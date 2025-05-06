@@ -1,0 +1,6 @@
+Language: Cpp
+BasedOnStyle: Mozilla
+ColumnLimit: 240
+IndentWidth: 2
+MaxEmptyLinesToKeep: 1
+TabWidth: 2
