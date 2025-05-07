@@ -1,29 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-dd="$(dirname "$0")"
+dd="$(cd "$(dirname "$0")" && pwd)"
 cd "$dd"
 
 echo "activating local spack environment"
 spack env activate --create --dir .
 
 echo "build iSpan graph converter"
-mkdir -p "${dd}/solver/iSpan/graph_converter/build"
-cd "${dd}/solver/iSpan/graph_converter/build"
+cd "${dd}/solver/iSpan/graph_converter"
 
-make ..
+g++ "txt_to_bin_fw_int.cpp" -o "${dd}/bin/iSpan_txt_to_bin_fw"
+g++ "txt_to_bin_bw_int.cpp" -o "${dd}/bin/iSpan_txt_to_bin_bw"
 
-echo "build iSpan distributed"
-mkdir -p "${dd}/solver/iSpan/scr_mpi/build"
-cd "${dd}/solver/iSpan/scr_mpi/build"
+echo "build iSpan (mpi)"
+cd "${dd}/solver/iSpan/src_mpi"
 
-make ..
+make clean
+make
 
 echo "copy iSpan binaries"
-mkdir -p "${dd}/bin"
-cd "${dd}/bin"
 
-cp "${dd}/solver/iSpan/graph_converter/build/graph_converter" "${dd}/bin/iSpan_graph_converter"
-cp "${dd}/solver/iSpan/scr_mpi/build/graph_converter" "${dd}/bin/iSpan"
+mkdir -p "${dd}/bin"
+mv "${dd}/solver/iSpan/src_mpi/scc_cpu" "${dd}/bin/iSpan"
 
 echo "finished building iSpan"

@@ -1,1 +1,8 @@
+.idea/
+
 .spack-env/
+spack.lock
+
+bin/
+graphs/
+results/
