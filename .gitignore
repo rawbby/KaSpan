@@ -1,8 +1,11 @@
 .idea/
 
+.venv/
 .spack-env/
 spack.lock
 
 bin/
 graphs/
 results/
+
+scc_run*

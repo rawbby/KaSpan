@@ -10,6 +10,8 @@ spack:
   - ninja
   - cmake
   - gcc@14
+  - python@3
+  - python-venv
   view: true
   concretizer:
     unify: true

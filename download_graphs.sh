@@ -51,6 +51,8 @@ process_url() {
     return 1
   fi
 
+  cp "$out_file" "$OUTPUT_DIR/${code}_edgelist.txt"
+
   # Run converters in out_file directory
   workdir="$(dirname "$out_file")"
   pushd "$workdir" > /dev/null

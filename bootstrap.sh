@@ -4,6 +4,9 @@ set -euo pipefail
 dd="$(dirname "$0")"
 cd "$dd"
 
+spack env activate --create .
+python3 -m venv .venv
+
 # Synchronize submodule URLs
 # This updates .git/config to match .gitmodules
 echo "Synchronizing submodule URLs..."
