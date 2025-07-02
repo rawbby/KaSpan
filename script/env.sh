@@ -26,9 +26,12 @@ set -euo pipefail
 trap '>&2 echo "[env.sh] Error on or near line $LINENO. Exiting."; exit 1' ERR
 
 # 4) Locate script & project roots
-export SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export PROJECT_DIR="$( cd "${SCRIPTS_DIR}/.." && pwd )"
+export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export PROJECT_DIR="$( cd "${SCRIPT_DIR}/.." && pwd )"
 export BINARY_DIR="${PROJECT_DIR}/bin"
+exprot GRAPH_DIR="${PROJECT_DIR}/graph"
+exprot SOLVER_DIR="${PROJECT_DIR}/solver"
+exprot RESULT_DIR="${PROJECT_DIR}/result"
 mkdir -p "${BINARY_DIR}"
 cd "${PROJECT_DIR}"
 

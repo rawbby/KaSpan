@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
-dd="$(cd "$(dirname "$0")" && pwd)"
-cd "$dd"
+source "$(dirname "$0")/env.sh"
 
 OUTPUT_DIR="${dd}/graphs"
 mkdir -p "$OUTPUT_DIR"
@@ -91,3 +88,4 @@ done
 wait
 
 echo "All downloads and processing complete."
+deactivate  # deactivate env.sh
