@@ -5,7 +5,5 @@
 spack.lock
 
 bin/
-graphs/
-results/
-
-scc_run*
+graph/
+result/

@@ -25,37 +25,40 @@ export ENV_COUNT
 set -euo pipefail
 trap '>&2 echo "[env.sh] Error on or near line $LINENO. Exiting."; exit 1' ERR
 
-# 4) Locate script & project roots
+# 4) Ensure folder structure and working directory
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export PROJECT_DIR="$( cd "${SCRIPT_DIR}/.." && pwd )"
+export SOLVER_DIR="${PROJECT_DIR}/solver"
+
 export BINARY_DIR="${PROJECT_DIR}/bin"
-exprot GRAPH_DIR="${PROJECT_DIR}/graph"
-exprot SOLVER_DIR="${PROJECT_DIR}/solver"
-exprot RESULT_DIR="${PROJECT_DIR}/result"
+export GRAPH_DIR="${PROJECT_DIR}/graph"
+export RESULT_DIR="${PROJECT_DIR}/result"
+
 mkdir -p "${BINARY_DIR}"
-cd "${PROJECT_DIR}"
+mkdir -p "${GRAPH_DIR}"
+mkdir -p "${RESULT_DIR}"
 
 # 5) Sync and Update git submodules
->&2 echo "[env.sh] note: syncing git submodules…"
-git submodule sync --recursive
->&2 echo "[env.sh] note: updating git submodules…"
-git submodule update --init --recursive
+>&2 echo "[env.sh] note: syncing git submodules ..."
+git -C "${PROJECT_DIR}" submodule sync --recursive
+>&2 echo "[env.sh] note: updating git submodules ..."
+git -C "${PROJECT_DIR}" submodule update --init --recursive
 
 # 6) Add our scripts dir to PATH
-export PATH="${SCRIPTS_DIR}:${PATH}"
+export PATH="${SCRIPT_DIR}:${PATH}"
 
 # 7) Spack environment
 >&2 echo "[env.sh] activating spack env in \"${PROJECT_DIR}\" ..."
-spack env activate --create --dir .
+spack env activate --create --dir "${PROJECT_DIR}"
 >&2 echo "[env.sh] spack env activated!"
 
 # 8) Python environment
-if [[ ! -d ".venv" ]]; then
+if [[ ! -d "${PROJECT_DIR}/.venv" ]]; then
   >&2 echo "[env.sh] creating python venv at \"${PROJECT_DIR}/.venv\" ..."
   python3 -m venv "${PROJECT_DIR}/.venv"
 fi
 >&2 echo "[env.sh] activating python venv in \"${PROJECT_DIR}/.venv\" ..."
-source ".venv/bin/activate"
+source "${PROJECT_DIR}/.venv/bin/activate"
 >&2 echo "[env.sh] activated python venv!"
 
 # If venv defines a `deactivate` function, rename it so we can chain
@@ -90,13 +93,17 @@ deactivate() {
   >&2 echo "[env.sh] deactivated spack env!"
 
   # e) Remove scripts dir from PATH
-  PATH="${PATH#${SCRIPTS_DIR}:}"
+  PATH="${PATH#${SCRIPT_DIR}:}"
   export PATH
 
   # f) Cleanup our exports
   unset ENV_COUNT
-  unset SCRIPTS_DIR
+  unset SCRIPT_DIR
   unset PROJECT_DIR
+  unset SOLVER_DIR
+  unset BINARY_DIR
+  unset GRAPH_DIR
+  unset RESULT_DIR
 
   # g) Remove this function
   unset -f deactivate

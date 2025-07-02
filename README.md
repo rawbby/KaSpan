@@ -22,10 +22,27 @@ On first use, ensure that all graph instances are downloaded and all solvers are
 
 ```shell
 source scripts/env.sh
-download_graphs.sh
+download_graphs.sh --no-cache
 build.sh
 deactivate  # (optional) deactivate the environment
 ```
+
+### Add own Instances
+
+To add own instances you can edit `script/download_graphs.sh`. There is a list of sources where you can add your instance:
+```text
+# Define sources: "<code>|<url-or-path>|<method>"
+SOURCES=(
+  "BAi|http://konect.cc/files/download.tsv.zhishi-baidu-internallink.tar.bz2|konnect"
+  "DB|http://konect.cc/files/download.tsv.dbpedia-all.tar.bz2|konnect"
+  ...
+  "TOY|${PROJECT_DIR}/solver/iSpan/graph_converter/toy_edge_list.txt|local:copy"
+)
+```
+
+1. The code defines a unique name under which the benchmark infrastructure can find your instance
+2. The source is commonly a url or file path depending on the last parameter
+3. The method determines how to fetch the source - currently the method fetches a local edgelist or an instance from konect database
 
 ## Benchmarking
 
@@ -48,3 +65,7 @@ source scripts/env.sh
 plot.py <result>  # where <result> is the folder name under results/<result>
 deactivate        # (optional) deactivate the environment
 ```
+
+## Conventions
+
+### File
