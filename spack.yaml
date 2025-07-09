@@ -12,6 +12,9 @@ spack:
   - gcc@14
   - python@3
   - python-venv
+  - valgrind
+  - iperf3
+  - linux-perf
   view: true
   concretizer:
     unify: true

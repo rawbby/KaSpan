@@ -10,7 +10,7 @@
 if [[ -n "${ENV_COUNT:-}" ]]; then
   ENV_COUNT=$(( ENV_COUNT + 1 ))
   export ENV_COUNT
-  >&2 echo "[env.sh] debug: ENV_COUNT=${ENV_COUNT}"
+  #>&2 echo "[env.sh] debug: ENV_COUNT=${ENV_COUNT}"
   return 0
 fi
 
@@ -19,7 +19,7 @@ fi
 # 2) Initialise environment counter
 ENV_COUNT=1
 export ENV_COUNT
->&2 echo "[env.sh] debug: ENV_COUNT=${ENV_COUNT}"
+#>&2 echo "[env.sh] debug: ENV_COUNT=${ENV_COUNT}"
 
 # 3) Strict error handling
 set -euo pipefail
@@ -71,7 +71,7 @@ fi
 deactivate() {
   ENV_COUNT=$(( ENV_COUNT - 1 ))
   export ENV_COUNT
-  >&2 echo "[env.sh] debug: ENV_COUNT=${ENV_COUNT}"
+  #>&2 echo "[env.sh] debug: ENV_COUNT=${ENV_COUNT}"
 
   if (( ENV_COUNT > 0 )); then
     return 0
