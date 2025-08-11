@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../error_codes.h"
+#include "../../../util/include/ErrorCode.hpp"
 #include "../scope_guard.h"
 #include "./distributed_graph.h"
 
@@ -16,7 +16,7 @@ namespace ka_span {
 
 namespace detail {
 
-inline ka_result<std::uint64_t>
+inline Result<std::uint64_t>
 file_read_index(int file_descriptor, std::uint8_t bytes, std::uint64_t offset)
 {
   static_assert(std::endian::native == std::endian::little);
@@ -27,7 +27,7 @@ file_read_index(int file_descriptor, std::uint8_t bytes, std::uint64_t offset)
 
 }
 
-ka_void_result
+VoidResult
 load_graph(auto&& fn, std::uint64_t world_rank, std::uint64_t world_size, const char* file)
 {
   static_assert(std::endian::native == std::endian::little);
@@ -61,16 +61,18 @@ load_graph(auto&& fn, std::uint64_t world_rank, std::uint64_t world_size, const 
   const auto local_index_size  = index_size_from_num(num_local_edges);
 
   return dispatch_indices_from_nums(
-    [&]<typename global_vertex_type, typename global_index_type, typename local_index_type>(global_vertex_type, global_index_type, local_index_type) -> ka_void_result {
+    [&]<typename global_vertex_type, typename global_index_type, typename local_index_type>(global_vertex_type, global_index_type, local_index_type) -> VoidResult {
       const auto page_size                = static_cast<std::uint64_t>(sysconf(_SC_PAGE_SIZE));
       const auto local_offset_buffer_size = (num_local_offsets * local_index_size + page_size - 1) / page_size * page_size;
       const auto local_edge_buffer_size   = (num_local_edges * local_vertex_size + page_size - 1) / page_size * page_size;
       const auto local_index_offset       = begin_local_edges;
 
-      VALUE_TRY(const auto local_offset_buffer, static_cast<local_index_type*>(std::aligned_alloc(page_size, local_offset_buffer_size)), ALLOCATION_ERROR);
+      const auto local_offset_buffer = static_cast<local_index_type*>(std::aligned_alloc(page_size, local_offset_buffer_size));
+      ASSERT_TRY(local_offset_buffer, ALLOCATION_ERROR, "failed to allocate offset buffer");
       SCOPE_GUARD(std::free(local_offset_buffer));
 
-      VALUE_TRY(const auto local_edge_buffer, static_cast<global_vertex_type*>(std::aligned_alloc(page_size, local_edge_buffer_size)), ALLOCATION_ERROR);
+      const auto local_edge_buffer= static_cast<global_vertex_type*>(std::aligned_alloc(page_size, local_edge_buffer_size));
+      ASSERT_TRY(local_edge_buffer, ALLOCATION_ERROR, "failed to allocate edge buffer");
       SCOPE_GUARD(std::free(local_edge_buffer));
 
       // Fill local offset buffer
@@ -106,7 +108,7 @@ load_graph(auto&& fn, std::uint64_t world_rank, std::uint64_t world_size, const 
           }
         }
 
-        ERROR_CODE_TRY(munmap(file_mapped_memory, map_length), MEMORY_MAPPING_ERROR);
+        ASSERT_TRY(!munmap(file_mapped_memory, map_length), MEMORY_MAPPING_ERROR);
         posix_fadvise64(file_descriptor, static_cast<std::int64_t>(map_offset), static_cast<std::int64_t>(map_length), POSIX_FADV_DONTNEED);
       }
 
@@ -133,7 +135,7 @@ load_graph(auto&& fn, std::uint64_t world_rank, std::uint64_t world_size, const 
 
         const auto raw_global_edge_buffer = static_cast<std::byte*>(file_mapped_memory) + map_difference;
         memcpy(local_edge_buffer, raw_global_edge_buffer, num_local_edges * global_vertex_size);
-        ERROR_CODE_TRY(munmap(file_mapped_memory, map_length), MEMORY_MAPPING_ERROR);
+        ASSERT_TRY(!munmap(file_mapped_memory, map_length), MEMORY_MAPPING_ERROR);
         posix_fadvise64(file_descriptor, static_cast<std::int64_t>(map_offset), static_cast<std::int64_t>(map_length), POSIX_FADV_DONTNEED);
       }
 
