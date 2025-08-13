@@ -1,142 +1,254 @@
 #pragma once
 
-#include <algorithm>
-#include <cassert>
+#include <cctype>
+#include <charconv>
 #include <fstream>
-#include <iostream>
+#include <limits>
 #include <string>
 #include <stxxl/mng>
 #include <stxxl/sorter>
+#include <utility>
 
-#include "Util.hpp"
-
-template<typename T>
-struct edge
-{
-  using node_t = T;
-  node_t src, dst;
-};
-
-template<typename edge_t>
-struct edge_cmp
-{
-  using node_t = typename edge_t::node_t;
-
-  bool operator()(const edge_t& a, const edge_t& b) const noexcept
-  {
-    return a.src < b.src || (a.src == b.src && a.dst < b.dst);
-  }
-
-  static constexpr edge_t min_value()
-  {
-    constexpr auto min_node = std::numeric_limits<node_t>::min();
-    return edge_t{ min_node, min_node };
-  }
-
-  static constexpr edge_t max_value()
-  {
-    constexpr auto max_node = std::numeric_limits<node_t>::max();
-    return edge_t{ max_node, max_node };
-  }
-};
+#include <ErrorCode.hpp>
+#include <Util.hpp>
 
 namespace distributed {
 
-template<bool is_forward, bool write_meta>
-void
-convert_graph(std::istream& input, const std::string& code, std::uint64_t mem_bytes)
+namespace convert_graph_internal {
+
+struct Edge
 {
-  using node_t     = std::uint64_t;
-  using edge_t     = edge<node_t>;
-  using edge_cmp_t = edge_cmp<edge_t>;
-  using sorter_t   = stxxl::sorter<edge_t, edge_cmp_t>;
-  sorter_t sorter{ edge_cmp_t{}, mem_bytes };
+  std::uint64_t src{};
+  std::uint64_t dst{};
+};
 
-  node_t u, v;
-  node_t node_count = 0;
-  node_t edge_count = 0;
-  while (input >> u >> v) {
-    ++edge_count;
-    node_count = std::max(node_count, std::max(u, v));
-
-    if constexpr (is_forward)
-      sorter.push({ u, v });
-    else
-      sorter.push({ v, u });
-  }
-  ++node_count;
-
-  const auto node_bytes   = needed_bytes(node_count - 1);
-  const auto offset_bytes = needed_bytes(edge_count);
-
-  if constexpr (write_meta) {
-    std::ofstream meta{ code + "_meta.bin", std::ios::binary };
-    meta.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-
-    write_little_endian(meta, node_bytes, 1);
-    write_little_endian(meta, offset_bytes, 1);
-    write_little_endian(meta, node_count, node_bytes);
-    write_little_endian(meta, edge_count, offset_bytes);
+struct EdgeLess
+{
+  constexpr bool operator()(Edge lhs, Edge rhs) const noexcept
+  {
+    return lhs.src < rhs.src or (lhs.src == rhs.src and lhs.dst < rhs.dst);
   }
 
-  sorter.sort();
-
-  const auto dir_tag     = is_forward ? "_fw" : "_bw";
-  auto       head_output = std::ofstream{ code + dir_tag + "_head.bin", std::ios::binary };
-  auto       csr_output  = std::ofstream{ code + dir_tag + "_csr.bin", std::ios::binary };
-
-  head_output.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-  csr_output.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-
-  write_little_endian(head_output, 0, offset_bytes);
-  auto current_node   = static_cast<node_t>(0);
-  auto current_offset = static_cast<node_t>(0);
-  for (; !sorter.empty(); ++sorter) {
-    const auto& [src, dst] = *sorter;
-    while (current_node < src) {
-      ++current_node;
-      write_little_endian(head_output, current_offset, offset_bytes);
-    }
-    write_little_endian(csr_output, dst, node_bytes);
-    ++current_offset;
+  static constexpr Edge min_value()
+  {
+    constexpr auto lo = std::numeric_limits<std::uint64_t>::min();
+    return Edge{ lo, lo };
   }
-  while (current_node < node_count) {
-    ++current_node;
-    write_little_endian(head_output, current_offset, offset_bytes);
+
+  static constexpr Edge max_value()
+  {
+    constexpr auto hi = std::numeric_limits<std::uint64_t>::max();
+    return Edge{ hi, hi };
   }
+};
+
+inline Result<std::pair<std::uint64_t, std::uint64_t>>
+parse_uv(const std::string& s)
+{
+  std::uint64_t pos = 0;
+
+  auto skip_ws = [&] {
+    while (pos < s.size() && std::isspace(static_cast<unsigned char>(s[pos])))
+      ++pos;
+  };
+
+  auto read_u64 = [&]() -> Result<std::uint64_t> {
+    std::uint64_t val    = 0;
+    const char*   begin  = s.data() + pos;
+    const char*   end    = s.data() + s.size();
+    const auto [ptr, ec] = std::from_chars(begin, end, val, 10);
+    ASSERT_TRY(ec == std::errc(), DESERIALIZE_ERROR);
+    ASSERT_TRY(ptr != begin, DESERIALIZE_ERROR);
+    pos = static_cast<std::uint64_t>(ptr - s.data());
+    return val;
+  };
+
+  skip_ws();
+  RESULT_TRY(const auto u, read_u64());
+  skip_ws();
+  RESULT_TRY(const auto v, read_u64());
+  skip_ws();
+  ASSERT_TRY(pos == s.size(), DESERIALIZE_ERROR);
+
+  return std::pair{ u, v };
 }
 
-/**
- * This function is used to convert a text based edge list file into a binary format while not allocating much more memory than requested.
- * The binary format is in multi file structure.
- * It not only creates a compressed sparse version of the graph but also stores metadata and the backward graph.
- *
- * The result contains five files:
- * 1. **code**_meta.bin:    contains metadata like the number of nodes and edges and the bytes per value used while writing.
- * 2. **code**_fw_head.bin: per node contains the begin and end offset of the csr.
- * 3. **code**_fw_csr.bin:  contains the csr data continuous.
- * 4. **code**_bw_head.bin: per node contains the begin and end offset of the csr.
- * 5. **code**_bw_csr.bin:  contains the csr data continuous.
- *
- * notice that a sideeffect of the conversion is also that all csr data is guaranteed to be sorted.
- *
- * @param input_file A path to an existing edge list file. Notice for **code**.txt the code is used as basename for the output files.
- * @param mem_bytes The amount of memory this function is allowed to allocate.
- */
-inline void
-convert_graph(const std::string& input_file, std::uint64_t mem_bytes)
+} // convert_graph_internal
+
+inline VoidResult
+convert_graph(const std::string& input_file,
+              std::uint64_t      mem_bytes,
+              const std::string& graph_name = std::string())
 {
+  using namespace convert_graph_internal;
+
   const std::string code = input_file.substr(0, input_file.find_first_of('.'));
+  const std::string name = graph_name.empty() ? code : graph_name;
 
-  std::ifstream input{ input_file };
-  input.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+  std::ifstream in{ input_file };
+  ASSERT_TRY(in, IO_ERROR);
 
-  convert_graph<true, true>(input, code, mem_bytes);
-  input.clear();
-  input.seekg(0);
+  std::uint64_t max_node       = 0;
+  std::uint64_t m              = 0;
+  std::uint64_t n              = 0;
+  std::uint8_t  head_bytes     = 0;
+  std::uint8_t  csr_bytes      = 0;
+  bool          has_self_loops = false;
+  bool          has_duplicates = false;
 
-  convert_graph<false, false>(input, code, mem_bytes);
-  input.close();
+  const std::string manifest_path = code + ".manifest";
+  const std::string fw_head_path  = code + ".fw.head.bin";
+  const std::string fw_csr_path   = code + ".fw.csr.bin";
+  const std::string bw_head_path  = code + ".bw.head.bin";
+  const std::string bw_csr_path   = code + ".bw.csr.bin";
+
+  // first pass for forward
+  {
+    stxxl::sorter<Edge, EdgeLess> fw{ EdgeLess{}, mem_bytes };
+
+    std::string line;
+    while (std::getline(in, line)) {
+      if (line.empty() or line[0] == '%')
+        continue;
+
+      RESULT_TRY(const auto uv, parse_uv(line));
+      const auto [u, v] = uv;
+
+      fw.push(Edge{ u, v });
+      ++m;
+
+      if (u > max_node)
+        max_node = u;
+      if (v > max_node)
+        max_node = v;
+      if (u == v)
+        has_self_loops = true;
+    }
+
+    n          = m == 0 ? 0 : max_node + 1;
+    head_bytes = needed_bytes(m);
+    csr_bytes  = needed_bytes(max_node);
+
+    ASSERT_TRY(not in.bad(), IO_ERROR);
+
+    fw.sort();
+
+    std::ofstream head_file{ fw_head_path, std::ios::binary };
+    ASSERT_TRY(head_file, IO_ERROR);
+    std::ofstream csr_file{ fw_csr_path, std::ios::binary };
+    ASSERT_TRY(csr_file, IO_ERROR);
+
+    RESULT_TRY(write_little_endian(head_file, static_cast<std::uint64_t>(0), head_bytes));
+
+    std::uint64_t current_node = 0;
+    std::uint64_t current_off  = 0;
+
+    std::uint64_t last_s = n;
+    std::uint64_t last_d = n;
+
+    for (; !fw.empty(); ++fw) {
+      const auto [s, d] = *fw;
+
+      if (s == last_s and d == last_d)
+        has_duplicates = true;
+      last_s = s;
+      last_d = d;
+
+      while (current_node < s) {
+        ++current_node;
+        RESULT_TRY(write_little_endian(head_file, current_off, head_bytes));
+      }
+
+      RESULT_TRY(write_little_endian(csr_file, d, csr_bytes));
+      ++current_off;
+    }
+
+    // close remaining head entries up to n
+    while (current_node < n) {
+      ++current_node;
+      RESULT_TRY(write_little_endian(head_file, current_off, head_bytes));
+    }
+
+    head_file.flush();
+    ASSERT_TRY(head_file, IO_ERROR);
+    csr_file.flush();
+    ASSERT_TRY(csr_file, IO_ERROR);
+  }
+
+  // second pass backward
+  {
+    in.seekg(0);
+    stxxl::sorter<Edge, EdgeLess> bw{ EdgeLess{}, mem_bytes };
+
+    std::string line;
+    while (std::getline(in, line)) {
+      if (line.empty() or line[0] == '%')
+        continue;
+
+      RESULT_TRY(const auto uv, parse_uv(line));
+      const auto [u, v] = uv;
+
+      bw.push(Edge{ v, u });
+    }
+
+    ASSERT_TRY(not in.bad(), IO_ERROR);
+
+    bw.sort();
+
+    std::ofstream head_file{ bw_head_path, std::ios::binary };
+    ASSERT_TRY(head_file, IO_ERROR);
+    std::ofstream csr_file{ bw_csr_path, std::ios::binary };
+    ASSERT_TRY(csr_file, IO_ERROR);
+
+    RESULT_TRY(write_little_endian(head_file, static_cast<std::uint64_t>(0), head_bytes));
+
+    std::uint64_t current_node = 0;
+    std::uint64_t current_off  = 0;
+
+    for (; !bw.empty(); ++bw) {
+      const auto [s, d] = *bw;
+
+      while (current_node < s) {
+        ++current_node;
+        RESULT_TRY(write_little_endian(head_file, current_off, head_bytes));
+      }
+
+      RESULT_TRY(write_little_endian(csr_file, d, csr_bytes));
+      ++current_off;
+    }
+
+    // close remaining head entries up to n
+    while (current_node < n) {
+      ++current_node;
+      RESULT_TRY(write_little_endian(head_file, current_off, head_bytes));
+    }
+
+    head_file.flush();
+    ASSERT_TRY(head_file, IO_ERROR);
+    csr_file.flush();
+    ASSERT_TRY(csr_file, IO_ERROR);
+  }
+
+  std::ofstream manifest_file{ manifest_path };
+  ASSERT_TRY(manifest_file, IO_ERROR);
+
+  manifest_file << "schema.version 1\n";
+  manifest_file << "graph.code " << code << "\n";
+  manifest_file << "graph.name " << name << "\n";
+  manifest_file << "graph.node_count " << n << "\n";
+  manifest_file << "graph.edge_count " << m << "\n";
+  manifest_file << "graph.contains_self_loops " << (has_self_loops ? "true" : "false") << "\n";
+  manifest_file << "graph.contains_duplicate_edges " << (has_duplicates ? "true" : "false") << "\n";
+  manifest_file << "graph.head.bytes " << static_cast<unsigned>(head_bytes) << "\n";
+  manifest_file << "graph.csr.bytes " << static_cast<unsigned>(csr_bytes) << "\n";
+  manifest_file << "fw.head.path " << fw_head_path << "\n";
+  manifest_file << "fw.csr.path " << fw_csr_path << "\n";
+  manifest_file << "bw.head.path " << bw_head_path << "\n";
+  manifest_file << "bw.csr.path " << bw_csr_path << "\n";
+
+  manifest_file.flush();
+  ASSERT_TRY(manifest_file, IO_ERROR);
+  return VoidResult::success();
 }
 
-}
+} // namespace distributed

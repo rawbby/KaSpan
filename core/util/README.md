@@ -45,17 +45,17 @@ little-endian integers, interpreted as raw bytes to allow compact encodings and 
 
 ### Converter (edge list → manifest + CSR)
 
-Once for the forward and once for the backward graph reads lines `u v`, externally sorts edges in O(m log m), and writes
-the four binary CSR files in a single streaming pass. Chooses minimal byte widths per file and records them in the
-manifest. All entries are little‑endian, independent of host endianness. Per‑node adjacency is sorted by definition.
-Finally stores the manifest file.
+Reads lines `u v`, externally sorts edges in O(m log m), and writes the four binary CSR files in a single streaming pass
+per direction (once for the forward and once for the backward graph). Chooses minimal byte widths per file and records
+them in the manifest. All entries are little‑endian, independent of host endianness. Per‑node adjacency is sorted by
+definition. inally stores the manifest file.
 
 > [!NOTICE]
 > Empty lines or lines starting with “%” are ignored.
 
 ### Manifest (text, key–value)
 
-Each non‑empty line is either a comment starting with “%” or a key followed by whitespace and the value. Paths are
+Each non‑empty line is either a comment starting with “%” or a key followed by a single space and the value. Paths are
 resolved relative to the manifest’s directory.
 
 Required keys:
@@ -67,14 +67,12 @@ Required keys:
 - graph.edge_count: m
 - graph.contains_self_loops: bool
 - graph.contains_duplicate_edges: bool
+- graph.head.bytes
+- graph.csr.bytes
 - fw.head.path
-- fw.head.bytes
 - fw.csr.path
-- fw.csr.bytes
 - bw.head.path
-- bw.head.bytes
 - bw.csr.path
-- bw.csr.bytes
 
 ### Head (binary)
 

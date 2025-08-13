@@ -26,7 +26,7 @@ public:
 #define SCOPE_GUARD_CAT1(A, B) A##B
 #define SCOPE_GUARD_CAT0(A, B) SCOPE_GUARD_CAT1(A, B)
 
-#define SCOPE_GUARD(F)                                                \
-  const auto SCOPE_GUARD_CAT0(guard, __COUNTER__) = scope_guard([&] { \
-    F;                                                                \
+#define SCOPE_GUARD(F)                                               \
+  const auto SCOPE_GUARD_CAT0(guard, __COUNTER__) = ScopeGuard([&] { \
+    F;                                                               \
   })

@@ -1,4 +1,11 @@
+#include <distributed/Buffer.hpp>
+#include <distributed/ConvertGraph.hpp>
+#include <distributed/Graph.h>
+#include <distributed/Manifest.hpp>
 #include <distributed/Partition.hpp>
+#include <ErrorCode.hpp>
+#include <ScopeGuard.hpp>
+#include <Util.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -8,8 +15,6 @@
 #include <random>
 #include <string>
 #include <vector>
-
-using namespace distributed;
 
 constexpr std::size_t exhaustive_n_max  = 1000;
 constexpr std::size_t first_sample      = 200;
