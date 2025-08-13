@@ -1,8 +1,9 @@
 #pragma once
 
+#include "util.h"
+#include "wtime.h"
 #include "graph.h"
-#include "../../src/util.h"
-#include "../../src/wtime.h"
+
 #include <algorithm>
 #include <assert.h>
 #include <iostream>

@@ -1,12 +1,13 @@
 #pragma once
 
 
-#include "../../src/util.h"
-#include "../../src/wtime.h"
+#include "util.h"
+#include "wtime.h"
+
 #include <iostream>
+#include <mpi.h>
 #include <set>
 #include <vector>
-#include <mpi.h>
 
 inline void
 fw_bfs(

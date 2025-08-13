@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../../src/util.h"
+#include "util.h"
+
 #include <vector>
 
 static void
