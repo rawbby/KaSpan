@@ -1,116 +1,117 @@
 #pragma once
 
-#include "Buffer.hpp"
+#include <ErrorCode.hpp>
+#include <Util.hpp>
+#include <distributed/Buffer.hpp>
+#include <distributed/Manifest.hpp>
+#include <distributed/Partition.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <filesystem>
+#include <span>
 
 namespace distributed {
 
-template<WorldPartitionConcept Partition = TrivialSlicePartition>
+template<PartitionConcept Partition = TrivialSlicePartition>
 struct Graph
 {
-  PartitionBuffer<Partition> vertices;
-  Buffer                     edges;
+  Partition     partition;
+  std::uint64_t node_count;
+  std::uint64_t edge_count;
 
-  Graph(const char* vertices_file_name, const char* edges_file_name, std::size_t world_rank, std::size_t world_size)
+  Buffer fw_head;
+  Buffer bw_head;
+  Buffer fw_csr;
+  Buffer bw_csr;
+
+  static Result<Graph> create(const Manifest& manifest, const Partition& part)
   {
-    // load and partition the vertex buffer from file.
-    vertices = [&] {
-      // file-buffer is lazy mapping the file content into memory.
-      // partition buffer extracts only the partition data of this world-rank and keeps allows access with local and global indices.
-      const auto vfb = FileBuffer{ vertices_file_name };
-      return PartitionBuffer<Partition>{ vfb, world_rank, world_size };
-    }();
+    Graph g;
+    g.partition  = part;
+    g.node_count = manifest.graph_node_count;
+    g.edge_count = manifest.graph_edge_count;
 
-    // Lambda to rebase the vertex 'begin' offset to be local to the partitioned edge buffer
-    const auto element_size         = vertices.element_size >> 1;
-    const auto correct_vertex_begin = [&](std::size_t index, std::size_t begin) {
-      const auto vertex_begin = read_little_endian<std::size_t>(vertices[index].data(), element_size);
-      write_little_endian(vertices[index].data(), vertex_begin - begin, element_size);
-    };
-    // Lambda to rebase the vertex 'end' offset similarly
-    const auto correct_vertex_end = [&](std::size_t index, std::size_t begin) {
-      const auto vertex_end = read_little_endian<std::size_t>(vertices[index].data() + element_size, element_size);
-      write_little_endian(vertices[index].data() + element_size, vertex_end - begin, element_size);
-    };
+    auto load_dir = [&](const std::filesystem::path& head_path, const std::filesystem::path& csr_path, Buffer& out_head, Buffer& out_csr) -> VoidResult {
+      RESULT_TRY(const auto head_fb, FileBuffer::create(head_path.c_str(), manifest.graph_head_bytes, g.node_count + 1));
+      RESULT_TRY(const auto csr_fb, FileBuffer::create(csr_path.c_str(), manifest.graph_csr_bytes, g.edge_count));
 
-    // load the csr of each vertex into a local buffer and update
-    // the vertex offsets to match the local ones not the global ones.
-    edges = [&] {
-      // file-buffer again only mapping lazy and deallocating data automatically
-      const auto efb = FileBuffer{ edges_file_name };
+      const std::uint64_t local_n = part.size();
+      std::uint64_t       local_m = 0;
 
-      // in the csr data not stride other than the element size is allowed.
-      // a bigger one would be waste of disc space, and overlapping makes no sense.
-      assert(efb.element_stride == efb.element_size);
-
-      // fast path: for continuous partitions and overlapping
-      // vertex layout a simple memory copy can be used.
-      if (Partition::continuous && vertices.element_stride < vertices.element_size && vertices.size() > 0) {
-
-        // gather edge info over all edges
-        const auto edge_begin = vertex_begin(0);
-        const auto edge_end   = vertex_end(vertices.partition.size() - 1);
-        const auto edge_count = edge_end - edge_begin;
-
-        // allocate a buffer capable of holding all csr data
-        Buffer buffer{ efb.element_size, efb.element_size, edge_count };
-
-        // copy the relevant edge data from the global edge buffer
-        std::memcpy(buffer.data, efb[edge_begin].data(), edge_count * efb.element_size);
-
-        // convert all vertex offsets to point to the corresponding local edges
-        for (std::size_t k = 0; k < vertices.size(); ++k)
-          correct_vertex_begin(k, edge_begin);
-        correct_vertex_end(vertices.size() - 1, edge_begin);
-
-        return buffer;
+      if constexpr (Partition::continuous) {
+        if (local_n > 0) {
+          const auto begin = head_fb.template get<std::uint64_t>(part.begin);
+          const auto end   = head_fb.template get<std::uint64_t>(part.end);
+          local_m          = end - begin;
+        }
+      } else {
+        for (std::uint64_t k = 0; k < local_n; ++k) {
+          const auto index = part.select(k);
+          const auto begin = head_fb.template get<std::uint64_t>(index);
+          const auto end   = head_fb.template get<std::uint64_t>(index + 1);
+          local_m += end - begin;
+        }
       }
 
-      // general path: for non-continuous partitions or non-overlapping layout
+      RESULT_TRY(out_head, Buffer::create(manifest.graph_head_bytes, local_n + 1));
+      RESULT_TRY(out_csr, Buffer::create(manifest.graph_csr_bytes, local_m));
 
-      std::size_t edge_count = 0;
-      for (std::size_t k = 0; k < vertices.size(); ++k)
-        edge_count += vertex_end(k) - vertex_begin(k);
+      std::uint64_t pos = 0;
+      for (std::uint64_t k = 0; k < local_n; ++k) {
+        const auto index  = part.select(k);
+        const auto begin  = head_fb.template get<std::uint64_t>(index);
+        const auto end    = head_fb.template get<std::uint64_t>(index + 1);
+        const auto degree = end - begin;
 
-      Buffer buffer{ efb.element_size, efb.element_size, edge_count };
+        out_head.set(k, pos);
 
-      // the buffer will be filled in sequential order where
-      // buffer_data and current_local_offset are our
-      // iterators we use to go through the buffer
-      auto*  buffer_data = buffer.data;
-      std::size_t current_local_offset = 0;
-
-      for (std::size_t k = 0; k < vertices.size(); ++k) {
-
-        // gather the edge range info we need to copy
-        const auto edge_k_begin = vertex_begin(k);
-        const auto edge_k_end   = vertex_end(k);
-        const auto edge_k_count = edge_k_end - edge_k_begin;
-
-        // copy the corresponding data and update the buffer_data iterator to the end
-        std::memcpy(buffer_data, efb[edge_k_begin].data(), edge_k_count * efb.element_size);
-        buffer_data += edge_k_count * efb.element_size;
-
-        // convert all vertex offsets to point to the corresponding local edges
-        write_little_endian(vertices[k].data(), current_local_offset, element_size);
-        current_local_offset += edge_k_count;
-        write_little_endian(vertices[k].data() + element_size, current_local_offset, element_size);
+        const auto src = csr_fb.range(begin, end);
+        std::memcpy(out_csr[pos].data(), src.data(), src.size_bytes());
+        pos += degree;
       }
+      out_head.set(local_n, pos);
+      return VoidResult::success();
+    };
 
-      return buffer;
-    }();
+    RESULT_TRY(load_dir(manifest.fw_head_path, manifest.fw_csr_path, g.fw_head, g.fw_csr));
+    RESULT_TRY(load_dir(manifest.bw_head_path, manifest.bw_csr_path, g.bw_head, g.bw_csr));
+
+    return g;
   }
 
-  std::size_t vertex_begin(std::size_t index) const
+  std::uint64_t fw_degree(std::uint64_t index) const
   {
-    const auto element_size = vertices.element_size >> 1;
-    return read_little_endian<std::size_t>(vertices[index].data(), element_size);
+    const auto k     = partition.rank(index);
+    const auto begin = fw_head.get<std::uint64_t>(k);
+    const auto end   = fw_head.get<std::uint64_t>(k + 1);
+    return end - begin;
   }
 
-  std::size_t vertex_end(std::size_t index) const
+  std::uint64_t bw_degree(std::uint64_t index) const
   {
-    const auto element_size = vertices.element_size >> 1;
-    return read_little_endian<std::size_t>(vertices[index].data() + element_size, element_size);
+    const auto k     = partition.rank(index);
+    const auto begin = bw_head.get<std::uint64_t>(k);
+    const auto end   = bw_head.get<std::uint64_t>(k + 1);
+    return end - begin;
+  }
+
+  std::span<const std::byte> fw_adjacency_bytes(std::uint64_t index) const
+  {
+    const auto k     = partition.rank(index);
+    const auto begin = fw_head.get<std::uint64_t>(k);
+    const auto end   = fw_head.get<std::uint64_t>(k + 1);
+    return fw_csr.range(begin, end);
+  }
+
+  std::span<const std::byte> bw_adjacency_bytes(std::uint64_t index) const
+  {
+    const auto k     = partition.rank(index);
+    const auto begin = bw_head.get<std::uint64_t>(k);
+    const auto end   = bw_head.get<std::uint64_t>(k + 1);
+    return bw_csr.range(begin, end);
   }
 };
 
-}
+} // namespace distributed

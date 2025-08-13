@@ -1,18 +1,14 @@
 #pragma once
 
-#include "../Util.hpp"
-#include "Partition.hpp"
+#include <Util.hpp>
+#include <distributed/Partition.hpp>
 
-#include <algorithm>
-#include <array>
-#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
 #include <span>
-#include <stdexcept>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -20,64 +16,50 @@
 namespace distributed {
 
 /**
- * @brief Memory-maps a file of fixed-size elements for fast, random-access reads.
+ * FileBuffer
  *
- * The file must start with a 24-byte header (three little-endian uint64_t values):
- *   - element_stride: byte distance between elements
- *   - element_size:   size in bytes of each element
- *   - element_count:  number of elements in the file
- *
- * After the header, the element data is accessed directly from memory using mmap.
- *
+ * Read-only, non-owning view over a fixed-width element array stored on disk.
+ * - Maps the file with mmap (no header on disk; flat array of fixed-width elements).
+ * - Element layout: a flat array of element_count elements, each element_size bytes.
  * - Not copyable. Moveable.
- * - All resources (file descriptor, mapping) are released on destruction or move.
- * - Throws std::runtime_error on any file or mapping error.
- * - Does not perform bounds checking on element access.
+ * - All resources are released on destruction or move.
  *
- * Usage:
- *   FileBuffer buf("path/to/file");
- *   std::span<const std::byte> element = buf[42];
- *
- * Typical use case: efficient, zero-copy access to large, structured binary files.
+ * Creation is done via the static create method to propagate I/O/mapping errors.
  */
 struct FileBuffer
 {
-  static constexpr std::size_t header_size = 3 * sizeof(std::uint64_t);
-
   int         fd;
-  std::size_t element_stride;
   std::size_t element_size;
   std::size_t element_count;
   void*       file_map;
 
-  explicit FileBuffer(const char* filename)
-    : fd(open(filename, O_RDONLY))
-    , element_stride()
+  FileBuffer() noexcept
+    : fd(-1)
     , element_size()
     , element_count()
     , file_map(nullptr)
   {
-    if (fd == -1) {
-      cleanup();
-      throw std::runtime_error("open failed");
-    }
+  }
 
-    std::byte header[header_size]{};
-    if (pread(fd, header, header_size, 0) != header_size) {
-      cleanup();
-      throw std::runtime_error("pread failed");
-    }
+  static Result<FileBuffer> create(const char* filename, std::size_t element_bytes, std::size_t element_count)
+  {
+    FileBuffer out;
+    out.element_size  = element_bytes;
+    out.element_count = element_count;
+    out.fd            = open(filename, O_RDONLY);
+    ASSERT_TRY(out.fd != -1, IO_ERROR);
 
-    element_stride = read_little_endian<std::size_t>(header + 0 * sizeof(std::uint64_t), 8);
-    element_size   = read_little_endian<std::size_t>(header + 1 * sizeof(std::uint64_t), 8);
-    element_count  = read_little_endian<std::size_t>(header + 2 * sizeof(std::uint64_t), 8);
+    const auto expected_bytes = element_bytes * element_count;
 
-    const auto file_size = header_size + size();
-    file_map             = mmap(nullptr, file_size, PROT_READ, MAP_SHARED, fd, 0);
-    if (file_map == MAP_FAILED) {
-      cleanup();
-      throw std::runtime_error("mmap failed");
-    }
+    struct stat st;
+    ASSERT_TRY(fstat(out.fd, &st) == 0, IO_ERROR);
+    ASSERT_TRY(st.st_size >= 0, IO_ERROR);
+    ASSERT_TRY(static_cast<std::size_t>(st.st_size) == expected_bytes, IO_ERROR);
+
+    out.file_map = mmap(nullptr, expected_bytes, PROT_READ, MAP_SHARED, out.fd, 0);
+    ASSERT_TRY(out.file_map != MAP_FAILED, MEMORY_MAPPING_ERROR);
+
+    return out;
   }
 
   FileBuffer(const FileBuffer&)            = delete;
@@ -85,69 +67,31 @@ struct FileBuffer
 
   FileBuffer(FileBuffer&& other) noexcept
     : fd(other.fd)
-    , element_stride(other.element_stride)
     , element_size(other.element_size)
     , element_count(other.element_count)
     , file_map(other.file_map)
   {
-    other.fd             = -1;
-    other.file_map       = nullptr;
-    other.element_stride = 0;
-    other.element_size   = 0;
-    other.element_count  = 0;
+    other.fd            = -1;
+    other.element_size  = 0;
+    other.element_count = 0;
+    other.file_map      = nullptr;
   }
 
   FileBuffer& operator=(FileBuffer&& other) noexcept
   {
     if (this != &other) {
-      std::swap(fd, other.fd);
-      std::swap(file_map, other.file_map);
-      std::swap(element_stride, other.element_stride);
-      std::swap(element_size, other.element_size);
-      std::swap(element_count, other.element_count);
+      std::swap(other.fd, fd);
+      std::swap(other.element_size, element_size);
+      std::swap(other.element_count, element_count);
+      std::swap(other.file_map, file_map);
     }
     return *this;
   }
 
   ~FileBuffer()
   {
-    cleanup();
-  }
-
-  std::span<std::byte> operator[](std::size_t index)
-  {
-    const auto data = static_cast<std::byte*>(file_map) + header_size;
-    return { data + index * element_stride, element_size };
-  }
-
-  std::span<const std::byte> operator[](std::size_t index) const
-  {
-    const auto data = static_cast<const std::byte*>(file_map) + header_size;
-    return { data + index * element_stride, element_size };
-  }
-
-  std::span<const std::byte> range(std::size_t begin, std::size_t end) const
-  {
-    const auto data = static_cast<const std::byte*>(file_map) + header_size;
-    return { data + begin * element_stride, data + (end - 1) * element_stride + element_size };
-  }
-
-  std::size_t size(std::size_t element_count) const
-  {
-    return (element_count - 1) * element_stride + element_size;
-  }
-
-  std::size_t size() const
-  {
-    return size(element_count);
-  }
-
-private:
-  void cleanup()
-  {
     if (file_map && file_map != MAP_FAILED) {
-      const auto file_size = header_size + size();
-      munmap(file_map, file_size);
+      munmap(file_map, element_size * element_count);
       file_map = nullptr;
     }
     if (fd != -1) {
@@ -155,60 +99,83 @@ private:
       fd = -1;
     }
   }
+
+  std::span<const std::byte> operator[](std::size_t index) const
+  {
+    const auto base = static_cast<const std::byte*>(file_map);
+    return { base + index * element_size, element_size };
+  }
+
+  std::span<const std::byte> range(std::size_t begin, std::size_t end) const
+  {
+    const auto base = static_cast<const std::byte*>(file_map);
+    return { base + begin * element_size, (end - begin) * element_size };
+  }
+
+  template<typename T>
+  T get(std::size_t index) const
+  {
+    const auto base = static_cast<const std::byte*>(file_map);
+    return read_little_endian<T>(base + index * element_size, element_size);
+  }
+
+  std::size_t size() const noexcept
+  {
+    return element_count;
+  }
 };
 
 /**
- * @brief Simple, move-only, aligned buffer for fixed-stride elements.
+ * Buffer
  *
- * - Allocates a single block of memory sufficient for `element_count` elements,
- *   each with the given stride and size.
- * - No partitioning or file I/O logic; user is responsible for filling and interpreting data.
- * - Ownership: buffer is freed on destruction or move.
+ * Owning, page-aligned, contiguous byte storage for a fixed-width element array.
+ * - Element layout: a flat array of element_count elements, each element_size bytes.
  * - Not copyable. Moveable.
- * - No bounds checks in element access (operator[]).
+ * - Memory is freed on destruction or move.
  *
- * Usage:
- *   Buffer buf(stride, size, count);
- *   // Fill buf.data or copy in content
- *   auto element = buf[42]; // span over the 42nd element's data
+ * Creation is done via the static create method to propagate allocation errors.
  */
 struct Buffer
 {
-  std::size_t element_stride;
   std::size_t element_size;
   std::size_t element_count;
   std::byte*  data;
 
-  Buffer(std::size_t element_stride, std::size_t element_size, std::size_t element_count)
-    : element_stride(element_stride)
-    , element_size(element_size)
-    , element_count(element_count)
-    , data(aligned_alloc(element_stride * (element_count - 1) + element_size))
+  Buffer() noexcept
+    : element_size(0)
+    , element_count(0)
+    , data(nullptr)
   {
+  }
+
+  static Result<Buffer> create(std::size_t element_bytes, std::size_t element_count)
+  {
+    Buffer buf;
+    buf.element_size  = element_bytes;
+    buf.element_count = element_count;
+    RESULT_TRY(buf.data, page_aligned_alloc(element_bytes * element_count));
+    return buf;
   }
 
   Buffer(const Buffer&)            = delete;
   Buffer& operator=(const Buffer&) = delete;
 
   Buffer(Buffer&& other) noexcept
-    : element_stride(other.element_stride)
-    , element_size(other.element_size)
+    : element_size(other.element_size)
     , element_count(other.element_count)
     , data(other.data)
   {
-    other.element_stride = 0;
-    other.element_size   = 0;
-    other.element_count  = 0;
-    other.data           = nullptr;
+    other.element_size  = 0;
+    other.element_count = 0;
+    other.data          = nullptr;
   }
 
   Buffer& operator=(Buffer&& other) noexcept
   {
     if (this != &other) {
-      std::swap(element_stride, other.element_stride);
-      std::swap(element_size, other.element_size);
-      std::swap(element_count, other.element_count);
-      std::swap(data, other.data);
+      std::swap(other.element_size, element_size);
+      std::swap(other.element_count, element_count);
+      std::swap(other.data, data);
     }
     return *this;
   }
@@ -223,12 +190,34 @@ struct Buffer
 
   std::span<std::byte> operator[](std::size_t index)
   {
-    return { data + index * element_stride, element_size };
+    return { data + index * element_size, element_size };
   }
 
   std::span<const std::byte> operator[](std::size_t index) const
   {
-    return { data + index * element_stride, element_size };
+    return { data + index * element_size, element_size };
+  }
+
+  std::span<std::byte> range(std::size_t begin, std::size_t end)
+  {
+    return { data + begin * element_size, (end - begin) * element_size };
+  }
+
+  std::span<const std::byte> range(std::size_t begin, std::size_t end) const
+  {
+    return { data + begin * element_size, (end - begin) * element_size };
+  }
+
+  template<typename T>
+  T get(std::size_t index) const
+  {
+    return read_little_endian<T>(data + index * element_size, element_size);
+  }
+
+  template<typename T>
+  void set(std::size_t index, T value) const
+  {
+    return write_little_endian<T>(data + index * element_size, value, element_size);
   }
 
   std::size_t size() const noexcept
@@ -237,105 +226,32 @@ struct Buffer
   }
 };
 
-/**
- * @brief Owns a partitioned, aligned copy of elements from a FileBuffer according to the given Partition.
- *
- * - For continuous partitions: copies a contiguous range of elements.
- * - For arbitrary partitions: copies individually selected elements.
- * - Allocates with aligned_alloc.
- * - Not copyable. Moveable.
- * - Frees all memory on destruction.
- *
- * @tparam Partition Partitioning strategy, must provide continuous/static info, begin/end/size/select.
- *
- * Example:
- *   PartitionBuffer<MyPartition> buf(file_buffer, partition_ctor_args...);
- *   auto bytes = buf[42];
- */
-template<PartitionConcept Partition>
-struct PartitionBuffer
+VoidResult
+copy_buffer(const FileBuffer& fb, Buffer& out, PartitionConcept auto partition)
 {
-  Partition   partition;
-  std::size_t element_stride;
-  std::size_t element_size;
-  std::byte*  data;
+  using Partition = decltype(partition);
+  ASSERT_TRY(out.element_size == fb.element_size, ERROR);
+  ASSERT_TRY(out.element_count == partition.size(), ERROR);
+  ASSERT_TRY(fb.element_count == partition.n, ERROR);
 
-  template<typename... Args>
-  explicit PartitionBuffer(const FileBuffer& fb, Args&&... args)
-  {
-    // todo: undocumented: partitions have the n argument always at first
-    partition = Partition{ fb.element_count, std::forward<Args>(args)... };
+  if constexpr (Partition::continuous) {
+    const auto range = fb.range(partition.begin, partition.end);
+    const auto bytes = range.size();
 
-    if constexpr (Partition::continuous) {
-      element_stride = fb.element_stride;
-      element_size   = fb.element_size;
+    RESULT_TRY(out.data, page_aligned_alloc(bytes));
+    std::memcpy(out.data, range.data(), bytes);
+  } else {
+    const std::size_t count = partition.size();
+    const std::size_t bytes = out.element_size * count;
 
-      const auto range = fb.range(partition.begin, partition.end);
-      data             = aligned_alloc(range.size_bytes());
-
-      memcpy(data, range.data(), range.size_bytes());
-    }
-
-    else {
-      element_stride = fb.element_size;
-      element_size   = fb.element_size;
-      data           = aligned_alloc(element_size * partition.size());
-
-      for (std::size_t k = 0; k < partition.size(); ++k) {
-        const auto index = partition.select(k);
-        std::memcpy(data + k * element_size, fb[index], element_size);
-      }
+    RESULT_TRY(out.data, page_aligned_alloc(bytes));
+    for (std::size_t k = 0; k < count; ++k) {
+      const auto index = partition.select(k);
+      std::memcpy(out.data + k * out.element_size, fb[index].data(), out.element_size);
     }
   }
 
-  PartitionBuffer(const PartitionBuffer&)            = delete;
-  PartitionBuffer& operator=(const PartitionBuffer&) = delete;
-
-  PartitionBuffer(PartitionBuffer&& other) noexcept
-    : partition(other.partition)
-    , element_stride(other.element_stride)
-    , element_size(other.element_size)
-    , data(other.data)
-  {
-    other.partition      = -1;
-    other.element_stride = nullptr;
-    other.element_size   = 0;
-    other.data           = 0;
-  }
-
-  PartitionBuffer& operator=(PartitionBuffer&& other) noexcept
-  {
-    if (this != &other) {
-      std::swap(partition, other.partition);
-      std::swap(element_stride, other.element_stride);
-      std::swap(element_size, other.element_size);
-      std::swap(data, other.data);
-    }
-    return *this;
-  }
-
-  ~PartitionBuffer()
-  {
-    if (data) {
-      std::free(data);
-      data = nullptr;
-    }
-  }
-
-  std::span<std::byte> operator[](std::size_t index)
-  {
-    return { data + index * element_stride, element_size };
-  }
-
-  std::span<const std::byte> operator[](std::size_t index) const
-  {
-    return { data + index * element_stride, element_size };
-  }
-
-  std::size_t size() const noexcept
-  {
-    return partition.size();
-  }
-};
-
+  return VoidResult::success();
 }
+
+} // namespace distributed

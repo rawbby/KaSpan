@@ -9,6 +9,7 @@
 #include <cstring>
 #include <istream>
 #include <ostream>
+#include <ranges>
 #include <unistd.h>
 
 #include "ErrorCode.hpp"
@@ -73,7 +74,7 @@ to_little_endian(T val)
 template<typename Dst>
   requires(std::is_unsigned_v<Dst>)
 Dst
-read_from_little_endian(const std::byte* src, std::size_t len)
+read_little_endian(const std::byte* src, std::size_t len)
 {
   Dst dst = 0;
   memcpy(&dst, src, len);
