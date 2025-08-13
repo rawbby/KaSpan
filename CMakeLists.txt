@@ -15,5 +15,6 @@ include(.cmake_utilities/modules/all.cmake)
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_LIST_DIR}/extern/stxxl")
 find_package(STXXL CONFIG REQUIRED)
 find_package(OpenMP REQUIRED)
+find_package(MPI REQUIRED)
 
 structured_directories()
