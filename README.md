@@ -5,4 +5,14 @@ Copyright © 2018 Yuede Ji, Hang Liu, and H. Howie Huang, licensed under [GPL-3.
 
 # KaSpan
 
+## Dependencies
 
+- MPI
+- KaMPIng
+- BriefKAsten
+
+### Graph Generator
+- KaGen
+
+### Graph Converter
+- stxxl

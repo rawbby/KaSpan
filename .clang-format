@@ -7,3 +7,4 @@ AllowShortFunctionsOnASingleLine: Empty
 AllowShortLambdasOnASingleLine: Empty
 AlignConsecutiveAssignments: Consecutive
 AlignConsecutiveDeclarations: Consecutive
+QualifierAlignment: Right
