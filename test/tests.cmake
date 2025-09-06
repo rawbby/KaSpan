@@ -1,1 +1,1 @@
-target_link_libraries(${TARGET_NAME} PRIVATE util)
+target_link_libraries(${TARGET_NAME} PRIVATE ka_span)

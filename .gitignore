@@ -3,4 +3,3 @@
 .venv/
 cmake-build-*/
 __pycache__/
-extern/
