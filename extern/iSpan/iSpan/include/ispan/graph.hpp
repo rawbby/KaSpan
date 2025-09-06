@@ -1,14 +1,11 @@
 #pragma once
 
-#include "util.h"
-#include "wtime.h"
-#include "graph.h"
+#include <ispan/util.hpp>
 
 #include <cassert>
 #include <cstdio>
 #include <iostream>
 #include <map>
-#include <mpi.h>
 
 struct graph
 {

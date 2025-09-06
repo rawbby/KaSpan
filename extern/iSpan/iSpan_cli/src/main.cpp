@@ -1,5 +1,4 @@
-#include "graph.h"
-#include "scc_common.h"
+#include <ispan/scc_detection.hpp>
 
 #include <mpi.h>
 
