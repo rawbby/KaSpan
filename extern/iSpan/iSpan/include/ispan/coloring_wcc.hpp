@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util.h"
+#include <ispan/util.hpp>
 
 static void
 coloring_wcc(index_t* color, index_t const* sub_fw_beg, index_t const* sub_fw_csr, index_t const* sub_bw_beg, index_t const* sub_bw_csr, vertex_t vert_beg, vertex_t vert_end)

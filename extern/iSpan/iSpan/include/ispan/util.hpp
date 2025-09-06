@@ -1,6 +1,20 @@
 #pragma once
 
+#include <algorithm>
+#include <sys/stat.h>
 #include <sys/time.h>
+
+typedef int index_t;
+typedef int vertex_t;
+
+inline off_t
+fsize(char const* filename)
+{
+  struct stat st{};
+  if (stat(filename, &st) == 0)
+    return st.st_size;
+  return -1;
+}
 
 inline double
 wtime()

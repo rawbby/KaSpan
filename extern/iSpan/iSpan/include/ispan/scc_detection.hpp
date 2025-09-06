@@ -1,58 +1,37 @@
 #pragma once
 
-#include "fw_bw.h"
-#include "graph.h"
-#include "wtime.h"
-#include "color_propagation.h"
-#include "trim_1_gfq.h"
-#include "util.h"
+#include <ispan/trim_1_first.hpp>
+#include <ispan/trim_1_normal.hpp>
+#include <ispan/util.hpp>
+#include <ispan/bw_bfs.hpp>
+#include <ispan/coloring_wcc.hpp>
+#include <ispan/fw_bfs.hpp>
+#include <ispan/gfq_origin.hpp>
+#include <ispan/graph.hpp>
+#include <ispan/mice_fw_bw.hpp>
+#include <ispan/pivot_selection.hpp>
+#include <ispan/process_wcc.hpp>
 
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
-#include <fcntl.h>
 #include <iostream>
 #include <mpi.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-inline index_t
-pivot_selection(index_t const* scc_id, unsigned int const* fw_beg_pos, unsigned int const* bw_beg_pos, index_t vert_beg, index_t vert_end, index_t world_rank)
-{
-  index_t max_pivot_thread  = 0;
-  index_t max_degree_thread = 0;
-  for (vertex_t vert_id = vert_beg; vert_id < vert_end; ++vert_id) {
-    if (scc_id[vert_id] == 0) {
-      unsigned int out_degree = fw_beg_pos[vert_id + 1] - fw_beg_pos[vert_id];
-      unsigned int in_degree  = bw_beg_pos[vert_id + 1] - bw_beg_pos[vert_id];
-      unsigned int degree_mul = out_degree * in_degree;
-      if (degree_mul > max_degree_thread) {
-        max_degree_thread = degree_mul;
-        max_pivot_thread  = vert_id;
-      }
-    }
-  }
-  index_t max_pivot  = max_pivot_thread;
-  index_t max_degree = max_degree_thread;
-  {
-    if (world_rank == 0)
-      printf("max_pivot, %d, max_degree, %d\n", max_pivot, max_degree);
-  }
-  return max_pivot;
-}
-
 inline void
 scc_detection(graph const* g, int alpha, int beta, double* avg_time, int world_rank, int world_size, int run_time)
 {
-  index_t const vert_count   = g->vert_count;
-  unsigned int const  edge_count   = g->edge_count;
-  unsigned int*       fw_beg_pos   = g->fw_beg_pos;
-  vertex_t*     fw_csr       = g->fw_csr;
-  unsigned int*       bw_beg_pos   = g->bw_beg_pos;
-  vertex_t*     bw_csr       = g->bw_csr;
-  auto*         front_comm   = static_cast<index_t*>(calloc(world_size, sizeof(index_t)));
-  auto*         work_comm    = static_cast<unsigned int*>(calloc(world_size, sizeof(unsigned int)));
-  auto*         color_change = new bool[world_size];
+  index_t const      vert_count   = g->vert_count;
+  unsigned int const edge_count   = g->edge_count;
+  unsigned int*      fw_beg_pos   = g->fw_beg_pos;
+  vertex_t*          fw_csr       = g->fw_csr;
+  unsigned int*      bw_beg_pos   = g->bw_beg_pos;
+  vertex_t*          bw_csr       = g->bw_csr;
+  auto*              front_comm   = static_cast<index_t*>(calloc(world_size, sizeof(index_t)));
+  auto*              work_comm    = static_cast<unsigned int*>(calloc(world_size, sizeof(unsigned int)));
+  auto*              color_change = new bool[world_size];
   memset(color_change, 0, sizeof(bool) * world_size);
   vertex_t      wcc_fq_size = 0;
   index_t const p_count     = world_size;
@@ -62,18 +41,18 @@ scc_detection(graph const* g, int alpha, int beta, double* avg_time, int world_r
   index_t t = s / p_count;
   if (s % p_count != 0)
     t += 1;
-  index_t  step          = t * 32;
-  index_t  virtual_count = t * p_count * 32;
-  index_t  vert_beg      = world_rank * step;
-  index_t  vert_end      = world_rank == p_count - 1 ? vert_count : vert_beg + step;
-  auto*    sa_compress   = static_cast<unsigned int*>(calloc(s, sizeof(unsigned int)));
-  auto*    small_queue   = new index_t[virtual_count + 1];
-  auto*    wcc_fq        = new index_t[virtual_count + 1];
-  auto*    vert_map      = static_cast<vertex_t*>(calloc(vert_count + 1, sizeof(vertex_t)));
-  auto*    sub_fw_beg    = static_cast<vertex_t*>(calloc(vert_count + 1, sizeof(vertex_t)));
-  auto*    sub_fw_csr    = static_cast<vertex_t*>(calloc(edge_count + 1, sizeof(vertex_t)));
-  auto*    sub_bw_beg    = static_cast<vertex_t*>(calloc(vert_count + 1, sizeof(vertex_t)));
-  auto*    sub_bw_csr    = static_cast<vertex_t*>(calloc(edge_count + 1, sizeof(vertex_t)));
+  index_t      step          = t * 32;
+  index_t      virtual_count = t * p_count * 32;
+  index_t      vert_beg      = world_rank * step;
+  index_t      vert_end      = world_rank == p_count - 1 ? vert_count : vert_beg + step;
+  auto*        sa_compress   = static_cast<unsigned int*>(calloc(s, sizeof(unsigned int)));
+  auto*        small_queue   = new index_t[virtual_count + 1];
+  auto*        wcc_fq        = new index_t[virtual_count + 1];
+  auto*        vert_map      = static_cast<vertex_t*>(calloc(vert_count + 1, sizeof(vertex_t)));
+  auto*        sub_fw_beg    = static_cast<vertex_t*>(calloc(vert_count + 1, sizeof(vertex_t)));
+  auto*        sub_fw_csr    = static_cast<vertex_t*>(calloc(edge_count + 1, sizeof(vertex_t)));
+  auto*        sub_bw_beg    = static_cast<vertex_t*>(calloc(vert_count + 1, sizeof(vertex_t)));
+  auto*        sub_bw_csr    = static_cast<vertex_t*>(calloc(edge_count + 1, sizeof(vertex_t)));
   signed char* fw_sa;
   signed char* bw_sa;
   if (posix_memalign((void**)&fw_sa, getpagesize(), sizeof(signed char) * (virtual_count + 1)))
