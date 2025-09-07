@@ -1,5 +1,7 @@
 #pragma once
 
+#include "util/ScopeGuard.hpp"
+
 #include <ispan/util.hpp>
 
 #include <iostream>
@@ -7,7 +9,7 @@
 #include <set>
 
 inline void
-fw_bfs(index_t const* scc_id, unsigned int const* fw_beg_pos, unsigned int const* bw_beg_pos, index_t vert_beg, index_t vert_end, vertex_t const* fw_csr, vertex_t const* bw_csr, signed char* fw_sa, index_t* front_comm, vertex_t root, index_t world_rank, index_t world_size, double alpha, double beta, unsigned int edge_count, vertex_t vert_count, vertex_t step, vertex_t* fq_comm, unsigned int* sa_compress, vertex_t virtual_count)
+fw_bfs(index_t const* scc_id, int const* fw_beg_pos, int const* bw_beg_pos, index_t vert_beg, index_t vert_end, vertex_t const* fw_csr, vertex_t const* bw_csr, signed char* fw_sa, index_t* front_comm, vertex_t root, index_t world_rank, index_t world_size, double alpha, double beta, int edge_count, vertex_t vert_count, vertex_t step, vertex_t* fq_comm, int* sa_compress, vertex_t virtual_count)
 {
   signed char level         = 0;
   fw_sa[root]               = 0;
@@ -19,13 +21,13 @@ fw_bfs(index_t const* scc_id, unsigned int const* fw_beg_pos, unsigned int const
     double const ltm          = wtime();
     double       sync_time    = 0.0;
     index_t      front_count  = 0;
-    unsigned int my_work_next = 0;
+    int          my_work_next = 0;
     if (is_top_down) {
       std::cout << vert_beg << "," << vert_end << "\n";
       for (vertex_t vert_id = vert_beg; vert_id < vert_end; vert_id++) {
         if (scc_id[vert_id] == 0 && fw_sa[vert_id] == (level)) {
-          unsigned int       my_beg = fw_beg_pos[vert_id];
-          unsigned int const my_end = fw_beg_pos[vert_id + 1];
+          int       my_beg = fw_beg_pos[vert_id];
+          int const my_end = fw_beg_pos[vert_id + 1];
           for (; my_beg < my_end; my_beg++) {
             vertex_t const nebr = fw_csr[my_beg];
             if (scc_id[nebr] == 0 && fw_sa[nebr] == -1) {
@@ -42,8 +44,8 @@ fw_bfs(index_t const* scc_id, unsigned int const* fw_beg_pos, unsigned int const
     } else if (!is_top_down_queue) {
       for (vertex_t vert_id = vert_beg; vert_id < vert_end; vert_id++) {
         if (scc_id[vert_id] == 0 && fw_sa[vert_id] == -1) {
-          unsigned int       my_beg = bw_beg_pos[vert_id];
-          unsigned int const my_end = bw_beg_pos[vert_id + 1];
+          int       my_beg = bw_beg_pos[vert_id];
+          int const my_end = bw_beg_pos[vert_id + 1];
           my_work_next += my_end - my_beg;
           for (; my_beg < my_end; my_beg++) {
             vertex_t const nebr = bw_csr[my_beg];
@@ -58,7 +60,10 @@ fw_bfs(index_t const* scc_id, unsigned int const* fw_beg_pos, unsigned int const
         }
       }
     } else {
-      auto*   q    = new index_t[queue_size];
+
+      auto* q = new index_t[queue_size]{};
+      SCOPE_GUARD(delete[] q);
+
       index_t head = 0;
       index_t tail = 0;
       for (vertex_t vert_id = vert_beg; vert_id < vert_end; vert_id++) {
@@ -70,8 +75,8 @@ fw_bfs(index_t const* scc_id, unsigned int const* fw_beg_pos, unsigned int const
         vertex_t const temp_v = q[head++];
         if (head == queue_size)
           head = 0;
-        unsigned int       my_beg = fw_beg_pos[temp_v];
-        unsigned int const my_end = fw_beg_pos[temp_v + 1];
+        int       my_beg = fw_beg_pos[temp_v];
+        int const my_end = fw_beg_pos[temp_v + 1];
         for (; my_beg < my_end; ++my_beg) {
           index_t w = fw_csr[my_beg];
           if (scc_id[w] == 0 && fw_sa[w] == -1) {
@@ -82,19 +87,42 @@ fw_bfs(index_t const* scc_id, unsigned int const* fw_beg_pos, unsigned int const
           }
         }
       }
-      MPI_Allreduce(MPI_IN_PLACE, fw_sa, vert_count, MPI_SIGNED_CHAR, MPI_MAX, MPI_COMM_WORLD);
+
+      // clang-format off
+      MPI_Allreduce(
+        MPI_IN_PLACE, fw_sa, vert_count, MpiBasicType<decltype(*fw_sa)>,
+        MPI_MAX, MPI_COMM_WORLD);
+      // clang-format on
+
       break;
     }
     front_comm[world_rank] = front_count;
     double const temp_time = wtime();
     if (is_top_down) {
-      MPI_Allreduce(MPI_IN_PLACE, &my_work_next, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+
+      // clang-format off
+      MPI_Allreduce(
+        MPI_IN_PLACE, &my_work_next, 1, MpiBasicType<decltype(my_work_next)>,
+        MPI_SUM, MPI_COMM_WORLD);
+      // clang-format on
     }
-    MPI_Allreduce(MPI_IN_PLACE, &front_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+    // clang-format off
+    MPI_Allreduce(
+      MPI_IN_PLACE, &front_count, 1, MpiBasicType<decltype(front_count)>,
+      MPI_SUM, MPI_COMM_WORLD);
+    // clang-format on
+
     sync_time += wtime() - temp_time;
     if (front_count == 0) {
       double temp_time = wtime();
-      MPI_Allreduce(MPI_IN_PLACE, fw_sa, vert_count, MPI_SIGNED_CHAR, MPI_MAX, MPI_COMM_WORLD);
+
+      // clang-format off
+      MPI_Allreduce(
+        MPI_IN_PLACE, fw_sa, vert_count, MpiBasicType<decltype(*fw_sa)>,
+        MPI_MAX, MPI_COMM_WORLD);
+      // clang-format on
+
       std::cout << "FW final sync," << static_cast<int>(level) << ",world_rank" << world_rank << ",time," << (wtime() - temp_time) * 1000 << " ms\n";
       break;
     }
@@ -105,7 +133,16 @@ fw_bfs(index_t const* scc_id, unsigned int const* fw_beg_pos, unsigned int const
     } else if (level > 50) {
       is_top_down_queue = true;
       double temp_time  = wtime();
-      MPI_Allgather(&fw_sa[vert_beg], step, MPI_SIGNED_CHAR, fw_sa, step, MPI_SIGNED_CHAR, MPI_COMM_WORLD);
+
+      // clang-format off
+
+      MPI_Allgather(
+        /* send: */ fw_sa + vert_beg, step, MpiBasicType<decltype(*fw_sa)>,
+        /* recv: */ fw_sa, step, MpiBasicType<decltype(*fw_sa)>,
+        /* comm: */ MPI_COMM_WORLD);
+
+      // clang-format on
+
       if (world_rank == 0)
         std::cout << "--->Switch to async top-down, level = " << static_cast<int>(level) << "<----\n";
       sync_time += wtime() - temp_time;
@@ -114,7 +151,17 @@ fw_bfs(index_t const* scc_id, unsigned int const* fw_beg_pos, unsigned int const
       double temp_time = wtime();
       if (front_count > 10000) {
         double temp_time = wtime();
-        MPI_Allreduce(MPI_IN_PLACE, sa_compress, virtual_count / 32, MPI_UNSIGNED, MPI_BOR, MPI_COMM_WORLD);
+
+        index_t s = vert_count / 32;
+        if (vert_count % 32 != 0)
+          s += 1;
+
+        // clang-format off
+        MPI_Allreduce(
+          MPI_IN_PLACE, sa_compress, s, MpiBasicType<decltype(*sa_compress)>,
+          MPI_BOR, MPI_COMM_WORLD);
+        // clang-format on
+
         sync_time += wtime() - temp_time;
         vertex_t num_sa = 0;
         for (index_t i = 0; i < vert_count; ++i) {
@@ -124,18 +171,36 @@ fw_bfs(index_t const* scc_id, unsigned int const* fw_beg_pos, unsigned int const
           }
         }
       } else {
-        MPI_Allreduce(MPI_IN_PLACE, front_comm, world_size, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+
+        // clang-format off
+        MPI_Allreduce(
+          MPI_IN_PLACE, front_comm, world_size, MpiBasicType<decltype(*front_comm)>,
+          MPI_MAX, MPI_COMM_WORLD);
+        // clang-format on
+
         MPI_Request request;
         for (int i = 0; i < world_size; ++i) {
           if (i != world_rank) {
-            MPI_Isend(fq_comm, front_comm[world_rank], MPI_INT, i, 0, MPI_COMM_WORLD, &request);
+
+            // clang-format off
+            MPI_Isend(
+              fq_comm, front_comm[world_rank], MpiBasicType<decltype(*fq_comm)>,
+              i, 0, MPI_COMM_WORLD, &request);
+            // clang-format on
+
             MPI_Request_free(&request);
           }
         }
         vertex_t fq_begin = front_comm[world_rank];
         for (int i = 0; i < world_size; ++i) {
           if (i != world_rank) {
-            MPI_Recv(&fq_comm[fq_begin], front_comm[i], MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+            // clang-format off
+            MPI_Recv(
+              fq_comm + fq_begin, front_comm[i], MpiBasicType<decltype(*fq_comm)>,
+              i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            // clang-format on
+
             fq_begin += front_comm[i];
           }
         }

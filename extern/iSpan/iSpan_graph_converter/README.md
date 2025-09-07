@@ -16,4 +16,4 @@ g++ txt\_to\_bin\_bw\_int.cpp -o txt\_to\_bin\_bw
 
 Similarly to forward edges.
 
-Note: Be careful about the data type (int, unsigned int, long int) you are using, one can change in the source code.
+Note: Be careful about the data type (int, int, long int) you are using, one can change in the source code.

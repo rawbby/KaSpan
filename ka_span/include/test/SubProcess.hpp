@@ -57,7 +57,7 @@ decode_system_status(int status) -> int
 }
 
 inline void
-mpi_sub_process(int argc, char** argv, int world_size = 4)
+mpi_sub_process(int argc, char** argv, int npc, int const* npv)
 {
   constexpr std::string_view magic_flag = "--mpi-sub-process";
 
@@ -68,17 +68,32 @@ mpi_sub_process(int argc, char** argv, int world_size = 4)
   auto const env_launcher = std::getenv("MPI_LAUNCHER");
   auto const launcher     = env_launcher ? env_launcher : "mpirun";
 
-  std::ostringstream cmd_builder{};
-  cmd_builder << launcher;
-  cmd_builder << " -n " << world_size;
-  cmd_builder << " \"" << argv[0] << "\" ";
-  cmd_builder << magic_flag;
+  for (int i = 0; i < npc; ++i) {
 
-  for (int i = 1; i < argc; ++i)
-    cmd_builder << " \"" << argv[i] << '"';
+    std::ostringstream cmd_builder{};
+    cmd_builder << launcher;
+    cmd_builder << " -n " << npv[i];
+    cmd_builder << " \"" << argv[0] << "\" ";
+    cmd_builder << magic_flag;
 
-  auto const cmd    = cmd_builder.str();
-  auto const status = std::system(cmd.c_str());
+    for (int j = 1; j < argc; ++j)
+      cmd_builder << " \"" << argv[j] << '"';
 
-  std::exit(decode_system_status(status));
+    auto const cmd    = cmd_builder.str();
+    auto const status = std::system(cmd.c_str());
+
+    auto const exit_code = decode_system_status(status);
+    if (exit_code != 0)
+      std::exit(exit_code);
+  }
+
+  std::exit(0);
+}
+
+inline void
+mpi_sub_process(int argc, char** argv)
+{
+  constexpr int npc      = 3;
+  constexpr int npv[npc] = { 1, 2, 4 };
+  mpi_sub_process(argc, argv, npc, npv);
 }

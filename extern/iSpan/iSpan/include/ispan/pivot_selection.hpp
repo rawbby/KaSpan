@@ -7,15 +7,15 @@
 #include <sys/types.h>
 
 inline index_t
-pivot_selection(index_t const* scc_id, unsigned int const* fw_beg_pos, unsigned int const* bw_beg_pos, index_t vert_beg, index_t vert_end, index_t world_rank)
+pivot_selection(index_t const* scc_id, int const* fw_beg_pos, int const* bw_beg_pos, index_t vert_beg, index_t vert_end, index_t world_rank)
 {
   index_t max_pivot_thread  = 0;
   index_t max_degree_thread = 0;
   for (vertex_t vert_id = vert_beg; vert_id < vert_end; ++vert_id) {
     if (scc_id[vert_id] == 0) {
-      unsigned int out_degree = fw_beg_pos[vert_id + 1] - fw_beg_pos[vert_id];
-      unsigned int in_degree  = bw_beg_pos[vert_id + 1] - bw_beg_pos[vert_id];
-      unsigned int degree_mul = out_degree * in_degree;
+      int out_degree = fw_beg_pos[vert_id + 1] - fw_beg_pos[vert_id];
+      int in_degree  = bw_beg_pos[vert_id + 1] - bw_beg_pos[vert_id];
+      int degree_mul = out_degree * in_degree;
       if (degree_mul > max_degree_thread) {
         max_degree_thread = degree_mul;
         max_pivot_thread  = vert_id;

@@ -201,10 +201,12 @@ test_kernel(kamping::Communicator<> const& comm, Partition const& part, char con
 auto
 main(int argc, char** argv) -> int
 {
-  constexpr auto n  = std::numeric_limits<size_t>::max();
-  constexpr auto np = 4;
+  constexpr auto n = std::numeric_limits<size_t>::max();
 
-  mpi_sub_process(argc, argv, np);
+  constexpr int npc      = 4;
+  constexpr int npv[npc] = { 1, 2, 4, 8 };
+
+  mpi_sub_process(argc, argv, npc, npv);
   MPI_Init(nullptr, nullptr);
   SCOPE_GUARD(MPI_Finalize());
 
