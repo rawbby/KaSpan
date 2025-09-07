@@ -90,6 +90,10 @@ main(int argc, char** argv)
 
   scc_detection(&g, alpha, beta, avg_time, world_rank, world_size, 1, &scc_id);
 
+  // SCC's:
+  // - [0,2]
+  // - [1,3,4]
+  // - [5,6]
   ASSERT_EQ(scc_id[0], 0);
   ASSERT_EQ(scc_id[1], 1);
   ASSERT_EQ(scc_id[2], 0);

@@ -1,11 +1,14 @@
 #pragma once
 
-#include <algorithm>
 #include <sys/stat.h>
 #include <sys/time.h>
 
 typedef int index_t;
 typedef int vertex_t;
+
+constexpr int scc_id_undecided = 0;
+constexpr int scc_id_singular = -1;
+constexpr int sub_scc_id_undecided = -1;
 
 inline off_t
 fsize(char const* filename)
