@@ -58,14 +58,14 @@ scc_detection(graph const* g, int alpha, int beta, double* avg_time, int world_r
   auto* sa_compress = new int[s]{};
   SCOPE_GUARD(delete[] sa_compress);
 
-  auto* small_queue = new index_t[virtual_count]{};
-  SCOPE_GUARD(delete[] small_queue);
+  auto* sub_vertices = new index_t[virtual_count]{};
+  SCOPE_GUARD(delete[] sub_vertices);
 
   auto* wcc_fq = new index_t[virtual_count]{};
   SCOPE_GUARD(delete[] wcc_fq);
 
-  auto* vert_map = new vertex_t[n + 1]{};
-  SCOPE_GUARD(delete[] vert_map);
+  auto* sub_vertices_inverse = new vertex_t[n + 1]{};
+  SCOPE_GUARD(delete[] sub_vertices_inverse);
 
   auto* sub_fw_beg = new vertex_t[n + 1]{};
   SCOPE_GUARD(delete[] sub_fw_beg);
@@ -92,8 +92,8 @@ scc_detection(graph const* g, int alpha, int beta, double* avg_time, int world_r
   auto* scc_id = new vertex_t[virtual_count + 1]{};
   SCOPE_GUARD(delete[] scc_id);
 
-  auto* scc_id_mice = new vertex_t[virtual_count + 1]{};
-  SCOPE_GUARD(delete[] scc_id_mice);
+  auto* sub_scc_id = new vertex_t[virtual_count + 1]{};
+  SCOPE_GUARD(delete[] sub_scc_id);
 
   auto* fw_sa_temp = new vertex_t[virtual_count + 1]{};
   SCOPE_GUARD(delete[] fw_sa_temp);
@@ -102,13 +102,15 @@ scc_detection(graph const* g, int alpha, int beta, double* avg_time, int world_r
   SCOPE_GUARD(delete[] color);
 
   for (int i = 0; i < virtual_count + 1; ++i) {
-    fw_sa[i]       = -1;
-    bw_sa[i]       = -1;
-    scc_id[i]      = 0;
-    scc_id_mice[i] = -1;
+    fw_sa[i]      = -1;
+    bw_sa[i]      = -1;
+    scc_id[i]     = scc_id_undecided;
+    sub_scc_id[i] = sub_scc_id_undecided;
   }
+
   double const start_time = wtime();
   double       end_time;
+
   {
     double time_size_1_first;
     double time_size_1;
@@ -175,44 +177,44 @@ scc_detection(graph const* g, int alpha, int beta, double* avg_time, int world_r
       MPI_MAX, MPI_COMM_WORLD);
     // clang-format on
 
-    gfq_origin(n, scc_id, small_queue, fw_beg_pos, fw_csr, bw_beg_pos, bw_csr, sub_fw_beg, sub_fw_csr, sub_bw_beg, sub_bw_csr, front_comm, work_comm, world_rank, vert_map);
-    vertex_t sub_v_count = front_comm[world_rank];
-    if (sub_v_count > 0) {
+    gfq_origin(n, scc_id, sub_vertices, fw_beg_pos, fw_csr, bw_beg_pos, bw_csr, sub_fw_beg, sub_fw_csr, sub_bw_beg, sub_bw_csr, front_comm, work_comm, world_rank, sub_vertices_inverse);
+    auto const sub_n = front_comm[world_rank];
+    if (sub_n > 0) {
 
-      step = sub_v_count / world_size;
-      if (sub_v_count % world_size != 0)
+      step = sub_n / world_size;
+      if (sub_n % world_size != 0)
         step += 1;
       vert_beg = world_rank * step;
-      for (index_t i = 0; i < sub_v_count; ++i) {
+      for (index_t i = 0; i < sub_n; ++i) {
         color[i] = i;
       }
       time = wtime();
 
-      coloring_wcc(color, sub_fw_beg, sub_fw_csr, sub_bw_beg, sub_bw_csr, 0, sub_v_count);
+      coloring_wcc(color, sub_fw_beg, sub_fw_csr, sub_bw_beg, sub_bw_csr, 0, sub_n);
       if (world_rank == 0) {
         time_wcc += wtime() - time;
       }
 
-      time = wtime();
+      time                 = wtime();
       vertex_t wcc_fq_size = 0;
-      process_wcc(0, sub_v_count, wcc_fq, color, wcc_fq_size);
+      process_wcc(0, sub_n, wcc_fq, color, wcc_fq_size);
       if (world_rank == 0) {
         printf("color time (ms), %lf, wcc_fq, %d, time (ms), %lf\n", time_wcc * 1000, wcc_fq_size, 1000 * (wtime() - time));
       }
-      mice_fw_bw(color, scc_id_mice, sub_fw_beg, sub_bw_beg, sub_fw_csr, sub_bw_csr, fw_sa_temp, world_rank, world_size, sub_v_count, wcc_fq, wcc_fq_size);
+      mice_fw_bw(color, sub_scc_id, sub_fw_beg, sub_bw_beg, sub_fw_csr, sub_bw_csr, fw_sa_temp, world_rank, world_size, sub_n, wcc_fq, wcc_fq_size);
       temp_time = wtime();
 
       // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, scc_id_mice, n, MpiBasicType<decltype(*scc_id_mice)>,
+        MPI_IN_PLACE, sub_scc_id, n, MpiBasicType<decltype(*sub_scc_id)>,
         MPI_MAX, MPI_COMM_WORLD);
       // clang-format on
 
       time_comm = wtime() - temp_time;
       printf("%d,final comm time,%.3lf\n", world_rank, time_comm * 1000);
-      for (int i = 0; i < sub_v_count; ++i) {
-        vertex_t actual_v = small_queue[i];
-        scc_id[actual_v]  = small_queue[scc_id_mice[i]];
+      for (int i = 0; i < sub_n; ++i) {
+        vertex_t actual_v = sub_vertices[i];
+        scc_id[actual_v]  = sub_vertices[sub_scc_id[i]];
       }
     }
     if (world_rank == 0) {

@@ -2,7 +2,6 @@
 
 #include <ispan/util.hpp>
 
-#include <cassert>
 #include <cstdio>
 #include <map>
 #include <unordered_map>
@@ -15,7 +14,7 @@ get_scc_result(index_t* scc_id, index_t vert_count)
   index_t largest = 0;
 
   std::map<index_t, index_t> mp;
-  for (index_t i = 0; i < vert_count + 1; ++i) {
+  for (index_t i = 0; i < vert_count; ++i) {
     if (scc_id[i] == 1)
       largest++;
     else if (scc_id[i] == -1)
@@ -28,17 +27,21 @@ get_scc_result(index_t* scc_id, index_t vert_count)
 
   // bring the scc id into a normalized version
 
-  std::unordered_map<index_t, index_t> min_node_in_component;
-  min_node_in_component.reserve(vert_count);
+  // map ispan scc id to normalized scc id
+  std::unordered_map<index_t, index_t> cid;
+  cid.reserve(vert_count);
 
   for (index_t i = 0; i < vert_count; ++i) {
-    if (scc_id[i] == -1) {
-      scc_id[i] = i;
-    } else {
-      auto const id       = scc_id[i];
-      auto [it, inserted] = min_node_in_component.try_emplace(id, i);
-      if (not inserted)
+
+    if (scc_id[i] != -1) {
+      auto [it, inserted] = cid.try_emplace(scc_id[i], i);
+      if (inserted)
+        scc_id[i] = i;
+      else // take present id
         scc_id[i] = it->second;
     }
+
+    else // singular component
+      scc_id[i] = i;
   }
 }
