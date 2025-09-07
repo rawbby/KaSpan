@@ -8,9 +8,12 @@ mice_fw_bw(int const* wcc_color, index_t* scc_id, index_t const* sub_fw_beg, ind
   index_t step    = wcc_fq_size / world_size;
   index_t wcc_beg = world_rank * step;
   index_t wcc_end = (world_rank == world_size - 1 ? wcc_fq_size : wcc_beg + step);
-  auto*   q       = new index_t[sub_v_count];
-  index_t head    = 0;
-  index_t tail    = 0;
+
+  auto* q = new index_t[sub_v_count]{};
+  SCOPE_GUARD(delete[] q);
+
+  index_t head = 0;
+  index_t tail = 0;
   for (vertex_t v = 0; v < sub_v_count; ++v) {
     if (scc_id[v] == -1) {
       vertex_t const cur_wcc = wcc_color[v];
@@ -65,5 +68,4 @@ mice_fw_bw(int const* wcc_color, index_t* scc_id, index_t const* sub_fw_beg, ind
       }
     }
   }
-  delete[] q;
 }

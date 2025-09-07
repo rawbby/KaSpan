@@ -2,6 +2,7 @@
 
 #include <util/Arithmetic.hpp>
 
+#include <functional>
 #include <mpi.h>
 #include <tuple>
 #include <type_traits>
@@ -9,17 +10,18 @@
 // clang-format off
 template<ArithmeticConcept T>
 constexpr MPI_Datatype MpiBasicType =
-  (I8Concept<T>  ? MPI_INT8_T   :
-  (I16Concept<T> ? MPI_INT16_T  :
-  (I32Concept<T> ? MPI_INT32_T  :
-  (I64Concept<T> ? MPI_INT64_T  :
-  (U8Concept<T>  ? MPI_UINT8_T  :
-  (U16Concept<T> ? MPI_UINT16_T :
-  (U32Concept<T> ? MPI_UINT32_T :
-  (U64Concept<T> ? MPI_UINT64_T :
-  (F32Concept<T> ? MPI_FLOAT    :
-  (F64Concept<T> ? MPI_DOUBLE   :
-  MPI_DATATYPE_NULL))))))))));
+  ByteConcept<T> ? MPI_BYTE     :
+  I8Concept<T>   ? MPI_INT8_T   :
+  I16Concept<T>  ? MPI_INT16_T  :
+  I32Concept<T>  ? MPI_INT32_T  :
+  I64Concept<T>  ? MPI_INT64_T  :
+  U8Concept<T>   ? MPI_UINT8_T  :
+  U16Concept<T>  ? MPI_UINT16_T :
+  U32Concept<T>  ? MPI_UINT32_T :
+  U64Concept<T>  ? MPI_UINT64_T :
+  F32Concept<T>  ? MPI_FLOAT    :
+  F64Concept<T>  ? MPI_DOUBLE   :
+  MPI_DATATYPE_NULL;
 // clang-format on
 
 template<typename T>
@@ -30,10 +32,11 @@ using MpiTupleType = std::tuple<Ts...>;
 
 template<typename T>
 concept MpiTupleConcept =
-  requires { typename std::tuple_size<T>::type; } and
+  requires {
+  typename std::tuple_size<T>::type; } and
   (0 < std::tuple_size_v<T>) and
   ([]<size_t... Is>(std::index_sequence<Is...>) {
-    return (MpiBasicConcept<std::tuple_element_t<Is, T>> and ...);
+  return (MpiBasicConcept<std::tuple_element_t<Is, T>> and ...);
   }(std::make_index_sequence<std::tuple_size_v<T>>{}));
 
 template<MpiTupleConcept T, size_t I = 0>
@@ -52,7 +55,8 @@ mpi_tuple_cmp(T const& a, T const& b)
 }
 
 template<MpiTupleConcept T, class P>
-  requires requires(P p, int a) { { p(a, a) } -> std::convertible_to<bool>; }
+  requires requires(P p, int a) {
+  { p(a, a) } -> std::convertible_to<bool>; }
 constexpr void
 mpi_tuple_cmp_kernel(void* in, void* inout, int* len, MPI_Datatype*) // NOLINT(*-non-const-parameter)
 {
@@ -105,7 +109,7 @@ MPI_Op
 mpi_make_tuple_min_op()
 {
   MPI_Op op;
-  MPI_Op_create(&mpi_tuple_cmp_kernel<T, std::less<int> >, 1, &op);
+  MPI_Op_create(&mpi_tuple_cmp_kernel<T, std::less<int>>, 1, &op);
   return op;
 }
 
@@ -177,8 +181,8 @@ public:
   MpiTypeContainer(MpiTypeContainer const&) = delete;
   MpiTypeContainer(MpiTypeContainer&&)      = default;
 
-  auto operator=(MpiTypeContainer const&) -> MpiTypeContainer& = delete;
-  auto operator=(MpiTypeContainer&&) -> MpiTypeContainer&      = default;
+  auto operator=(MpiTypeContainer const&)->MpiTypeContainer& = delete;
+  auto operator=(MpiTypeContainer&&)->MpiTypeContainer&      = default;
 
   [[nodiscard]] auto get() const -> MPI_Datatype
   {
