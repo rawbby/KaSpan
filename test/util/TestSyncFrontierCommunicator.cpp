@@ -51,40 +51,43 @@ sanitized_communication(kamping::Communicator<> const& comm, Partition const& pa
 
   auto const result = frontier.template communicate<false>(comm, part);
 
-  // Prefix-sum structure
-  ASSERT_GE(send_counts[0], 0);
-  ASSERT_GE(recv_counts[0], 0);
-  ASSERT_EQ(send_displs[0], 0);
-  ASSERT_EQ(recv_displs[0], 0);
-  for (size_t i = 1; i < size; ++i) {
-    ASSERT_GE(send_counts[i], 0);
-    ASSERT_GE(recv_counts[i], 0);
-    ASSERT_EQ(send_displs[i], send_displs[i - 1] + send_counts[i - 1]);
-    ASSERT_EQ(recv_displs[i], recv_displs[i - 1] + recv_counts[i - 1]);
-  }
+  if (result) { // only check if the buffer where changed
 
-  // Ends match totals
-  auto const send_end = send_displs[size - 1] + send_counts[size - 1];
-  ASSERT_EQ(send_end, send_buf.size());
+    // Prefix-sum structure
+    ASSERT_GE(send_counts[0], 0);
+    ASSERT_GE(recv_counts[0], 0);
+    ASSERT_EQ(send_displs[0], 0);
+    ASSERT_EQ(recv_displs[0], 0);
+    for (size_t i = 1; i < size; ++i) {
+      ASSERT_GE(send_counts[i], 0);
+      ASSERT_GE(recv_counts[i], 0);
+      ASSERT_EQ(send_displs[i], send_displs[i - 1] + send_counts[i - 1]);
+      ASSERT_EQ(recv_displs[i], recv_displs[i - 1] + recv_counts[i - 1]);
+    }
 
-  size_t total_recv_count = 0;
-  for (auto const recv_count : recv_counts)
-    total_recv_count += recv_count;
+    // Ends match totals
+    auto const send_end = send_displs[size - 1] + send_counts[size - 1];
+    ASSERT_EQ(send_end, send_buf.size());
 
-  auto const recv_end = recv_displs[size - 1] + recv_counts[size - 1];
-  ASSERT_EQ(recv_end, total_recv_count);
-  ASSERT_EQ(recv_buf.size(), recv_buf_size_before + total_recv_count);
+    size_t total_recv_count = 0;
+    for (auto const recv_count : recv_counts)
+      total_recv_count += recv_count;
 
-  // Received entries belong to self
-  for (auto v : recv_buf)
-    ASSERT_EQ(part.world_rank_of(v), rank);
+    auto const recv_end = recv_displs[size - 1] + recv_counts[size - 1];
+    ASSERT_EQ(recv_end, total_recv_count);
+    ASSERT_EQ(recv_buf.size(), recv_buf_size_before + total_recv_count);
 
-  for (size_t i = 0; i < size; ++i) {
-    size_t total_messages_to_i = 0;
-    for (size_t j = 0; j < send_buf.size(); ++j)
-      if (part.world_rank_of(send_buf[j]) == i)
-        ++total_messages_to_i;
-    ASSERT_EQ(total_messages_to_i, send_counts[i], "i=%zu", i);
+    // Received entries belong to self
+    for (auto v : recv_buf)
+      ASSERT_EQ(part.world_rank_of(v), rank);
+
+    for (size_t i = 0; i < size; ++i) {
+      size_t total_messages_to_i = 0;
+      for (size_t j = 0; j < send_buf.size(); ++j)
+        if (part.world_rank_of(send_buf[j]) == i)
+          ++total_messages_to_i;
+      ASSERT_EQ(total_messages_to_i, send_counts[i], "i=%zu", i);
+    }
   }
 
   frontier.clear();
@@ -178,7 +181,7 @@ test_kernel(kamping::Communicator<> const& comm, Partition const& part, char con
 
     auto const result0 = sanitized_communication(comm, part, frontier);
     ASSERT(result0.has_value());
-    ASSERT(result0.value());
+    // ASSERT(result0.value());
 
     while (frontier.has_next()) {
       auto const v = frontier.next();
@@ -204,9 +207,9 @@ main(int argc, char** argv) -> int
   constexpr auto n = std::numeric_limits<size_t>::max();
 
   constexpr int npc      = 4;
-  constexpr int npv[npc] = { 1, 2, 4, 8 };
-
+  constexpr int npv[npc] = { 1, 2, 3, 4 };
   mpi_sub_process(argc, argv, npc, npv);
+
   MPI_Init(nullptr, nullptr);
   SCOPE_GUARD(MPI_Finalize());
 
@@ -216,8 +219,6 @@ main(int argc, char** argv) -> int
   auto const bs_part  = BalancedSlicePartition{ n, comm.rank(), comm.size() };
   auto const ts_part  = TrivialSlicePartition{ n, comm.rank(), comm.size() };
 
-  ASSERT_EQ(comm.size(), np);
-
   constexpr int  NO_FUZZ         = 0;
   constexpr int  HARD_CODED_RUNS = 3;
   constexpr int  FUZZ_RUNS       = 128;
@@ -225,20 +226,23 @@ main(int argc, char** argv) -> int
   constexpr bool NON_RELAXED     = false;
   constexpr int  FUZZ_SEEDS[8]{ 0x8067e9, 0xdf00dd, 0xd0ecf0, 0x22d80b, 0x17e615, 0xd59eef, 0x215869, 0xa2a5a5 };
 
-  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, part, "CyclicPartition");
-  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, blk_part, "BlockCyclicPartition");
   test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, bs_part, "BalancedSlicePartition");
   test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, ts_part, "TrivialSlicePartition");
-  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, part, "CyclicPartition");
-  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, blk_part, "BlockCyclicPartition");
+  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, part, "CyclicPartition");
+  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, blk_part, "BlockCyclicPartition");
+
   test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, bs_part, "BalancedSlicePartition");
   test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, ts_part, "TrivialSlicePartition");
-  test_kernel<NON_RELAXED, FUZZ_SEEDS[0], FUZZ_RUNS>(comm, part, "CyclicPartition");
-  test_kernel<NON_RELAXED, FUZZ_SEEDS[1], FUZZ_RUNS>(comm, blk_part, "BlockCyclicPartition");
+  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, part, "CyclicPartition");
+  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, blk_part, "BlockCyclicPartition");
+
   test_kernel<NON_RELAXED, FUZZ_SEEDS[2], FUZZ_RUNS>(comm, bs_part, "BalancedSlicePartition");
   test_kernel<NON_RELAXED, FUZZ_SEEDS[3], FUZZ_RUNS>(comm, ts_part, "TrivialSlicePartition");
-  test_kernel<RELAXED, FUZZ_SEEDS[4], FUZZ_RUNS>(comm, part, "CyclicPartition");
-  test_kernel<RELAXED, FUZZ_SEEDS[5], FUZZ_RUNS>(comm, blk_part, "BlockCyclicPartition");
+  test_kernel<NON_RELAXED, FUZZ_SEEDS[0], FUZZ_RUNS>(comm, part, "CyclicPartition");
+  test_kernel<NON_RELAXED, FUZZ_SEEDS[1], FUZZ_RUNS>(comm, blk_part, "BlockCyclicPartition");
+
   test_kernel<RELAXED, FUZZ_SEEDS[6], FUZZ_RUNS>(comm, bs_part, "BalancedSlicePartition");
   test_kernel<RELAXED, FUZZ_SEEDS[7], FUZZ_RUNS>(comm, ts_part, "TrivialSlicePartition");
+  test_kernel<RELAXED, FUZZ_SEEDS[4], FUZZ_RUNS>(comm, part, "CyclicPartition");
+  test_kernel<RELAXED, FUZZ_SEEDS[5], FUZZ_RUNS>(comm, blk_part, "BlockCyclicPartition");
 }

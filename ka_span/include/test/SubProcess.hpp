@@ -93,7 +93,16 @@ mpi_sub_process(int argc, char** argv, int npc, int const* npv)
 inline void
 mpi_sub_process(int argc, char** argv)
 {
-  constexpr int npc      = 3;
-  constexpr int npv[npc] = { 1, 2, 4 };
+  constexpr int npc      = 6;
+  constexpr int npv[npc] = { 1, 2, 4, 8, 16, 32 };
   mpi_sub_process(argc, argv, npc, npv);
+}
+
+inline double
+mpi_global_max_wtime()
+{
+  auto const local_time      = MPI_Wtime();
+  auto       global_max_time = std::numeric_limits<double>::min();
+  MPI_Allreduce(&local_time, &global_max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  return global_max_time;
 }
