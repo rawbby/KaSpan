@@ -1,5 +1,6 @@
 #pragma once
 
+#include <buffer/Accessor.hpp>
 #include <buffer/Buffer.hpp>
 #include <graph/Partition.hpp>
 #include <util/ErrorCode.hpp>
@@ -42,29 +43,34 @@ public:
   static auto create(kamping::Communicator<> const& comm) -> Result<SyncFrontierComm>
   {
     SyncFrontierComm result{};
-    RESULT_TRY(result.recv_counts_, I32Buffer::zeroes(comm.size()));
-    RESULT_TRY(result.recv_displs_, I32Buffer::create(comm.size()));
-    RESULT_TRY(result.send_counts_, I32Buffer::zeroes(comm.size()));
-    RESULT_TRY(result.send_displs_, I32Buffer::create(comm.size()));
+    result.access_ = I32Accessor{ comm.size() };
+    RESULT_TRY(result.recv_counts_, Buffer::zeroes(result.access_));
+    RESULT_TRY(result.recv_displs_, Buffer::create(result.access_));
+    RESULT_TRY(result.send_counts_, Buffer::zeroes(result.access_));
+    RESULT_TRY(result.send_displs_, Buffer::create(result.access_));
 
     // these two are ALWAYS zero and will never change
-    result.recv_displs_[0] = 0;
-    result.send_displs_[0] = 0;
+    auto recvd = result.access_.range(result.recv_displs_);
+    auto sendd = result.access_.range(result.send_displs_);
+    recvd[0]   = 0;
+    sendd[0]   = 0;
 
     return result;
   }
 
   void clear()
   {
+    auto sendc = access_.range(send_counts_);
     // now prepare send buffer and send counts for next iteration
     send_buf_.clear();
-    std::memset(send_counts_.data(), 0, send_counts_.bytes());
+    std::memset(sendc.data(), 0, sendc.size_bytes());
   }
 
   void push(Partition const& part, u64 v)
   {
+    auto sendc = access_.range(send_counts_);
     send_buf_.emplace_back(v);
-    ++send_counts_[part.world_rank_of(v)];
+    ++sendc[part.world_rank_of(v)];
   }
 
   void push_relaxed(kamping::Communicator<> const& comm, Partition const& part, u64 payload)
@@ -73,8 +79,9 @@ public:
     if (rank == comm.rank()) {
       recv_buf_.emplace_back(payload);
     } else {
+      auto sendc = access_.range(send_counts_);
       send_buf_.emplace_back(payload);
-      ++send_counts_[rank];
+      ++sendc[rank];
     }
   }
 
@@ -93,6 +100,12 @@ public:
   template<bool AutoClear = true>
   auto communicate(kamping::Communicator<> const& comm, Partition const& part) -> bool
   {
+    auto recvd = access_.range(recv_displs_);
+    auto recvc = access_.range(recv_counts_);
+
+    auto       sendd = access_.range(send_displs_);
+    auto const sendc = access_.range(send_counts_);
+
     // communicate the message count across all ranks
     u64 world_message_count = send_buf_.size();
     MPI_Allreduce(MPI_IN_PLACE, &world_message_count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
@@ -102,15 +115,15 @@ public:
       return false; // finished (no further communication)
 
     // collect recv counts from other ranks
-    MPI_Alltoall(send_counts_.data(), 1, MPI_INT32_T, recv_counts_.data(), 1, MPI_INT32_T, MPI_COMM_WORLD);
+    MPI_Alltoall(sendc.data(), 1, MPI_INT32_T, recvc.data(), 1, MPI_INT32_T, MPI_COMM_WORLD);
 
     // create prefix sums for send and recv (and compute total recv count)
     auto const world      = comm.size();
-    u64        recv_count = recv_counts_[0];
+    u64        recv_count = recvc[0];
     for (size_t rank = 1; rank < world; ++rank) {
-      send_displs_[rank] = send_displs_[rank - 1] + send_counts_[rank - 1];
-      recv_displs_[rank] = recv_displs_[rank - 1] + recv_counts_[rank - 1];
-      recv_count += recv_counts_[rank];
+      sendd[rank] = sendd[rank - 1] + sendc[rank - 1];
+      recvd[rank] = recvd[rank - 1] + recvc[rank - 1];
+      recv_count += recvc[rank];
     }
 
     // reallocate recv buffer
@@ -121,36 +134,32 @@ public:
     size_t index = 0;
     for (size_t bucket = 0; bucket < comm.size(); ++bucket) {
       // skip already placed elements
-      size_t bucket_index = send_displs_[bucket] - index;
-      index               = send_displs_[bucket];
+      size_t bucket_index = sendd[bucket] - index;
+      index               = sendd[bucket];
 
-      while (bucket_index < send_counts_[bucket]) {
+      while (bucket_index < sendc[bucket]) {
 
         auto const u      = send_buf_[index];
         auto const rank_u = part.world_rank_of(u);
 
         if (bucket == rank_u) {
-          ++send_displs_[bucket];
+          ++sendd[bucket];
           ++bucket_index;
           ++index;
         }
 
         else {
-          std::swap(send_buf_[index], send_buf_[send_displs_[rank_u]++]);
+          std::swap(send_buf_[index], send_buf_[sendd[rank_u]++]);
         }
       }
     }
 
     // restore prefix sums after they where used by the sorting
     for (int r = 0; r < comm.size(); ++r)
-      send_displs_[r] -= send_counts_[r];
+      sendd[r] -= sendc[r];
 
     // now we are ready to send
-    auto const* send_counts = send_counts_.range().data();
-    auto const* send_displs = send_displs_.range().data();
-    auto const* recv_counts = recv_counts_.range().data();
-    auto const* recv_displs = recv_displs_.range().data();
-    MPI_Alltoallv(send_buf_.data(), send_counts, send_displs, MPI_UINT64_T, recv_buf_.data() + recv_buf_offest, recv_counts, recv_displs, MPI_UINT64_T, MPI_COMM_WORLD);
+    MPI_Alltoallv(send_buf_.data(), sendc.data(), sendd.data(), MPI_UINT64_T, recv_buf_.data() + recv_buf_offest, recvc.data(), recvd.data(), MPI_UINT64_T, MPI_COMM_WORLD);
 
     // now prepare send buffer and send counts for next iteration
     if (AutoClear)
@@ -160,20 +169,22 @@ public:
   }
 
   // clang-format off
-  [[nodiscard]] auto recv_buf() const -> std::vector<u64> const & { return recv_buf_; }
-  [[nodiscard]] auto recv_counts() const -> std::span<i32 const> { return recv_counts_.range(); }
-  [[nodiscard]] auto recv_displs() const -> std::span<i32 const> { return recv_displs_.range(); }
-  [[nodiscard]] auto send_buf() const -> std::vector<u64> const & { return send_buf_; }
-  [[nodiscard]] auto send_counts() const -> std::span<i32 const> { return send_counts_.range(); }
-  [[nodiscard]] auto send_displs() const -> std::span<i32 const> { return send_displs_.range(); }
+  [[nodiscard]] auto recv_buf()    const -> std::vector<u64> const& { return recv_buf_; }
+  [[nodiscard]] auto recv_counts() const -> std::span<i32 const>    { return access_.range(recv_counts_); }
+  [[nodiscard]] auto recv_displs() const -> std::span<i32 const>    { return access_.range(recv_displs_); }
+  [[nodiscard]] auto send_buf()    const -> std::vector<u64> const& { return send_buf_; }
+  [[nodiscard]] auto send_counts() const -> std::span<i32 const>    { return access_.range(send_counts_); }
+  [[nodiscard]] auto send_displs() const -> std::span<i32 const>    { return access_.range(send_displs_); }
   // clang-format on
 
 private:
+  I32Accessor access_;
+
   std::vector<u64> recv_buf_;    // local frontier
-  I32Buffer        recv_counts_; // number of messages to recv per rank
-  I32Buffer        recv_displs_; // prefix sums of recv_counts
+  Buffer           recv_counts_; // number of messages to recv per rank
+  Buffer           recv_displs_; // prefix sums of recv_counts
 
   std::vector<u64> send_buf_;    // messages to send
-  I32Buffer        send_counts_; // number of messages to send per rank
-  I32Buffer        send_displs_; // prefix sums of send_counts
+  Buffer           send_counts_; // number of messages to send per rank
+  Buffer           send_displs_; // prefix sums of send_counts
 };

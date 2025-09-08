@@ -1,4 +1,6 @@
+#include <buffer/Accessor.hpp>
 #include <buffer/Buffer.hpp>
+#include <buffer/View.hpp>
 #include <test/Assert.hpp>
 
 #include <cassert>
@@ -7,29 +9,34 @@ template<IntConcept Int>
 void
 test_kernel()
 {
-  using Buf = IntBuffer<Int>;
-
   // create(0)
   {
-    auto res = Buf::create(0);
-    ASSERT(res.has_value());
-    auto b = std::move(res.value());
-    ASSERT_EQ(b.size(), 0);
-    ASSERT_EQ(b.data(), nullptr);
-    ASSERT_EQ(b.bytes(), 0);
+    auto access = Accessor<Int>{ 0 };
+    auto result = Buffer::create(access);
+    ASSERT(result.has_value());
+    auto buffer = std::move(result.value());
+
+    ASSERT_EQ(access.size(), 0);
+    ASSERT_EQ(access.size_bytes(), 0);
+    ASSERT_EQ(buffer.data(), nullptr);
+    ASSERT_EQ(buffer, nullptr);
   }
 
   // create(N) and read/write
   {
-    constexpr size_t N   = 10;
-    auto             res = Buf::create(N);
-    ASSERT(res.has_value());
-    auto b = std::move(res.value());
-    ASSERT_EQ(b.size(), N);
-    ASSERT_NE(b.data(), nullptr);
-    ASSERT_EQ(b.bytes(), N * sizeof(Int));
+    constexpr size_t N = 10;
 
-    auto ptr = static_cast<Int*>(b.data());
+    auto access = Accessor<Int>{ N };
+    auto result = Buffer::create(access);
+    ASSERT(result.has_value());
+    auto buffer = std::move(result.value());
+
+    ASSERT_EQ(access.size(), N);
+    ASSERT_EQ(access.size_bytes(), N * sizeof(Int));
+    ASSERT_NE(buffer.data(), nullptr);
+    ASSERT_NE(buffer, nullptr);
+
+    auto ptr = static_cast<Int*>(buffer.data());
     for (size_t i = 0; i < N; ++i)
       ptr[i] = static_cast<Int>(i * 7 + 1);
 
@@ -39,12 +46,14 @@ test_kernel()
 
   // zeroes(N)
   {
-    constexpr size_t N   = 5;
-    auto             res = Buf::zeroes(N);
-    ASSERT(res.has_value());
-    auto b = std::move(res.value());
-    ASSERT_EQ(b.size(), N);
-    auto const ptr = static_cast<Int const*>(b.data());
+    constexpr size_t N = 5;
+
+    auto access = Accessor<Int>{ N };
+    auto result = Buffer::zeroes(access);
+    ASSERT(result.has_value());
+    auto buffer = std::move(result.value());
+
+    auto const ptr = static_cast<Int const*>(buffer.data());
     for (size_t i = 0; i < N; ++i)
       ASSERT_EQ(ptr[i], 0);
   }
@@ -54,47 +63,52 @@ test_kernel()
     constexpr size_t N = 127;
     constexpr size_t S = 63;
 
-    auto res = Buf::create(N);
-    ASSERT(res.has_value());
-    auto b = std::move(res.value());
+    auto access = Accessor<Int>{ N };
+    auto result = Buffer::create(access);
+    ASSERT(result.has_value());
+    auto buffer = std::move(result.value());
 
-    ASSERT_EQ(b.size(), N);
+    ASSERT_EQ(access.size(), N);
 
     for (size_t i = 0; i < S; ++i)
-      b.set(i, static_cast<Int>(i));
+      access.set(buffer, i, static_cast<Int>(i));
+
+    auto const ptr = static_cast<Int*>(buffer.data());
     for (size_t i = S; i < N; ++i)
-      b[i] = static_cast<Int>(i);
+      ptr[i] = static_cast<Int>(i);
 
     for (size_t i = 0; i < N; ++i)
-      ASSERT_EQ(b.get(i), i);
+      ASSERT_EQ(access.get(buffer, i), i);
 
-    for (size_t i = 0; i < N; ++i)
-      ASSERT_EQ(b[i], i);
-
-    auto ptr = static_cast<Int*>(b.data());
     for (size_t i = 0; i < N; ++i)
       ASSERT_EQ(ptr[i], i);
   }
 
   // move semantics
   {
-    constexpr size_t N   = 3;
-    auto             res = Buf::create(N);
-    ASSERT(res.has_value());
-    auto b1       = std::move(res.value());
-    auto orig_ptr = b1.data();
-    auto p        = static_cast<Int*>(b1.data());
-    p[0]          = 11;
-    p[1]          = 22;
-    p[2]          = 33;
+    constexpr size_t N = 3;
 
-    auto b2 = std::move(b1);
-    ASSERT_EQ(b2.size(), N);
-    ASSERT_EQ(b2.data(), orig_ptr);
-    auto const q = static_cast<Int const*>(b2.data());
-    ASSERT_EQ(q[0], 11);
-    ASSERT_EQ(q[1], 22);
-    ASSERT_EQ(q[2], 33);
+    auto access = Accessor<Int>{ N };
+    auto result = Buffer::create(access);
+    ASSERT(result.has_value());
+
+    auto buffer = std::move(result.value());
+    auto ptr    = buffer.data();
+    auto p      = static_cast<Int*>(ptr);
+
+    p[0] = 11;
+    p[1] = 22;
+    p[2] = 33;
+
+    auto moved_buffer = std::move(buffer);
+    auto moved_ptr    = moved_buffer.data();
+    auto moved_p      = static_cast<Int*>(moved_ptr);
+
+    ASSERT_EQ(moved_ptr, ptr);
+    ASSERT_EQ(moved_p, p);
+    ASSERT_EQ(moved_p[0], 11);
+    ASSERT_EQ(moved_p[1], 22);
+    ASSERT_EQ(moved_p[2], 33);
   }
 }
 
