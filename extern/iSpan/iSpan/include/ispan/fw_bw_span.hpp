@@ -2,6 +2,7 @@
 
 #include "test/Assert.hpp"
 
+#include <cstring>
 #include <ispan/util.hpp>
 #include <util/MpiTuple.hpp>
 #include <util/ScopeGuard.hpp>
@@ -186,15 +187,20 @@ fw_span(
         }
       } else {
 
-        // clang-format off
         auto const rank_count = front_comm[world_rank];
-        MPI_Allgather(
-          &rank_count, 1, MpiBasicType<decltype(rank_count)>,
-          front_comm, 1, MpiBasicType<decltype(*front_comm)>,
-          MPI_COMM_WORLD);
-        //MPI_Allreduce(
-        //  MPI_IN_PLACE, front_comm, world_size, MpiBasicType<decltype(*front_comm)>,
-        //  MPI_MAX, MPI_COMM_WORLD);
+
+        // clang-format off
+        // option 1:
+        // MPI_Allgather(
+        //   &rank_count, 1, MpiBasicType<decltype(rank_count)>,
+        //   front_comm, 1, MpiBasicType<decltype(*front_comm)>,
+        //   MPI_COMM_WORLD);
+        // option 2:
+        memset(front_comm, 0, world_size * sizeof(*front_comm));
+        front_comm[world_rank] = rank_count;
+        MPI_Allreduce(
+          MPI_IN_PLACE, front_comm, world_size, MpiBasicType<decltype(*front_comm)>,
+          MPI_MAX, MPI_COMM_WORLD);
         // clang-format on
 
         MPI_Request request;
@@ -381,8 +387,6 @@ bw_span(
     }
     if (is_top_down and next_work * alpha > m) {
       is_top_down = false;
-      // if (world_rank == 0)
-      //   std::cout << "--->Switch to bottom up" << my_work_next << " " << edge_count << "<----\n";
     } else if (level > 50) {
       is_top_down_queue = true;
 
@@ -393,8 +397,8 @@ bw_span(
         /* comm: */ MPI_COMM_WORLD);
       // clang-format on
     }
-    // if (!is_top_down || is_top_down_queue) { // -(???)
-    if (front_count > 0) { // +(???)
+
+    if (front_count > 0) {
       if (front_count > 10000) {
 
         index_t s = n / 32;
@@ -412,22 +416,27 @@ bw_span(
           if (fw_sa[i] != scc_id_undecided and
               bw_sa[i] == scc_id_undecided and
               (sa_compress[i / 32] & 1 << (i % 32)) != 0) {
-            bw_sa[i]  = static_cast<signed char>(level + 1);
+            bw_sa[i] = static_cast<signed char>(level + 1);
             // scc_id[i] = scc_id_largest; // +(???) this is added manually
             num_sa += 1;
           }
         }
       } else {
 
-        // clang-format off
         auto const rank_count = front_comm[world_rank];
-        MPI_Allgather(
-          &rank_count, 1, MpiBasicType<decltype(rank_count)>,
-          front_comm, 1, MpiBasicType<decltype(*front_comm)>,
-          MPI_COMM_WORLD);
-        //MPI_Allreduce(
-        //  MPI_IN_PLACE, front_comm, world_size, MpiBasicType<decltype(*front_comm)>,
-        //  MPI_MAX, MPI_COMM_WORLD);
+
+        // clang-format off
+        // option 1:
+        // MPI_Allgather(
+        //   &rank_count, 1, MpiBasicType<decltype(rank_count)>,
+        //   front_comm, 1, MpiBasicType<decltype(*front_comm)>,
+        //   MPI_COMM_WORLD);
+        // option 2:
+        memset(front_comm, 0, world_size * sizeof(*front_comm));
+        front_comm[world_rank] = rank_count;
+        MPI_Allreduce(
+          MPI_IN_PLACE, front_comm, world_size, MpiBasicType<decltype(*front_comm)>,
+          MPI_MAX, MPI_COMM_WORLD);
         // clang-format on
 
         MPI_Request request;
