@@ -1,8 +1,6 @@
 #pragma once
 
-#include <ispan/bw_bfs.hpp>
-#include <ispan/coloring_wcc.hpp>
-#include <ispan/fw_bfs.hpp>
+#include <ispan/fw_bw_span.hpp>
 #include <ispan/get_scc_result.hpp>
 #include <ispan/gfq_origin.hpp>
 #include <ispan/graph.hpp>
@@ -12,26 +10,26 @@
 #include <ispan/trim_1_first.hpp>
 #include <ispan/trim_1_normal.hpp>
 #include <ispan/util.hpp>
+#include <ispan/wcc_detection.hpp>
 
 #include <util/MpiTuple.hpp>
 
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
-#include <iostream>
 #include <mpi.h>
 #include <unistd.h>
 #include <vector>
 
 inline void
-scc_detection(graph const* g, int alpha, int beta, double* avg_time, int world_rank, int world_size, int run_time, std::vector<index_t>* scc_id_out = nullptr)
+scc_detection(graph const* g, int alpha, int world_rank, int world_size, std::vector<index_t>* scc_id_out = nullptr)
 {
-  auto const  n          = g->vert_count;
-  auto const  m          = g->edge_count;
-  auto const* fw_beg_pos = g->fw_beg_pos;
-  auto const* fw_csr     = g->fw_csr;
-  auto const* bw_beg_pos = g->bw_beg_pos;
-  auto const* bw_csr     = g->bw_csr;
+  auto const  n      = g->vert_count;
+  auto const  m      = g->edge_count;
+  auto const* fw_beg = g->fw_beg;
+  auto const* fw_csr = g->fw_csr;
+  auto const* bw_beg = g->bw_beg;
+  auto const* bw_csr = g->bw_csr;
 
   auto* front_comm = new index_t[world_size]{};
   SCOPE_GUARD(delete[] front_comm);
@@ -39,30 +37,27 @@ scc_detection(graph const* g, int alpha, int beta, double* avg_time, int world_r
   auto* work_comm = new int[world_size]{};
   SCOPE_GUARD(delete[] work_comm);
 
-  auto* color_change = new bool[world_size]{};
-  SCOPE_GUARD(delete[] color_change);
-
-  index_t s = n / 32;
+  vertex_t s = n / 32;
   if (n % 32 != 0)
     s += 1;
 
-  index_t t = s / world_size;
+  vertex_t t = s / world_size;
   if (s % world_size != 0)
     t += 1;
 
-  index_t step          = t * 32;
-  index_t virtual_count = t * world_size * 32;
-  index_t vert_beg      = std::min<index_t>(step * world_rank, n);
-  index_t vert_end      = std::min<index_t>(step * (world_rank + 1), n);
+  vertex_t const step          = t * 32;
+  vertex_t const virtual_count = t * world_size * 32;
+  vertex_t const local_beg     = std::min<index_t>(step * world_rank, n);
+  vertex_t const local_end     = std::min<index_t>(step * (world_rank + 1), n);
 
-  auto* sa_compress = new int[s]{};
+  auto* sa_compress = new unsigned int[s]{};
   SCOPE_GUARD(delete[] sa_compress);
 
   auto* sub_vertices = new index_t[virtual_count]{};
   SCOPE_GUARD(delete[] sub_vertices);
 
-  auto* wcc_fq = new index_t[virtual_count]{};
-  SCOPE_GUARD(delete[] wcc_fq);
+  auto* sub_wcc_fq = new index_t[virtual_count]{};
+  SCOPE_GUARD(delete[] sub_wcc_fq);
 
   auto* sub_vertices_inverse = new vertex_t[n + 1]{};
   SCOPE_GUARD(delete[] sub_vertices_inverse);
@@ -80,11 +75,10 @@ scc_detection(graph const* g, int alpha, int beta, double* avg_time, int world_r
   SCOPE_GUARD(delete[] sub_bw_csr);
 
   signed char* fw_sa;
+  posix_memalign((void**)&fw_sa, getpagesize(), sizeof(*fw_sa) * (virtual_count + 1));
+
   signed char* bw_sa;
-  if (posix_memalign((void**)&fw_sa, getpagesize(), sizeof(*fw_sa) * (virtual_count + 1)))
-    perror("posix_memalign");
-  if (posix_memalign((void**)&bw_sa, getpagesize(), sizeof(*bw_sa) * (virtual_count + 1)))
-    perror("posix_memalign");
+  posix_memalign((void**)&bw_sa, getpagesize(), sizeof(*bw_sa) * (virtual_count + 1));
 
   auto* fq_comm = new vertex_t[virtual_count + 1]{};
   SCOPE_GUARD(delete[] fq_comm);
@@ -95,151 +89,126 @@ scc_detection(graph const* g, int alpha, int beta, double* avg_time, int world_r
   auto* sub_scc_id = new vertex_t[virtual_count + 1]{};
   SCOPE_GUARD(delete[] sub_scc_id);
 
-  auto* fw_sa_temp = new vertex_t[virtual_count + 1]{};
-  SCOPE_GUARD(delete[] fw_sa_temp);
+  auto* sub_fw_sa = new vertex_t[virtual_count + 1]{};
+  SCOPE_GUARD(delete[] sub_fw_sa);
 
-  auto* color = new vertex_t[virtual_count + 1]{};
-  SCOPE_GUARD(delete[] color);
+  auto* sub_wcc_id = new vertex_t[virtual_count + 1]{};
+  SCOPE_GUARD(delete[] sub_wcc_id);
 
   for (int i = 0; i < virtual_count + 1; ++i) {
-    fw_sa[i]      = -1;
-    bw_sa[i]      = -1;
+    fw_sa[i]      = scc_id_undecided;
+    bw_sa[i]      = scc_id_undecided;
     scc_id[i]     = scc_id_undecided;
-    sub_scc_id[i] = sub_scc_id_undecided;
+    sub_scc_id[i] = scc_id_undecided;
+    sub_fw_sa[i]  = scc_id_undecided;
   }
 
-  double const start_time = wtime();
-  double       end_time;
+  trim_1_first(scc_id, fw_beg, bw_beg, local_beg, local_end);
 
-  {
-    double time_size_1_first;
-    double time_size_1;
-    double time_fw;
-    double time_bw;
-    double time_size_2;
-    double time_size_3;
-    double time_gfq;
-    double pivot_time;
-    double time_wcc = 0.0;
-    double time_mice_fw_bw;
-    double time_comm;
+  // clang-format off
+  MPI_Allgather(
+    /* send: */ MPI_IN_PLACE, 0, MpiBasicType<decltype(*scc_id)>,
+    /* recv: */ scc_id, step, MpiBasicType<decltype(*scc_id)>,
+    /* comm: */ MPI_COMM_WORLD);
+  // clang-format on
 
-    MPI_Barrier(MPI_COMM_WORLD);
+  auto const root = pivot_selection(scc_id, fw_beg, bw_beg, 0, n, world_rank);
+  fw_span(
+    scc_id,
+    fw_beg,
+    bw_beg,
+    fw_csr,
+    bw_csr,
+    local_beg,
+    local_end,
+    fw_sa,
+    front_comm,
+    root,
+    world_rank,
+    world_size,
+    alpha,
+    n,
+    m,
+    step,
+    fq_comm,
+    sa_compress);
+  memset(sa_compress, 0, s * sizeof(*sa_compress));
+  bw_span(
+    scc_id,
+    fw_beg,
+    bw_beg,
+    fw_csr,
+    bw_csr,
+    local_beg,
+    local_end,
+    fw_sa,
+    bw_sa,
+    front_comm,
+    work_comm,
+    root,
+    world_rank,
+    world_size,
+    alpha,
+    n,
+    m,
+    step,
+    fq_comm,
+    sa_compress);
 
-    double time = wtime();
-    trim_1_first(scc_id, fw_beg_pos, bw_beg_pos, vert_beg, vert_end);
-    std::cout << world_rank << ",Computing size_1_first cost," << (wtime() - time) * 1000 << " ms\n";
-    double temp_time = wtime();
+  // optional
+  // trim_1_normal(scc_id, fw_beg, bw_beg, fw_csr, bw_csr, local_beg, local_end);
+  // trim_1_normal(scc_id, fw_beg, bw_beg, fw_csr, bw_csr, local_beg, local_end);
+
+  // clang-format off
+  MPI_Allreduce(
+    MPI_IN_PLACE, scc_id, n, MpiBasicType<decltype(*scc_id)>,
+    MPI_MAX, MPI_COMM_WORLD);
+  // clang-format on
+
+  index_t sub_n;
+  gfq_origin(
+    // input
+    n,
+    scc_id,
+    fw_beg,
+    fw_csr,
+    bw_beg,
+    bw_csr,
+    // output
+    sub_n,
+    sub_vertices,
+    sub_vertices_inverse,
+    sub_fw_beg,
+    sub_fw_csr,
+    sub_bw_beg,
+    sub_bw_csr);
+
+  if (sub_n > 0) {
+
+    for (index_t i = 0; i < sub_n; ++i)
+      sub_wcc_id[i] = i;
+
+    wcc_detection(sub_wcc_id, sub_fw_beg, sub_fw_csr, sub_bw_beg, sub_bw_csr, sub_n);
+
+    vertex_t sub_wcc_fq_size = 0;
+    process_wcc(sub_n, sub_wcc_fq, sub_wcc_id, sub_wcc_fq_size);
+    mice_fw_bw(sub_wcc_id, sub_scc_id, sub_fw_beg, sub_bw_beg, sub_fw_csr, sub_bw_csr, sub_fw_sa, world_rank, world_size, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
 
     // clang-format off
-
-    MPI_Allgather(
-      /* send: */ MPI_IN_PLACE, 0, MpiBasicType<decltype(*scc_id)>,
-      /* recv: */ scc_id, step, MpiBasicType<decltype(*scc_id)>,
-      /* comm: */ MPI_COMM_WORLD);
-
-    // clang-format on
-
-    double time_comm_trim_1 = wtime() - temp_time;
-    std::cout << world_rank << ",trim-1 comm time," << time_comm_trim_1 * 1000 << ",ms\n";
-    if (world_rank == 0) {
-      time_size_1_first = wtime() - time;
-    }
-    time          = wtime();
-    vertex_t root = pivot_selection(scc_id, fw_beg_pos, bw_beg_pos, 0, n, world_rank);
-    pivot_time    = wtime() - time;
-    time          = wtime();
-    fw_bfs(scc_id, fw_beg_pos, bw_beg_pos, vert_beg, vert_end, fw_csr, bw_csr, fw_sa, front_comm, root, world_rank, world_size, alpha, beta, m, n, step, fq_comm, sa_compress, virtual_count);
-    time_fw = wtime() - time;
-    for (vertex_t i = 0; i < virtual_count / 32; ++i) {
-      sa_compress[i] = 0;
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    time = wtime();
-    bw_bfs(scc_id, fw_beg_pos, bw_beg_pos, vert_beg, vert_end, fw_csr, bw_csr, fw_sa, bw_sa, front_comm, work_comm, root, world_rank, world_size, alpha, m, n, step, fq_comm, sa_compress);
-    time_bw = wtime() - time;
-    printf("bw_bfs done\n");
-    time = wtime();
-    trim_1_normal(scc_id, fw_beg_pos, bw_beg_pos, vert_beg, vert_end, fw_csr, bw_csr);
-    if (world_rank == 0) {
-      time_size_1 += wtime() - time;
-    }
-    time = wtime();
-    trim_1_normal(scc_id, fw_beg_pos, bw_beg_pos, vert_beg, vert_end, fw_csr, bw_csr);
-    time_size_1 += wtime() - time;
-    time = wtime();
-
-    // clang-format off
-    MPI_Allreduce(
-      MPI_IN_PLACE, scc_id, n, MpiBasicType<decltype(*scc_id)>,
-      MPI_MAX, MPI_COMM_WORLD);
-    // clang-format on
-
-    gfq_origin(n, scc_id, sub_vertices, fw_beg_pos, fw_csr, bw_beg_pos, bw_csr, sub_fw_beg, sub_fw_csr, sub_bw_beg, sub_bw_csr, front_comm, work_comm, world_rank, sub_vertices_inverse);
-    auto const sub_n = front_comm[world_rank];
-    if (sub_n > 0) {
-
-      step = sub_n / world_size;
-      if (sub_n % world_size != 0)
-        step += 1;
-      vert_beg = world_rank * step;
-      for (index_t i = 0; i < sub_n; ++i) {
-        color[i] = i;
-      }
-      time = wtime();
-
-      coloring_wcc(color, sub_fw_beg, sub_fw_csr, sub_bw_beg, sub_bw_csr, 0, sub_n);
-      if (world_rank == 0) {
-        time_wcc += wtime() - time;
-      }
-
-      time                 = wtime();
-      vertex_t wcc_fq_size = 0;
-      process_wcc(0, sub_n, wcc_fq, color, wcc_fq_size);
-      if (world_rank == 0) {
-        printf("color time (ms), %lf, wcc_fq, %d, time (ms), %lf\n", time_wcc * 1000, wcc_fq_size, 1000 * (wtime() - time));
-      }
-      mice_fw_bw(color, sub_scc_id, sub_fw_beg, sub_bw_beg, sub_fw_csr, sub_bw_csr, fw_sa_temp, world_rank, world_size, sub_n, wcc_fq, wcc_fq_size);
-      temp_time = wtime();
-
-      // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, sub_scc_id, n, MpiBasicType<decltype(*sub_scc_id)>,
+        MPI_IN_PLACE, sub_scc_id, sub_n, MpiBasicType<decltype(*sub_scc_id)>,
         MPI_MAX, MPI_COMM_WORLD);
-      // clang-format on
+    // clang-format on
 
-      time_comm = wtime() - temp_time;
-      printf("%d,final comm time,%.3lf\n", world_rank, time_comm * 1000);
-      for (int i = 0; i < sub_n; ++i) {
-        vertex_t actual_v = sub_vertices[i];
-        scc_id[actual_v]  = sub_vertices[sub_scc_id[i]];
-      }
-    }
-    if (world_rank == 0) {
-      time_mice_fw_bw = wtime() - time;
-    }
-    if (world_rank == 0 && run_time != 1) {
-      avg_time[0] += time_size_1_first + time_size_1 + time_size_2 + time_size_3;
-      avg_time[1] += time_fw + time_bw;
-      avg_time[2] += time_wcc + time_mice_fw_bw;
-      avg_time[4] += time_size_1_first + time_size_1;
-      avg_time[5] += time_size_2;
-      avg_time[6] += pivot_time;
-      avg_time[7] += time_fw;
-      avg_time[8] += time_bw;
-      avg_time[9] += time_wcc;
-      avg_time[10] += time_mice_fw_bw;
-      avg_time[13] += time_size_3;
-      avg_time[14] += time_gfq;
+    for (index_t sub_u = 0; sub_u < sub_n; ++sub_u) {
+      if (sub_scc_id[sub_u] != scc_id_undecided)
+        scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
     }
   }
-  end_time = wtime() - start_time;
-  avg_time[3] += end_time;
 
   get_scc_result(scc_id, n);
   if (scc_id_out) {
-    std::memcpy(scc_id_out->data(), scc_id, std::min<size_t>(virtual_count + 1, n) * sizeof(index_t));
+    scc_id_out->resize(n);
+    std::memcpy(scc_id_out->data(), scc_id, n * sizeof(index_t));
   }
 }

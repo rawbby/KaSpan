@@ -14,13 +14,13 @@
 #include <vector>
 
 inline std::vector<vertex_t>
-make_random_normalized_scc_id(size_t n)
+make_random_normalized_scc_id(size_t n, u64 seed)
 {
   std::vector<vertex_t> scc_id(n);
   if (n == 0)
     return scc_id;
 
-  std::mt19937                rng(std::random_device{}());
+  std::mt19937                rng(seed);
   std::bernoulli_distribution start_new(0.25);
 
   std::vector<vertex_t> reps;
@@ -40,7 +40,7 @@ make_random_normalized_scc_id(size_t n)
 }
 
 inline graph
-make_random_graph_from_scc_ids(std::vector<vertex_t> const& scc_id)
+make_random_graph_from_scc_ids(std::vector<vertex_t> const& scc_id, u64 seed)
 {
   graph      g{};
   auto const n = scc_id.size();
@@ -61,7 +61,7 @@ make_random_graph_from_scc_ids(std::vector<vertex_t> const& scc_id)
   std::ranges::sort(reps);
 
   // RNG and helpers
-  std::mt19937                               rng(std::random_device{}());
+  std::mt19937                               rng(seed);
   std::uniform_real_distribution             prob(0.0, 1.0);
   std::bernoulli_distribution                coin(0.5);
   std::unordered_set<uint64_t>               seen;
@@ -128,10 +128,10 @@ make_random_graph_from_scc_ids(std::vector<vertex_t> const& scc_id)
   g.edge_count    = edges.size();
   auto fw_beg_mem = page_aligned_alloc((n + 1) * sizeof(index_t));
   ASSERT(fw_beg_mem.has_value());
-  g.fw_beg_pos    = static_cast<index_t*>(fw_beg_mem.value());
+  g.fw_beg        = static_cast<index_t*>(fw_beg_mem.value());
   auto bw_beg_mem = page_aligned_alloc((n + 1) * sizeof(index_t));
   ASSERT(bw_beg_mem.has_value());
-  g.bw_beg_pos    = static_cast<index_t*>(bw_beg_mem.value());
+  g.bw_beg        = static_cast<index_t*>(bw_beg_mem.value());
   auto fw_csr_mem = page_aligned_alloc(g.edge_count * sizeof(vertex_t));
   ASSERT(fw_csr_mem.has_value());
   g.fw_csr        = static_cast<vertex_t*>(fw_csr_mem.value());
@@ -145,18 +145,18 @@ make_random_graph_from_scc_ids(std::vector<vertex_t> const& scc_id)
     ++in_degree[second];
   }
 
-  g.fw_beg_pos[0] = 0;
+  g.fw_beg[0] = 0;
   for (size_t i = 0; i < n; ++i)
-    g.fw_beg_pos[i + 1] = g.fw_beg_pos[i] + out_degree[i];
+    g.fw_beg[i + 1] = g.fw_beg[i] + out_degree[i];
 
-  g.bw_beg_pos[0] = 0;
+  g.bw_beg[0] = 0;
   for (size_t i = 0; i < n; ++i)
-    g.bw_beg_pos[i + 1] = g.bw_beg_pos[i] + in_degree[i];
+    g.bw_beg[i + 1] = g.bw_beg[i] + in_degree[i];
 
   std::vector<index_t> cur_fw(n), cur_bw(n);
   for (size_t i = 0; i < n; ++i) {
-    cur_fw[i] = g.fw_beg_pos[i];
-    cur_bw[i] = g.bw_beg_pos[i];
+    cur_fw[i] = g.fw_beg[i];
+    cur_bw[i] = g.bw_beg[i];
   }
 
   for (auto [first, second] : edges)

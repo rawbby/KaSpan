@@ -3,15 +3,9 @@
 #include <ispan/util.hpp>
 
 inline void
-trim_1_first(index_t* scc_id, int const* fw_beg_pos, int const* bw_beg_pos, index_t vert_beg, index_t vert_end)
+trim_1_first(vertex_t* scc_id, index_t const* fw_beg, index_t const* bw_beg, vertex_t local_beg, vertex_t local_end)
 {
-  for (vertex_t vert_id = vert_beg; vert_id < vert_end; ++vert_id) {
-    if (fw_beg_pos[vert_id + 1] - fw_beg_pos[vert_id] == 0) {
-      scc_id[vert_id] = -1;
-    } else {
-      if (bw_beg_pos[vert_id + 1] - bw_beg_pos[vert_id] == 0) {
-        scc_id[vert_id] = -1;
-      }
-    }
-  }
+  for (auto u = local_beg; u < local_end; ++u)
+    if (fw_beg[u + 1] - fw_beg[u] == 0 or bw_beg[u + 1] - bw_beg[u] == 0)
+      scc_id[u] = scc_id_singular;
 }

@@ -8,9 +8,9 @@
 
 struct graph
 {
-  int*      fw_beg_pos = nullptr;
+  int*      fw_beg = nullptr;
   vertex_t* fw_csr     = nullptr;
-  int*      bw_beg_pos = nullptr;
+  int*      bw_beg = nullptr;
   vertex_t* bw_csr     = nullptr;
 
   index_t vert_count = 0;
@@ -20,14 +20,14 @@ struct graph
 
   ~graph()
   {
-    delete[] fw_beg_pos;
+    delete[] fw_beg;
     delete[] fw_csr;
-    delete[] bw_beg_pos;
+    delete[] bw_beg;
     delete[] bw_csr;
 
-    fw_beg_pos = nullptr;
+    fw_beg = nullptr;
     fw_csr     = nullptr;
-    bw_beg_pos = nullptr;
+    bw_beg = nullptr;
     bw_csr     = nullptr;
 
     vert_count = 0;
@@ -42,21 +42,21 @@ struct graph
 
     FILE* file = fopen(fw_beg_file, "rb");
     if (file == nullptr) {
-      std::cout << fw_beg_file << " cannot open\n";
+      //std::cout << fw_beg_file << " cannot open\n";
       exit(-1);
     }
 
     {
-      auto* tmp_beg_pos = new index_t[vert_count + 1]{};
-      SCOPE_GUARD(delete[] tmp_beg_pos);
+      auto* tmp_beg = new index_t[vert_count + 1]{};
+      SCOPE_GUARD(delete[] tmp_beg);
 
-      auto ret = fread(tmp_beg_pos, sizeof(index_t), vert_count + 1, file);
+      auto ret = fread(tmp_beg, sizeof(index_t), vert_count + 1, file);
       assert(ret == vert_count + 1);
 
       fclose(file);
       file = fopen(fw_csr_file, "rb");
       if (file == nullptr) {
-        std::cout << fw_csr_file << " cannot open\n";
+        //std::cout << fw_csr_file << " cannot open\n";
         exit(-1);
       }
 
@@ -67,30 +67,30 @@ struct graph
       assert(ret == edge_count);
 
       fclose(file);
-      fw_beg_pos = new index_t[vert_count + 1]{};
+      fw_beg = new index_t[vert_count + 1]{};
       fw_csr     = new vertex_t[edge_count]{};
       for (index_t i = 0; i < vert_count + 1; ++i)
-        fw_beg_pos[i] = tmp_beg_pos[i];
+        fw_beg[i] = tmp_beg[i];
       for (index_t i = 0; i < edge_count; ++i)
         fw_csr[i] = tmp_csr[i];
       file = fopen(bw_beg_file, "rb");
       if (file == nullptr) {
-        std::cout << bw_beg_file << " cannot open\n";
+        //std::cout << bw_beg_file << " cannot open\n";
         exit(-1);
       }
     }
 
     {
-      auto* tmp_beg_pos = new index_t[vert_count + 1]{};
-      SCOPE_GUARD(delete[] tmp_beg_pos);
+      auto* tmp_beg = new index_t[vert_count + 1]{};
+      SCOPE_GUARD(delete[] tmp_beg);
 
-      auto ret = fread(tmp_beg_pos, sizeof(index_t), vert_count + 1, file);
+      auto ret = fread(tmp_beg, sizeof(index_t), vert_count + 1, file);
       assert(ret == vert_count + 1);
 
       fclose(file);
       file = fopen(bw_csr_file, "rb");
       if (file == nullptr) {
-        std::cout << bw_csr_file << " cannot open\n";
+        //std::cout << bw_csr_file << " cannot open\n";
         exit(-1);
       }
 
@@ -101,23 +101,18 @@ struct graph
       assert(ret == edge_count);
 
       fclose(file);
-      bw_beg_pos = new index_t[vert_count + 1]{};
+      bw_beg = new index_t[vert_count + 1]{};
       bw_csr     = new vertex_t[edge_count]{};
       for (index_t i = 0; i < vert_count + 1; ++i)
-        bw_beg_pos[i] = tmp_beg_pos[i];
+        bw_beg[i] = tmp_beg[i];
       for (index_t i = 0; i < edge_count; ++i)
         bw_csr[i] = tmp_csr[i];
     }
-
-    std::cout << "Graph load (success): " << vert_count << " verts, " << edge_count << " edges " << wtime() - tm << " second(s)\n";
   }
 };
 
 inline graph*
-graph_load(char const* fw_beg_file, char const* fw_csr_file, char const* bw_beg_file, char const* bw_csr_file, double* avg_time)
+graph_load(char const* fw_beg_file, char const* fw_csr_file, char const* bw_beg_file, char const* bw_csr_file)
 {
-  auto* g = new graph(fw_beg_file, fw_csr_file, bw_beg_file, bw_csr_file);
-  for (index_t i = 0; i < 15; ++i)
-    avg_time[i] = 0.0;
-  return g;
+  return new graph(fw_beg_file, fw_csr_file, bw_beg_file, bw_csr_file);
 }
