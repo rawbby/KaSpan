@@ -1,30 +1,19 @@
 #pragma once
 
-#include "util/Arithmetic.hpp"
-#include "util/MpiTuple.hpp"
-#include "util/ScopeGuard.hpp"
+#include <buffer/Buffer.hpp>
+#include <util/Arithmetic.hpp>
 
 #include <concepts>
 #include <cstddef>
-
 #include <mpi.h>
 
-/**
- * PartitionConcept
- *
- * Models a subset S of {0, ..., n-1}.
- *
- * Requirements:
- * - Public member: n (size_t) - total element count
- * - bool contains(i): true iff i ∈ S
- * - size_t rank(i): local index of i within S (requires contains(i) == true)
- * - size_t select(k): global index for local k in [0, size())
- * - size_t size(): |S| (number of elements in S)
- * - static constexpr bool continuous: true if S is a contiguous interval
- * - If continuous: members begin, end (interval [begin, end))
- */
 template<class T>
 concept PartitionConcept =
+
+  (std::is_move_constructible_v<T> and std::is_move_assignable_v<T>)
+
+  and
+
   requires(T t, size_t i) {
     { t.n } -> std::convertible_to<size_t>;
     { t.contains(i) } -> std::convertible_to<bool>;
@@ -32,34 +21,28 @@ concept PartitionConcept =
     { t.select(i) } -> std::convertible_to<size_t>;
     { t.size() } -> std::convertible_to<size_t>;
     { T::continuous } -> std::convertible_to<bool>;
-  } && (!T::continuous || requires(T t) {
+  }
+
+  and
+
+  (!T::continuous or requires(T t) {
     { t.begin } -> std::convertible_to<size_t>;
     { t.end } -> std::convertible_to<size_t>;
   });
 
-/**
- * WorldPartitionConcept
- *
- * Extends PartitionConcept to represent a complete, disjoint partitioning of {0, ..., n-1}
- * among world_size parts. Each index is owned by exactly one world_rank.
- *
- * Additional Requirements:
- * - Constructor: T(n, world_rank, world_size)
- * - size_t world_rank_of(i): owning rank for global index i
- */
 template<class T>
 concept WorldPartitionConcept =
-  PartitionConcept<T> &&
+
+  PartitionConcept<T>
+
+  and
+
   requires(T t, size_t i) {
-    { T{ i, i, i } } -> std::convertible_to<T>;
+    { t.world_size } -> std::convertible_to<size_t>;
+    { t.world_rank } -> std::convertible_to<size_t>;
     { t.world_rank_of(i) } -> std::convertible_to<size_t>;
   };
 
-/**
- * ExplicitContinuousPartition
- *
- * Represents a contiguous interval [begin, end) subset of {0, ..., n-1}.
- */
 struct ExplicitContinuousPartition
 {
   static constexpr bool continuous = true;
@@ -68,7 +51,8 @@ struct ExplicitContinuousPartition
   size_t begin = 0;
   size_t end   = 0;
 
-  explicit constexpr ExplicitContinuousPartition() noexcept = default;
+  constexpr ExplicitContinuousPartition() noexcept  = default;
+  constexpr ~ExplicitContinuousPartition() noexcept = default;
 
   explicit constexpr ExplicitContinuousPartition(size_t n) noexcept
     : n(n)
@@ -81,6 +65,12 @@ struct ExplicitContinuousPartition
     , end(end)
   {
   }
+
+  constexpr ExplicitContinuousPartition(ExplicitContinuousPartition const&) noexcept = default;
+  constexpr ExplicitContinuousPartition(ExplicitContinuousPartition&&) noexcept      = default;
+
+  constexpr auto operator=(ExplicitContinuousPartition const&) noexcept -> ExplicitContinuousPartition& = default;
+  constexpr auto operator=(ExplicitContinuousPartition&&) noexcept -> ExplicitContinuousPartition&      = default;
 
   [[nodiscard]] constexpr auto contains(size_t i) const noexcept -> bool
   {
@@ -103,18 +93,16 @@ struct ExplicitContinuousPartition
   }
 };
 
-/**
- * CyclicPartition
- *
- * Indices owned by rank r: { i | i % world_size == r }
- */
-struct CyclicPartition
+struct CyclicPartition final
 {
   static constexpr bool continuous = false;
 
-  size_t n;
-  size_t world_rank;
-  size_t world_size;
+  size_t n          = 0;
+  size_t world_rank = 0;
+  size_t world_size = 0;
+
+  constexpr CyclicPartition() noexcept  = default;
+  constexpr ~CyclicPartition() noexcept = default;
 
   constexpr CyclicPartition(size_t n, size_t world_rank, size_t world_size) noexcept
     : n(n)
@@ -122,6 +110,12 @@ struct CyclicPartition
     , world_size(world_size)
   {
   }
+
+  constexpr CyclicPartition(CyclicPartition const&) noexcept = default;
+  constexpr CyclicPartition(CyclicPartition&&) noexcept      = default;
+
+  constexpr auto operator=(CyclicPartition const&) noexcept -> CyclicPartition& = default;
+  constexpr auto operator=(CyclicPartition&&) noexcept -> CyclicPartition&      = default;
 
   [[nodiscard]] constexpr auto contains(size_t i) const noexcept -> bool
   {
@@ -157,32 +151,32 @@ struct CyclicPartition
   }
 };
 
-/**
- * BlockCyclicPartition
- *
- * Blocks of consecutive indices of size block_size are distributed cyclically among ranks.
- */
-struct BlockCyclicPartition
+struct BlockCyclicPartition final
 {
-  static constexpr bool continuous = false;
-
-  size_t n;
-  size_t world_rank;
-  size_t world_size;
-  size_t block_size;
-
+  static constexpr bool   continuous         = false;
   static constexpr size_t default_block_size = 512;
 
-  constexpr BlockCyclicPartition(size_t n,
-                                 size_t world_rank,
-                                 size_t world_size,
-                                 size_t block_size = default_block_size) noexcept
+  size_t n          = 0;
+  size_t world_rank = 0;
+  size_t world_size = 0;
+  size_t block_size = 0;
+
+  constexpr BlockCyclicPartition() noexcept  = default;
+  constexpr ~BlockCyclicPartition() noexcept = default;
+
+  constexpr BlockCyclicPartition(size_t n, size_t world_rank, size_t world_size, size_t block_size = default_block_size) noexcept
     : n(n)
     , world_rank(world_rank)
     , world_size(world_size)
     , block_size(block_size)
   {
   }
+
+  constexpr BlockCyclicPartition(BlockCyclicPartition const&) noexcept = default;
+  constexpr BlockCyclicPartition(BlockCyclicPartition&&) noexcept      = default;
+
+  constexpr auto operator=(BlockCyclicPartition const&) noexcept -> BlockCyclicPartition& = default;
+  constexpr auto operator=(BlockCyclicPartition&&) noexcept -> BlockCyclicPartition&      = default;
 
   [[nodiscard]] constexpr auto contains(size_t i) const noexcept -> bool
   {
@@ -208,7 +202,7 @@ struct BlockCyclicPartition
     size_t const block                        = i / block_size;
     size_t const offset_in_block              = i % block_size;
     size_t const num_full_owned_blocks_before = block / world_size;
-    return (num_full_owned_blocks_before * block_size) + offset_in_block;
+    return num_full_owned_blocks_before * block_size + offset_in_block;
   }
 
   // Precondition: k < size()
@@ -218,7 +212,7 @@ struct BlockCyclicPartition
       return k;
     size_t const local_block        = k / block_size; // which owned block (0-based)
     size_t const offset             = k % block_size; // offset within that block
-    size_t const global_block       = (local_block * world_size) + world_rank;
+    size_t const global_block       = local_block * world_size + world_rank;
     size_t const global_block_start = global_block * block_size;
     return global_block_start + offset;
   }
@@ -251,18 +245,13 @@ struct BlockCyclicPartition
   }
 };
 
-/**
- * TrivialSlicePartition
- *
- * Contiguous slicing into world_size ranges:
- * - All ranks 0..world_size-2 get exactly base = n / world_size elements.
- * - The last rank gets base + (n % world_size) elements.
- * This is a simple contiguous partition by index as referenced in the README.
- */
-struct TrivialSlicePartition : ExplicitContinuousPartition
+struct TrivialSlicePartition final : ExplicitContinuousPartition
 {
-  size_t world_rank;
-  size_t world_size;
+  size_t world_rank = 0;
+  size_t world_size = 0;
+
+  constexpr TrivialSlicePartition() noexcept  = default;
+  constexpr ~TrivialSlicePartition() noexcept = default;
 
   constexpr TrivialSlicePartition(size_t n, size_t world_rank, size_t world_size) noexcept
     : ExplicitContinuousPartition(n)
@@ -285,6 +274,12 @@ struct TrivialSlicePartition : ExplicitContinuousPartition
     }
   }
 
+  constexpr TrivialSlicePartition(TrivialSlicePartition const&) noexcept = default;
+  constexpr TrivialSlicePartition(TrivialSlicePartition&&) noexcept      = default;
+
+  constexpr auto operator=(TrivialSlicePartition const&) noexcept -> TrivialSlicePartition& = default;
+  constexpr auto operator=(TrivialSlicePartition&&) noexcept -> TrivialSlicePartition&      = default;
+
   [[nodiscard]] constexpr auto world_rank_of(size_t i) const noexcept -> size_t
   {
     if (world_size == 1)
@@ -301,17 +296,13 @@ struct TrivialSlicePartition : ExplicitContinuousPartition
   }
 };
 
-/**
- * BalancedSlicePartition
- *
- * Contiguous slicing with size difference at most one:
- * - First (n % world_size) ranks get (base + 1) elements.
- * - Remaining ranks get base elements, where base = n / world_size.
- */
-struct BalancedSlicePartition : ExplicitContinuousPartition
+struct BalancedSlicePartition final : ExplicitContinuousPartition
 {
   size_t world_rank;
   size_t world_size;
+
+  constexpr BalancedSlicePartition() noexcept  = default;
+  constexpr ~BalancedSlicePartition() noexcept = default;
 
   constexpr BalancedSlicePartition(size_t n, size_t world_rank, size_t world_size) noexcept
     : ExplicitContinuousPartition(n)
@@ -336,6 +327,12 @@ struct BalancedSlicePartition : ExplicitContinuousPartition
     }
   }
 
+  constexpr BalancedSlicePartition(BalancedSlicePartition const&) noexcept = default;
+  constexpr BalancedSlicePartition(BalancedSlicePartition&&) noexcept      = default;
+
+  constexpr auto operator=(BalancedSlicePartition const&) noexcept -> BalancedSlicePartition& = default;
+  constexpr auto operator=(BalancedSlicePartition&&) noexcept -> BalancedSlicePartition&      = default;
+
   [[nodiscard]] constexpr auto world_rank_of(size_t i) const noexcept -> size_t
   {
     if (world_size == 1)
@@ -356,93 +353,82 @@ struct BalancedSlicePartition : ExplicitContinuousPartition
   }
 };
 
-struct KaGenPartition : ExplicitContinuousPartition
+struct ExplicitContinuousWorldPartition final : ExplicitContinuousPartition
 {
-  size_t world_rank = 0;
-  size_t world_size = 0;
+  size_t    world_rank = 0;
+  size_t    world_size = 0;
+  U64Buffer partition;
 
-  /// contains the begin and end node for each rank r as:
-  /// begin = partition[2 * r]
-  /// end = partition[2 * r + 1]
-  U64Buffer partition{};
+  ExplicitContinuousWorldPartition()  = default;
+  ~ExplicitContinuousWorldPartition() = default;
 
-  bool ordered_ranks{};
+  ExplicitContinuousWorldPartition(ExplicitContinuousWorldPartition const&) = delete;
+  ExplicitContinuousWorldPartition(ExplicitContinuousWorldPartition&&)      = default;
 
-  KaGenPartition()  = default;
-  ~KaGenPartition() = default;
+  auto operator=(ExplicitContinuousWorldPartition const&) -> ExplicitContinuousWorldPartition& = delete;
+  auto operator=(ExplicitContinuousWorldPartition&&) -> ExplicitContinuousWorldPartition&      = default;
 
-  KaGenPartition(KaGenPartition const&) = delete;
-  KaGenPartition(KaGenPartition&&)      = default;
-
-  auto operator=(KaGenPartition const&) -> KaGenPartition& = delete;
-  auto operator=(KaGenPartition&&) -> KaGenPartition&      = default;
-
-  static auto create(size_t n, size_t begin, size_t end, size_t world_rank, size_t world_size) -> Result<KaGenPartition>
+  static auto create(size_t n, size_t begin, size_t end, size_t world_rank, size_t world_size) -> Result<ExplicitContinuousWorldPartition>
   {
-    ASSERT_TRY(n != 0, ASSUMPTION_ERROR);
-
-    KaGenPartition result{};
+    ExplicitContinuousWorldPartition result{};
+    RESULT_TRY(result.partition, U64Buffer::zeroes(2 * world_size));
     result.n          = n;
     result.begin      = begin;
     result.end        = end;
     result.world_rank = world_rank;
     result.world_size = world_size;
 
-    // reserve buffer for per rank ranges
-    RESULT_TRY(result.partition, U64Buffer::create(2 * result.world_size));
-
-    // declare custom mpi datatype for a (begin, end) tuple
-    using Range              = std::tuple<u64, u64>;
-    MPI_Datatype MPI_RANGE_T = mpi_make_tuple_type<Range>();
-    SCOPE_GUARD(mpi_free(MPI_RANGE_T)); // auto free
-
-    // distribute ranges across all ranks
-    auto const range = Range{ begin, end };
-    MPI_Allgather(&range, 1, MPI_RANGE_T, result.partition.data(), 1, MPI_RANGE_T, MPI_COMM_WORLD);
-
-    // check if ranks are ordered (begin[i] == end[i-1])
-    result.ordered_ranks = true;
-    for (size_t r = 0; r < result.world_size - 1; ++r) {
-      auto const this_end   = result.partition[(r * 2) + 1];
-      auto const next_begin = result.partition[(r + 1) * 2];
-      if (this_end != next_begin) {
-        result.ordered_ranks = false;
-        break;
-      }
-    }
-
+    u64 const local_range[2]{ begin, end };
+    MPI_Allgather(&local_range, 2, MPI_UINT64_T, result.partition.data(), 2, MPI_UINT64_T, MPI_COMM_WORLD);
     return result;
   }
 
   [[nodiscard]] auto world_rank_of(size_t i) const -> size_t
   {
-    if (ordered_ranks) {
-      // approximate rank and fix with linear search
-
-      auto r = [&] {
-        if constexpr (has_uint128_t) {
-          return static_cast<size_t>(
-            (static_cast<u128>(i) * static_cast<u128>(world_size)) / static_cast<u128>(n));
-        }
-        // ReSharper disable CppDFAUnreachableCode
-        // fallback to double if
-        return std::ranges::min(world_size - 1, static_cast<size_t>(static_cast<double>(i) * (static_cast<double>(world_size) / static_cast<double>(n))));
-        // ReSharper restore CppDFAUnreachableCode
-      }();
-
-      while (r > 0 and i < partition[r * 2])
-        --r;
-      while ((r + 1) < world_size and i >= partition[(r * 2) + 1])
-        ++r;
-
-      return r;
-    }
-
-    // linear search from the beginning
     for (size_t r = 0; r < world_size; ++r)
-      if (i >= partition[r * 2] && i < partition[(r * 2) + 1])
+      if (i >= partition[r * 2] and i < partition[r * 2 + 1])
         return r;
+    return -1;
+  }
+};
 
-    return -1; // should be unreachable if partition and input is valid. this is undefined behaviour.
+struct ExplicitSortedContinuousWorldPartition final : ExplicitContinuousPartition
+{
+  size_t    world_rank = 0;
+  size_t    world_size = 0;
+  U64Buffer partition;
+
+  ExplicitSortedContinuousWorldPartition()  = default;
+  ~ExplicitSortedContinuousWorldPartition() = default;
+
+  ExplicitSortedContinuousWorldPartition(ExplicitSortedContinuousWorldPartition const&) = delete;
+  ExplicitSortedContinuousWorldPartition(ExplicitSortedContinuousWorldPartition&&)      = default;
+
+  auto operator=(ExplicitSortedContinuousWorldPartition const&) -> ExplicitSortedContinuousWorldPartition& = delete;
+  auto operator=(ExplicitSortedContinuousWorldPartition&&) -> ExplicitSortedContinuousWorldPartition&      = default;
+
+  static auto create(size_t n, size_t begin, size_t end, size_t world_rank, size_t world_size) -> Result<ExplicitSortedContinuousWorldPartition>
+  {
+    ExplicitSortedContinuousWorldPartition result{};
+    RESULT_TRY(result.partition, U64Buffer::zeroes(world_size));
+    result.n          = n;
+    result.begin      = begin;
+    result.end        = end;
+    result.world_rank = world_rank;
+    result.world_size = world_size;
+
+    u64 const local_end = end;
+    MPI_Allgather(&local_end, 1, MPI_UINT64_T, result.partition.data(), 1, MPI_UINT64_T, MPI_COMM_WORLD);
+    return result;
+  }
+
+  [[nodiscard]] auto world_rank_of(size_t i) const -> size_t
+  {
+    auto r = i * static_cast<u64>(world_size) / static_cast<u64>(n);
+    while (r > 0 and i < partition[r - 1])
+      --r;
+    while (r + 1 < world_size and i >= partition[r])
+      ++r;
+    return r;
   }
 };

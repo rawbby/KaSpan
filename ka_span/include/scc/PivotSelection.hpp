@@ -6,6 +6,7 @@
 #include <scc/Common.hpp>
 #include <util/Arithmetic.hpp>
 #include <util/MpiTuple.hpp>
+#include <util/ScopeGuard.hpp>
 
 #include <kamping/collectives/allreduce.hpp>
 #include <kamping/communicator.hpp>

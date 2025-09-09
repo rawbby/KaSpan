@@ -1,6 +1,7 @@
 #pragma once
 
 #include <scc/GraphReduction.hpp>
+#include <graph/Graph.hpp>
 #include <scc/PivotSelection.hpp>
 #include <scc/SyncForwardBackwardSearch.hpp>
 #include <scc/color_propagation.h>
@@ -22,34 +23,24 @@
 
 template<WorldPartitionConcept Partition>
 VoidResult
-scc_detection(kamping::Communicator<>& comm, DistributedGraph<Partition> const& graph)
+scc_detection(kamping::Communicator<>& comm, DistributedGraph<Partition> const& graph, U64Buffer& scc_id)
 {
   // scc id contains per local node an id that maps it to an scc
-  RESULT_TRY(auto scc_id, U64Buffer::create(graph.partition.n));
   std::ranges::fill(scc_id.range(), SCC_ID_UNDECIDED);
 
-  // frontier is an communicator that abstracts communication for forward and backward searches
   RESULT_TRY(auto frontier, SyncFrontierComm<Partition>::create(comm));
-  // forward-reached is an intermediate result from the forward search used by the backward search
   RESULT_TRY(auto fw_reached, BitBuffer::create(graph.partition.size()));
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  //RESULT_TRY(auto edge_comm, SyncEdgeComm<Partition>::create(comm));
 
   /* single run to remove huge component */
   {
-    // await all ranks before starting the timer
+    trim_1_first(graph, scc_id);
 
-    // 1. trim_1 and sync scc_id
-    trim_1_first_and_sync(comm, graph, scc_id);
-
-    // 2. find the pivot across all ranks
+    // run forward backwards search
     auto const root = pivot_selection(comm, graph, scc_id);
-
-    // 3. forward reachability
     sync_forward_search(comm, graph, frontier, scc_id, fw_reached, root);
-    frontier.clear(); // clear for reuse
-
-    // 4. backward reachability
+    frontier.clear();
     sync_backward_search(comm, graph, frontier, scc_id, fw_reached, root);
   }
 
@@ -62,7 +53,7 @@ scc_detection(kamping::Communicator<>& comm, DistributedGraph<Partition> const& 
 
     // // 6. build reduced global graph
     // // (it is expected that the graph is now a lot smaller)
-    // gfq_origin(comm, graph, scc_id, small_queue, vert_map, sub_fw_beg, sub_fw_csr, sub_bw_beg, sub_bw_csr);
+    gfq_origin(comm, graph, scc_id);
 
     // auto const sub_v_count = front_comm[comm.rank()];
     // if (sub_v_count > 0) {

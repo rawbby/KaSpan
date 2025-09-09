@@ -3,22 +3,31 @@
 #include <buffer/Buffer.hpp>
 #include <graph/Partition.hpp>
 #include <util/ErrorCode.hpp>
+#include <util/MpiTuple.hpp>
 
+#include <kamping/collectives/allreduce.hpp>
 #include <kamping/collectives/alltoall.hpp>
 #include <kamping/communicator.hpp>
+#include <stxxl/bits/stream/sort_stream.h>
 
-template<WorldPartitionConcept Partition>
-class SyncEdgeComm
+template<class Impl>
+class SyncAlltoallvBase
 {
-  using Payload = MpiTupleType<u64, u64>; // (u, v)
-
 public:
-  SyncEdgeComm()  = default;
-  ~SyncEdgeComm() = default;
+  using Payload = Impl::Payload;
 
-  SyncEdgeComm(SyncEdgeComm const&) = delete;
-  SyncEdgeComm(SyncEdgeComm&& rhs) noexcept
+  SyncAlltoallvBase()  = default;
+  ~SyncAlltoallvBase() = default;
+
+  explicit SyncAlltoallvBase(Impl impl)
+    : impl_(std::move(impl))
   {
+  }
+
+  SyncAlltoallvBase(SyncAlltoallvBase const&) = delete;
+  SyncAlltoallvBase(SyncAlltoallvBase&& rhs) noexcept
+  {
+    impl_ = std::move(rhs.impl_);
     std::swap(recv_buf_, rhs.recv_buf_);
     recv_counts_ = std::move(rhs.recv_counts_);
     recv_displs_ = std::move(rhs.recv_displs_);
@@ -27,10 +36,11 @@ public:
     send_displs_ = std::move(rhs.send_displs_);
   }
 
-  auto operator=(SyncEdgeComm const&) -> SyncEdgeComm& = delete;
-  auto operator=(SyncEdgeComm&& rhs) noexcept -> SyncEdgeComm&
+  auto operator=(SyncAlltoallvBase const&) -> SyncAlltoallvBase& = delete;
+  auto operator=(SyncAlltoallvBase&& rhs) noexcept -> SyncAlltoallvBase&
   {
     if (this != &rhs) [[likely]] {
+      impl_ = std::move(rhs.impl_);
       std::swap(recv_buf_, rhs.recv_buf_);
       recv_counts_ = std::move(rhs.recv_counts_);
       recv_displs_ = std::move(rhs.recv_displs_);
@@ -41,42 +51,41 @@ public:
     return *this;
   }
 
-  static auto create(kamping::Communicator<> const& comm) -> Result<SyncEdgeComm>
+  static auto create(kamping::Communicator<> const& comm, Impl impl) -> Result<SyncAlltoallvBase>
   {
-    SyncEdgeComm result{};
+    SyncAlltoallvBase result{ std::move(impl) };
     RESULT_TRY(result.recv_counts_, I32Buffer::zeroes(comm.size()));
     RESULT_TRY(result.recv_displs_, I32Buffer::create(comm.size()));
     RESULT_TRY(result.send_counts_, I32Buffer::zeroes(comm.size()));
     RESULT_TRY(result.send_displs_, I32Buffer::create(comm.size()));
-
-    // these two are ALWAYS zero and will never change
     result.recv_displs_[0] = 0;
     result.send_displs_[0] = 0;
-
     return result;
   }
 
   void clear()
   {
-    // now prepare send buffer and send counts for next iteration
     send_buf_.clear();
     std::memset(send_counts_.data(), 0, send_counts_.bytes());
   }
 
-  void push(Partition const& part, Payload payload)
+  void push(Payload payload)
   {
     send_buf_.emplace_back(payload);
-    ++send_counts_[part.world_rank_of(std::get<0>(payload))];
+    ++send_counts_[impl_.world_rank_of(payload)];
   }
 
-  void push_relaxed(kamping::Communicator<> const& comm, Partition const& part, Payload payload)
+  void push_relaxed(Payload payload)
   {
-    auto const rank = part.world_rank_of(std::get<0>(payload));
-    if (rank == comm.rank()) {
+    auto const payload_rank = impl_.world_rank_of(payload);
+
+    if (payload_rank == impl_.world_rank()) {
       recv_buf_.emplace_back(payload);
-    } else {
+    }
+
+    else {
       send_buf_.emplace_back(payload);
-      ++send_counts_[rank];
+      ++send_counts_[payload_rank];
     }
   }
 
@@ -93,23 +102,22 @@ public:
   }
 
   template<bool AutoClear = true>
-  auto communicate(kamping::Communicator<> const& comm, Partition const& part) -> bool
+  auto communicate(kamping::Communicator<> const& comm) -> bool
   {
-    // communicate the message count across all ranks
-    u64 world_message_count = send_buf_.size();
-    MPI_Allreduce(MPI_IN_PLACE, &world_message_count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+    namespace kmp = kamping;
 
-    // check if there is communication needed
-    if (world_message_count == 0)
-      return false; // finished (no further communication)
+    u64 rmc = send_buf_.size(); // rank message count
+    if (comm.allreduce_single(kmp::send_buf(rmc), kmp::op(MPI_SUM)) == 0)
+      return false; // world message count == 0
 
-    // collect recv counts from other ranks
-    MPI_Alltoall(send_counts_.data(), 1, MPI_INT32_T, recv_counts_.data(), 1, MPI_INT32_T, MPI_COMM_WORLD);
+    comm.alltoall(
+      kmp::send_buf(send_counts_.range()),
+      kmp::send_count(1),
+      kmp::recv_buf(recv_counts_.range()));
 
     // create prefix sums for send and recv (and compute total recv count)
-    auto const world      = comm.size();
-    u64        recv_count = recv_counts_[0];
-    for (size_t rank = 1; rank < world; ++rank) {
+    u64 recv_count = recv_counts_[0];
+    for (size_t rank = 1; rank < comm.size(); ++rank) {
       send_displs_[rank] = send_displs_[rank - 1] + send_counts_[rank - 1];
       recv_displs_[rank] = recv_displs_[rank - 1] + recv_counts_[rank - 1];
       recv_count += recv_counts_[rank];
@@ -122,23 +130,19 @@ public:
     // inplace sort the send buffer
     size_t index = 0;
     for (size_t bucket = 0; bucket < comm.size(); ++bucket) {
-      // skip already placed elements
       size_t bucket_index = send_displs_[bucket] - index;
       index               = send_displs_[bucket];
-
       while (bucket_index < send_counts_[bucket]) {
-
-        auto const u      = send_buf_[index];
-        auto const rank_u = part.world_rank_of(std::get<0>(u));
-
+        auto const rank_u = impl_.world_rank_of(send_buf_[index]);
         if (bucket == rank_u) {
           ++send_displs_[bucket];
           ++bucket_index;
           ++index;
-        }
-
-        else {
-          std::swap(send_buf_[index], send_buf_[send_displs_[rank_u]++]);
+        } else {
+          auto const lhs = index;
+          auto const rhs = send_displs_[rank_u]++;
+          impl_.swap(lhs, rhs);
+          std::swap(send_buf_[lhs], send_buf_[rhs]);
         }
       }
     }
@@ -148,11 +152,15 @@ public:
       send_displs_[r] -= send_counts_[r];
 
     // now we are ready to send
-    auto const* send_counts = send_counts_.range().data();
-    auto const* send_displs = send_displs_.range().data();
-    auto const* recv_counts = recv_counts_.range().data();
-    auto const* recv_displs = recv_displs_.range().data();
-    MPI_Alltoallv(send_buf_.data(), send_counts, send_displs, MPI_UINT64_T, recv_buf_.data() + recv_buf_offest, recv_counts, recv_displs, MPI_UINT64_T, MPI_COMM_WORLD);
+    comm.alltoallv(
+      kmp::send_buf(send_buf_),
+      kmp::send_type(payload_type_container_.get()),
+      kmp::send_counts(send_counts_.range()),
+      kmp::send_displs(send_displs_.range()),
+      kmp::recv_buf(std::span{ recv_buf_ }.last(recv_count)),
+      kmp::recv_type(payload_type_container_.get()),
+      kmp::recv_counts(recv_counts_.range()),
+      kmp::recv_displs(recv_displs_.range()));
 
     // now prepare send buffer and send counts for next iteration
     if (AutoClear)
@@ -162,16 +170,17 @@ public:
   }
 
   // clang-format off
-  [[nodiscard]] auto recv_buf() const -> std::vector<Payload> const & { return recv_buf_; }
+  [[nodiscard]] auto recv_buf() const -> std::span<Payload const> { return { recv_buf_ }; }
   [[nodiscard]] auto recv_counts() const -> std::span<i32 const> { return recv_counts_.range(); }
   [[nodiscard]] auto recv_displs() const -> std::span<i32 const> { return recv_displs_.range(); }
-  [[nodiscard]] auto send_buf() const -> std::vector<Payload> const & { return send_buf_; }
+  [[nodiscard]] auto send_buf() const -> std::span<Payload const> { return { send_buf_ }; }
   [[nodiscard]] auto send_counts() const -> std::span<i32 const> { return send_counts_.range(); }
   [[nodiscard]] auto send_displs() const -> std::span<i32 const> { return send_displs_.range(); }
   // clang-format on
 
 private:
-  MpiTypeContainer<Payload> payload_type_container;
+  Impl                      impl_;
+  MpiTypeContainer<Payload> payload_type_container_;
 
   std::vector<Payload> recv_buf_;    // local frontier
   I32Buffer            recv_counts_; // number of messages to recv per rank
@@ -180,4 +189,41 @@ private:
   std::vector<Payload> send_buf_;    // messages to send
   I32Buffer            send_counts_; // number of messages to send per rank
   I32Buffer            send_displs_; // prefix sums of send_counts
+};
+
+template<WorldPartitionConcept Partition>
+class SyncEdgeComm
+{
+public:
+  using Payload = MpiTupleType<u64, u64>;
+  static_assert(requires { requires MpiTupleConcept<Payload>; } or requires { requires MpiBasicConcept<Payload>; });
+
+  SyncEdgeComm()  = default;
+  ~SyncEdgeComm() = default;
+
+  explicit SyncEdgeComm(Partition partition)
+    : partition_(partition)
+  {
+  }
+
+  SyncEdgeComm(SyncEdgeComm const&) = default;
+  SyncEdgeComm(SyncEdgeComm&&)      = default;
+
+  auto operator=(SyncEdgeComm const&) -> SyncEdgeComm& = default;
+  auto operator=(SyncEdgeComm&&) -> SyncEdgeComm&      = default;
+
+  auto world_rank() const -> size_t
+  {
+    return partition_.rank();
+  }
+
+  auto world_rank_of(Payload payload) const -> size_t
+  {
+    return partition_.world_rank_of(std::get<0>(payload));
+  }
+
+  void swap(size_t /* i */, size_t /* j */) const {}
+
+private:
+  Partition partition_;
 };
