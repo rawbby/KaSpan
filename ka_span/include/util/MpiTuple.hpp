@@ -32,11 +32,10 @@ using MpiTupleType = std::tuple<Ts...>;
 
 template<typename T>
 concept MpiTupleConcept =
-  requires {
-  typename std::tuple_size<T>::type; } and
+  requires { typename std::tuple_size<T>::type; } and
   (0 < std::tuple_size_v<T>) and
   ([]<size_t... Is>(std::index_sequence<Is...>) {
-  return (MpiBasicConcept<std::tuple_element_t<Is, T>> and ...);
+    return (MpiBasicConcept<std::tuple_element_t<Is, T>> and ...);
   }(std::make_index_sequence<std::tuple_size_v<T>>{}));
 
 template<MpiTupleConcept T, size_t I = 0>
@@ -181,15 +180,16 @@ public:
   MpiTypeContainer(MpiTypeContainer const&) = delete;
   MpiTypeContainer(MpiTypeContainer&&)      = default;
 
-  auto operator=(MpiTypeContainer const&)->MpiTypeContainer& = delete;
-  auto operator=(MpiTypeContainer&&)->MpiTypeContainer&      = default;
+  auto operator=(MpiTypeContainer const&) -> MpiTypeContainer& = delete;
+  auto operator=(MpiTypeContainer&&) -> MpiTypeContainer&      = default;
 
   [[nodiscard]] auto get() const -> MPI_Datatype
   {
     if constexpr (MpiTupleConcept<T>) {
       return datatype_;
+    } else {
+      return MpiBasicType<T>;
     }
-    return MpiBasicType<T>;
   }
 
 private:
