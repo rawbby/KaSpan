@@ -5,7 +5,7 @@
 #include <graph/Manifest.hpp>
 #include <graph/Partition.hpp>
 #include <util/Arithmetic.hpp>
-#include <util/ErrorCode.hpp>
+#include <util/Result.hpp>
 
 #include <cstring>
 #include <filesystem>

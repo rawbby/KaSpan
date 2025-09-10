@@ -2,7 +2,7 @@
 
 #include <buffer/Buffer.hpp>
 #include <graph/Partition.hpp>
-#include <util/ErrorCode.hpp>
+#include <util/Result.hpp>
 
 #include <kamping/collectives/alltoall.hpp>
 #include <kamping/communicator.hpp>

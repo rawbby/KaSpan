@@ -2,8 +2,9 @@
 
 #include <buffer/Buffer.hpp>
 #include <graph/Partition.hpp>
-#include <util/ErrorCode.hpp>
-#include <util/MpiTuple.hpp>
+#include <util/Result.hpp>
+#include <comm/MpiBasic.hpp>
+#include <graph/Edge.hpp>
 
 #include <kamping/collectives/allreduce.hpp>
 #include <kamping/collectives/alltoall.hpp>
@@ -26,27 +27,27 @@ public:
 
   SyncAlltoallvBase(SyncAlltoallvBase const&) = delete;
   SyncAlltoallvBase(SyncAlltoallvBase&& rhs) noexcept
+    : impl_(std::move(rhs.impl_))
+    , recv_buf_(std::move(rhs.recv_buf_))
+    , recv_counts_(std::move(rhs.recv_counts_))
+    , recv_displs_(std::move(rhs.recv_displs_))
+    , send_buf_(std::move(rhs.send_buf_))
+    , send_counts_(std::move(rhs.send_counts_))
+    , send_displs_(std::move(rhs.send_displs_))
   {
-    impl_ = std::move(rhs.impl_);
-    std::swap(recv_buf_, rhs.recv_buf_);
-    recv_counts_ = std::move(rhs.recv_counts_);
-    recv_displs_ = std::move(rhs.recv_displs_);
-    std::swap(send_buf_, rhs.send_buf_);
-    send_counts_ = std::move(rhs.send_counts_);
-    send_displs_ = std::move(rhs.send_displs_);
   }
 
   auto operator=(SyncAlltoallvBase const&) -> SyncAlltoallvBase& = delete;
   auto operator=(SyncAlltoallvBase&& rhs) noexcept -> SyncAlltoallvBase&
   {
     if (this != &rhs) [[likely]] {
-      impl_ = std::move(rhs.impl_);
-      std::swap(recv_buf_, rhs.recv_buf_);
-      recv_counts_ = std::move(rhs.recv_counts_);
-      recv_displs_ = std::move(rhs.recv_displs_);
-      std::swap(send_buf_, rhs.send_buf_);
-      send_counts_ = std::move(rhs.send_counts_);
-      send_displs_ = std::move(rhs.send_displs_);
+      impl_          = std::move(rhs.impl_);
+      recv_buf_      = std::move(rhs.recv_buf_);
+      recv_counts_   = std::move(rhs.recv_counts_);
+      recv_displs_   = std::move(rhs.recv_displs_);
+      send_buf_      = std::move(rhs.send_buf_);
+      send_counts_   = std::move(rhs.send_counts_);
+      send_displs_   = std::move(rhs.send_displs_);
     }
     return *this;
   }
@@ -154,11 +155,9 @@ public:
     // now we are ready to send
     comm.alltoallv(
       kmp::send_buf(send_buf_),
-      kmp::send_type(payload_type_container_.get()),
       kmp::send_counts(send_counts_.range()),
       kmp::send_displs(send_displs_.range()),
       kmp::recv_buf(std::span{ recv_buf_ }.last(recv_count)),
-      kmp::recv_type(payload_type_container_.get()),
       kmp::recv_counts(recv_counts_.range()),
       kmp::recv_displs(recv_displs_.range()));
 
@@ -180,7 +179,6 @@ public:
 
 private:
   Impl                      impl_;
-  MpiTypeContainer<Payload> payload_type_container_;
 
   std::vector<Payload> recv_buf_;    // local frontier
   I32Buffer            recv_counts_; // number of messages to recv per rank
@@ -195,8 +193,7 @@ template<WorldPartitionConcept Partition>
 class SyncEdgeComm
 {
 public:
-  using Payload = MpiTupleType<u64, u64>;
-  static_assert(requires { requires MpiTupleConcept<Payload>; } or requires { requires MpiBasicConcept<Payload>; });
+  using Payload = Edge;
 
   SyncEdgeComm()  = default;
   ~SyncEdgeComm() = default;
@@ -214,12 +211,48 @@ public:
 
   auto world_rank() const -> size_t
   {
-    return partition_.rank();
+    return partition_.world_rank;
+  }
+
+  auto world_rank_of(Edge payload) const -> size_t
+  {
+    return partition_.world_rank_of(payload.u);
+  }
+
+  void swap(size_t /* i */, size_t /* j */) const {}
+
+private:
+  Partition partition_;
+};
+
+template<WorldPartitionConcept Partition>
+class SyncFrontier
+{
+public:
+  using Payload = u64;
+
+  SyncFrontier()  = default;
+  ~SyncFrontier() = default;
+
+  explicit SyncFrontier(Partition partition)
+    : partition_(partition)
+  {
+  }
+
+  SyncFrontier(SyncFrontier const&) = default;
+  SyncFrontier(SyncFrontier&&)      = default;
+
+  auto operator=(SyncFrontier const&) -> SyncFrontier& = default;
+  auto operator=(SyncFrontier&&) -> SyncFrontier&      = default;
+
+  auto world_rank() const -> size_t
+  {
+    return partition_.world_rank;
   }
 
   auto world_rank_of(Payload payload) const -> size_t
   {
-    return partition_.world_rank_of(std::get<0>(payload));
+    return partition_.world_rank_of(payload);
   }
 
   void swap(size_t /* i */, size_t /* j */) const {}

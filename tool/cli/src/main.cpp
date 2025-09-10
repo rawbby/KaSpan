@@ -8,8 +8,8 @@
 
 #include <mpi.h>
 
-VoidResult
-run(int argc, char** argv)
+auto
+run(int argc, char** argv) -> VoidResult
 {
   ASSERT_TRY(argc == 2, IO_ERROR, "Usage: ./scc_cpu <manifest>");
 

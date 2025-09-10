@@ -4,7 +4,7 @@
 // ReSharper disable CppDFAUnreachableCode
 
 #include <test/Assert.hpp>
-#include <util/ErrorCode.hpp>
+#include <util/Result.hpp>
 
 #include <string>
 #include <utility>

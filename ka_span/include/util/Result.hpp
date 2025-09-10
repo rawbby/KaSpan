@@ -1,5 +1,6 @@
 #pragma once
 
+#include <pp/PP.hpp>
 #include <util/Arithmetic.hpp>
 
 #include <cassert>
@@ -187,26 +188,25 @@ public:
   if (!(TMP)) {                     \
     return (TMP).error();           \
   }                                 \
-  VAR = std::move((TMP).value()); \
+  VAR = std::move((TMP).value());   \
   ((void)0)
 #define RESULT_TRY(...)                                         \
   RESULT_TRY_DISPATCH_(__VA_ARGS__, RESULT_TRY3, RESULT_TRY2, ) \
   (__VA_ARGS__, RESULT_TRY_CAT_(tmp, __COUNTER__))
 
-#define ASSERT_TRY_DISPATCH_(_1, _2, _3, NAME, ...) NAME
-#define ASSERT_TRY2(COND, ERROR_CODE)                    \
+#define ASSERT_TRY_2(COND, ERROR_CODE)                    \
   if (not(COND)) { /* NOLINT(*-simplify-boolean-expr) */ \
     return (ErrorCode::ERROR_CODE);                      \
   }                                                      \
   ((void)0)
-#define ASSERT_TRY3(COND, ERROR_CODE, ERROR_STRING)      \
+#define ASSERT_TRY_3(COND, ERROR_CODE, ERROR_STRING)      \
   if (not(COND)) { /* NOLINT(*-simplify-boolean-expr) */ \
     perror(ERROR_STRING);                                \
     return (ErrorCode::ERROR_CODE);                      \
   }                                                      \
   ((void)0)
-#define ASSERT_TRY(...)                                          \
-  ASSERT_TRY_DISPATCH_(__VA_ARGS__, ASSERT_TRY3, ASSERT_TRY2, _) \
-  (__VA_ARGS__)
+#define ASSERT_TRY_N(N, ...) ASSERT_TRY_##N(__VA_ARGS__)
+#define ASSERT_TRY_IMPL(N, ...) ASSERT_TRY_N(N, __VA_ARGS__)
+#define ASSERT_TRY(...) ASSERT_TRY_IMPL(ARGS_SIZE(__VA_ARGS__), __VA_ARGS__)
 
 using VoidResult = Result<std::monostate>;

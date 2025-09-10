@@ -1,13 +1,14 @@
 #pragma once
 
+#include <util/Arithmetic.hpp>
+#include <comm/MpiBasic.hpp>
+
 #include <mpi.h>
 
-#define SCC_ID_T MPI_UINT64_T
-#define SCC_ID_REDUCE_OP MPI_MIN
+using scc_id_t = u64;
 
-#define SCC_ID_UNDECIDED UINT64_MAX
-#define SCC_ID_SINGLE (UINT64_MAX - 1)
-// #define SCC_ID_DOUBLE (UINT64_MAX - 2)
-// #define SCC_ID_TRIPLE (UINT64_MAX - 3)
-// #define SCC_ID_QUADRUPLE (UINT64_MAX - 4)
-#define SCC_ID_MAX (UINT64_MAX - 2)
+constexpr auto scc_id_undecided = std::numeric_limits<scc_id_t>::max();
+constexpr auto scc_id_singular  = scc_id_undecided - 1;
+
+constexpr auto mpi_scc_id_t         = mpi_basic_type<scc_id_t>;
+constexpr auto mpi_scc_id_reduction = MPI_MIN;
