@@ -23,8 +23,6 @@ main(int argc, char** argv)
   auto result = SyncAlltoallvBase<decltype(impl)>::create(comm, impl);
   ASSERT(result.has_value());
 
-  static_assert(MpiTupleConcept<MpiTupleType<u64, u64>>);
-
   auto edge_comm = std::move(result.value());
 
   for (size_t i = 0; i < comm.size(); ++i)

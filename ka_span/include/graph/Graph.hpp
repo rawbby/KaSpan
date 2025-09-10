@@ -5,7 +5,7 @@
 #include <graph/Manifest.hpp>
 #include <graph/Partition.hpp>
 #include <util/Arithmetic.hpp>
-#include <util/ErrorCode.hpp>
+#include <util/Result.hpp>
 #include <util/Util.hpp>
 
 #include <cstring>
@@ -23,9 +23,9 @@ struct Graph
   U64Buffer fw_csr;
   U64Buffer bw_csr;
 
-  Graph(u64 node_count, u64 edge_count)
-    : n(node_count)
-    , m(edge_count)
+  Graph(u64 n, u64 m)
+    : n(n)
+    , m(m)
   {
   }
 

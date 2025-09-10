@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ispan/util.hpp>
+#include <util/Time.hpp>
 
 #include <cassert>
 #include <cstdio>

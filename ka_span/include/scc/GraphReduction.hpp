@@ -19,7 +19,7 @@ gfq_origin(
 
   u64 local_active_n = 0;
   for (u64 k = 0; k < graph.partition.size(); ++k)
-    if (scc_id[k] == SCC_ID_UNDECIDED)
+    if (scc_id[k] == scc_id_undecided)
       ++local_active_n;
 
   auto const global_active_n = comm.allreduce_single(kamping::send_buf(local_active_n), kamping::op(MPI_SUM));

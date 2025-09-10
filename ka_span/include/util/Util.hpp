@@ -1,6 +1,6 @@
 #pragma once
 
-#include <util/ErrorCode.hpp>
+#include <util/Result.hpp>
 
 #include <algorithm>
 #include <cerrno>

@@ -1,17 +1,21 @@
 #pragma once
 
+#include <comm/MpiBasic.hpp>
 #include <util/Arithmetic.hpp>
-#include <util/MpiTuple.hpp>
 
 #include <limits>
 
-using Edge = MpiTupleType<u64, u64>;
+struct Edge
+{
+  u64 u;
+  u64 v;
+};
 
 struct EdgeLess
 {
   constexpr auto operator()(Edge const& lhs, Edge const& rhs) const noexcept -> bool
   {
-    return mpi_tuple_lt(lhs, rhs);
+    return lhs.u < rhs.u or (lhs.u == rhs.u and lhs.v < rhs.v);
   }
 
   static constexpr auto min_value() -> Edge

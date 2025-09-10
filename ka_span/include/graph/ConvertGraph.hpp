@@ -2,7 +2,7 @@
 
 #include <buffer/Buffer.hpp>
 #include <graph/Edge.hpp>
-#include <util/ErrorCode.hpp>
+#include <util/Result.hpp>
 #include <util/Util.hpp>
 
 #include <algorithm>

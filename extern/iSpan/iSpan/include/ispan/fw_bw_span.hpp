@@ -1,12 +1,11 @@
 #pragma once
 
-#include "test/Assert.hpp"
-
-#include <cstring>
+#include <comm/MpiBasic.hpp>
 #include <ispan/util.hpp>
-#include <util/MpiTuple.hpp>
+#include <test/Assert.hpp>
 #include <util/ScopeGuard.hpp>
 
+#include <cstring>
 #include <iostream>
 #include <mpi.h>
 #include <set>
@@ -118,7 +117,7 @@ fw_span(
 
       // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, fw_sa, n, MpiBasicType<decltype(*fw_sa)>,
+        MPI_IN_PLACE, fw_sa, n, mpi_basic_type<decltype(*fw_sa)>,
         MPI_MAX, MPI_COMM_WORLD);
       // clang-format on
 
@@ -130,14 +129,14 @@ fw_span(
 
       // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, &next_work, 1, MpiBasicType<decltype(next_work)>,
+        MPI_IN_PLACE, &next_work, 1, mpi_basic_type<decltype(next_work)>,
         MPI_SUM, MPI_COMM_WORLD);
       // clang-format on
     }
 
     // clang-format off
     MPI_Allreduce(
-      MPI_IN_PLACE, &front_count, 1, MpiBasicType<decltype(front_count)>,
+      MPI_IN_PLACE, &front_count, 1, mpi_basic_type<decltype(front_count)>,
       MPI_SUM, MPI_COMM_WORLD);
     // clang-format on
 
@@ -145,7 +144,7 @@ fw_span(
 
       // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, fw_sa, n, MpiBasicType<decltype(*fw_sa)>,
+        MPI_IN_PLACE, fw_sa, n, mpi_basic_type<decltype(*fw_sa)>,
         MPI_MAX, MPI_COMM_WORLD);
       // clang-format on
 
@@ -159,8 +158,8 @@ fw_span(
 
       // clang-format off
       MPI_Allgather(
-        /* send: */ fw_sa + local_beg, step, MpiBasicType<decltype(*fw_sa)>,
-        /* recv: */ fw_sa, step, MpiBasicType<decltype(*fw_sa)>,
+        /* send: */ fw_sa + local_beg, step, mpi_basic_type<decltype(*fw_sa)>,
+        /* recv: */ fw_sa, step, mpi_basic_type<decltype(*fw_sa)>,
         /* comm: */ MPI_COMM_WORLD);
       // clang-format on
     }
@@ -174,7 +173,7 @@ fw_span(
 
         // clang-format off
         MPI_Allreduce(
-          MPI_IN_PLACE, sa_compress, s, MpiBasicType<decltype(*sa_compress)>,
+          MPI_IN_PLACE, sa_compress, s, mpi_basic_type<decltype(*sa_compress)>,
           MPI_BOR, MPI_COMM_WORLD);
         // clang-format on
 
@@ -192,14 +191,14 @@ fw_span(
         // clang-format off
         // option 1:
         // MPI_Allgather(
-        //   &rank_count, 1, MpiBasicType<decltype(rank_count)>,
-        //   front_comm, 1, MpiBasicType<decltype(*front_comm)>,
+        //   &rank_count, 1, mpi_basic_type<decltype(rank_count)>,
+        //   front_comm, 1, mpi_basic_type<decltype(*front_comm)>,
         //   MPI_COMM_WORLD);
         // option 2:
         memset(front_comm, 0, world_size * sizeof(*front_comm));
         front_comm[world_rank] = rank_count;
         MPI_Allreduce(
-          MPI_IN_PLACE, front_comm, world_size, MpiBasicType<decltype(*front_comm)>,
+          MPI_IN_PLACE, front_comm, world_size, mpi_basic_type<decltype(*front_comm)>,
           MPI_MAX, MPI_COMM_WORLD);
         // clang-format on
 
@@ -209,7 +208,7 @@ fw_span(
 
             // clang-format off
             MPI_Isend(
-              fq_comm, front_comm[world_rank], MpiBasicType<decltype(*fq_comm)>,
+              fq_comm, front_comm[world_rank], mpi_basic_type<decltype(*fq_comm)>,
               i, 0, MPI_COMM_WORLD, &request);
             // clang-format on
 
@@ -222,7 +221,7 @@ fw_span(
 
             // clang-format off
             MPI_Recv(
-              fq_comm + fq_begin, front_comm[i], MpiBasicType<decltype(*fq_comm)>,
+              fq_comm + fq_begin, front_comm[i], mpi_basic_type<decltype(*fq_comm)>,
               i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             // clang-format on
 
@@ -353,7 +352,7 @@ bw_span(
 
       // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, scc_id, n, MpiBasicType<decltype(*scc_id)>,
+        MPI_IN_PLACE, scc_id, n, mpi_basic_type<decltype(*scc_id)>,
         MPI_MAX, MPI_COMM_WORLD);
       // clang-format on
 
@@ -363,7 +362,7 @@ bw_span(
 
     // clang-format off
     MPI_Allreduce(
-      MPI_IN_PLACE, &front_count, 1, MpiBasicType<decltype(front_count)>,
+      MPI_IN_PLACE, &front_count, 1, mpi_basic_type<decltype(front_count)>,
       MPI_SUM, MPI_COMM_WORLD);
     // clang-format on
 
@@ -371,7 +370,7 @@ bw_span(
 
       // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, &next_work, 1, MpiBasicType<decltype(next_work)>,
+        MPI_IN_PLACE, &next_work, 1, mpi_basic_type<decltype(next_work)>,
         MPI_SUM, MPI_COMM_WORLD);
       // clang-format on
     }
@@ -379,7 +378,7 @@ bw_span(
 
       // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, scc_id, n, MpiBasicType<decltype(*scc_id)>,
+        MPI_IN_PLACE, scc_id, n, mpi_basic_type<decltype(*scc_id)>,
         MPI_MAX, MPI_COMM_WORLD);
       // clang-format on
 
@@ -392,8 +391,8 @@ bw_span(
 
       // clang-format off
       MPI_Allgather(
-        /* send: */ bw_sa + local_beg, step, MpiBasicType<decltype(*bw_sa)>,
-        /* recv: */ bw_sa, step, MpiBasicType<decltype(*bw_sa)>,
+        /* send: */ bw_sa + local_beg, step, mpi_basic_type<decltype(*bw_sa)>,
+        /* recv: */ bw_sa, step, mpi_basic_type<decltype(*bw_sa)>,
         /* comm: */ MPI_COMM_WORLD);
       // clang-format on
     }
@@ -407,7 +406,7 @@ bw_span(
 
         // clang-format off
         MPI_Allreduce(
-          MPI_IN_PLACE, sa_compress, s, MpiBasicType<decltype(*sa_compress)>,
+          MPI_IN_PLACE, sa_compress, s, mpi_basic_type<decltype(*sa_compress)>,
           MPI_BOR, MPI_COMM_WORLD);
         // clang-format on
 
@@ -428,14 +427,14 @@ bw_span(
         // clang-format off
         // option 1:
         // MPI_Allgather(
-        //   &rank_count, 1, MpiBasicType<decltype(rank_count)>,
-        //   front_comm, 1, MpiBasicType<decltype(*front_comm)>,
+        //   &rank_count, 1, mpi_basic_type<decltype(rank_count)>,
+        //   front_comm, 1, mpi_basic_type<decltype(*front_comm)>,
         //   MPI_COMM_WORLD);
         // option 2:
         memset(front_comm, 0, world_size * sizeof(*front_comm));
         front_comm[world_rank] = rank_count;
         MPI_Allreduce(
-          MPI_IN_PLACE, front_comm, world_size, MpiBasicType<decltype(*front_comm)>,
+          MPI_IN_PLACE, front_comm, world_size, mpi_basic_type<decltype(*front_comm)>,
           MPI_MAX, MPI_COMM_WORLD);
         // clang-format on
 
@@ -445,7 +444,7 @@ bw_span(
 
             // clang-format off
             MPI_Isend(
-              fq_comm, front_comm[world_rank], MpiBasicType<decltype(*fq_comm)>,
+              fq_comm, front_comm[world_rank], mpi_basic_type<decltype(*fq_comm)>,
               i, 0, MPI_COMM_WORLD, &request);
             // clang-format on
 
@@ -458,7 +457,7 @@ bw_span(
 
             // clang-format off
             MPI_Recv(
-              fq_comm + fq_begin, front_comm[i], MpiBasicType<decltype(*fq_comm)>,
+              fq_comm + fq_begin, front_comm[i], mpi_basic_type<decltype(*fq_comm)>,
               i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             // clang-format on
 

@@ -1,15 +1,13 @@
 #pragma once
 
 #include <buffer/Buffer.hpp>
-#include <util/Debug.hpp>
-#include <util/ErrorCode.hpp>
+#include <util/Result.hpp>
 
 namespace internal {
 
 inline auto
 memory_copy_bytes(std::span<byte> dst, std::span<byte const> src) -> VoidResult
 {
-  DEBUG_ASSERT_TRY(dst.size_bytes() == src.size_bytes(), ASSUMPTION_ERROR);
   std::memcpy(dst.data(), src.data(), std::min(dst.size_bytes(), src.size_bytes()));
   return VoidResult::success();
 }
@@ -18,7 +16,6 @@ template<IntConcept Int>
 auto
 memory_copy_ints(std::span<Int> dst, std::span<Int const> src) -> VoidResult
 {
-  DEBUG_ASSERT_TRY(dst.size_bytes() == src.size_bytes(), ASSUMPTION_ERROR);
   std::memcpy(dst.data(), src.data(), std::min(dst.size_bytes(), src.size_bytes()));
   return VoidResult::success();
 }
@@ -28,7 +25,6 @@ template<IndirectBufferConcept Dst, IndirectBufferConcept Src>
 auto
 copy_indirect(Dst& dst, Src const& src) -> VoidResult
 {
-  DEBUG_ASSERT_TRY(dst.size() == src.size(), ASSUMPTION_ERROR);
   auto const n = std::min(dst.size(), src.size());
   for (size_t i = 0; i < n; ++i)
     dst.set(i, src.get(i));

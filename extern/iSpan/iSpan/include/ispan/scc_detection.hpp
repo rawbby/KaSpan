@@ -1,5 +1,6 @@
 #pragma once
 
+#include <comm/MpiBasic.hpp>
 #include <ispan/fw_bw_span.hpp>
 #include <ispan/get_scc_result.hpp>
 #include <ispan/gfq_origin.hpp>
@@ -11,8 +12,7 @@
 #include <ispan/trim_1_normal.hpp>
 #include <ispan/util.hpp>
 #include <ispan/wcc_detection.hpp>
-
-#include <util/MpiTuple.hpp>
+#include <util/Time.hpp>
 
 #include <algorithm>
 #include <cstdio>
@@ -107,8 +107,8 @@ scc_detection(graph const* g, int alpha, int world_rank, int world_size, std::ve
 
   // clang-format off
   MPI_Allgather(
-    /* send: */ MPI_IN_PLACE, 0, MpiBasicType<decltype(*scc_id)>,
-    /* recv: */ scc_id, step, MpiBasicType<decltype(*scc_id)>,
+    /* send: */ MPI_IN_PLACE, 0, mpi_basic_type<decltype(*scc_id)>,
+    /* recv: */ scc_id, step, mpi_basic_type<decltype(*scc_id)>,
     /* comm: */ MPI_COMM_WORLD);
   // clang-format on
 
@@ -161,7 +161,7 @@ scc_detection(graph const* g, int alpha, int world_rank, int world_size, std::ve
 
   // clang-format off
   MPI_Allreduce(
-    MPI_IN_PLACE, scc_id, n, MpiBasicType<decltype(*scc_id)>,
+    MPI_IN_PLACE, scc_id, n, mpi_basic_type<decltype(*scc_id)>,
     MPI_MAX, MPI_COMM_WORLD);
   // clang-format on
 
@@ -196,7 +196,7 @@ scc_detection(graph const* g, int alpha, int world_rank, int world_size, std::ve
 
     // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, sub_scc_id, sub_n, MpiBasicType<decltype(*sub_scc_id)>,
+        MPI_IN_PLACE, sub_scc_id, sub_n, mpi_basic_type<decltype(*sub_scc_id)>,
         MPI_MAX, MPI_COMM_WORLD);
     // clang-format on
 
