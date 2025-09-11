@@ -8,9 +8,6 @@
 // === TOSTRING ===
 #define TOSTRING(X) STRINGIFY(X)
 
-// === EXPAND ===
-#define EXPAND(X) X
-
 // === CAT ===
 #define CAT_IMPL(A,B) A##B
 #define CAT(A,B) CAT_IMPL(A,B)
@@ -39,25 +36,11 @@
 #define ARGS_SIZE_IMPL(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16,N,...) N
 #define ARGS_SIZE(...) ARGS_SIZE_IMPL(__VA_OPT__(__VA_ARGS__,)16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0)
 
+// === ARGS_SIZE ===
+#define ARGS_EMPTY(...) NOT(BOOL(CAT(__VA_OPT__(1),0)))
+
 // === ARGS_TO_TUPLE ===
-#define ARGS_TO_TUPLE_0() ()
-#define ARGS_TO_TUPLE_1(_1) (_1)
-#define ARGS_TO_TUPLE_2(_1,_2) (_1,_2)
-#define ARGS_TO_TUPLE_3(_1,_2,_3) (_1,_2,_3)
-#define ARGS_TO_TUPLE_4(_1,_2,_3,_4) (_1,_2,_3,_4)
-#define ARGS_TO_TUPLE_5(_1,_2,_3,_4,_5) (_1,_2,_3,_4,_5)
-#define ARGS_TO_TUPLE_6(_1,_2,_3,_4,_5,_6) (_1,_2,_3,_4,_5,_6)
-#define ARGS_TO_TUPLE_7(_1,_2,_3,_4,_5,_6,_7) (_1,_2,_3,_4,_5,_6,_7)
-#define ARGS_TO_TUPLE_8(_1,_2,_3,_4,_5,_6,_7,_8) (_1,_2,_3,_4,_5,_6,_7,_8)
-#define ARGS_TO_TUPLE_9(_1,_2,_3,_4,_5,_6,_7,_8,_9) (_1,_2,_3,_4,_5,_6,_7,_8,_9)
-#define ARGS_TO_TUPLE_10(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10) (_1,_2,_3,_4,_5,_6,_7,_8,_9,_10)
-#define ARGS_TO_TUPLE_11(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11) (_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11)
-#define ARGS_TO_TUPLE_12(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12) (_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12)
-#define ARGS_TO_TUPLE_13(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13) (_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13)
-#define ARGS_TO_TUPLE_14(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14) (_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14)
-#define ARGS_TO_TUPLE_15(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15) (_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15)
-#define ARGS_TO_TUPLE_16(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16) (_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16)
-#define ARGS_TO_TUPLE(...) CAT(ARGS_TO_TUPLE_,ARGS_SIZE(__VA_ARGS__))(__VA_ARGS__)
+#define ARGS_TO_TUPLE(...) (ARGS(__VA_ARGS__))
 
 // === ARGS_ELEMENT ===
 #define ARGS_ELEMENT_0(_1,...) _1
@@ -77,6 +60,11 @@
 #define ARGS_ELEMENT_14(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,...) _15
 #define ARGS_ELEMENT_15(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16) _16
 #define ARGS_ELEMENT(N,...) CAT(ARGS_ELEMENT_,N)(__VA_ARGS__)
+
+// === ARGS_TAIL ===
+#define ARGS_TAIL_0(_1,...) __VA_ARGS__
+#define ARGS_TAIL_1()
+#define ARGS_TAIL(...) CAT(ARGS_TAIL_,ARGS_EMPTY(__VA_ARGS__))(__VA_ARGS__)
 
 // === ARGS_FOREACH ===
 #define ARGS_FOREACH_1(F,_1) F(_1)
@@ -133,26 +121,6 @@
 
 // === TUPLE_MAP ===
 #define TUPLE_MAP(M,TUPLE) ARGS_TO_TUPLE(ARGS_MAP(M,ARGS TUPLE))
-
-// === TUPLE_ZIP ===
-#define TUPLE_ZIP_1(_1a,_1b) (_1a,_1b)
-#define TUPLE_ZIP_2(_1a,_2a,_1b,_2b) (_1a,_1b),(_2a,_2b)
-#define TUPLE_ZIP_3(_1a,_2a,_3a,_1b,_2b,_3b) (_1a,_1b),(_2a,_2b),(_3a,_3b)
-#define TUPLE_ZIP_4(_1a,_2a,_3a,_4a,_1b,_2b,_3b,_4b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b)
-#define TUPLE_ZIP_5(_1a,_2a,_3a,_4a,_5a,_1b,_2b,_3b,_4b,_5b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b)
-#define TUPLE_ZIP_6(_1a,_2a,_3a,_4a,_5a,_6a,_1b,_2b,_3b,_4b,_5b,_6b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b),(_6a,_6b)
-#define TUPLE_ZIP_7(_1a,_2a,_3a,_4a,_5a,_6a,_7a,_1b,_2b,_3b,_4b,_5b,_6b,_7b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b),(_6a,_6b),(_7a,_7b)
-#define TUPLE_ZIP_8(_1a,_2a,_3a,_4a,_5a,_6a,_7a,_8a,_1b,_2b,_3b,_4b,_5b,_6b,_7b,_8b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b),(_6a,_6b),(_7a,_7b),(_8a,_8b)
-#define TUPLE_ZIP_9(_1a,_2a,_3a,_4a,_5a,_6a,_7a,_8a,_9a,_1b,_2b,_3b,_4b,_5b,_6b,_7b,_8b,_9b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b),(_6a,_6b),(_7a,_7b),(_8a,_8b),(_9a,_9b)
-#define TUPLE_ZIP_10(_1a,_2a,_3a,_4a,_5a,_6a,_7a,_8a,_9a,_10a,_1b,_2b,_3b,_4b,_5b,_6b,_7b,_8b,_9b,_10b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b),(_6a,_6b),(_7a,_7b),(_8a,_8b),(_9a,_9b),(_10a,_10b)
-#define TUPLE_ZIP_11(_1a,_2a,_3a,_4a,_5a,_6a,_7a,_8a,_9a,_10a,_11a,_1b,_2b,_3b,_4b,_5b,_6b,_7b,_8b,_9b,_10b,_11b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b),(_6a,_6b),(_7a,_7b),(_8a,_8b),(_9a,_9b),(_10a,_10b),(_11a,_11b)
-#define TUPLE_ZIP_12(_1a,_2a,_3a,_4a,_5a,_6a,_7a,_8a,_9a,_10a,_11a,_12a,_1b,_2b,_3b,_4b,_5b,_6b,_7b,_8b,_9b,_10b,_11b,_12b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b),(_6a,_6b),(_7a,_7b),(_8a,_8b),(_9a,_9b),(_10a,_10b),(_11a,_11b),(_12a,_12b)
-#define TUPLE_ZIP_13(_1a,_2a,_3a,_4a,_5a,_6a,_7a,_8a,_9a,_10a,_11a,_12a,_13a,_1b,_2b,_3b,_4b,_5b,_6b,_7b,_8b,_9b,_10b,_11b,_12b,_13b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b),(_6a,_6b),(_7a,_7b),(_8a,_8b),(_9a,_9b),(_10a,_10b),(_11a,_11b),(_12a,_12b),(_13a,_13b)
-#define TUPLE_ZIP_14(_1a,_2a,_3a,_4a,_5a,_6a,_7a,_8a,_9a,_10a,_11a,_12a,_13a,_14a,_1b,_2b,_3b,_4b,_5b,_6b,_7b,_8b,_9b,_10b,_11b,_12b,_13b,_14b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b),(_6a,_6b),(_7a,_7b),(_8a,_8b),(_9a,_9b),(_10a,_10b),(_11a,_11b),(_12a,_12b),(_13a,_13b),(_14a,_14b)
-#define TUPLE_ZIP_15(_1a,_2a,_3a,_4a,_5a,_6a,_7a,_8a,_9a,_10a,_11a,_12a,_13a,_14a,_15a,_1b,_2b,_3b,_4b,_5b,_6b,_7b,_8b,_9b,_10b,_11b,_12b,_13b,_14b,_15b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b),(_6a,_6b),(_7a,_7b),(_8a,_8b),(_9a,_9b),(_10a,_10b),(_11a,_11b),(_12a,_12b),(_13a,_13b),(_14a,_14b),(_15a,_15b)
-#define TUPLE_ZIP_16(_1a,_2a,_3a,_4a,_5a,_6a,_7a,_8a,_9a,_10a,_11a,_12a,_13a,_14a,_15a,_16a,_1b,_2b,_3b,_4b,_5b,_6b,_7b,_8b,_9b,_10b,_11b,_12b,_13b,_14b,_15b,_16b) (_1a,_1b),(_2a,_2b),(_3a,_3b),(_4a,_4b),(_5a,_5b),(_6a,_6b),(_7a,_7b),(_8a,_8b),(_9a,_9b),(_10a,_10b),(_11a,_11b),(_12a,_12b),(_13a,_13b),(_14a,_14b),(_15a,_15b),(_16a,_16b)
-#define TUPLE_ZIP(TUPLE_A,TUPLE_B) CAT(TUPLE_ZIP_,ARGS_SIZE(__VA_ARGS__))(ARGS TUPLE_A,ARGS TUPLE_B)
-
 
 // === PROBE/CHECK ===
 #define PROBE() ~,1
