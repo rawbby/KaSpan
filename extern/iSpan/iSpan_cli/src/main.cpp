@@ -6,7 +6,7 @@
 int
 main(int args, char** argv)
 {
-  if (args != 11) {
+  if (args != 3) {
     std::cout << "Usage: ./scc_cpu <manifest> <alpha>\n";
     exit(-1);
   }
@@ -25,5 +25,4 @@ main(int args, char** argv)
   ASSERT_TRY(auto const graph, Graph::load(manifest));
 
   scc_detection(graph, alpha, world_rank, world_size);
-  MPI_Finalize();
 }

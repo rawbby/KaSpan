@@ -12,8 +12,8 @@
 
 namespace manifest_internal {
 
-inline Result<std::unordered_map<std::string, std::string>>
-parse_kv_map(std::filesystem::path const& file)
+inline auto
+parse_kv_map(std::filesystem::path const& file) -> Result<std::unordered_map<std::string, std::string>>
 {
   std::ifstream in{ file };
   RESULT_ASSERT(in.is_open(), IO_ERROR);
@@ -44,11 +44,11 @@ parse_kv_map(std::filesystem::path const& file)
 
 template<typename T>
   requires requires(char* it, T t) { std::from_chars(it, it, t); }
-Result<T>
-parse_int(std::string_view value_str)
+auto
+parse_int(std::string_view value_str) -> Result<T>
 {
-  auto const begin = value_str.data();
-  auto const end   = begin + value_str.size();
+  auto const* begin = value_str.data();
+  auto const* end   = begin + value_str.size();
 
   T t;
   auto const [ptr, ec] = std::from_chars(begin, end, t);
@@ -60,8 +60,8 @@ parse_int(std::string_view value_str)
   return t;
 }
 
-constexpr Result<bool>
-parse_bool(std::string_view value_str)
+constexpr auto
+parse_bool(std::string_view value_str) -> Result<bool>
 {
   if (value_str.size() == 4) {
     RESULT_ASSERT(value_str[0] == 't', DESERIALIZE_ERROR);
@@ -79,8 +79,8 @@ parse_bool(std::string_view value_str)
   return false;
 }
 
-constexpr Result<std::endian>
-parse_endian(std::string_view value_str)
+constexpr auto
+parse_endian(std::string_view value_str) -> Result<std::endian>
 {
   if (value_str.size() == 6) {
     RESULT_ASSERT(value_str[0] == 'l', DESERIALIZE_ERROR);
@@ -102,26 +102,26 @@ parse_endian(std::string_view value_str)
 
 struct Manifest
 {
-  u32         schema_version{};
+  u32         schema_version = 0;
   std::string graph_code;
   std::string graph_name;
-  std::endian graph_endian;
-  u64         graph_node_count{};
-  u64         graph_edge_count{};
+  std::endian graph_endian     = std::endian::native;
+  u64         graph_node_count = 0;
+  u64         graph_edge_count = 0;
 
-  bool graph_contains_self_loops{};
-  bool graph_contains_duplicate_edges{};
+  bool graph_contains_self_loops      = false;
+  bool graph_contains_duplicate_edges = false;
 
-  size_t graph_head_bytes{};
-  size_t graph_csr_bytes{};
+  size_t graph_head_bytes = 0;
+  size_t graph_csr_bytes  = 0;
 
   std::filesystem::path fw_head_path;
   std::filesystem::path fw_csr_path;
   std::filesystem::path bw_head_path;
   std::filesystem::path bw_csr_path;
 
-  static Result<Manifest>
-  load(std::filesystem::path const& file)
+  static auto
+  load(std::filesystem::path const& file) -> Result<Manifest>
   {
     using namespace manifest_internal;
 
@@ -135,7 +135,7 @@ struct Manifest
     };
     auto const path_from_base = [&base](auto const& p) -> Result<std::filesystem::path> {
       try {
-        auto const full_path = std::filesystem::canonical(base / p);
+        auto full_path = std::filesystem::canonical(base / p);
         RESULT_ASSERT(std::filesystem::is_regular_file(full_path), IO_ERROR);
         return full_path;
       } catch (std::filesystem::filesystem_error const&) {
@@ -176,6 +176,6 @@ struct Manifest
     return manifest;
   }
 
-  bool operator==(Manifest const& other) const = default;
-  bool operator!=(Manifest const& other) const = default;
+  auto operator==(Manifest const& other) const -> bool = default;
+  auto operator!=(Manifest const& other) const -> bool = default;
 };

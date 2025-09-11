@@ -4,3 +4,4 @@
 cmake-build-*/
 __pycache__/
 experiment_data
+graph/

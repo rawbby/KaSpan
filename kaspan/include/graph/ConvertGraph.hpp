@@ -2,6 +2,7 @@
 
 #include <buffer/Buffer.hpp>
 #include <graph/Edge.hpp>
+#include <util/Log.hpp>
 #include <util/Result.hpp>
 #include <util/Util.hpp>
 
@@ -82,7 +83,7 @@ convert_graph(std::string const& input_file,
 
     std::string line;
     while (std::getline(in, line)) {
-      if (line.empty() or line[0] == '%')
+      if (line.empty() or line[0] == '%' or line[0] == '#' or (line[0] == '/' and line[1] == '/'))
         continue;
 
       RESULT_TRY(auto const uv, parse_uv(line));
@@ -152,7 +153,7 @@ convert_graph(std::string const& input_file,
 
     std::string line;
     while (std::getline(in, line)) {
-      if (line.empty() or line[0] == '%')
+      if (line.empty() or line[0] == '%' or line[0] == '#' or (line[0] == '/' and line[1] == '/'))
         continue;
 
       RESULT_TRY(auto const uv, parse_uv(line));
