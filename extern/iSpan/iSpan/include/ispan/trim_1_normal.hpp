@@ -4,9 +4,9 @@
 
 inline void
 trim_1_normal(
-  index_t* scc_id,
-  index_t const* fw_beg,
-  index_t const* bw_beg,
+  VertexBuffer& scc_id,
+  index_t const* fw_head,
+  index_t const* bw_head,
   vertex_t const* fw_csr,
   vertex_t const* bw_csr,
   vertex_t vert_beg,
@@ -14,8 +14,8 @@ trim_1_normal(
 {
   for (vertex_t vert_id = vert_beg; vert_id < vert_end; ++vert_id) {
     if (scc_id[vert_id] == scc_id_undecided) {
-      int my_beg     = fw_beg[vert_id];
-      int my_end     = fw_beg[vert_id + 1];
+      int my_beg     = fw_head[vert_id];
+      int my_end     = fw_head[vert_id + 1];
       index_t      out_degree = 0;
       for (; my_beg < my_end; ++my_beg) {
         index_t w = fw_csr[my_beg];
@@ -29,8 +29,8 @@ trim_1_normal(
         continue;
       }
       index_t in_degree = 0;
-      my_beg            = bw_beg[vert_id];
-      my_end            = bw_beg[vert_id + 1];
+      my_beg            = bw_head[vert_id];
+      my_end            = bw_head[vert_id + 1];
       for (; my_beg < my_end; ++my_beg) {
         index_t w = bw_csr[my_beg];
         if (scc_id[w] == scc_id_undecided && w != vert_id) {

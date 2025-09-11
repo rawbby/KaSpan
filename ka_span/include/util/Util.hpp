@@ -16,7 +16,7 @@ inline auto
 file_size(char const* file) -> Result<u64>
 {
   struct stat st{};
-  ASSERT_TRY(lstat(file, &st) == 0, FILESYSTEM_ERROR);
+  RESULT_ASSERT(lstat(file, &st) == 0, FILESYSTEM_ERROR);
   return static_cast<u64>(st.st_size);
 }
 
@@ -24,8 +24,8 @@ inline auto
 file_size_fd(int fd) -> Result<u64>
 {
   struct stat st{};
-  ASSERT_TRY(fstat(fd, &st) == 0, FILESYSTEM_ERROR);
-  ASSERT_TRY(S_ISREG(st.st_mode), FILESYSTEM_ERROR);
+  RESULT_ASSERT(fstat(fd, &st) == 0, FILESYSTEM_ERROR);
+  RESULT_ASSERT(S_ISREG(st.st_mode), FILESYSTEM_ERROR);
   return static_cast<u64>(st.st_size);
 }
 
@@ -33,7 +33,7 @@ inline auto
 page_count() -> Result<size_t>
 {
   auto const physical_pages = sysconf(_SC_PHYS_PAGES);
-  ASSERT_TRY(physical_pages > 0, IO_ERROR);
+  RESULT_ASSERT(physical_pages > 0, IO_ERROR);
   return static_cast<size_t>(physical_pages);
 }
 
@@ -41,7 +41,7 @@ inline auto
 page_size() -> Result<size_t>
 {
   auto const page_size = sysconf(_SC_PAGESIZE);
-  ASSERT_TRY(page_size > 0, IO_ERROR);
+  RESULT_ASSERT(page_size > 0, IO_ERROR);
   return static_cast<size_t>(page_size);
 }
 
@@ -60,7 +60,7 @@ page_aligned_alloc(size_t bytes) -> Result<void*>
   RESULT_TRY(auto const page_aligned_size, page_aligned_size(bytes));
   RESULT_TRY(auto const page_size, page_size());
   auto const data = std::aligned_alloc(page_size, page_aligned_size);
-  ASSERT_TRY(data, ALLOCATION_ERROR);
+  RESULT_ASSERT(data, ALLOCATION_ERROR);
   return data;
 }
 

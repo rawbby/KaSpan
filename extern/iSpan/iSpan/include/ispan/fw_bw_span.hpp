@@ -6,20 +6,19 @@
 #include <util/ScopeGuard.hpp>
 
 #include <cstring>
-#include <iostream>
 #include <mpi.h>
 #include <set>
 
 inline void
 fw_span(
-  index_t const*  scc_id,
-  index_t const*  fw_beg,
-  index_t const*  bw_beg,
+  vertex_t const*  scc_id,
+  index_t const*  fw_head,
+  index_t const*  bw_head,
   vertex_t const* fw_csr,
   vertex_t const* bw_csr,
   vertex_t        local_beg,
   vertex_t        local_end,
-  signed char*    fw_sa,
+  depth_t*    fw_sa,
   index_t*        front_comm,
   vertex_t        root,
   index_t         world_rank,
@@ -31,7 +30,7 @@ fw_span(
   vertex_t*       fq_comm,
   unsigned int*   sa_compress)
 {
-  signed char level            = 0;
+  depth_t level            = 0;
   fw_sa[root]                  = 0;
   bool       is_top_down       = true;
   bool       is_top_down_queue = false;
@@ -46,15 +45,15 @@ fw_span(
       for (auto u = local_beg; u < local_end; ++u) {
         if (scc_id[u] == scc_id_undecided and fw_sa[u] == level) {
 
-          auto const beg = fw_beg[u];
-          auto const end = fw_beg[u + 1];
+          auto const beg = fw_head[u];
+          auto const end = fw_head[u + 1];
           for (auto it = beg; it < end; ++it) {
             auto const v = fw_csr[it];
 
-            if (scc_id[v] == scc_id_undecided && fw_sa[v] == scc_id_undecided) {
-              fw_sa[v] = static_cast<signed char>(level + 1);
+            if (scc_id[v] == scc_id_undecided && fw_sa[v] == depth_unset) {
+              fw_sa[v] = static_cast<depth_t>(level + 1);
               sa_compress[v / 32] |= 1 << (static_cast<index_t>(v) % 32);
-              next_work += fw_beg[v + 1] - fw_beg[v];
+              next_work += fw_head[v + 1] - fw_head[v];
               fq_comm[front_count] = v;
               front_count++;
             }
@@ -65,16 +64,16 @@ fw_span(
     } else if (!is_top_down_queue) {
 
       for (vertex_t u = local_beg; u < local_end; u++) {
-        if (scc_id[u] == scc_id_undecided && fw_sa[u] == scc_id_undecided) {
+        if (scc_id[u] == scc_id_undecided && fw_sa[u] == depth_unset) {
 
-          auto const beg = bw_beg[u];
-          auto const end = bw_beg[u + 1];
+          auto const beg = bw_head[u];
+          auto const end = bw_head[u + 1];
           next_work += end - beg;
           for (auto it = beg; it < end; ++it) {
             auto const v = bw_csr[it];
 
-            if (scc_id[u] == scc_id_undecided && fw_sa[v] != scc_id_undecided) {
-              fw_sa[u]             = static_cast<signed char>(level + 1);
+            if (scc_id[u] == scc_id_undecided && fw_sa[v] != depth_unset) {
+              fw_sa[u]             = static_cast<depth_t>(level + 1);
               fq_comm[front_count] = u;
               sa_compress[u / 32] |= 1 << (u % 32);
               front_count++;
@@ -101,23 +100,23 @@ fw_span(
         if (head == queue_size)
           head = 0;
 
-        auto const beg = fw_beg[temp_v];
-        auto const end = fw_beg[temp_v + 1];
+        auto const beg = fw_head[temp_v];
+        auto const end = fw_head[temp_v + 1];
         for (auto it = beg; it < end; ++it) {
           auto const w = fw_csr[it];
 
-          if (scc_id[w] == scc_id_undecided && fw_sa[w] == scc_id_undecided) {
+          if (scc_id[w] == scc_id_undecided && fw_sa[w] == depth_unset) {
             q[tail++] = w;
             if (tail == queue_size)
               tail = 0;
-            fw_sa[w] = static_cast<signed char>(level + 1);
+            fw_sa[w] = static_cast<depth_t>(level + 1);
           }
         }
       }
 
       // clang-format off
-      MPI_Allreduce(
-        MPI_IN_PLACE, fw_sa, n, mpi_basic_type<decltype(*fw_sa)>,
+      MPI_Allreduce_c(
+        MPI_IN_PLACE, fw_sa, n, mpi_depth_t,
         MPI_MAX, MPI_COMM_WORLD);
       // clang-format on
 
@@ -143,8 +142,8 @@ fw_span(
     if (front_count == 0) {
 
       // clang-format off
-      MPI_Allreduce(
-        MPI_IN_PLACE, fw_sa, n, mpi_basic_type<decltype(*fw_sa)>,
+      MPI_Allreduce_c(
+        MPI_IN_PLACE, fw_sa, n, mpi_depth_t,
         MPI_MAX, MPI_COMM_WORLD);
       // clang-format on
 
@@ -158,8 +157,8 @@ fw_span(
 
       // clang-format off
       MPI_Allgather(
-        /* send: */ fw_sa + local_beg, step, mpi_basic_type<decltype(*fw_sa)>,
-        /* recv: */ fw_sa, step, mpi_basic_type<decltype(*fw_sa)>,
+        /* send: */ fw_sa + local_beg, step, mpi_depth_t,
+        /* recv: */ fw_sa, step, mpi_depth_t,
         /* comm: */ MPI_COMM_WORLD);
       // clang-format on
     }
@@ -179,8 +178,8 @@ fw_span(
 
         vertex_t num_sa = 0;
         for (index_t i = 0; i < n; ++i) {
-          if (scc_id[i] == scc_id_undecided && fw_sa[i] == scc_id_undecided && (sa_compress[i / 32] & 1 << (i % 32)) != 0) {
-            fw_sa[i] = static_cast<signed char>(level + 1);
+          if (scc_id[i] == scc_id_undecided && fw_sa[i] == depth_unset && (sa_compress[i / 32] & 1 << (i % 32)) != 0) {
+            fw_sa[i] = static_cast<depth_t>(level + 1);
             num_sa += 1;
           }
         }
@@ -230,8 +229,8 @@ fw_span(
         }
         for (int i = front_comm[world_rank]; i < front_count; ++i) {
           auto const v = fq_comm[i];
-          if (fw_sa[v] == scc_id_undecided) {
-            fw_sa[v] = static_cast<signed char>(level + 1);
+          if (fw_sa[v] == depth_unset) {
+            fw_sa[v] = static_cast<depth_t>(level + 1);
           }
         }
       }
@@ -243,16 +242,16 @@ fw_span(
 inline void
 bw_span(
   vertex_t*       scc_id,
-  index_t const*  fw_beg,
-  index_t const*  bw_beg,
+  index_t const*  fw_head,
+  index_t const*  bw_head,
   vertex_t const* fw_csr,
   vertex_t const* bw_csr,
 
   vertex_t local_beg,
   vertex_t local_end,
 
-  signed char const* fw_sa,
-  signed char*       bw_sa,
+  depth_t const* fw_sa,
+  depth_t*       bw_sa,
   index_t*           front_comm,
   int*               work_comm,
 
@@ -269,7 +268,7 @@ bw_span(
   bw_sa[root]                   = 0;
   bool        is_top_down       = true;
   bool        is_top_down_queue = false;
-  signed char level             = 0;
+  depth_t level             = 0;
   scc_id[root]                  = scc_id_largest;
   auto const queue_size         = std::max<index_t>(1, n / 100);
 
@@ -280,14 +279,14 @@ bw_span(
       for (auto u = local_beg; u < local_end; u++) {
         if (bw_sa[u] == level) {
 
-          auto const beg = bw_beg[u];
-          auto const end = bw_beg[u + 1];
+          auto const beg = bw_head[u];
+          auto const end = bw_head[u + 1];
           for (auto it = beg; it < end; ++it) {
             auto const v = bw_csr[it];
 
-            if (bw_sa[v] == scc_id_undecided && fw_sa[v] != scc_id_undecided) {
-              bw_sa[v] = static_cast<signed char>(level + 1);
-              next_work += bw_beg[v + 1] - bw_beg[v];
+            if (bw_sa[v] == depth_unset && fw_sa[v] != depth_unset) {
+              bw_sa[v] = static_cast<depth_t>(level + 1);
+              next_work += bw_head[v + 1] - bw_head[v];
               fq_comm[front_count] = v;
               front_count++;
               scc_id[v] = scc_id_largest;
@@ -299,16 +298,16 @@ bw_span(
       work_comm[world_rank] = next_work;
     } else if (!is_top_down_queue) {
       for (auto u = local_beg; u < local_end; u++) {
-        if (bw_sa[u] == scc_id_undecided && fw_sa[u] != scc_id_undecided) {
+        if (bw_sa[u] == depth_unset && fw_sa[u] != depth_unset) {
 
-          auto const beg = fw_beg[u];
-          auto const end = fw_beg[u + 1];
+          auto const beg = fw_head[u];
+          auto const end = fw_head[u + 1];
           next_work += end - beg;
           for (auto it = beg; it < end; it++) {
             auto const v = fw_csr[it];
 
-            if (bw_sa[v] != scc_id_undecided) {
-              bw_sa[u]             = static_cast<signed char>(level + 1);
+            if (bw_sa[v] != depth_unset) {
+              bw_sa[u]             = static_cast<depth_t>(level + 1);
               fq_comm[front_count] = u;
               front_count++;
               sa_compress[u / 32] |= 1 << (u % 32);
@@ -335,25 +334,25 @@ bw_span(
         if (head == queue_size)
           head = 0;
 
-        auto const beg = bw_beg[u];
-        auto const end = bw_beg[u + 1];
+        auto const beg = bw_head[u];
+        auto const end = bw_head[u + 1];
         for (auto it = beg; it < end; ++it) {
           auto const v = bw_csr[it];
 
-          if (bw_sa[v] == scc_id_undecided && fw_sa[v] != scc_id_undecided) {
+          if (bw_sa[v] == depth_unset && fw_sa[v] != depth_unset) {
             q[tail++] = v;
             if (tail == queue_size)
               tail = 0;
             scc_id[v] = scc_id_largest;
-            bw_sa[v]  = static_cast<signed char>(level + 1);
+            bw_sa[v]  = static_cast<depth_t>(level + 1);
           }
         }
       }
 
       // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, scc_id, n, mpi_basic_type<decltype(*scc_id)>,
-        MPI_MAX, MPI_COMM_WORLD);
+        MPI_IN_PLACE, scc_id, n, mpi_vertex_t,
+        MPI_MIN, MPI_COMM_WORLD);
       // clang-format on
 
       break;
@@ -378,8 +377,8 @@ bw_span(
 
       // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, scc_id, n, mpi_basic_type<decltype(*scc_id)>,
-        MPI_MAX, MPI_COMM_WORLD);
+        MPI_IN_PLACE, scc_id, n, mpi_vertex_t,
+        MPI_MIN, MPI_COMM_WORLD);
       // clang-format on
 
       break;
@@ -391,8 +390,8 @@ bw_span(
 
       // clang-format off
       MPI_Allgather(
-        /* send: */ bw_sa + local_beg, step, mpi_basic_type<decltype(*bw_sa)>,
-        /* recv: */ bw_sa, step, mpi_basic_type<decltype(*bw_sa)>,
+        /* send: */ bw_sa + local_beg, step, mpi_depth_t,
+        /* recv: */ bw_sa, step, mpi_depth_t,
         /* comm: */ MPI_COMM_WORLD);
       // clang-format on
     }
@@ -412,10 +411,10 @@ bw_span(
 
         vertex_t num_sa = 0;
         for (vertex_t i = 0; i < n; ++i) {
-          if (fw_sa[i] != scc_id_undecided and
-              bw_sa[i] == scc_id_undecided and
+          if (fw_sa[i] != depth_unset and
+              bw_sa[i] == depth_unset and
               (sa_compress[i / 32] & 1 << (i % 32)) != 0) {
-            bw_sa[i] = static_cast<signed char>(level + 1);
+            bw_sa[i] = static_cast<depth_t>(level + 1);
             // scc_id[i] = scc_id_largest; // +(???) this is added manually
             num_sa += 1;
           }
@@ -466,8 +465,8 @@ bw_span(
         }
         for (int i = 0; i < front_count; ++i) {
           auto const v_new = fq_comm[i];
-          if (bw_sa[v_new] == scc_id_undecided) {
-            bw_sa[v_new] = static_cast<signed char>(level + 1);
+          if (bw_sa[v_new] == depth_unset) {
+            bw_sa[v_new] = static_cast<depth_t>(level + 1);
           }
         }
       }

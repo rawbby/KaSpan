@@ -1,15 +1,14 @@
 #pragma once
 
 #include <comm/MpiBasic.hpp>
+#include <graph/Graph.hpp>
 #include <ispan/fw_bw_span.hpp>
 #include <ispan/get_scc_result.hpp>
 #include <ispan/gfq_origin.hpp>
-#include <ispan/graph.hpp>
 #include <ispan/mice_fw_bw.hpp>
 #include <ispan/pivot_selection.hpp>
 #include <ispan/process_wcc.hpp>
 #include <ispan/trim_1_first.hpp>
-#include <ispan/trim_1_normal.hpp>
 #include <ispan/util.hpp>
 #include <ispan/wcc_detection.hpp>
 #include <util/Time.hpp>
@@ -22,14 +21,15 @@
 #include <vector>
 
 inline void
-scc_detection(graph const* g, int alpha, int world_rank, int world_size, std::vector<index_t>* scc_id_out = nullptr)
+scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<index_t>* scc_id_out = nullptr)
 {
-  auto const  n      = g->vert_count;
-  auto const  m      = g->edge_count;
-  auto const* fw_beg = g->fw_beg;
-  auto const* fw_csr = g->fw_csr;
-  auto const* bw_beg = g->bw_beg;
-  auto const* bw_csr = g->bw_csr;
+  auto const n = graph.n;
+  auto const m = graph.m;
+
+  auto const* fw_head = static_cast<index_t const*>(graph.fw_head.data());
+  auto const* fw_csr  = static_cast<vertex_t const*>(graph.fw_csr.data());
+  auto const* bw_head = static_cast<index_t const*>(graph.bw_head.data());
+  auto const* bw_csr  = static_cast<vertex_t const*>(graph.bw_csr.data());
 
   auto* front_comm = new index_t[world_size]{};
   SCOPE_GUARD(delete[] front_comm);
@@ -62,22 +62,22 @@ scc_detection(graph const* g, int alpha, int world_rank, int world_size, std::ve
   auto* sub_vertices_inverse = new vertex_t[n + 1]{};
   SCOPE_GUARD(delete[] sub_vertices_inverse);
 
-  auto* sub_fw_beg = new vertex_t[n + 1]{};
-  SCOPE_GUARD(delete[] sub_fw_beg);
+  auto* sub_fw_head = new vertex_t[n + 1]{};
+  SCOPE_GUARD(delete[] sub_fw_head);
 
   auto* sub_fw_csr = new vertex_t[m + 1]{};
   SCOPE_GUARD(delete[] sub_fw_csr);
 
-  auto* sub_bw_beg = new vertex_t[n + 1]{};
-  SCOPE_GUARD(delete[] sub_bw_beg);
+  auto* sub_bw_head = new vertex_t[n + 1]{};
+  SCOPE_GUARD(delete[] sub_bw_head);
 
   auto* sub_bw_csr = new vertex_t[m + 1]{};
   SCOPE_GUARD(delete[] sub_bw_csr);
 
-  signed char* fw_sa;
+  depth_t* fw_sa = nullptr;
   posix_memalign((void**)&fw_sa, getpagesize(), sizeof(*fw_sa) * (virtual_count + 1));
 
-  signed char* bw_sa;
+  depth_t* bw_sa = nullptr;
   posix_memalign((void**)&bw_sa, getpagesize(), sizeof(*bw_sa) * (virtual_count + 1));
 
   auto* fq_comm = new vertex_t[virtual_count + 1]{};
@@ -96,27 +96,27 @@ scc_detection(graph const* g, int alpha, int world_rank, int world_size, std::ve
   SCOPE_GUARD(delete[] sub_wcc_id);
 
   for (int i = 0; i < virtual_count + 1; ++i) {
-    fw_sa[i]      = scc_id_undecided;
-    bw_sa[i]      = scc_id_undecided;
+    fw_sa[i]      = depth_unset;
+    bw_sa[i]      = depth_unset;
     scc_id[i]     = scc_id_undecided;
     sub_scc_id[i] = scc_id_undecided;
     sub_fw_sa[i]  = scc_id_undecided;
   }
 
-  trim_1_first(scc_id, fw_beg, bw_beg, local_beg, local_end);
+  trim_1_first(scc_id, fw_head, bw_head, local_beg, local_end);
 
   // clang-format off
   MPI_Allgather(
-    /* send: */ MPI_IN_PLACE, 0, mpi_basic_type<decltype(*scc_id)>,
-    /* recv: */ scc_id, step, mpi_basic_type<decltype(*scc_id)>,
+    /* send: */ MPI_IN_PLACE, 0, mpi_vertex_t,
+    /* recv: */ scc_id, step, mpi_vertex_t,
     /* comm: */ MPI_COMM_WORLD);
   // clang-format on
 
-  auto const root = pivot_selection(scc_id, fw_beg, bw_beg, 0, n, world_rank);
+  auto const root = pivot_selection(scc_id, fw_head, bw_head, n);
   fw_span(
     scc_id,
-    fw_beg,
-    bw_beg,
+    fw_head,
+    bw_head,
     fw_csr,
     bw_csr,
     local_beg,
@@ -135,8 +135,8 @@ scc_detection(graph const* g, int alpha, int world_rank, int world_size, std::ve
   memset(sa_compress, 0, s * sizeof(*sa_compress));
   bw_span(
     scc_id,
-    fw_beg,
-    bw_beg,
+    fw_head,
+    bw_head,
     fw_csr,
     bw_csr,
     local_beg,
@@ -156,31 +156,31 @@ scc_detection(graph const* g, int alpha, int world_rank, int world_size, std::ve
     sa_compress);
 
   // optional
-  // trim_1_normal(scc_id, fw_beg, bw_beg, fw_csr, bw_csr, local_beg, local_end);
-  // trim_1_normal(scc_id, fw_beg, bw_beg, fw_csr, bw_csr, local_beg, local_end);
+  // trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
+  // trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
 
   // clang-format off
   MPI_Allreduce(
-    MPI_IN_PLACE, scc_id, n, mpi_basic_type<decltype(*scc_id)>,
-    MPI_MAX, MPI_COMM_WORLD);
+    MPI_IN_PLACE, scc_id, n, mpi_vertex_t,
+    MPI_MIN, MPI_COMM_WORLD);
   // clang-format on
 
-  index_t sub_n;
+  index_t sub_n = 0;
   gfq_origin(
     // input
     n,
     scc_id,
-    fw_beg,
+    fw_head,
     fw_csr,
-    bw_beg,
+    bw_head,
     bw_csr,
     // output
     sub_n,
     sub_vertices,
     sub_vertices_inverse,
-    sub_fw_beg,
+    sub_fw_head,
     sub_fw_csr,
-    sub_bw_beg,
+    sub_bw_head,
     sub_bw_csr);
 
   if (sub_n > 0) {
@@ -188,16 +188,16 @@ scc_detection(graph const* g, int alpha, int world_rank, int world_size, std::ve
     for (index_t i = 0; i < sub_n; ++i)
       sub_wcc_id[i] = i;
 
-    wcc_detection(sub_wcc_id, sub_fw_beg, sub_fw_csr, sub_bw_beg, sub_bw_csr, sub_n);
+    wcc_detection(sub_wcc_id, sub_fw_head, sub_fw_csr, sub_bw_head, sub_bw_csr, sub_n);
 
     vertex_t sub_wcc_fq_size = 0;
     process_wcc(sub_n, sub_wcc_fq, sub_wcc_id, sub_wcc_fq_size);
-    mice_fw_bw(sub_wcc_id, sub_scc_id, sub_fw_beg, sub_bw_beg, sub_fw_csr, sub_bw_csr, sub_fw_sa, world_rank, world_size, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
+    mice_fw_bw(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, world_rank, world_size, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
 
     // clang-format off
       MPI_Allreduce(
-        MPI_IN_PLACE, sub_scc_id, sub_n, mpi_basic_type<decltype(*sub_scc_id)>,
-        MPI_MAX, MPI_COMM_WORLD);
+        MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t,
+        MPI_MIN, MPI_COMM_WORLD);
     // clang-format on
 
     for (index_t sub_u = 0; sub_u < sub_n; ++sub_u) {
@@ -207,7 +207,7 @@ scc_detection(graph const* g, int alpha, int world_rank, int world_size, std::ve
   }
 
   get_scc_result(scc_id, n);
-  if (scc_id_out) {
+  if (scc_id_out != nullptr) {
     scc_id_out->resize(n);
     std::memcpy(scc_id_out->data(), scc_id, n * sizeof(index_t));
   }

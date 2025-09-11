@@ -15,7 +15,7 @@ converter_main(int argc, char** argv) -> VoidResult
   }
 
   std::ifstream in{ argv[1] };
-  ASSERT_TRY(in, IO_ERROR);
+  RESULT_ASSERT(in, IO_ERROR);
 
   u64 max_node  = 0;
   u64 m         = 0;
@@ -49,7 +49,7 @@ converter_main(int argc, char** argv) -> VoidResult
 
     n = m == 0 ? 0 : max_node + 1;
 
-    ASSERT_TRY(not in.bad(), IO_ERROR);
+    RESULT_ASSERT(not in.bad(), IO_ERROR);
 
     fw.sort();
 
@@ -101,7 +101,7 @@ converter_main(int argc, char** argv) -> VoidResult
       bw.push(Edge{ v, u });
     }
 
-    ASSERT_TRY(not in.bad(), IO_ERROR);
+    RESULT_ASSERT(not in.bad(), IO_ERROR);
 
     bw.sort();
 

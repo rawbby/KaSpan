@@ -2,31 +2,25 @@
 
 #include <ispan/util.hpp>
 
-#include <cstdio>
-#include <fcntl.h>
-#include <sys/types.h>
-
 inline index_t
-pivot_selection(index_t const* scc_id, int const* fw_beg, int const* bw_beg, index_t vert_beg, index_t vert_end, index_t world_rank)
+pivot_selection(vertex_t const* scc_id, index_t const* fw_head, index_t const* bw_head, vertex_t n)
 {
-  index_t max_pivot_thread  = 0;
-  index_t max_degree_thread = 0;
-  for (vertex_t vert_id = vert_beg; vert_id < vert_end; ++vert_id) {
-    if (scc_id[vert_id] == scc_id_undecided) {
-      int out_degree = fw_beg[vert_id + 1] - fw_beg[vert_id];
-      int in_degree  = bw_beg[vert_id + 1] - bw_beg[vert_id];
-      int degree_mul = out_degree * in_degree;
-      if (degree_mul > max_degree_thread) {
-        max_degree_thread = degree_mul;
-        max_pivot_thread  = vert_id;
+  index_t  max_degree_product = 0;
+  vertex_t pivot              = 0;
+
+  for (vertex_t u = 0; u < n; ++u) {
+    if (scc_id[u] == scc_id_undecided) {
+
+      index_t const out_degree = fw_head[u + 1] - fw_head[u];
+      index_t const in_degree  = bw_head[u + 1] - bw_head[u];
+
+      index_t const degree_product = out_degree * in_degree;
+      if (degree_product > max_degree_product) {
+        max_degree_product = degree_product;
+        pivot              = u;
       }
     }
   }
-  index_t max_pivot  = max_pivot_thread;
-  index_t max_degree = max_degree_thread;
-  {
-    //if (world_rank == 0)
-    //  printf("max_pivot, %d, max_degree, %d\n", max_pivot, max_degree);
-  }
-  return max_pivot;
+
+  return pivot;
 }

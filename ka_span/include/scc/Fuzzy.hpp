@@ -19,12 +19,6 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0) -> Result<s
   if (degree < 0.0)
     degree = std::log(std::max(0.0, std::log(n)));
 
-  std::cout << "[FuzzyGen]\n";
-  std::cout << "  Beginning graph generation ...\n";
-  std::cout << "  >>> seed: " << seed << "\n";
-  std::cout << "  >>> n: " << n << "\n";
-  std::cout << "  >>> degree: " << degree << std::endl;
-
   auto rng       = std::mt19937{ seed };
   auto start_new = std::bernoulli_distribution{ 0.25 };
 
@@ -56,8 +50,6 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0) -> Result<s
     }
   }
 
-  std::cout << "  <<< scc count: " << comps.size() << std::endl;
-
   auto try_add_edge = [&](u64 u, u64 v) {
     if (u != v and edges.emplace(u, v).second) {
       ++fw_degree[u];
@@ -84,7 +76,7 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0) -> Result<s
 
   std::vector<u64> prior;
   prior.reserve(comps.size());
-  while (avg_degree() < degree) {
+  while (avg_degree() > degree) {
     prior.clear();
 
     for (auto& [id, comp_u] : comps) {
@@ -94,7 +86,7 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0) -> Result<s
       auto pick_comp_v = std::uniform_int_distribution<size_t>{ 0, prior.size() - 1 };
 
       for (size_t i = 0; i < comp_u.size(); ++i) {
-        if (avg_degree() < degree)
+        if (avg_degree() > degree)
           break;
 
         auto const& comp_v = comps[prior[pick_comp_v(rng)]];
@@ -105,16 +97,14 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0) -> Result<s
 
         try_add_edge(u, v);
       }
-
-      if (avg_degree() < degree)
-        break;
     }
   }
 
-  std::cout << "  <<< m: " << edges.size() << std::endl;
-
   auto const m = edges.size();
-  auto       g = Graph{ n, m };
+
+  auto g = Graph{};
+  g.n    = n;
+  g.m    = m;
 
   RESULT_TRY(g.fw_head, U64Buffer::create(n + 1));
   RESULT_TRY(g.bw_head, U64Buffer::create(n + 1));
@@ -145,31 +135,21 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0) -> Result<s
     }
   }
 
-  std::cout << "  Finished graph generation" << std::endl;
-
   return std::pair{ std::move(scc_id), std::move(g) };
 }
 
-template<WorldPartitionConcept Partition, bool Compress = false>
+template<WorldPartitionConcept Partition>
 auto
-fuzzy_local_scc_id_and_graph(u64 seed, Partition partition, double degree = -1.0) -> Result<std::pair<U64Buffer, DistributedGraph<Partition, Compress>>>
+fuzzy_local_scc_id_and_graph(u64 seed, Partition partition, double degree = -1.0) -> Result<std::pair<U64Buffer, DistributedGraph<Partition>>>
 {
   RESULT_TRY(auto global_scc_id_and_graph, fuzzy_global_scc_id_and_graph(seed, partition.n, degree));
   auto [global_scc_id, global_graph] = std::move(global_scc_id_and_graph);
 
-  std::cout << "  Beginning graph partitioning ..." << std::endl;
-
-  std::cout << "    Step 0" << std::endl;
   RESULT_TRY(auto local_scc_id, U64Buffer::create(partition.size()));
-  std::cout << "    Step 1" << std::endl;
   for (size_t k = 0; k < partition.size(); ++k)
     local_scc_id[k] = global_scc_id[partition.select(k)];
-  std::cout << "    Step 3" << std::endl;
 
-  RESULT_TRY(auto local_graph, load_local(global_graph, partition));
-  std::cout << "    Step 4" << std::endl;
-
-  std::cout << "  Finished graph partitioning" << std::endl;
+  RESULT_TRY(auto local_graph, load_local(global_graph, std::move(partition)));
 
   return std::pair{ std::move(local_scc_id), std::move(local_graph) };
 }

@@ -1,39 +1,35 @@
 #include <ispan/scc_detection.hpp>
-#include <ispan/test/random_graph_from_scc.hpp>
+#include <scc/Fuzzy.hpp>
 #include <test/Assert.hpp>
 #include <test/SubProcess.hpp>
 #include <util/ScopeGuard.hpp>
-#include <util/Util.hpp>
 #include <util/Time.hpp>
+#include <util/Util.hpp>
 
 #include <iomanip>
 #include <iostream>
-#include <streambuf>
 
-int
-main(int argc, char** argv)
+auto
+main(int argc, char** argv) -> int
 {
   mpi_sub_process(argc, argv);
 
   MPI_Init(nullptr, nullptr);
   SCOPE_GUARD(MPI_Finalize());
 
-  int world_rank = 0;
-  int world_size = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  auto comm = kamping::Communicator{};
 
-  for (size_t n = 4; n < 1024; n += 8) {
+  for (size_t n = 32; n < 64; n += 8) {
 
     auto const seed = std::bit_cast<u64>(mpi_global_max_wtime());
+    auto const part = BalancedSlicePartition{ n, comm.rank(), comm.size() };
 
-    auto const scc_id_orig = make_random_normalized_scc_id(n, seed);
-    auto const g           = make_random_graph_from_scc_ids(scc_id_orig, seed);
+    ASSERT_TRY(auto scc_id_and_graph, fuzzy_global_scc_id_and_graph(seed, part.n));
+    auto const scc_id_orig = std::move(scc_id_and_graph.first);
+    auto const graph       = std::move(scc_id_and_graph.second);
 
-    constexpr int alpha = 0; // always top down
-
-    std::vector<index_t> scc_id_ispan;
-    scc_detection(&g, alpha, world_rank, world_size, &scc_id_ispan);
+    std::vector<vertex_t> scc_id_ispan;
+    scc_detection(graph, 16, comm.rank(), comm.size(), &scc_id_ispan);
 
     std::stringstream ss;
     ss << "  index        :";

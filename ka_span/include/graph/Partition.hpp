@@ -202,7 +202,7 @@ struct BlockCyclicPartition final
     size_t const block                        = i / block_size;
     size_t const offset_in_block              = i % block_size;
     size_t const num_full_owned_blocks_before = block / world_size;
-    return num_full_owned_blocks_before * block_size + offset_in_block;
+    return (num_full_owned_blocks_before * block_size) + offset_in_block;
   }
 
   // Precondition: k < size()
@@ -212,7 +212,7 @@ struct BlockCyclicPartition final
       return k;
     size_t const local_block        = k / block_size; // which owned block (0-based)
     size_t const offset             = k % block_size; // offset within that block
-    size_t const global_block       = local_block * world_size + world_rank;
+    size_t const global_block       = (local_block * world_size) + world_rank;
     size_t const global_block_start = global_block * block_size;
     return global_block_start + offset;
   }
@@ -298,8 +298,8 @@ struct TrivialSlicePartition final : ExplicitContinuousPartition
 
 struct BalancedSlicePartition final : ExplicitContinuousPartition
 {
-  size_t world_rank;
-  size_t world_size;
+  size_t world_rank = 0;
+  size_t world_size = 0;
 
   constexpr BalancedSlicePartition() noexcept  = default;
   constexpr ~BalancedSlicePartition() noexcept = default;
@@ -378,7 +378,7 @@ struct ExplicitContinuousWorldPartition final : ExplicitContinuousPartition
     result.world_rank = world_rank;
     result.world_size = world_size;
 
-    u64 const local_range[2]{ begin, end };
+    auto const local_range = std::array{ begin, end };
     MPI_Allgather(&local_range, 2, MPI_UINT64_T, result.partition.data(), 2, MPI_UINT64_T, MPI_COMM_WORLD);
     return result;
   }
@@ -386,7 +386,7 @@ struct ExplicitContinuousWorldPartition final : ExplicitContinuousPartition
   [[nodiscard]] auto world_rank_of(size_t i) const -> size_t
   {
     for (size_t r = 0; r < world_size; ++r)
-      if (i >= partition[r * 2] and i < partition[r * 2 + 1])
+      if (i >= partition[r * 2] and i < partition[(r * 2) + 1])
         return r;
     return -1;
   }

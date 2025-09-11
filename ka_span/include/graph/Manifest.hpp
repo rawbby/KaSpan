@@ -16,7 +16,7 @@ inline Result<std::unordered_map<std::string, std::string>>
 parse_kv_map(std::filesystem::path const& file)
 {
   std::ifstream in{ file };
-  ASSERT_TRY(in.is_open(), IO_ERROR);
+  RESULT_ASSERT(in.is_open(), IO_ERROR);
 
   std::unordered_map<std::string, std::string> result;
 
@@ -26,7 +26,7 @@ parse_kv_map(std::filesystem::path const& file)
       continue;
 
     auto const key_end = line.find(' ');
-    ASSERT_TRY(key_end != std::string::npos, DESERIALIZE_ERROR);
+    RESULT_ASSERT(key_end != std::string::npos, DESERIALIZE_ERROR);
 
     // skip spaces after key to get the start of the value
     size_t value_start = key_end;
@@ -36,7 +36,7 @@ parse_kv_map(std::filesystem::path const& file)
     auto const key   = line.substr(0, key_end);
     auto const value = value_start < line.size() ? line.substr(value_start) : std::string{};
 
-    ASSERT_TRY(result.emplace(key, value).second, DESERIALIZE_ERROR);
+    RESULT_ASSERT(result.emplace(key, value).second, DESERIALIZE_ERROR);
   }
 
   return result;
@@ -54,8 +54,8 @@ parse_int(std::string_view value_str)
   auto const [ptr, ec] = std::from_chars(begin, end, t);
 
   // check for non empty full match
-  ASSERT_TRY(ec == std::errc(), DESERIALIZE_ERROR);
-  ASSERT_TRY(ptr == end, DESERIALIZE_ERROR);
+  RESULT_ASSERT(ec == std::errc(), DESERIALIZE_ERROR);
+  RESULT_ASSERT(ptr == end, DESERIALIZE_ERROR);
 
   return t;
 }
@@ -64,18 +64,18 @@ constexpr Result<bool>
 parse_bool(std::string_view value_str)
 {
   if (value_str.size() == 4) {
-    ASSERT_TRY(value_str[0] == 't', DESERIALIZE_ERROR);
-    ASSERT_TRY(value_str[1] == 'r', DESERIALIZE_ERROR);
-    ASSERT_TRY(value_str[2] == 'u', DESERIALIZE_ERROR);
-    ASSERT_TRY(value_str[3] == 'e', DESERIALIZE_ERROR);
+    RESULT_ASSERT(value_str[0] == 't', DESERIALIZE_ERROR);
+    RESULT_ASSERT(value_str[1] == 'r', DESERIALIZE_ERROR);
+    RESULT_ASSERT(value_str[2] == 'u', DESERIALIZE_ERROR);
+    RESULT_ASSERT(value_str[3] == 'e', DESERIALIZE_ERROR);
     return true;
   }
-  ASSERT_TRY(value_str.size() == 5, DESERIALIZE_ERROR);
-  ASSERT_TRY(value_str[0] == 'f', DESERIALIZE_ERROR);
-  ASSERT_TRY(value_str[1] == 'a', DESERIALIZE_ERROR);
-  ASSERT_TRY(value_str[2] == 'l', DESERIALIZE_ERROR);
-  ASSERT_TRY(value_str[3] == 's', DESERIALIZE_ERROR);
-  ASSERT_TRY(value_str[4] == 'e', DESERIALIZE_ERROR);
+  RESULT_ASSERT(value_str.size() == 5, DESERIALIZE_ERROR);
+  RESULT_ASSERT(value_str[0] == 'f', DESERIALIZE_ERROR);
+  RESULT_ASSERT(value_str[1] == 'a', DESERIALIZE_ERROR);
+  RESULT_ASSERT(value_str[2] == 'l', DESERIALIZE_ERROR);
+  RESULT_ASSERT(value_str[3] == 's', DESERIALIZE_ERROR);
+  RESULT_ASSERT(value_str[4] == 'e', DESERIALIZE_ERROR);
   return false;
 }
 
@@ -83,18 +83,18 @@ constexpr Result<std::endian>
 parse_endian(std::string_view value_str)
 {
   if (value_str.size() == 6) {
-    ASSERT_TRY(value_str[0] == 'l', DESERIALIZE_ERROR);
-    ASSERT_TRY(value_str[1] == 'i', DESERIALIZE_ERROR);
-    ASSERT_TRY(value_str[2] == 't', DESERIALIZE_ERROR);
-    ASSERT_TRY(value_str[3] == 't', DESERIALIZE_ERROR);
-    ASSERT_TRY(value_str[4] == 'l', DESERIALIZE_ERROR);
-    ASSERT_TRY(value_str[5] == 'e', DESERIALIZE_ERROR);
+    RESULT_ASSERT(value_str[0] == 'l', DESERIALIZE_ERROR);
+    RESULT_ASSERT(value_str[1] == 'i', DESERIALIZE_ERROR);
+    RESULT_ASSERT(value_str[2] == 't', DESERIALIZE_ERROR);
+    RESULT_ASSERT(value_str[3] == 't', DESERIALIZE_ERROR);
+    RESULT_ASSERT(value_str[4] == 'l', DESERIALIZE_ERROR);
+    RESULT_ASSERT(value_str[5] == 'e', DESERIALIZE_ERROR);
     return std::endian::little;
   }
-  ASSERT_TRY(value_str.size() == 3, DESERIALIZE_ERROR);
-  ASSERT_TRY(value_str[0] == 'b', DESERIALIZE_ERROR);
-  ASSERT_TRY(value_str[1] == 'i', DESERIALIZE_ERROR);
-  ASSERT_TRY(value_str[2] == 'g', DESERIALIZE_ERROR);
+  RESULT_ASSERT(value_str.size() == 3, DESERIALIZE_ERROR);
+  RESULT_ASSERT(value_str[0] == 'b', DESERIALIZE_ERROR);
+  RESULT_ASSERT(value_str[1] == 'i', DESERIALIZE_ERROR);
+  RESULT_ASSERT(value_str[2] == 'g', DESERIALIZE_ERROR);
   return std::endian::big;
 }
 
@@ -130,13 +130,13 @@ struct Manifest
 
     auto const get_value_str = [&kv](auto const& key) -> Result<std::string_view> {
       auto const it = kv.find(key);
-      ASSERT_TRY(it != kv.end(), DESERIALIZE_ERROR);
+      RESULT_ASSERT(it != kv.end(), DESERIALIZE_ERROR);
       return it->second;
     };
     auto const path_from_base = [&base](auto const& p) -> Result<std::filesystem::path> {
       try {
         auto const full_path = std::filesystem::canonical(base / p);
-        ASSERT_TRY(std::filesystem::is_regular_file(full_path), IO_ERROR);
+        RESULT_ASSERT(std::filesystem::is_regular_file(full_path), IO_ERROR);
         return full_path;
       } catch (std::filesystem::filesystem_error const&) {
         return ErrorCode::IO_ERROR;

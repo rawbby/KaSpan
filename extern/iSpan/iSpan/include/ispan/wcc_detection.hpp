@@ -3,7 +3,7 @@
 #include <ispan/util.hpp>
 
 static void
-wcc_detection(index_t* wcc_id, index_t const* fw_beg, index_t const* fw_csr, index_t const* bw_beg, index_t const* bw_csr, vertex_t n)
+wcc_detection(index_t* wcc_id, index_t const* fw_head, index_t const* fw_csr, index_t const* bw_head, index_t const* bw_csr, vertex_t n)
 {
   // use different internal name
   auto* color = wcc_id;
@@ -16,8 +16,8 @@ wcc_detection(index_t* wcc_id, index_t const* fw_beg, index_t const* fw_csr, ind
     for (vertex_t u = 0; u < n; ++u) {
       // bw
       {
-        auto const beg = bw_beg[u];
-        auto const end = bw_beg[u + 1];
+        auto const beg = bw_head[u];
+        auto const end = bw_head[u + 1];
         for (auto it = beg; it < end; ++it) {
           auto const v = bw_csr[it];
 
@@ -29,8 +29,8 @@ wcc_detection(index_t* wcc_id, index_t const* fw_beg, index_t const* fw_csr, ind
       }
       // fw
       {
-        auto const beg = fw_beg[u];
-        auto const end = fw_beg[u + 1];
+        auto const beg = fw_head[u];
+        auto const end = fw_head[u + 1];
         for (auto it = beg; it < end; ++it) {
           auto const v = fw_csr[it];
 

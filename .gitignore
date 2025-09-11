@@ -3,3 +3,4 @@
 .venv/
 cmake-build-*/
 __pycache__/
+experiment_data

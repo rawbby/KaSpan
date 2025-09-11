@@ -2,8 +2,8 @@
 
 #include <pp/PP.hpp>
 #include <util/Arithmetic.hpp>
+#include <test/Assert.hpp>
 
-#include <cassert>
 #include <functional>
 #include <type_traits>
 #include <utility>
@@ -21,6 +21,7 @@ enum class ErrorCode : u8
   ALLOCATION_ERROR     = 6,
   ASSUMPTION_ERROR     = 7,
   FILESYSTEM_ERROR     = 8,
+  ASSERTION_ERROR      = 9,
 };
 
 template<typename V>
@@ -96,37 +97,37 @@ public:
 
   constexpr auto error() -> ErrorCode
   {
-    assert(not has_value());
+    ASSERT(not has_value());
     return std::get<ErrorCode>(data);
   }
 
   [[nodiscard]] constexpr auto error() const -> ErrorCode
   {
-    assert(not has_value());
+    ASSERT(not has_value());
     return std::get<ErrorCode>(data);
   }
 
   constexpr auto value() & -> V&
   {
-    assert(has_value());
+    ASSERT(has_value());
     return std::get<V>(data);
   }
 
   constexpr auto value() const& -> V const&
   {
-    assert(has_value());
+    ASSERT(has_value());
     return std::get<V>(data);
   }
 
   constexpr auto value() && -> V&&
   {
-    assert(has_value());
+    ASSERT(has_value());
     return std::move(std::get<V>(data));
   }
 
   constexpr auto value() const&& -> V const&&
   {
-    assert(has_value());
+    ASSERT(has_value());
     return std::move(std::get<V>(data));
   }
 
@@ -171,42 +172,40 @@ public:
   auto operator!=(Result const&) const -> bool = default;
 };
 
-#define RESULT_TRY_CAT2(A, B) A##B
-#define RESULT_TRY_CAT_(A, B) RESULT_TRY_CAT2(A, B)
+#define RESULT_TRY_1(EXPR, TMP)                     \
+  auto&& TMP = (EXPR);                              \
+  if (!(TMP)) /* NOLINT(*-simplify-boolean-expr) */ \
+  return (TMP).error()
+#define RESULT_TRY_2(VAR, EXPR, TMP) \
+  RESULT_TRY_1(EXPR, TMP);           \
+  VAR = std::move((TMP).value())
+#define RESULT_TRY_N(N, ...) RESULT_TRY_##N(__VA_ARGS__)
+#define RESULT_TRY_IMPL(N, ...) RESULT_TRY_N(N, __VA_ARGS__)
+#define RESULT_TRY(...) RESULT_TRY_IMPL(ARGS_SIZE(__VA_ARGS__), __VA_ARGS__, CAT(tmp, __COUNTER__))
 
-#define RESULT_TRY_DISPATCH_(_1, _2, NAME, ...) NAME
-#define RESULT_TRY2(EXPR, TMP) \
-  {                            \
-    auto&& TMP = (EXPR);       \
-    if (!(TMP)) {              \
-      return (TMP).error();    \
-    }                          \
-  }                            \
-  ((void)0)
-#define RESULT_TRY3(VAR, EXPR, TMP) \
-  auto&& TMP = (EXPR);              \
-  if (!(TMP)) {                     \
-    return (TMP).error();           \
-  }                                 \
-  VAR = std::move((TMP).value());   \
-  ((void)0)
-#define RESULT_TRY(...)                                         \
-  RESULT_TRY_DISPATCH_(__VA_ARGS__, RESULT_TRY3, RESULT_TRY2, ) \
-  (__VA_ARGS__, RESULT_TRY_CAT_(tmp, __COUNTER__))
-
-#define ASSERT_TRY_2(COND, ERROR_CODE)                    \
-  if (not(COND)) { /* NOLINT(*-simplify-boolean-expr) */ \
-    return (ErrorCode::ERROR_CODE);                      \
-  }                                                      \
-  ((void)0)
-#define ASSERT_TRY_3(COND, ERROR_CODE, ERROR_STRING)      \
+#define RESULT_ASSERT_1(COND) \
+  RESULT_ASSERT_2(COND, ASSERTION_ERROR)
+#define RESULT_ASSERT_2(COND, ERROR_CODE)              \
+  if (not(COND)) /* NOLINT(*-simplify-boolean-expr) */ \
+  return ErrorCode::ERROR_CODE
+#define RESULT_ASSERT_3(COND, ERROR_CODE, ERROR_STRING)  \
   if (not(COND)) { /* NOLINT(*-simplify-boolean-expr) */ \
     perror(ERROR_STRING);                                \
     return (ErrorCode::ERROR_CODE);                      \
   }                                                      \
   ((void)0)
+#define RESULT_ASSERT_N(N, ...) RESULT_ASSERT_##N(__VA_ARGS__)
+#define RESULT_ASSERT_IMPL(N, ...) RESULT_ASSERT_N(N, __VA_ARGS__)
+#define RESULT_ASSERT(...) RESULT_ASSERT_IMPL(ARGS_SIZE(__VA_ARGS__), __VA_ARGS__)
+
+#define ASSERT_TRY_1(EXPR, TMP) \
+  auto&& TMP = (EXPR);          \
+  ASSERT(TMP)
+#define ASSERT_TRY_2(VAR, EXPR, TMP) \
+  ASSERT_TRY_1(EXPR, TMP);           \
+  VAR = std::move(TMP.value())
 #define ASSERT_TRY_N(N, ...) ASSERT_TRY_##N(__VA_ARGS__)
 #define ASSERT_TRY_IMPL(N, ...) ASSERT_TRY_N(N, __VA_ARGS__)
-#define ASSERT_TRY(...) ASSERT_TRY_IMPL(ARGS_SIZE(__VA_ARGS__), __VA_ARGS__)
+#define ASSERT_TRY(...) ASSERT_TRY_IMPL(ARGS_SIZE(__VA_ARGS__), __VA_ARGS__, CAT(tmp, __COUNTER__))
 
 using VoidResult = Result<std::monostate>;
