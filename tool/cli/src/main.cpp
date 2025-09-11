@@ -11,7 +11,7 @@
 auto
 run(int argc, char** argv) -> VoidResult
 {
-  ASSERT_TRY(argc == 2, IO_ERROR, "Usage: ./scc_cpu <manifest>");
+  RESULT_ASSERT(argc == 2, IO_ERROR, "Usage: ./scc_cpu <manifest>");
 
   MPI_Init(nullptr, nullptr);
   SCOPE_GUARD(MPI_Finalize());

@@ -2,6 +2,7 @@
 
 #include <comm/SyncFrontierComm.hpp>
 #include <graph/DistributedGraph.hpp>
+#include <pp/PP.hpp>
 #include <scc/Common.hpp>
 
 #include <kamping/communicator.hpp>
@@ -14,11 +15,12 @@ sync_forward_search(
   SyncAlltoallvBase<SyncFrontier<Partition>>& frontier,
   U64Buffer const&                            scc_id,
   BitBuffer&                                  fw_reached,
-  u64                                         root)
+  IF(KASPAN_NORMALIZE, u64&, u64) root)
 {
   if (graph.partition.contains(root)) {
     frontier.push_relaxed(root);
-    fw_reached.set(graph.partition.rank(root));
+    ASSERT(not fw_reached.get(graph.partition.rank(root)));
+    ASSERT(scc_id[graph.partition.rank(root)] == scc_id_undecided);
   }
 
   do { // NOLINT(*-avoid-do-while)
@@ -33,10 +35,11 @@ sync_forward_search(
 
       // now it is reached
       fw_reached.set(k);
+      IF(KASPAN_NORMALIZE, root = std::min(root, u);)
 
       // add all neighbours to frontier
-      auto const begin = graph.fw_head[u];
-      auto const end   = graph.fw_head[u + 1];
+      auto const begin = graph.fw_head[k];
+      auto const end   = graph.fw_head[k + 1];
       for (auto i = begin; i < end; ++i)
         frontier.push_relaxed(graph.fw_csr.get(i));
     }
@@ -54,11 +57,8 @@ sync_backward_search(
   u64                                         root,
   u64&                                        decided_count)
 {
-  if (graph.partition.contains(root) && fw_reached.get(graph.partition.rank(root))) {
+  if (graph.partition.contains(root))
     frontier.push_relaxed(root);
-    scc_id[graph.partition.rank(root)] = root;
-    ++decided_count;
-  }
 
   do { // NOLINT(*-avoid-do-while)
 
@@ -75,8 +75,8 @@ sync_backward_search(
       ++decided_count;
 
       // add all neighbours to frontier
-      auto const begin = graph.bw_head[u];
-      auto const end   = graph.bw_head[u + 1];
+      auto const begin = graph.bw_head[k];
+      auto const end   = graph.bw_head[k + 1];
       for (auto i = begin; i < end; ++i)
         frontier.push_relaxed(graph.bw_csr.get(i));
     }

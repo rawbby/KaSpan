@@ -23,15 +23,15 @@ pivot_selection(kamping::Communicator<>& comm, DistributedGraph<Partition> const
 {
   Degree max_degree{};
   for (u64 k = 0; k < graph.partition.size(); ++k) {
-    u64 const index = graph.partition.select(k);
+    if (scc_id[k] == scc_id_undecided) {
+      auto const out_degree     = graph.fw_degree(k);
+      auto const in_degree      = graph.bw_degree(k);
+      auto const degree_product = out_degree * in_degree;
 
-    if (scc_id[index] == scc_id_undecided) {
-      auto const   out_degree = graph.fw_degree(k);
-      auto const   in_degree  = graph.bw_degree(k);
-      Degree const degree{ out_degree * in_degree, index };
-
-      if (degree.degree > max_degree.degree)
-        max_degree = degree;
+      if (degree_product >= max_degree.degree) {
+        max_degree.degree = degree_product;
+        max_degree.u      = graph.partition.select(k);
+      }
     }
   }
 

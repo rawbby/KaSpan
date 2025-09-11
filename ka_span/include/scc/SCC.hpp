@@ -1,8 +1,9 @@
 #pragma once
 
+#include <scc/Common.hpp>
 #include <scc/GraphReduction.hpp>
 #include <scc/PivotSelection.hpp>
-#include <scc/SyncForwardBackwardSearch.hpp>
+#include <scc/SyncFwBw.hpp>
 #include <scc/Trim1.hpp>
 #include <util/Result.hpp>
 
@@ -14,21 +15,14 @@
 #include <algorithm>
 #include <cstdio>
 
-inline void
-normalize_scc_id(U64Buffer& scc_id, u64 n)
+template<WorldPartitionConcept Partition>
+void
+normalize_scc_id(U64Buffer& scc_id, Partition const& part)
 {
-  std::unordered_map<u64, u64> cid;
-  for (u64 i = 0; i < n; ++i) {
-    if (scc_id[i] == scc_id_singular)
-      scc_id[i] = i;
-
-    else {
-      auto [it, inserted] = cid.try_emplace(scc_id[i], i);
-      if (inserted)
-        scc_id[i] = i;
-      else // take present id
-        scc_id[i] = it->second;
-    }
+  for (vertex_t k = 0; k < part.size(); ++k) {
+    auto const u = part.select(k);
+    if (scc_id[k] == scc_id_singular)
+      scc_id[k] = u;
   }
 }
 
@@ -43,7 +37,6 @@ scc_detection(kamping::Communicator<>& comm, DistributedGraph<Partition> const& 
 
   auto frontier_kernel = SyncFrontier{ graph.partition };
   RESULT_TRY(auto frontier, SyncAlltoallvBase<SyncFrontier<Partition>>::create(comm, frontier_kernel));
-
   RESULT_TRY(auto fw_reached, BitBuffer::create(graph.partition.size()));
 
   // RESULT_TRY(auto edge_comm, SyncEdgeComm<Partition>::create(comm));
@@ -55,15 +48,22 @@ scc_detection(kamping::Communicator<>& comm, DistributedGraph<Partition> const& 
   trim_1_first(graph, scc_id, decided_count);
 
   while (global_decided_count != graph.n) {
+    std::memset(fw_reached.data(), 0, fw_reached.bytes());
 
     // run forward backwards search
-    auto const root = pivot_selection(comm, graph, scc_id);
+    IF(NOT(KASPAN_NORMALIZE), const)
+    auto root = pivot_selection(comm, graph, scc_id);
+
     sync_forward_search(comm, graph, frontier, scc_id, fw_reached, root);
+
+    IF(KASPAN_NORMALIZE,
+       root = comm.allreduce_single(kmp::send_buf(root), kmp::op(MPI_MIN)));
+
     sync_backward_search(comm, graph, frontier, scc_id, fw_reached, root, decided_count);
 
     global_decided_count = comm.allreduce_single(kmp::send_buf(decided_count), kmp::op(MPI_SUM));
   }
 
-  normalize_scc_id(scc_id, graph.n);
+  normalize_scc_id(scc_id, graph.partition);
   return VoidResult::success();
 }

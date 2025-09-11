@@ -6,7 +6,7 @@
 #include <algorithm>
 
 inline void
-mice_fw_bw(index_t const* sub_wcc_id, index_t* sub_scc_id, index_t const* sub_fw_beg, index_t const* sub_bw_beg, vertex_t const* sub_fw_csr, vertex_t const* sub_bw_csr, vertex_t* sub_fw_sa, index_t world_rank, index_t world_size, vertex_t sub_n, vertex_t const* sub_wcc_fq, vertex_t sub_wcc_fq_size, vertex_t const* sub_vertices)
+mice_fw_bw(index_t const* sub_wcc_id, index_t* sub_scc_id, index_t const* sub_fw_head, index_t const* sub_bw_head, vertex_t const* sub_fw_csr, vertex_t const* sub_bw_csr, vertex_t* sub_fw_sa, index_t world_rank, index_t world_size, vertex_t sub_n, vertex_t const* sub_wcc_fq, vertex_t sub_wcc_fq_size, vertex_t const* sub_vertices)
 {
   // prepare the local slice this rank calculates
 
@@ -47,8 +47,8 @@ mice_fw_bw(index_t const* sub_wcc_id, index_t* sub_scc_id, index_t const* sub_fw
           if (head == sub_n)
             head = 0;
 
-          auto       beg = sub_fw_beg[temp_v];
-          auto const end = sub_fw_beg[temp_v + 1];
+          auto       beg = sub_fw_head[temp_v];
+          auto const end = sub_fw_head[temp_v + 1];
           for (; beg < end; ++beg) {
             auto const sub_v = sub_fw_csr[beg];
 
@@ -76,8 +76,8 @@ mice_fw_bw(index_t const* sub_wcc_id, index_t* sub_scc_id, index_t const* sub_fw
           if (head == sub_n)
             head = 0;
 
-          auto       beg = sub_bw_beg[temp_v];
-          auto const end = sub_bw_beg[temp_v + 1];
+          auto       beg = sub_bw_head[temp_v];
+          auto const end = sub_bw_head[temp_v + 1];
           for (; beg < end; ++beg) {
             auto const sub_v = sub_bw_csr[beg];
 

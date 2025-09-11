@@ -4,6 +4,7 @@
 #include <comm/MpiBasic.hpp>
 
 #include <mpi.h>
+#include <limits>
 
 using scc_id_t = u64;
 

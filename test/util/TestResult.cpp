@@ -190,12 +190,12 @@ void
 test_ASSERT_try_macro()
 {
   auto f_ok = []() -> ErrorCode {
-    ASSERT_TRY(1 + 1 == 2, OK);
+    RESULT_ASSERT(1 + 1 == 2, OK);
     return ErrorCode::OK;
   };
 
   auto f_fail = []() -> ErrorCode {
-    ASSERT_TRY(2 + 2 == 5, IO_ERROR);
+    RESULT_ASSERT(2 + 2 == 5, IO_ERROR);
     return ErrorCode::OK;
   };
 

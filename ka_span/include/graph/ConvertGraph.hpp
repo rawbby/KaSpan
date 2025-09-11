@@ -31,8 +31,8 @@ parse_uv(std::string const& s) -> Result<std::pair<u64, u64>>
     char const* begin    = s.data() + pos;
     char const* end      = s.data() + s.size();
     auto const [ptr, ec] = std::from_chars(begin, end, val, 10);
-    ASSERT_TRY(ec == std::errc(), DESERIALIZE_ERROR);
-    ASSERT_TRY(ptr != begin, DESERIALIZE_ERROR);
+    RESULT_ASSERT(ec == std::errc(), DESERIALIZE_ERROR);
+    RESULT_ASSERT(ptr != begin, DESERIALIZE_ERROR);
     pos = static_cast<u64>(ptr - s.data());
     return val;
   };
@@ -42,7 +42,7 @@ parse_uv(std::string const& s) -> Result<std::pair<u64, u64>>
   skip_ws();
   RESULT_TRY(auto const v, read_u64());
   skip_ws();
-  ASSERT_TRY(pos == s.size(), DESERIALIZE_ERROR);
+  RESULT_ASSERT(pos == s.size(), DESERIALIZE_ERROR);
 
   return std::pair{ u, v };
 }
@@ -60,7 +60,7 @@ convert_graph(std::string const& input_file,
   std::string const name = graph_name.empty() ? code : graph_name;
 
   std::ifstream in{ input_file };
-  ASSERT_TRY(in, IO_ERROR);
+  RESULT_ASSERT(in, IO_ERROR);
 
   u64  max_node       = 0;
   u64  m              = 0;
@@ -101,7 +101,7 @@ convert_graph(std::string const& input_file,
     head_bytes = needed_bytes(m);
     csr_bytes  = needed_bytes(max_node);
 
-    ASSERT_TRY(not in.bad(), IO_ERROR);
+    RESULT_ASSERT(not in.bad(), IO_ERROR);
 
     fw.sort();
 
@@ -161,7 +161,7 @@ convert_graph(std::string const& input_file,
       bw.push(Edge{ v, u });
     }
 
-    ASSERT_TRY(not in.bad(), IO_ERROR);
+    RESULT_ASSERT(not in.bad(), IO_ERROR);
 
     bw.sort();
 
@@ -196,7 +196,7 @@ convert_graph(std::string const& input_file,
   }
 
   std::ofstream manifest_file{ manifest_path };
-  ASSERT_TRY(manifest_file, IO_ERROR);
+  RESULT_ASSERT(manifest_file, IO_ERROR);
 
   // ReSharper disable once CppDFAUnreachableCode
   constexpr auto endian_str = std::endian::native == std::endian::big ? "big" : "little";
@@ -217,6 +217,6 @@ convert_graph(std::string const& input_file,
   manifest_file << "bw.csr.path " << bw_csr_path << '\n';
 
   manifest_file.flush();
-  ASSERT_TRY(manifest_file, IO_ERROR);
+  RESULT_ASSERT(manifest_file, IO_ERROR);
   return VoidResult::success();
 }

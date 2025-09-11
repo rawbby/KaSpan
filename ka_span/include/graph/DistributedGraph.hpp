@@ -2,6 +2,7 @@
 
 #include <buffer/Buffer.hpp>
 #include <comm/SyncEdgeComm.hpp>
+#include <graph/Base.hpp>
 #include <graph/Manifest.hpp>
 #include <graph/Partition.hpp>
 #include <util/Arithmetic.hpp>
@@ -11,91 +12,110 @@
 #include <filesystem>
 #include <kagen.h>
 
-template<PartitionConcept Partition = TrivialSlicePartition, bool Compress = false>
+template<PartitionConcept Partition = TrivialSlicePartition>
 struct DistributedGraph
 {
-  using buffer_type = std::conditional_t<Compress, CU64Buffer<Buffer>, U64Buffer>;
-
   Partition partition;
-  u64       n;
-  u64       m;
+  vertex_t  n = 0;
+  index_t   m = 0;
 
-  buffer_type fw_head;
-  buffer_type bw_head;
-  buffer_type fw_csr;
-  buffer_type bw_csr;
+  VertexBuffer fw_head;
+  VertexBuffer bw_head;
+  IndexBuffer  fw_csr;
+  IndexBuffer  bw_csr;
 
-  DistributedGraph(Partition partition, u64 n, u64 m)
-    : partition(partition)
-    , n(n)
-    , m(m)
+  DistributedGraph()  = default;
+  ~DistributedGraph() = default;
+
+  DistributedGraph(DistributedGraph const&) = delete;
+  DistributedGraph(DistributedGraph&& rhs) noexcept
   {
+    partition = std::move(rhs.partition);
+    n         = rhs.n;
+    m         = rhs.m;
+    fw_head   = std::move(rhs.fw_head);
+    bw_head   = std::move(rhs.bw_head);
+    fw_csr    = std::move(rhs.fw_csr);
+    bw_csr    = std::move(rhs.bw_csr);
+    rhs.n     = 0;
+    rhs.m     = 0;
   }
 
-  static auto load(Partition const& partition, Manifest const& manifest) -> Result<DistributedGraph>
+  auto operator=(DistributedGraph const&) -> DistributedGraph& = delete;
+  auto operator=(DistributedGraph&& rhs) noexcept -> DistributedGraph&
   {
-    auto const n      = manifest.graph_node_count;
-    auto const m      = manifest.graph_edge_count;
-    auto const endian = manifest.graph_endian;
+    if (this != &rhs) {
+      partition = std::move(rhs.partition);
+      n         = rhs.n;
+      m         = rhs.m;
+      fw_head   = std::move(rhs.fw_head);
+      bw_head   = std::move(rhs.bw_head);
+      fw_csr    = std::move(rhs.fw_csr);
+      bw_csr    = std::move(rhs.bw_csr);
+      rhs.n     = 0;
+      rhs.m     = 0;
+    }
+    return *this;
+  }
 
-    auto load_dir = [&](std::filesystem::path const& head_path, std::filesystem::path const& csr_path, auto& out_head, auto& out_csr) -> VoidResult {
-      RESULT_TRY(auto const head_fb, (CU64Buffer<FileBuffer>::create_r(head_path.c_str(), n + 1, manifest.graph_head_bytes, endian)));
-      RESULT_TRY(auto const csr_fb, (CU64Buffer<FileBuffer>::create_r(csr_path.c_str(), m, manifest.graph_csr_bytes, endian)));
+  static auto load(Partition partition, Manifest const& manifest) -> Result<DistributedGraph>
+  {
+    using LoadBuffer = CU64Buffer<FileBuffer>;
 
-      u64 const local_n = partition.size();
-      u64       local_m = 0;
+    auto const n            = manifest.graph_node_count;
+    auto const m            = manifest.graph_edge_count;
+    auto const head_bytes   = manifest.graph_head_bytes;
+    auto const csr_bytes    = manifest.graph_csr_bytes;
+    auto const load_endian  = manifest.graph_endian;
+    auto const fw_head_file = manifest.fw_head_path.c_str();
+    auto const fw_csr_file  = manifest.fw_csr_path.c_str();
+    auto const bw_head_file = manifest.bw_head_path.c_str();
+    auto const bw_csr_file  = manifest.bw_csr_path.c_str();
+
+    RESULT_ASSERT(n < std::numeric_limits<vertex_t>::max(), ASSUMPTION_ERROR);
+    RESULT_ASSERT(m < std::numeric_limits<index_t>::max(), ASSUMPTION_ERROR);
+
+    auto load_dir = [&](char const* head_file, char const* csr_file, auto& graph_head, auto& graph_csr) -> VoidResult {
+      RESULT_TRY(auto const head, LoadBuffer::create_r(head_file, n + 1, head_bytes, load_endian));
+      RESULT_TRY(auto const csr, LoadBuffer::create_r(csr_file, m, csr_bytes, load_endian));
+
+      vertex_t const local_n = partition.size();
+      index_t        local_m = 0;
 
       if constexpr (Partition::continuous) {
-        if (local_n > 0) {
-          auto const begin = head_fb.get(partition.begin);
-          auto const end   = head_fb.get(partition.end);
-          local_m          = end - begin;
-        }
+        if (local_n > 0)
+          local_m = head.get(partition.end) - head.get(partition.begin);
       } else {
-        for (u64 k = 0; k < local_n; ++k) {
-          auto const index = partition.select(k);
-          auto const begin = head_fb.get(index);
-          auto const end   = head_fb.get(index + 1);
-          local_m += end - begin;
+        for (vertex_t k = 0; k < local_n; ++k) {
+          auto const u = partition.select(k);
+          local_m += head.get(u + 1) - head.get(u);
         }
       }
 
-      if constexpr (Compress) {
-        RESULT_TRY(out_head, buffer_type::create(local_n + 1, manifest.graph_head_bytes));
-        RESULT_TRY(out_csr, buffer_type::create(local_m, manifest.graph_csr_bytes));
-      } else {
-        RESULT_TRY(out_head, buffer_type::create(local_n + 1));
-        RESULT_TRY(out_csr, buffer_type::create(local_m));
-      }
+      RESULT_TRY(graph_head, create_head_buffer(partition, local_m));
+      RESULT_TRY(graph_csr, create_csr_buffer(partition, local_m));
 
       u64 pos = 0;
       for (u64 k = 0; k < local_n; ++k) {
         auto const index = partition.select(k);
-        auto const begin = head_fb.get(index);
-        auto const end   = head_fb.get(index + 1);
+        auto const begin = head.get(index);
+        auto const end   = head.get(index + 1);
 
-        out_head.set(k, pos);
+        graph_head.set(k, pos);
 
         for (auto it = begin; it != end; ++it)
-          out_csr.set(pos++, csr_fb.get(it));
+          graph_csr.set(pos++, csr.get(it));
       }
-      out_head.set(local_n, pos);
+      graph_head.set(local_n, pos);
       return VoidResult::success();
     };
 
-    buffer_type fw_head;
-    buffer_type bw_head;
-    buffer_type fw_csr;
-    buffer_type bw_csr;
-
-    RESULT_TRY(load_dir(manifest.fw_head_path, manifest.fw_csr_path, fw_head, fw_csr));
-    RESULT_TRY(load_dir(manifest.bw_head_path, manifest.bw_csr_path, bw_head, bw_csr));
-
-    DistributedGraph result{ partition, n, m };
-    result.fw_head = std::move(fw_head);
-    result.bw_head = std::move(bw_head);
-    result.fw_csr  = std::move(fw_csr);
-    result.bw_csr  = std::move(bw_csr);
+    auto result = DistributedGraph{};
+    RESULT_TRY(load_dir(fw_head_file, fw_csr_file, result.fw_head, result.fw_csr));
+    RESULT_TRY(load_dir(bw_head_file, bw_csr_file, result.bw_head, result.bw_csr));
+    result.partition = std::move(partition);
+    result.n         = n;
+    result.m         = m;
     return result;
   }
 
@@ -109,7 +129,7 @@ struct DistributedGraph
   //   auto const local_n                = kg_graph.xadj.size() - 1;
   //   auto const local_m                = kg_graph.adjncy.size();
   //   auto const [node_begin, node_end] = kg_graph.vertex_range;
-  //   ASSERT_TRY(node_end - node_begin == local_n, ASSUMPTION_ERROR);
+  //   RESULT_ASSERT(node_end - node_begin == local_n, ASSUMPTION_ERROR);
   //   RESULT_TRY(auto part, KaGenPartition::create(n, node_begin, node_end, comm.rank(), comm.size()));
   //   auto const needed_head_bytes = needed_bytes(local_m);
   //   auto const needed_csr_bytes  = needed_bytes(n - 1);

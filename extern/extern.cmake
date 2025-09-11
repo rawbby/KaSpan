@@ -32,6 +32,7 @@ block()
     set(USE_BOOST OFF)
     set(INSTALL_GTEST OFF)
 
+    include("${TARGET_DIR}/kaval.cmake")
     include("${TARGET_DIR}/kamping.cmake")
     include("${TARGET_DIR}/stxxl.cmake")
     include("${TARGET_DIR}/KaGen.cmake")

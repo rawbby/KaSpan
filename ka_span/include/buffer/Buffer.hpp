@@ -136,11 +136,11 @@ public:
       return b;
 
     b.fd_ = open(file, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
-    ASSERT_TRY(b.fd_ != -1, IO_ERROR);
-    ASSERT_TRY(file_size_fd(b.fd_) == size, IO_ERROR);
+    RESULT_ASSERT(b.fd_ != -1, IO_ERROR);
+    RESULT_ASSERT(file_size_fd(b.fd_) == size, IO_ERROR);
 
     b.data_ = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, b.fd_, 0);
-    ASSERT_TRY(b.data_ != MAP_FAILED, MEMORY_MAPPING_ERROR);
+    RESULT_ASSERT(b.data_ != MAP_FAILED, MEMORY_MAPPING_ERROR);
 
     b.size_ = size;
     return b;
@@ -157,16 +157,16 @@ public:
 
     if (allocate) {
       b.fd_ = open(file, alloc_oflags, 0600);
-      ASSERT_TRY(b.fd_ != -1, IO_ERROR);
-      ASSERT_TRY(ftruncate(b.fd_, static_cast<off_t>(size)) == 0, IO_ERROR);
+      RESULT_ASSERT(b.fd_ != -1, IO_ERROR);
+      RESULT_ASSERT(ftruncate(b.fd_, static_cast<off_t>(size)) == 0, IO_ERROR);
     } else {
       b.fd_ = open(file, oflags);
-      ASSERT_TRY(b.fd_ != -1, IO_ERROR);
-      ASSERT_TRY(file_size_fd(b.fd_) == size, IO_ERROR);
+      RESULT_ASSERT(b.fd_ != -1, IO_ERROR);
+      RESULT_ASSERT(file_size_fd(b.fd_) == size, IO_ERROR);
     }
 
     b.data_ = mmap(nullptr, size, PROT_WRITE, MAP_SHARED, b.fd_, 0);
-    ASSERT_TRY(b.data_ != MAP_FAILED, MEMORY_MAPPING_ERROR);
+    RESULT_ASSERT(b.data_ != MAP_FAILED, MEMORY_MAPPING_ERROR);
 
     b.size_ = size;
     return b;
@@ -183,16 +183,16 @@ public:
 
     if (allocate) {
       b.fd_ = open(file, alloc_oflags, 0600);
-      ASSERT_TRY(b.fd_ != -1, IO_ERROR);
-      ASSERT_TRY(ftruncate(b.fd_, static_cast<off_t>(size)) == 0, IO_ERROR);
+      RESULT_ASSERT(b.fd_ != -1, IO_ERROR);
+      RESULT_ASSERT(ftruncate(b.fd_, static_cast<off_t>(size)) == 0, IO_ERROR);
     } else {
       b.fd_ = open(file, oflags);
-      ASSERT_TRY(b.fd_ != -1, IO_ERROR);
-      ASSERT_TRY(file_size_fd(b.fd_) == size, IO_ERROR);
+      RESULT_ASSERT(b.fd_ != -1, IO_ERROR);
+      RESULT_ASSERT(file_size_fd(b.fd_) == size, IO_ERROR);
     }
 
     b.data_ = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, b.fd_, 0);
-    ASSERT_TRY(b.data_ != MAP_FAILED, MEMORY_MAPPING_ERROR);
+    RESULT_ASSERT(b.data_ != MAP_FAILED, MEMORY_MAPPING_ERROR);
 
     b.size_ = size;
     return b;
@@ -336,7 +336,7 @@ public:
   [[nodiscard]] static auto create(size_t size, size_t element_bytes, std::endian endian = std::endian::native) -> Result<CompressedUnsignedBuffer>
     requires std::same_as<Backed, Buffer>
   {
-    ASSERT_TRY(element_bytes and element_bytes <= sizeof(V), ASSUMPTION_ERROR);
+    RESULT_ASSERT(element_bytes and element_bytes <= sizeof(V), ASSUMPTION_ERROR);
     CompressedUnsignedBuffer result{};
     if (size == 0)
       return result;
@@ -350,7 +350,7 @@ public:
   [[nodiscard]] static auto create_r(char const* file, size_t size, size_t element_bytes, std::endian endian = std::endian::native) -> Result<CompressedUnsignedBuffer>
     requires std::same_as<Backed, FileBuffer>
   {
-    ASSERT_TRY(element_bytes and element_bytes <= sizeof(V), ASSUMPTION_ERROR);
+    RESULT_ASSERT(element_bytes and element_bytes <= sizeof(V), ASSUMPTION_ERROR);
     CompressedUnsignedBuffer result{};
     if (size == 0)
       return result;
@@ -364,7 +364,7 @@ public:
   [[nodiscard]] static auto create_w(char const* file, size_t size, size_t element_bytes, bool allocate, std::endian endian = std::endian::native) -> Result<CompressedUnsignedBuffer>
     requires std::same_as<Backed, FileBuffer>
   {
-    ASSERT_TRY(element_bytes and element_bytes <= sizeof(V), ASSUMPTION_ERROR);
+    RESULT_ASSERT(element_bytes and element_bytes <= sizeof(V), ASSUMPTION_ERROR);
     CompressedUnsignedBuffer result{};
     if (size == 0)
       return result;
@@ -378,7 +378,7 @@ public:
   [[nodiscard]] static auto create_rw(char const* file, size_t size, size_t element_bytes, bool allocate, std::endian endian = std::endian::native) -> Result<CompressedUnsignedBuffer>
     requires std::same_as<Backed, FileBuffer>
   {
-    ASSERT_TRY(element_bytes and element_bytes <= sizeof(V), ASSUMPTION_ERROR);
+    RESULT_ASSERT(element_bytes and element_bytes <= sizeof(V), ASSUMPTION_ERROR);
     CompressedUnsignedBuffer result{};
     if (size == 0)
       return result;
