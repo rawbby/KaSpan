@@ -1,5 +1,5 @@
 #include <comm/SyncEdgeComm.hpp>
-#include <graph/Partition.hpp>
+#include <graph/Part.hpp>
 #include <test/Assert.hpp>
 #include <test/SubProcess.hpp>
 #include <util/ScopeGuard.hpp>
@@ -17,7 +17,7 @@ main(int argc, char** argv)
   SCOPE_GUARD(MPI_Finalize());
 
   auto       comm = kmp::Communicator{};
-  auto const part = TrivialSlicePartition{ comm.size(), comm.rank(), comm.size() };
+  auto const part = TrivialSlicePart{ comm.size(), comm.rank(), comm.size() };
 
   auto impl   = SyncEdgeComm{ part };
   auto result = SyncAlltoallvBase<decltype(impl)>::create(comm, impl);

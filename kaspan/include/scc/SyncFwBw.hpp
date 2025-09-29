@@ -1,33 +1,33 @@
 #pragma once
 
 #include <comm/SyncFrontierComm.hpp>
-#include <graph/DistributedGraph.hpp>
+#include <graph/GraphPart.hpp>
 #include <pp/PP.hpp>
 #include <scc/Common.hpp>
 
 #include <kamping/communicator.hpp>
 
-template<WorldPartitionConcept Partition>
+template<WorldPartConcept Part>
 void
 sync_forward_search(
   kamping::Communicator<> const&              comm,
-  DistributedGraph<Partition> const&          graph,
-  SyncAlltoallvBase<SyncFrontier<Partition>>& frontier,
+  GraphPart<Part> const&          graph,
+  SyncAlltoallvBase<SyncFrontier<Part>>& frontier,
   U64Buffer const&                            scc_id,
   BitBuffer&                                  fw_reached,
   IF(KASPAN_NORMALIZE, u64&, u64) root)
 {
-  if (graph.partition.contains(root)) {
+  if (graph.part.contains(root)) {
     frontier.push_relaxed(root);
-    ASSERT(not fw_reached.get(graph.partition.rank(root)));
-    ASSERT(scc_id[graph.partition.rank(root)] == scc_id_undecided);
+    ASSERT(not fw_reached.get(graph.part.rank(root)));
+    ASSERT(scc_id[graph.part.rank(root)] == scc_id_undecided);
   }
 
   do { // NOLINT(*-avoid-do-while)
 
     while (frontier.has_next()) {
       auto const u = frontier.next();
-      auto const k = graph.partition.rank(u); // local index of u
+      auto const k = graph.part.rank(u); // local index of u
 
       // skip if reached or decided
       if (fw_reached.get(k) or scc_id[k] != scc_id_undecided)
@@ -46,25 +46,25 @@ sync_forward_search(
   } while (frontier.communicate(comm));
 }
 
-template<WorldPartitionConcept Partition>
+template<WorldPartConcept Part>
 void
 sync_backward_search(
   kamping::Communicator<> const&              comm,
-  DistributedGraph<Partition> const&          graph,
-  SyncAlltoallvBase<SyncFrontier<Partition>>& frontier,
+  GraphPart<Part> const&          graph,
+  SyncAlltoallvBase<SyncFrontier<Part>>& frontier,
   U64Buffer&                                  scc_id,
   BitBuffer const&                            fw_reached,
   u64                                         root,
   u64&                                        decided_count)
 {
-  if (graph.partition.contains(root))
+  if (graph.part.contains(root))
     frontier.push_relaxed(root);
 
   do { // NOLINT(*-avoid-do-while)
 
     while (frontier.has_next()) {
       auto const u = frontier.next();
-      auto const k = graph.partition.rank(u); // local index of u
+      auto const k = graph.part.rank(u); // local index of u
 
       // skip if not in fw-reached or decided
       if (!fw_reached.get(k) or scc_id[k] != scc_id_undecided)

@@ -21,13 +21,13 @@ struct Graph
 
   Graph(Graph const&) = delete;
   Graph(Graph&& rhs) noexcept
+    : n(rhs.n)
+    , m(rhs.m)
+    , fw_head(std::move(rhs.fw_head))
+    , fw_csr(std::move(rhs.fw_csr))
+    , bw_head(std::move(rhs.bw_head))
+    , bw_csr(std::move(rhs.bw_csr))
   {
-    n       = rhs.n;
-    m       = rhs.m;
-    fw_head = std::move(rhs.fw_head);
-    fw_csr  = std::move(rhs.fw_csr);
-    bw_head = std::move(rhs.bw_head);
-    bw_csr  = std::move(rhs.bw_csr);
   }
 
   auto operator=(Graph const&) -> Graph& = delete;
@@ -48,15 +48,15 @@ struct Graph
   {
     using LoadBuffer = CU64Buffer<FileBuffer>;
 
-    auto const n            = manifest.graph_node_count;
-    auto const m            = manifest.graph_edge_count;
-    auto const head_bytes   = manifest.graph_head_bytes;
-    auto const csr_bytes    = manifest.graph_csr_bytes;
-    auto const load_endian  = manifest.graph_endian;
-    auto const fw_head_file = manifest.fw_head_path.c_str();
-    auto const fw_csr_file  = manifest.fw_csr_path.c_str();
-    auto const bw_head_file = manifest.bw_head_path.c_str();
-    auto const bw_csr_file  = manifest.bw_csr_path.c_str();
+    auto const  n            = manifest.graph_node_count;
+    auto const  m            = manifest.graph_edge_count;
+    auto const  head_bytes   = manifest.graph_head_bytes;
+    auto const  csr_bytes    = manifest.graph_csr_bytes;
+    auto const  load_endian  = manifest.graph_endian;
+    char const* fw_head_file = manifest.fw_head_path.c_str();
+    char const* fw_csr_file  = manifest.fw_csr_path.c_str();
+    char const* bw_head_file = manifest.bw_head_path.c_str();
+    char const* bw_csr_file  = manifest.bw_csr_path.c_str();
 
     RESULT_ASSERT(n < std::numeric_limits<vertex_t>::max(), ASSUMPTION_ERROR);
     RESULT_ASSERT(m < std::numeric_limits<index_t>::max(), ASSUMPTION_ERROR);

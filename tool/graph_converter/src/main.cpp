@@ -1,6 +1,6 @@
 #include <buffer/Buffer.hpp>
 #include <graph/ConvertGraph.hpp>
-#include <graph/DistributedGraph.hpp>
+#include <graph/GraphPart.hpp>
 #include <scc/SCC.hpp>
 #include <test/Assert.hpp>
 

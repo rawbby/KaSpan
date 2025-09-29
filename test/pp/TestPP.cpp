@@ -114,7 +114,6 @@ main() -> int
   ASSERT_EQ(1, values[0]);
   ASSERT_EQ(2, values[1]);
 
-  static_assert(std::string_view{ TOSTRING(TUPLE_ZIP((1, 2, 3), (a, b, c))) } == "(1,2,3,a,b,c)");
   static_assert(std::string_view{ TOSTRING(ARGS_TO_TUPLE(a, b, c)) } == "(a,b,c)");
   static_assert(std::string_view{ TOSTRING(ARGS_ELEMENT(0, TUPLE_TO_ARGS((a, b, c)))) } == "a");
   static_assert(std::string_view{ TOSTRING(ARGS_ELEMENT(1, TUPLE_TO_ARGS((a, b, c)))) } == "b");

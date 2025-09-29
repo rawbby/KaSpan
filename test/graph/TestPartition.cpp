@@ -1,24 +1,24 @@
-#include <graph/Partition.hpp>
+#include <graph/Part.hpp>
 #include <test/Assert.hpp>
 #include <test/SubProcess.hpp>
 #include <util/ScopeGuard.hpp>
 
 template<bool sorted_variant>
 void
-test_explicit_continuous_world_partition(int rank, int size)
+test_explicit_continuous_world_part(int rank, int size)
 {
-  using Partition = std::conditional_t<
+  using Part = std::conditional_t<
     sorted_variant,
-    ExplicitSortedContinuousWorldPartition,
-    ExplicitContinuousWorldPartition>;
+    ExplicitSortedContinuousWorldPart,
+    ExplicitContinuousWorldPart>;
 
   auto result = [&] {
     if (rank == 0)
-      return Partition::create(10, 0, 3, rank, size);
+      return Part::create(10, 0, 3, rank, size);
     if (rank == 1)
-      return Partition::create(10, 3, 9, rank, size);
+      return Part::create(10, 3, 9, rank, size);
     ASSERT_EQ(rank, 2);
-    return Partition::create(10, 9, 10, rank, size);
+    return Part::create(10, 9, 10, rank, size);
   }();
 
   ASSERT(result.has_value());
@@ -55,13 +55,13 @@ test_explicit_continuous_world_partition(int rank, int size)
 int
 main(int argc, char** argv)
 {
-  static_assert(PartitionConcept<ExplicitContinuousPartition>);
-  static_assert(WorldPartitionConcept<CyclicPartition>);
-  static_assert(WorldPartitionConcept<BlockCyclicPartition>);
-  static_assert(WorldPartitionConcept<TrivialSlicePartition>);
-  static_assert(WorldPartitionConcept<BalancedSlicePartition>);
-  static_assert(WorldPartitionConcept<ExplicitContinuousWorldPartition>);
-  static_assert(WorldPartitionConcept<ExplicitSortedContinuousWorldPartition>);
+  static_assert(PartConcept<ExplicitContinuousPart>);
+  static_assert(WorldPartConcept<CyclicPart>);
+  static_assert(WorldPartConcept<BlockCyclicPart>);
+  static_assert(WorldPartConcept<TrivialSlicePart>);
+  static_assert(WorldPartConcept<BalancedSlicePart>);
+  static_assert(WorldPartConcept<ExplicitContinuousWorldPart>);
+  static_assert(WorldPartConcept<ExplicitSortedContinuousWorldPart>);
 
   constexpr int npc = 1;
   constexpr int npv[1]{ 3 };
@@ -75,6 +75,6 @@ main(int argc, char** argv)
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  test_explicit_continuous_world_partition<false>(rank, size);
-  test_explicit_continuous_world_partition<true>(rank, size);
+  test_explicit_continuous_world_part<false>(rank, size);
+  test_explicit_continuous_world_part<true>(rank, size);
 }

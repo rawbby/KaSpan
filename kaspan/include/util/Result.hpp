@@ -46,23 +46,19 @@ public:
   {
   }
 
-  // ReSharper disable CppNonExplicitConvertingConstructor
-
   template<typename T>
     requires(value_convertible_v<T>)
-  constexpr Result(T&& value) // NOLINT(*-explicit-constructor)
+  constexpr Result(T&& value) // NOLINT(*-explicit-constructor, *-explicit-conversions)
     : data(std::in_place_index<0>, std::forward<T>(value))
   {
   }
 
   template<typename T>
     requires(error_convertible_v<T>)
-  constexpr Result(T&& error) // NOLINT(*-explicit-constructor)
+  constexpr Result(T&& error) // NOLINT(*-explicit-constructor, *-explicit-conversions)
     : data(std::in_place_index<1>, std::forward<T>(error))
   {
   }
-
-  // ReSharper restore CppNonExplicitConvertingConstructor
 
   static constexpr auto success() -> Result
     requires(value_is_void_v)

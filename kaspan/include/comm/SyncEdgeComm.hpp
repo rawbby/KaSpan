@@ -1,7 +1,7 @@
 #pragma once
 
 #include <buffer/Buffer.hpp>
-#include <graph/Partition.hpp>
+#include <graph/Part.hpp>
 #include <util/Result.hpp>
 #include <comm/MpiBasic.hpp>
 #include <graph/Edge.hpp>
@@ -189,7 +189,7 @@ private:
   I32Buffer            send_displs_; // prefix sums of send_counts
 };
 
-template<WorldPartitionConcept Partition>
+template<WorldPartConcept Part>
 class SyncEdgeComm
 {
 public:
@@ -198,8 +198,8 @@ public:
   SyncEdgeComm()  = default;
   ~SyncEdgeComm() = default;
 
-  explicit SyncEdgeComm(Partition partition)
-    : partition_(partition)
+  explicit SyncEdgeComm(Part part)
+    : part_(part)
   {
   }
 
@@ -211,21 +211,21 @@ public:
 
   auto world_rank() const -> size_t
   {
-    return partition_.world_rank;
+    return part_.world_rank;
   }
 
   auto world_rank_of(Edge payload) const -> size_t
   {
-    return partition_.world_rank_of(payload.u);
+    return part_.world_rank_of(payload.u);
   }
 
   void swap(size_t /* i */, size_t /* j */) const {}
 
 private:
-  Partition partition_;
+  Part part_;
 };
 
-template<WorldPartitionConcept Partition>
+template<WorldPartConcept Part>
 class SyncFrontier
 {
 public:
@@ -234,8 +234,8 @@ public:
   SyncFrontier()  = default;
   ~SyncFrontier() = default;
 
-  explicit SyncFrontier(Partition partition)
-    : partition_(partition)
+  explicit SyncFrontier(Part part)
+    : part_(part)
   {
   }
 
@@ -247,16 +247,16 @@ public:
 
   auto world_rank() const -> size_t
   {
-    return partition_.world_rank;
+    return part_.world_rank;
   }
 
   auto world_rank_of(Payload payload) const -> size_t
   {
-    return partition_.world_rank_of(payload);
+    return part_.world_rank_of(payload);
   }
 
   void swap(size_t /* i */, size_t /* j */) const {}
 
 private:
-  Partition partition_;
+  Part part_;
 };
