@@ -2,8 +2,8 @@
 
 #include <buffer/Buffer.hpp>
 #include <comm/MpiBasic.hpp>
-#include <graph/DistributedGraph.hpp>
-#include <graph/Partition.hpp>
+#include <graph/GraphPart.hpp>
+#include <graph/Part.hpp>
 #include <scc/Common.hpp>
 #include <util/Arithmetic.hpp>
 #include <util/ScopeGuard.hpp>
@@ -17,12 +17,12 @@ struct Degree
   u64 u;
 };
 
-template<WorldPartitionConcept Partition>
+template<WorldPartConcept Part>
 auto
-pivot_selection(kamping::Communicator<>& comm, DistributedGraph<Partition> const& graph, U64Buffer const& scc_id) -> u64
+pivot_selection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer const& scc_id) -> u64
 {
   Degree max_degree{};
-  for (u64 k = 0; k < graph.partition.size(); ++k) {
+  for (u64 k = 0; k < graph.part.size(); ++k) {
     if (scc_id[k] == scc_id_undecided) {
       auto const out_degree     = graph.fw_degree(k);
       auto const in_degree      = graph.bw_degree(k);
@@ -30,7 +30,7 @@ pivot_selection(kamping::Communicator<>& comm, DistributedGraph<Partition> const
 
       if (degree_product >= max_degree.degree) {
         max_degree.degree = degree_product;
-        max_degree.u      = graph.partition.select(k);
+        max_degree.u      = graph.part.select(k);
       }
     }
   }

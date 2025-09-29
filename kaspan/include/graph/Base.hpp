@@ -3,7 +3,7 @@
 #include <buffer/Buffer.hpp>
 #include <comm/MpiBasic.hpp>
 #include <graph/Manifest.hpp>
-#include <graph/Partition.hpp>
+#include <graph/Part.hpp>
 #include <util/Arithmetic.hpp>
 
 #ifdef KASPAN_32
@@ -66,23 +66,23 @@ create_csr_buffer(Manifest const& manifest) -> Result<IndexBuffer>
 #endif
 }
 
-template<WorldPartitionConcept Partition>
+template<WorldPartConcept Part>
 auto
-create_head_buffer(Partition const& partition, index_t local_m) -> Result<VertexBuffer> // NOLINT(*-unused-parameters)
+create_head_buffer(Part const& part, index_t local_m) -> Result<VertexBuffer> // NOLINT(*-unused-parameters)
 {
 #ifdef KASPAN_COMPRESS_BUFFER
-  return VertexBuffer::create(partition.size() + 1, needed_bytes(local_m));
+  return VertexBuffer::create(part.size() + 1, needed_bytes(local_m));
 #else
-  return VertexBuffer::create(partition.size() + 1);
+  return VertexBuffer::create(part.size() + 1);
 #endif
 }
 
-template<WorldPartitionConcept Partition>
+template<WorldPartConcept Part>
 auto
-create_csr_buffer(Partition const& partition, index_t local_m) -> Result<IndexBuffer> // NOLINT(*-unused-parameters)
+create_csr_buffer(Part const& part, index_t local_m) -> Result<IndexBuffer> // NOLINT(*-unused-parameters)
 {
 #ifdef KASPAN_COMPRESS_BUFFER
-  auto const max_vertex = partition.n == 0 ? 0 : partition.n - 1;
+  auto const max_vertex = part.n == 0 ? 0 : part.n - 1;
   return IndexBuffer::create(local_m, needed_bytes(max_vertex));
 #else
   return IndexBuffer::create(local_m);

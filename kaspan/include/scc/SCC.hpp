@@ -7,7 +7,7 @@
 #include <scc/Trim1.hpp>
 #include <util/Result.hpp>
 
-#include <graph/DistributedGraph.hpp>
+#include <graph/GraphPart.hpp>
 
 #include <kamping/collectives/allreduce.hpp>
 #include <kamping/communicator.hpp>
@@ -15,9 +15,9 @@
 #include <algorithm>
 #include <cstdio>
 
-template<WorldPartitionConcept Partition>
+template<WorldPartConcept Part>
 void
-normalize_scc_id(U64Buffer& scc_id, Partition const& part)
+normalize_scc_id(U64Buffer& scc_id, Part const& part)
 {
   for (vertex_t k = 0; k < part.size(); ++k) {
     auto const u = part.select(k);
@@ -26,20 +26,20 @@ normalize_scc_id(U64Buffer& scc_id, Partition const& part)
   }
 }
 
-template<WorldPartitionConcept Partition>
+template<WorldPartConcept Part>
 VoidResult
-scc_detection(kamping::Communicator<>& comm, DistributedGraph<Partition> const& graph, U64Buffer& scc_id)
+scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer& scc_id)
 {
   namespace kmp = kamping;
 
   // scc id contains per local node an id that maps it to an scc
   std::ranges::fill(scc_id.range(), scc_id_undecided);
 
-  auto frontier_kernel = SyncFrontier{ graph.partition };
-  RESULT_TRY(auto frontier, SyncAlltoallvBase<SyncFrontier<Partition>>::create(comm, frontier_kernel));
-  RESULT_TRY(auto fw_reached, BitBuffer::create(graph.partition.size()));
+  auto frontier_kernel = SyncFrontier{ graph.part };
+  RESULT_TRY(auto frontier, SyncAlltoallvBase<SyncFrontier<Part>>::create(comm, frontier_kernel));
+  RESULT_TRY(auto fw_reached, BitBuffer::create(graph.part.size()));
 
-  // RESULT_TRY(auto edge_comm, SyncEdgeComm<Partition>::create(comm));
+  // RESULT_TRY(auto edge_comm, SyncEdgeComm<Part>::create(comm));
 
   u64 decided_count        = 0;
   u64 global_decided_count = 0;
@@ -64,6 +64,6 @@ scc_detection(kamping::Communicator<>& comm, DistributedGraph<Partition> const& 
     global_decided_count = comm.allreduce_single(kmp::send_buf(decided_count), kmp::op(MPI_SUM));
   }
 
-  normalize_scc_id(scc_id, graph.partition);
+  normalize_scc_id(scc_id, graph.part);
   return VoidResult::success();
 }

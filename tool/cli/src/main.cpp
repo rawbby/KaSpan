@@ -1,5 +1,5 @@
 #include <buffer/Buffer.hpp>
-#include <graph/DistributedGraph.hpp>
+#include <graph/GraphPart.hpp>
 #include <scc/SCC.hpp>
 #include <util/ScopeGuard.hpp>
 
@@ -18,8 +18,8 @@ main(int argc, char** argv) -> int
   kamping::Communicator comm{};
 
   ASSERT_TRY(auto const manifest, Manifest::load(argv[1]));
-  TrivialSlicePartition const partition{ manifest.graph_node_count, comm.rank(), comm.size() };
-  ASSERT_TRY(auto const graph, DistributedGraph<>::load(partition, manifest));
+  TrivialSlicePart const part{ manifest.graph_node_count, comm.rank(), comm.size() };
+  ASSERT_TRY(auto const graph, GraphPart<>::load(part, manifest));
 
   ASSERT_TRY(auto scc_id, U64Buffer::create(manifest.graph_node_count));
   ASSERT_TRY(scc_detection(comm, graph, scc_id));

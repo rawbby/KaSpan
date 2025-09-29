@@ -15,9 +15,9 @@
 namespace {
 
 /// sanitize the state of the frontier communicator pre and post communication
-template<class Partition>
+template<class Part>
 auto
-sanitized_communication(kamping::Communicator<> const& comm, Partition const& part, SyncFrontierComm<Partition>& frontier) -> Result<bool>
+sanitized_communication(kamping::Communicator<> const& comm, Part const& part, SyncFrontierComm<Part>& frontier) -> Result<bool>
 {
   auto const rank = comm.rank();
   auto const size = comm.size();
@@ -117,11 +117,11 @@ random_messages(u64 seed, size_t max_count = 4096, u64 value_range = 8192) -> st
 
 /// test different configurations
 /// notice: Fuzzy = 0 means hard coded sample
-template<bool Relaxed, u64 Fuzzy, int Runs, class Partition>
+template<bool Relaxed, u64 Fuzzy, int Runs, class Part>
 void
-test_kernel(kamping::Communicator<> const& comm, Partition const& part, char const* part_name)
+test_kernel(kamping::Communicator<> const& comm, Part const& part, char const* part_name)
 {
-  auto frontier_result = SyncFrontierComm<Partition>::create(comm);
+  auto frontier_result = SyncFrontierComm<Part>::create(comm);
   ASSERT(frontier_result.has_value());
   auto frontier = std::move(frontier_result.value());
 
@@ -214,10 +214,10 @@ main(int argc, char** argv) -> int
   SCOPE_GUARD(MPI_Finalize());
 
   auto const comm     = kamping::Communicator{};
-  auto const part     = CyclicPartition{ n, comm.rank(), comm.size() };
-  auto const blk_part = BlockCyclicPartition{ n, comm.rank(), comm.size() };
-  auto const bs_part  = BalancedSlicePartition{ n, comm.rank(), comm.size() };
-  auto const ts_part  = TrivialSlicePartition{ n, comm.rank(), comm.size() };
+  auto const part     = CyclicPart{ n, comm.rank(), comm.size() };
+  auto const blk_part = BlockCyclicPart{ n, comm.rank(), comm.size() };
+  auto const bs_part  = BalancedSlicePart{ n, comm.rank(), comm.size() };
+  auto const ts_part  = TrivialSlicePart{ n, comm.rank(), comm.size() };
 
   constexpr int  NO_FUZZ         = 0;
   constexpr int  HARD_CODED_RUNS = 3;
@@ -226,23 +226,23 @@ main(int argc, char** argv) -> int
   constexpr bool NON_RELAXED     = false;
   constexpr int  FUZZ_SEEDS[8]{ 0x8067e9, 0xdf00dd, 0xd0ecf0, 0x22d80b, 0x17e615, 0xd59eef, 0x215869, 0xa2a5a5 };
 
-  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, bs_part, "BalancedSlicePartition");
-  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, ts_part, "TrivialSlicePartition");
-  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, part, "CyclicPartition");
-  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, blk_part, "BlockCyclicPartition");
+  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, bs_part, "BalancedSlicePart");
+  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, ts_part, "TrivialSlicePart");
+  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, part, "CyclicPart");
+  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, blk_part, "BlockCyclicPart");
 
-  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, bs_part, "BalancedSlicePartition");
-  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, ts_part, "TrivialSlicePartition");
-  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, part, "CyclicPartition");
-  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, blk_part, "BlockCyclicPartition");
+  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, bs_part, "BalancedSlicePart");
+  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, ts_part, "TrivialSlicePart");
+  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, part, "CyclicPart");
+  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, blk_part, "BlockCyclicPart");
 
-  test_kernel<NON_RELAXED, FUZZ_SEEDS[2], FUZZ_RUNS>(comm, bs_part, "BalancedSlicePartition");
-  test_kernel<NON_RELAXED, FUZZ_SEEDS[3], FUZZ_RUNS>(comm, ts_part, "TrivialSlicePartition");
-  test_kernel<NON_RELAXED, FUZZ_SEEDS[0], FUZZ_RUNS>(comm, part, "CyclicPartition");
-  test_kernel<NON_RELAXED, FUZZ_SEEDS[1], FUZZ_RUNS>(comm, blk_part, "BlockCyclicPartition");
+  test_kernel<NON_RELAXED, FUZZ_SEEDS[2], FUZZ_RUNS>(comm, bs_part, "BalancedSlicePart");
+  test_kernel<NON_RELAXED, FUZZ_SEEDS[3], FUZZ_RUNS>(comm, ts_part, "TrivialSlicePart");
+  test_kernel<NON_RELAXED, FUZZ_SEEDS[0], FUZZ_RUNS>(comm, part, "CyclicPart");
+  test_kernel<NON_RELAXED, FUZZ_SEEDS[1], FUZZ_RUNS>(comm, blk_part, "BlockCyclicPart");
 
-  test_kernel<RELAXED, FUZZ_SEEDS[6], FUZZ_RUNS>(comm, bs_part, "BalancedSlicePartition");
-  test_kernel<RELAXED, FUZZ_SEEDS[7], FUZZ_RUNS>(comm, ts_part, "TrivialSlicePartition");
-  test_kernel<RELAXED, FUZZ_SEEDS[4], FUZZ_RUNS>(comm, part, "CyclicPartition");
-  test_kernel<RELAXED, FUZZ_SEEDS[5], FUZZ_RUNS>(comm, blk_part, "BlockCyclicPartition");
+  test_kernel<RELAXED, FUZZ_SEEDS[6], FUZZ_RUNS>(comm, bs_part, "BalancedSlicePart");
+  test_kernel<RELAXED, FUZZ_SEEDS[7], FUZZ_RUNS>(comm, ts_part, "TrivialSlicePart");
+  test_kernel<RELAXED, FUZZ_SEEDS[4], FUZZ_RUNS>(comm, part, "CyclicPart");
+  test_kernel<RELAXED, FUZZ_SEEDS[5], FUZZ_RUNS>(comm, blk_part, "BlockCyclicPart");
 }

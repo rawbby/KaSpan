@@ -22,7 +22,7 @@ main(int argc, char** argv) -> int
   for (size_t n = 32; n < 64; n += 8) {
 
     auto const seed = std::bit_cast<u64>(mpi_global_max_wtime());
-    auto const part = BalancedSlicePartition{ n, comm.rank(), comm.size() };
+    auto const part = BalancedSlicePart{ n, comm.rank(), comm.size() };
 
     ASSERT_TRY(auto scc_id_and_graph, fuzzy_global_scc_id_and_graph(seed, part.n));
     auto const scc_id_orig = std::move(scc_id_and_graph.first);

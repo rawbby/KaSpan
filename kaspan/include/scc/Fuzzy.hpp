@@ -1,8 +1,8 @@
 #pragma once
 
-#include <graph/DistributedGraph.hpp>
+#include <graph/GraphPart.hpp>
 #include <graph/Graph.hpp>
-#include <graph/convert/Graph2GraphPartition.hpp>
+#include <graph/convert/Graph2GraphPart.hpp>
 
 #include <buffer/Buffer.hpp>
 #include <util/Util.hpp>
@@ -138,18 +138,18 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0) -> Result<s
   return std::pair{ std::move(scc_id), std::move(g) };
 }
 
-template<WorldPartitionConcept Partition>
+template<WorldPartConcept Part>
 auto
-fuzzy_local_scc_id_and_graph(u64 seed, Partition partition, double degree = -1.0) -> Result<std::pair<U64Buffer, DistributedGraph<Partition>>>
+fuzzy_local_scc_id_and_graph(u64 seed, Part part, double degree = -1.0) -> Result<std::pair<U64Buffer, GraphPart<Part>>>
 {
-  RESULT_TRY(auto global_scc_id_and_graph, fuzzy_global_scc_id_and_graph(seed, partition.n, degree));
+  RESULT_TRY(auto global_scc_id_and_graph, fuzzy_global_scc_id_and_graph(seed, part.n, degree));
   auto [global_scc_id, global_graph] = std::move(global_scc_id_and_graph);
 
-  RESULT_TRY(auto local_scc_id, U64Buffer::create(partition.size()));
-  for (size_t k = 0; k < partition.size(); ++k)
-    local_scc_id[k] = global_scc_id[partition.select(k)];
+  RESULT_TRY(auto local_scc_id, U64Buffer::create(part.size()));
+  for (size_t k = 0; k < part.size(); ++k)
+    local_scc_id[k] = global_scc_id[part.select(k)];
 
-  RESULT_TRY(auto local_graph, load_local(global_graph, std::move(partition)));
+  RESULT_TRY(auto local_graph, load_local(global_graph, std::move(part)));
 
   return std::pair{ std::move(local_scc_id), std::move(local_graph) };
 }

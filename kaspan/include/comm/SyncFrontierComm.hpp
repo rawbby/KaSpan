@@ -1,13 +1,13 @@
 #pragma once
 
 #include <buffer/Buffer.hpp>
-#include <graph/Partition.hpp>
+#include <graph/Part.hpp>
 #include <util/Result.hpp>
 
 #include <kamping/collectives/alltoall.hpp>
 #include <kamping/communicator.hpp>
 
-template<WorldPartitionConcept Partition>
+template<WorldPartConcept Part>
 class SyncFrontierComm
 {
 public:
@@ -61,13 +61,13 @@ public:
     std::memset(send_counts_.data(), 0, send_counts_.bytes());
   }
 
-  void push(Partition const& part, u64 v)
+  void push(Part const& part, u64 v)
   {
     send_buf_.emplace_back(v);
     ++send_counts_[part.world_rank_of(v)];
   }
 
-  void push_relaxed(kamping::Communicator<> const& comm, Partition const& part, u64 payload)
+  void push_relaxed(kamping::Communicator<> const& comm, Part const& part, u64 payload)
   {
     auto const rank = part.world_rank_of(payload);
     if (rank == comm.rank()) {
@@ -91,7 +91,7 @@ public:
   }
 
   template<bool AutoClear = true>
-  auto communicate(kamping::Communicator<> const& comm, Partition const& part) -> bool
+  auto communicate(kamping::Communicator<> const& comm, Part const& part) -> bool
   {
     // communicate the message count across all ranks
     u64 world_message_count = send_buf_.size();
