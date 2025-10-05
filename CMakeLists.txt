@@ -14,4 +14,7 @@ include(.cmake_utilities/modules/all.cmake)
 
 python(-m pip install --upgrade -r "${PROJECT_SOURCE_DIR}/requirements.txt")
 
+find_package(MPI REQUIRED)
+find_package(OpenMP REQUIRED)
+
 structured_directories()
