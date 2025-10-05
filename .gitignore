@@ -1,7 +1,8 @@
-.cmake_utilities/
-.idea/
-.venv/
-cmake-build-*/
+/.cmake_utilities/
+/.idea/
+/.venv/
+/cmake-build-*/
+/experiment_data/
+/graph/
+
 __pycache__/
-experiment_data
-graph/

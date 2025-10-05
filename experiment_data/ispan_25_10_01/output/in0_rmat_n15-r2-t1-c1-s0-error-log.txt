@@ -1,0 +1,9 @@
+--------------------------------------------------------------------------
+mpiexec was unable to launch the specified application as it could not access
+or execute an executable:
+
+Executable: /mnt/c/Users/User/workspace/KaSpan/cmake-build-debug/_deps/kaval-src/../build/bin/iSpan_cli
+Node: PC
+
+while attempting to start process rank 0.
+--------------------------------------------------------------------------

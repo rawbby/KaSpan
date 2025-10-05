@@ -11,8 +11,8 @@ block()
 
     option(KAVAL_MACHINE "the machine kaval is running on" "shared")
 
-    python_target(kaval "${kaval_SOURCE_DIR}/run-experiments.py"
-            --machine "${KAVAL_MACHINE}"
-            --search-dirs "${PROJECT_SOURCE_DIR}/experiment")
+    # python_target(kaval "${kaval_SOURCE_DIR}/run-experiments.py"
+    #         --machine "${KAVAL_MACHINE}"
+    #         --search-dirs "${PROJECT_SOURCE_DIR}/experiment")
 
 endblock()
