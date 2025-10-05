@@ -1,8 +1,5 @@
 include(FetchContent)
 
-find_package(MPI REQUIRED)
-find_package(OpenMP REQUIRED)
-
 block()
 
     set(KASSERT_WARNINGS_ARE_ERRORS OFF CACHE BOOL "" FORCE)
