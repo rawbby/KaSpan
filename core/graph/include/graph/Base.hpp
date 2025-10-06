@@ -22,12 +22,12 @@ constexpr inline auto mpi_vertex_t = mpi_basic_type<vertex_t>;
 using VertexBuffer = CompressedUnsignedBuffer<index_t>;
 using IndexBuffer  = CompressedUnsignedBuffer<vertex_t>;
 #else
-using VertexBuffer = IntBuffer<index_t>;
-using IndexBuffer  = IntBuffer<vertex_t>;
+using VertexBuffer = IntBuffer<vertex_t>;
+using IndexBuffer  = IntBuffer<index_t>;
 #endif
 
 inline auto
-create_head_buffer(vertex_t n, index_t m) -> Result<VertexBuffer>
+create_head_buffer(vertex_t n, index_t m) -> Result<IndexBuffer>
 {
 #ifdef KASPAN_COMPRESS_BUFFER
   return VertexBuffer::create(n + 1, needed_bytes(m));
@@ -37,7 +37,7 @@ create_head_buffer(vertex_t n, index_t m) -> Result<VertexBuffer>
 }
 
 inline auto
-create_csr_buffer(vertex_t n, index_t m) -> Result<IndexBuffer>
+create_csr_buffer(vertex_t n, index_t m) -> Result<VertexBuffer>
 {
 #ifdef KASPAN_COMPRESS_BUFFER
   auto const max_vertex = n == 0 ? 0 : n - 1;
@@ -48,7 +48,7 @@ create_csr_buffer(vertex_t n, index_t m) -> Result<IndexBuffer>
 }
 
 inline auto
-create_head_buffer(Manifest const& manifest) -> Result<VertexBuffer>
+create_head_buffer(Manifest const& manifest) -> Result<IndexBuffer>
 {
 #ifdef KASPAN_COMPRESS_BUFFER
   return VertexBuffer::create(manifest.graph_node_count + 1, manifest.graph_head_bytes);
@@ -58,7 +58,7 @@ create_head_buffer(Manifest const& manifest) -> Result<VertexBuffer>
 }
 
 inline auto
-create_csr_buffer(Manifest const& manifest) -> Result<IndexBuffer>
+create_csr_buffer(Manifest const& manifest) -> Result<VertexBuffer>
 {
 #ifdef KASPAN_COMPRESS_BUFFER
   return IndexBuffer::create(manifest.graph_edge_count, manifest.graph_csr_bytes);
@@ -69,7 +69,7 @@ create_csr_buffer(Manifest const& manifest) -> Result<IndexBuffer>
 
 template<WorldPartConcept Part>
 auto
-create_head_buffer(Part const& part, index_t local_m) -> Result<VertexBuffer> // NOLINT(*-unused-parameters)
+create_head_buffer(Part const& part, index_t local_m) -> Result<IndexBuffer> // NOLINT(*-unused-parameters)
 {
 #ifdef KASPAN_COMPRESS_BUFFER
   return VertexBuffer::create(part.size() + 1, needed_bytes(local_m));
@@ -80,7 +80,7 @@ create_head_buffer(Part const& part, index_t local_m) -> Result<VertexBuffer> //
 
 template<WorldPartConcept Part>
 auto
-create_csr_buffer(Part const& part, index_t local_m) -> Result<IndexBuffer> // NOLINT(*-unused-parameters)
+create_csr_buffer(Part const& part, index_t local_m) -> Result<VertexBuffer> // NOLINT(*-unused-parameters)
 {
 #ifdef KASPAN_COMPRESS_BUFFER
   auto const max_vertex = part.n == 0 ? 0 : part.n - 1;

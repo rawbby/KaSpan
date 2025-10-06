@@ -11,10 +11,10 @@ struct Graph
   vertex_t n = 0;
   index_t  m = 0;
 
-  VertexBuffer fw_head;
-  IndexBuffer  fw_csr;
-  VertexBuffer bw_head;
-  IndexBuffer  bw_csr;
+  IndexBuffer  fw_head;
+  VertexBuffer fw_csr;
+  IndexBuffer  bw_head;
+  VertexBuffer bw_csr;
 
   Graph()  = default;
   ~Graph() = default;
