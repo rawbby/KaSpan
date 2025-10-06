@@ -200,11 +200,93 @@ AllGatherGraph(kamping::Communicator<>& comm, GraphPart<Part> const& graph_part)
   return result_graph;
 }
 
-/* gathers a subset of a `GraphPart` on every node */
-template<class Partition, class Fn>
-  requires(std::convertible_to<std::invoke_result_t<Fn, size_t>, bool>)
+/* gathers an induced subgraph (by vertex filter) on every node; also returns new->old vertex mapping */
+template<class Part, class Fn>
+  requires(Part::ordered and not IndexBuffer::compressed and std::convertible_to<std::invoke_result_t<Fn, vertex_t>, bool>)
 auto
-AllGatherSubGraph(GraphPart<Partition> const& graph_part, Fn&& in_sub_graph) -> Result<Graph>
+AllGatherSubGraph(GraphPart<Part> const& graph_part, Fn&& in_sub_graph) -> Result<std::tuple<Graph, VertexBuffer, std::unordered_map<vertex_t, vertex_t>>>
 {
-  return ErrorCode::ERROR;
+  kamping::Communicator<> comm;
+
+  std::vector<vertex_t> local_sub_ids_inverse;
+  local_sub_ids_inverse.reserve(graph_part.part.size());
+  for (size_t k = 0; k < graph_part.part.size(); ++k) {
+    vertex_t const u = graph_part.part.select(k);
+    if (static_cast<bool>(in_sub_graph(u)))
+      local_sub_ids_inverse.push_back(u);
+  }
+
+  vertex_t sub_n = local_sub_ids_inverse.size();
+  comm.allreduce_inplace(kamping::send_recv_buf(sub_n), kamping::op(kamping::ops::plus{}));
+
+  RESULT_TRY(auto sub_ids_inverse, VertexBuffer::create(sub_n));
+  comm.allgatherv(
+    kamping::send_buf(std::span{
+      local_sub_ids_inverse.data(),
+      local_sub_ids_inverse.size() }),
+    kamping::recv_buf(std::span{
+      static_cast<vertex_t*>(sub_ids_inverse.data()),
+      sub_ids_inverse.size() }));
+
+  std::unordered_map<vertex_t, vertex_t> sub_ids;
+  sub_ids.reserve(sub_ids_inverse.size());
+  for (vertex_t new_id = 0; new_id < sub_ids_inverse.size(); ++new_id) {
+    sub_ids.emplace(sub_ids_inverse[new_id], new_id);
+  }
+
+  std::vector<index_t>  local_sub_degrees;
+  std::vector<vertex_t> local_sub_csr;
+  local_sub_degrees.reserve(local_sub_ids_inverse.size());
+
+  for (vertex_t const u : local_sub_ids_inverse) {
+    auto const k   = graph_part.part.rank(u);
+    auto const beg = graph_part.fw_head.get(k);
+    auto const end = graph_part.fw_head.get(k + 1);
+
+    index_t deg = 0;
+    for (index_t it = beg; it < end; ++it) {
+      auto const v = graph_part.fw_csr[it];
+      if (static_cast<bool>(in_sub_graph(v))) {
+        ASSERT(sub_ids.contains(v));
+        local_sub_csr.push_back(sub_ids.find(v)->second);
+        ++deg;
+      }
+    }
+    local_sub_degrees.push_back(deg);
+  }
+
+  Graph sub_graph;
+
+  // gather the head by first storing degrees and than create head with prefix sum
+  sub_graph.n = sub_n;
+  RESULT_TRY(sub_graph.fw_head, IndexBuffer::create(sub_n + 1));
+  comm.allgatherv(
+    kamping::send_buf(std::span{
+      local_sub_degrees.data(),
+      local_sub_degrees.size() }),
+    kamping::recv_buf(std::span{
+      static_cast<index_t*>(sub_graph.fw_head.data()) + 1,
+      sub_graph.fw_head.size() }));
+  sub_graph.fw_head.set(0, 0);
+  for (size_t i = 0; i < sub_n + 1; ++i) {
+    sub_graph.fw_head.set(i + 1, sub_graph.fw_head.get(i) + sub_graph.fw_head.get(i + 1));
+  }
+
+  // gather the csr
+  sub_graph.m = sub_graph.fw_head.get(sub_graph.n);
+  RESULT_TRY(sub_graph.fw_csr, VertexBuffer::create(sub_graph.m));
+  comm.allgatherv(
+    kamping::send_buf(std::span{
+      local_sub_csr.data(),
+      local_sub_csr.size() }),
+    kamping::recv_buf(std::span{
+      static_cast<vertex_t*>(sub_graph.fw_csr.data()),
+      sub_graph.m }));
+
+  // reconstruct backward head and csr from forward
+  RESULT_TRY(sub_graph.bw_head, IndexBuffer::create(sub_n + 1));
+  RESULT_TRY(sub_graph.bw_csr, VertexBuffer::create(sub_graph.m));
+  ComplementBackwardsGraph(sub_graph);
+
+  return std::tuple{ std::move(sub_graph), std::move(sub_ids_inverse), std::move(sub_ids) };
 }
