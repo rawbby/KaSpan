@@ -206,38 +206,39 @@ template<class Part, class Fn>
 auto
 AllGatherSubGraph(GraphPart<Part> const& graph_part, Fn&& in_sub_graph) -> Result<std::tuple<Graph, VertexBuffer, std::unordered_map<vertex_t, vertex_t>>>
 {
-  kamping::Communicator<> comm;
+  kamping::Communicator<> const comm;
 
-  std::vector<vertex_t> local_sub_ids_inverse;
-  local_sub_ids_inverse.reserve(graph_part.part.size());
+  std::vector<vertex_t> sub_ids_inverse_part; // all vertices in part that are active as global id
+  sub_ids_inverse_part.reserve(graph_part.part.size());
   for (size_t k = 0; k < graph_part.part.size(); ++k) {
     if (static_cast<bool>(in_sub_graph(k)))
-      local_sub_ids_inverse.push_back(graph_part.part.select(k));
+      sub_ids_inverse_part.push_back(graph_part.part.select(k));
   }
 
-  vertex_t sub_n = local_sub_ids_inverse.size();
+  vertex_t sub_n = sub_ids_inverse_part.size();
   comm.allreduce_inplace(kamping::send_recv_buf(sub_n), kamping::op(kamping::ops::plus{}));
 
+  // gather on every rank all the vertices that are in sub graph
   RESULT_TRY(auto sub_ids_inverse, VertexBuffer::create(sub_n));
   comm.allgatherv(
-    kamping::send_buf(std::span{
-      local_sub_ids_inverse.data(),
-      local_sub_ids_inverse.size() }),
+    kamping::send_buf(sub_ids_inverse_part),
     kamping::recv_buf(std::span{
       static_cast<vertex_t*>(sub_ids_inverse.data()),
       sub_ids_inverse.size() }));
 
+  // compute an inverse utility for all vertices in sub graph
   std::unordered_map<vertex_t, vertex_t> sub_ids;
   sub_ids.reserve(sub_ids_inverse.size());
   for (vertex_t new_id = 0; new_id < sub_ids_inverse.size(); ++new_id) {
     sub_ids.emplace(sub_ids_inverse[new_id], new_id);
   }
 
-  std::vector<index_t>  local_sub_degrees;
-  std::vector<vertex_t> local_sub_csr;
-  local_sub_degrees.reserve(local_sub_ids_inverse.size());
+  std::vector<index_t>  sub_degrees_part;
+  std::vector<vertex_t> sub_csr_part;
+  sub_degrees_part.reserve(sub_ids_inverse_part.size());
 
-  for (vertex_t const u : local_sub_ids_inverse) {
+  //
+  for (vertex_t const u : sub_ids_inverse_part) { // for each vertex in part and in sub graph
     auto const k   = graph_part.part.rank(u);
     auto const beg = graph_part.fw_head.get(k);
     auto const end = graph_part.fw_head.get(k + 1);
@@ -245,13 +246,13 @@ AllGatherSubGraph(GraphPart<Part> const& graph_part, Fn&& in_sub_graph) -> Resul
     index_t deg = 0;
     for (index_t it = beg; it < end; ++it) {
       auto const v = graph_part.fw_csr[it];
-      if (static_cast<bool>(in_sub_graph(v))) {
-        ASSERT(sub_ids.contains(v));
-        local_sub_csr.push_back(sub_ids.find(v)->second);
+      // v is in sub graph if contained by sub_ids
+      if (auto const jt = sub_ids.find(v); jt != sub_ids.end()) {
+        sub_csr_part.push_back(jt->second);
         ++deg;
       }
     }
-    local_sub_degrees.push_back(deg);
+    sub_degrees_part.push_back(deg);
   }
 
   Graph sub_graph;
@@ -261,8 +262,8 @@ AllGatherSubGraph(GraphPart<Part> const& graph_part, Fn&& in_sub_graph) -> Resul
   RESULT_TRY(sub_graph.fw_head, IndexBuffer::create(sub_n + 1));
   comm.allgatherv(
     kamping::send_buf(std::span{
-      local_sub_degrees.data(),
-      local_sub_degrees.size() }),
+      sub_degrees_part.data(),
+      sub_degrees_part.size() }),
     kamping::recv_buf(std::span{
       static_cast<index_t*>(sub_graph.fw_head.data()) + 1,
       sub_n }));
@@ -276,8 +277,8 @@ AllGatherSubGraph(GraphPart<Part> const& graph_part, Fn&& in_sub_graph) -> Resul
   RESULT_TRY(sub_graph.fw_csr, VertexBuffer::create(sub_graph.m));
   comm.allgatherv(
     kamping::send_buf(std::span{
-      local_sub_csr.data(),
-      local_sub_csr.size() }),
+      sub_csr_part.data(),
+      sub_csr_part.size() }),
     kamping::recv_buf(std::span{
       static_cast<vertex_t*>(sub_graph.fw_csr.data()),
       sub_graph.m }));

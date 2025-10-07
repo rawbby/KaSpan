@@ -5,25 +5,40 @@
 #include <kamping/communicator.hpp>
 #include <mpi.h>
 
-auto
-load_graph(kamping::Communicator<>& comm)
-{
-  ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, "rgg2d;n=16;m=32"));
-  ASSERT_TRY(auto graph, AllGatherGraph(comm, graph_part));
-  return graph;
-}
-
 int
-main(int args, char** argv)
+main(int argc, char** argv)
 {
+  if (argc != 2) {
+    std::cout << "usage: ./<exe> <kagen_args_string>" << std::endl;
+    std::exit(1);
+  }
+
   MPI_Init(nullptr, nullptr);
   SCOPE_GUARD(MPI_Finalize());
 
   auto comm = kamping::Communicator{};
-  // auto const graph = load_graph(comm);
+  comm.barrier();
+  double const beg_mpi = MPI_Wtime();
+  SCOPE_GUARD(if (comm.is_root()) {
+    double const end_mpi = MPI_Wtime();
+    std::cout << "Time from MPI_Init() to MPI_Finalize(): " << (end_mpi - beg_mpi) << std::endl;
+  });
 
-  ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, "rgg2d;n=1000;r=0.2"));
-  ASSERT_TRY(const auto graph, AllGatherGraph(comm, graph_part));
+  double const beg_kagen = MPI_Wtime();
+  ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, argv[1]));
+  comm.barrier();
+  if (comm.is_root()) {
+    double const end_kagen = MPI_Wtime();
+    std::cout << "Time KaGen(): " << (end_kagen - beg_kagen) << std::endl;
+  }
 
+  ASSERT_TRY(auto const graph, AllGatherGraph(comm, graph_part));
+
+  double const beg_ispan = MPI_Wtime();
   scc_detection(graph, 100, comm.rank(), comm.size());
+  comm.barrier();
+  if (comm.is_root()) {
+    double const end_ispan = MPI_Wtime();
+    std::cout << "Time scc_detection(): " << (end_ispan - beg_ispan) << std::endl;
+  }
 }

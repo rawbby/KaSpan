@@ -1,13 +1,13 @@
 #pragma once
 
 #include <scc/Common.hpp>
+#include <scc/FwBwPart.hpp>
 #include <scc/GraphReduction.hpp>
 #include <scc/PivotSelection.hpp>
 #include <scc/SyncFwBw.hpp>
 #include <scc/Trim1.hpp>
-#include <scc/FwBwPart.hpp>
-#include <wcc/WCC.hpp>
 #include <util/Result.hpp>
+#include <wcc/WCC.hpp>
 
 #include <graph/AllGatherGraph.hpp>
 #include <graph/GraphPart.hpp>
@@ -51,7 +51,12 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
   trim_1_first(graph, scc_id, decided_count);
 
   // reduce until the global graph is smaller than the partition
-  while (not global_decided_count or (graph.n / global_decided_count < comm.size())) {
+  int i = 0;
+  while (not global_decided_count or global_decided_count < graph.n / comm.size()) {
+    if (comm.is_root())
+      std::cout << i << ' ' << global_decided_count << '/' << graph.part.n << std::endl;
+    ++i;
+
     std::memset(fw_reached.data(), 0, fw_reached.bytes());
 
     // run forward backwards search
@@ -67,6 +72,8 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
 
     global_decided_count = comm.allreduce_single(kmp::send_buf(decided_count), kmp::op(MPI_SUM));
   }
+  if (comm.is_root())
+    std::cout << i << ' ' << global_decided_count << '/' << graph.part.n << std::endl;
 
   RESULT_TRY(auto sub_graph_ids_inverse_and_ids, AllGatherSubGraph(graph, [&scc_id](vertex_t k) {
                return scc_id[k] == scc_id_undecided;
@@ -76,7 +83,7 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
   RESULT_TRY(auto wcc_id, U64Buffer::create(sub_graph.n));
   RESULT_TRY(auto sub_scc_id, U64Buffer::create(sub_graph.n));
   for (u64 i = 0; i < sub_graph.n; ++i) {
-    wcc_id[i] = i;
+    wcc_id[i]     = i;
     sub_scc_id[i] = scc_id_undecided;
   }
 
@@ -85,15 +92,14 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
     FwBwPart(comm, wcc_id, wcc_count, sub_scc_id, sub_graph, sub_ids_inverse);
 
     MPI_Allreduce(
-      MPI_IN_PLACE, sub_scc_id.data(), sub_graph.n, mpi_scc_id_t,
-      MPI_MIN, MPI_COMM_WORLD);
+      MPI_IN_PLACE, sub_scc_id.data(), sub_graph.n, mpi_scc_id_t, MPI_MIN, MPI_COMM_WORLD);
 
     for (u64 sub_v = 0; sub_v < sub_graph.n; ++sub_v) {
       auto const v = sub_ids_inverse[sub_v];
 
       if (graph.part.contains(v)) {
         auto const k = graph.part.rank(v);
-        scc_id[k] = sub_scc_id[sub_v];
+        scc_id[k]    = sub_scc_id[sub_v];
       }
     }
   }
