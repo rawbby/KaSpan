@@ -211,9 +211,8 @@ AllGatherSubGraph(GraphPart<Part> const& graph_part, Fn&& in_sub_graph) -> Resul
   std::vector<vertex_t> local_sub_ids_inverse;
   local_sub_ids_inverse.reserve(graph_part.part.size());
   for (size_t k = 0; k < graph_part.part.size(); ++k) {
-    vertex_t const u = graph_part.part.select(k);
-    if (static_cast<bool>(in_sub_graph(u)))
-      local_sub_ids_inverse.push_back(u);
+    if (static_cast<bool>(in_sub_graph(k)))
+      local_sub_ids_inverse.push_back(graph_part.part.select(k));
   }
 
   vertex_t sub_n = local_sub_ids_inverse.size();
@@ -266,14 +265,14 @@ AllGatherSubGraph(GraphPart<Part> const& graph_part, Fn&& in_sub_graph) -> Resul
       local_sub_degrees.size() }),
     kamping::recv_buf(std::span{
       static_cast<index_t*>(sub_graph.fw_head.data()) + 1,
-      sub_graph.fw_head.size() }));
+      sub_n }));
   sub_graph.fw_head.set(0, 0);
   for (size_t i = 0; i < sub_n + 1; ++i) {
     sub_graph.fw_head.set(i + 1, sub_graph.fw_head.get(i) + sub_graph.fw_head.get(i + 1));
   }
 
   // gather the csr
-  sub_graph.m = sub_graph.fw_head.get(sub_graph.n);
+  sub_graph.m = sub_graph.fw_head.get(sub_n);
   RESULT_TRY(sub_graph.fw_csr, VertexBuffer::create(sub_graph.m));
   comm.allgatherv(
     kamping::send_buf(std::span{
