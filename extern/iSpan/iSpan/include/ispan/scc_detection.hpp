@@ -195,9 +195,9 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     mice_fw_bw(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, world_rank, world_size, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
 
     // clang-format off
-      MPI_Allreduce(
-        MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t,
-        MPI_MIN, MPI_COMM_WORLD);
+    MPI_Allreduce(
+      MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t,
+      MPI_MIN, MPI_COMM_WORLD);
     // clang-format on
 
     for (index_t sub_u = 0; sub_u < sub_n; ++sub_u) {
