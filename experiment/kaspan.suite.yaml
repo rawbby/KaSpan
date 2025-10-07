@@ -1,5 +1,5 @@
 name: ispan
-executable: bin/bench_ispan
+executable: bin/bench_kaspan
 output_path_option_name: "output-file"
 ncores: [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
 time_limit: 240 # minutes
@@ -13,5 +13,3 @@ graphs:
     b: 0.19
     c: 0.19
     scale_weak: true
-config:
-  - alpha: [ 12, 14, 16 ] # (top-down/bottom-up threshold) 14 is often sweetspot, see "Direction-optimizing breadth-first search" (Beamer et al.)

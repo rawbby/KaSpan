@@ -51,11 +51,11 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
   trim_1_first(graph, scc_id, decided_count);
 
   // reduce until the global graph is smaller than the partition
-  int i = 0;
+  // int i = 0;
   while (not global_decided_count or global_decided_count < graph.n / comm.size()) {
-    if (comm.is_root())
-      std::cout << i << ' ' << global_decided_count << '/' << graph.part.n << std::endl;
-    ++i;
+    // if (comm.is_root())
+    // std::cout << i << ' ' << global_decided_count << '/' << graph.part.n << std::endl;
+    // ++i;
 
     std::memset(fw_reached.data(), 0, fw_reached.bytes());
 
@@ -72,8 +72,8 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
 
     global_decided_count = comm.allreduce_single(kmp::send_buf(decided_count), kmp::op(MPI_SUM));
   }
-  if (comm.is_root())
-    std::cout << i << ' ' << global_decided_count << '/' << graph.part.n << std::endl;
+  // if (comm.is_root())
+  // std::cout << i << ' ' << global_decided_count << '/' << graph.part.n << std::endl;
 
   RESULT_TRY(auto sub_graph_ids_inverse_and_ids, AllGatherSubGraph(graph, [&scc_id](vertex_t k) {
                return scc_id[k] == scc_id_undecided;
