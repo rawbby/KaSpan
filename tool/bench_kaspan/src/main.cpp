@@ -1,27 +1,44 @@
-#include <graph/AllGatherGraph.hpp>
-#include <buffer/Buffer.hpp>
-#include <graph/GraphPart.hpp>
+#include <graph/Graph.hpp>
+#include <graph/KaGen.hpp>
 #include <scc/SCC.hpp>
-#include <util/ScopeGuard.hpp>
 
-#include <kamping/collectives/allgather.hpp>
 #include <kamping/communicator.hpp>
-
 #include <mpi.h>
 
-auto
-main(int argc, char** argv) -> int
+int
+main(int argc, char** argv)
 {
-  ASSERT(argc == 2, "Usage: ./scc_cpu <manifest>");
+  if (argc != 2) {
+    std::cout << "usage: ./<exe> <kagen_args_string>" << std::endl;
+    std::exit(1);
+  }
 
   MPI_Init(nullptr, nullptr);
   SCOPE_GUARD(MPI_Finalize());
-  kamping::Communicator comm{};
 
-  ASSERT_TRY(auto const manifest, Manifest::load(argv[1]));
-  TrivialSlicePart const part{ manifest.graph_node_count, comm.rank(), comm.size() };
-  ASSERT_TRY(auto const graph, GraphPart<>::load(part, manifest));
+  auto comm = kamping::Communicator{};
+  comm.barrier();
+  double const beg_mpi = MPI_Wtime();
+  SCOPE_GUARD(if (comm.is_root()) {
+    double const end_mpi = MPI_Wtime();
+    std::cout << "Time from MPI_Init() to MPI_Finalize(): " << (end_mpi - beg_mpi) << std::endl;
+  });
 
-  ASSERT_TRY(auto scc_id, U64Buffer::create(manifest.graph_node_count));
-  ASSERT_TRY(scc_detection(comm, graph, scc_id));
+  double const beg_kagen = MPI_Wtime();
+  ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, argv[1]));
+  comm.barrier();
+  if (comm.is_root()) {
+    double const end_kagen = MPI_Wtime();
+    std::cout << "Time KaGen(): " << (end_kagen - beg_kagen) << std::endl;
+  }
+
+  ASSERT_TRY(auto scc_id, U64Buffer::create(graph_part.part.n));
+
+  double const beg_kaspan = MPI_Wtime();
+  scc_detection(comm, graph_part, scc_id);
+  comm.barrier();
+  if (comm.is_root()) {
+    double const end_kaspan = MPI_Wtime();
+    std::cout << "Time scc_detection(): " << (end_kaspan - beg_kaspan) << std::endl;
+  }
 }

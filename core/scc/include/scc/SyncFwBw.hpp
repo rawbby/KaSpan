@@ -20,7 +20,7 @@ sync_forward_search(
   if (graph.part.contains(root)) {
     frontier.push_relaxed(root);
     ASSERT(not fw_reached.get(graph.part.rank(root)));
-    ASSERT(scc_id[graph.part.rank(root)] == scc_id_undecided);
+    ASSERT(scc_id[graph.part.rank(root)] == scc_id_undecided, " for root=%lu", root);
   }
 
   do { // NOLINT(*-avoid-do-while)
