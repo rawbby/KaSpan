@@ -36,6 +36,8 @@ block()
         add_subdirectory(${stxxl_SOURCE_DIR} ${stxxl_BINARY_DIR})
     endif ()
 
+    target_include_directories(stxxl PUBLIC ${STXXL_INCLUDE_DIRS})
+
     # suppress compilation warnings for external target
     target_compile_options(stxxl PRIVATE
             $<$<CXX_COMPILER_ID:GNU>:-w>
