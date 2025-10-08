@@ -21,6 +21,7 @@ block()
     set(USE_TPIE OFF)
     set(BUILD_STATIC_LIBS ON)
     set(BUILD_SHARED_LIBS OFF)
+    set(CMAKE_SKIP_INSTALL_RULES ON)
 
     FetchContent_Declare(stxxl GIT_REPOSITORY https://github.com/stxxl/stxxl.git GIT_TAG 1.4.1)
     FetchContent_GetProperties(stxxl)
@@ -36,7 +37,8 @@ block()
         add_subdirectory(${stxxl_SOURCE_DIR} ${stxxl_BINARY_DIR})
     endif ()
 
-    target_include_directories(stxxl PUBLIC ${STXXL_INCLUDE_DIRS})
+    target_include_directories(stxxl INTERFACE
+            $<BUILD_INTERFACE:${STXXL_INCLUDE_DIRS}>)
 
     # suppress compilation warnings for external target
     target_compile_options(stxxl PRIVATE
