@@ -51,7 +51,7 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
   trim_1_first(graph, scc_id, decided_count);
   kamping::measurements::timer().stop();
 
-  kamping::measurements::timer().start("kaspan_trim1_first");
+  kamping::measurements::timer().start("kaspan_fwbw");
   // reduce until the global graph is smaller than the partition
   while (not global_decided_count or global_decided_count < graph.n / comm.size()) {
     std::memset(fw_reached.data(), 0, fw_reached.bytes());
