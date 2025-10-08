@@ -38,7 +38,8 @@ block()
     endif ()
 
     target_include_directories(stxxl INTERFACE
-            $<BUILD_INTERFACE:${STXXL_INCLUDE_DIRS}>)
+            $<BUILD_INTERFACE:${stxxl_SOURCE_DIR}/include;${stxxl_BINARY_DIR}/include>
+            $<INSTALL_INTERFACE:include>)
 
     # suppress compilation warnings for external target
     target_compile_options(stxxl PRIVATE
