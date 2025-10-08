@@ -4,7 +4,6 @@
 
 #include <compare>
 #include <cstdio>
-#include <format>
 
 #if !defined(NDEBUG)
 #if defined(_MSC_VER)

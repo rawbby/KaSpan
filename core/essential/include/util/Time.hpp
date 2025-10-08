@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include <format>
 #include <mpi.h>
 #include <sys/time.h>
 
