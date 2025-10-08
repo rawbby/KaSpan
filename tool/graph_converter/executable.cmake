@@ -1,5 +1,4 @@
 target_link_libraries(${TARGET_NAME} PRIVATE
-        essential partition graph
+        essential partition graph scc
         kamping::kamping
-        scc stxxl::stxxl
         OpenMP::OpenMP_CXX)
