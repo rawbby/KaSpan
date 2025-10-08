@@ -12,11 +12,11 @@
 [[noreturn]] void
 usage()
 {
-  std::cout << "usage: ./<exe> --kagen_option_string <kagen_option_string> --output-file <output_file>" << std::endl;
+  std::cout << "usage: ./<exe> --kagen_option_string <kagen_option_string> --output_file <output_file>" << std::endl;
   std::exit(1);
 }
 
-char const*
+std::string
 select_kagen_option_string(int argc, char** argv)
 {
   for (int i = 1; i < argc - 1; ++i)
@@ -25,12 +25,12 @@ select_kagen_option_string(int argc, char** argv)
   usage();
 }
 
-char const*
+std::string
 select_output_file(int argc, char** argv)
 {
   for (int i = 1; i < argc - 1; ++i)
-    if (strcmp(argv[i], "--output-file") == 0)
-      return argv[i + 1];
+    if (strcmp(argv[i], "--output_file") == 0)
+      return std::string{ argv[i + 1] } + ".json";
   usage();
 }
 
@@ -44,30 +44,17 @@ main(int argc, char** argv)
   SCOPE_GUARD(MPI_Finalize());
 
   auto comm = kamping::Communicator{};
-  comm.barrier();
-  double const beg_mpi = MPI_Wtime();
-  SCOPE_GUARD(if (comm.is_root()) {
-    double const end_mpi = MPI_Wtime();
-    std::cout << "Time from MPI_Init() to MPI_Finalize(): " << (end_mpi - beg_mpi) << std::endl;
-  });
-
-  double const beg_kagen = MPI_Wtime();
-  ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, kagen_option_string));
-  comm.barrier();
-  if (comm.is_root()) {
-    double const end_kagen = MPI_Wtime();
-    std::cout << "Time KaGen(): " << (end_kagen - beg_kagen) << std::endl;
-  }
+  kamping::measurements::timer().synchronize_and_start("kagen");
+  ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, kagen_option_string.c_str()));
+  kamping::measurements::timer().stop();
 
   ASSERT_TRY(auto scc_id, U64Buffer::create(graph_part.part.n));
 
-  double const beg_kaspan = MPI_Wtime();
+  kamping::measurements::timer().synchronize_and_start("kaspan");
+  kamping::measurements::timer().synchronize_and_start("kaspan_scc");
   scc_detection(comm, graph_part, scc_id);
-  comm.barrier();
-  if (comm.is_root()) {
-    double const end_kaspan = MPI_Wtime();
-    std::cout << "Time scc_detection(): " << (end_kaspan - beg_kaspan) << std::endl;
-  }
+  kamping::measurements::timer().stop();
+  kamping::measurements::timer().stop();
 
   std::ofstream output_fd{ output_file };
 
