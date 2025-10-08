@@ -13,6 +13,8 @@
 #include <ispan/wcc_detection.hpp>
 #include <util/Time.hpp>
 
+#include <kamping/measurements/timer.hpp>
+
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -23,6 +25,7 @@
 inline void
 scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<index_t>* scc_id_out = nullptr)
 {
+  kamping::measurements::timer().start("ispan_alloc");
   auto const n = graph.n;
   auto const m = graph.m;
 
@@ -102,16 +105,19 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     sub_scc_id[i] = scc_id_undecided;
     sub_fw_sa[i]  = scc_id_undecided;
   }
+  kamping::measurements::timer().stop();
 
+  kamping::measurements::timer().start("ispan_trim1_first");
   trim_1_first(scc_id, fw_head, bw_head, local_beg, local_end);
-
   // clang-format off
   MPI_Allgather(
     /* send: */ MPI_IN_PLACE, 0, mpi_vertex_t,
     /* recv: */ scc_id, step, mpi_vertex_t,
     /* comm: */ MPI_COMM_WORLD);
   // clang-format on
+  kamping::measurements::timer().stop();
 
+  kamping::measurements::timer().start("ispan_fwbw");
   auto const root = pivot_selection(scc_id, fw_head, bw_head, n);
   fw_span(
     scc_id,
@@ -154,17 +160,18 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     step,
     fq_comm,
     sa_compress);
+  kamping::measurements::timer().stop();
 
   // optional
   // trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
   // trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
 
+  kamping::measurements::timer().start("ispan_residual");
   // clang-format off
   MPI_Allreduce(
     MPI_IN_PLACE, scc_id, n, mpi_vertex_t,
     MPI_MIN, MPI_COMM_WORLD);
   // clang-format on
-
   index_t sub_n = 0;
   gfq_origin(
     // input
@@ -182,18 +189,24 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     sub_fw_csr,
     sub_bw_head,
     sub_bw_csr);
+  kamping::measurements::timer().stop();
 
   if (sub_n > 0) {
 
     for (index_t i = 0; i < sub_n; ++i)
       sub_wcc_id[i] = i;
 
+    kamping::measurements::timer().start("ispan_wcc");
     wcc_detection(sub_wcc_id, sub_fw_head, sub_fw_csr, sub_bw_head, sub_bw_csr, sub_n);
-
     vertex_t sub_wcc_fq_size = 0;
     process_wcc(sub_n, sub_wcc_fq, sub_wcc_id, sub_wcc_fq_size);
-    mice_fw_bw(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, world_rank, world_size, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
+    kamping::measurements::timer().stop();
 
+    kamping::measurements::timer().start("ispan_wcc_fwbw");
+    mice_fw_bw(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, world_rank, world_size, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
+    kamping::measurements::timer().stop();
+
+    kamping::measurements::timer().start("ispan_post");
     // clang-format off
     MPI_Allreduce(
       MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t,
@@ -204,6 +217,8 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
       if (sub_scc_id[sub_u] != scc_id_undecided)
         scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
     }
+  } else {
+    kamping::measurements::timer().start("ispan_post");
   }
 
   get_scc_result(scc_id, n);
@@ -211,4 +226,5 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     scc_id_out->resize(n);
     std::memcpy(scc_id_out->data(), scc_id, n * sizeof(index_t));
   }
+  kamping::measurements::timer().stop();
 }

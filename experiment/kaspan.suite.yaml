@@ -1,8 +1,8 @@
-name: ispan
+name: kaspan
 executable: bin/bench_kaspan
-output_path_option_name: "output-file"
+output_path_option_name: "output_file"
 ncores: [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
-time_limit: 240 # minutes
+time_limit: 5 # minutes
 threads_per_rank: [1]
 graphs:
   - generator: kagen
