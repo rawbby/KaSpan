@@ -14,6 +14,7 @@
 
 #include <kamping/collectives/allreduce.hpp>
 #include <kamping/communicator.hpp>
+#include <kamping/measurements/timer.hpp>
 
 #include <algorithm>
 #include <cstdio>
@@ -44,6 +45,8 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
 
   // RESULT_TRY(auto edge_comm, SyncEdgeComm<Part>::create(comm));
 
+  kmp::measurements::timer().synchronize_and_start("global");
+
   u64 decided_count        = 0;
   u64 global_decided_count = 0;
 
@@ -62,6 +65,7 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
     // run forward backwards search
     IF(NOT(KASPAN_NORMALIZE), const)
     auto root = pivot_selection(comm, graph, scc_id);
+
 
     sync_forward_search(comm, graph, frontier, scc_id, fw_reached, root);
 
@@ -103,6 +107,8 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
       }
     }
   }
+
+  kmp::measurements::timer().stop();
 
   normalize_scc_id(scc_id, graph.part);
   return VoidResult::success();
