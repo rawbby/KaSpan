@@ -6,7 +6,7 @@
 
 // clang-format off
 template<typename T>
-constexpr inline MPI_Datatype mpi_basic_type =
+const inline MPI_Datatype mpi_basic_type =
   ByteConcept<T> ? MPI_BYTE     :
   I8Concept<T>   ? MPI_INT8_T   :
   I16Concept<T>  ? MPI_INT16_T  :
