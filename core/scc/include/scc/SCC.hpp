@@ -52,8 +52,10 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
   kamping::measurements::timer().stop();
 
   kamping::measurements::timer().start("kaspan_fwbw");
-  // reduce until the global graph is smaller than the partition
-  while (not global_decided_count or global_decided_count < graph.n / comm.size()) {
+  // reduce until the global graph is smaller than the partition but at least once
+  // - in most cases there is a single big component here
+  // - in every other case this one is nessesary as one can not gather before because of space requirements
+  do {
     std::memset(fw_reached.data(), 0, fw_reached.bytes());
     IF(NOT(KASPAN_NORMALIZE), const)
     auto root = pivot_selection(comm, graph, scc_id);
@@ -62,7 +64,7 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
        root = comm.allreduce_single(kmp::send_buf(root), kmp::op(MPI_MIN)));
     sync_backward_search(comm, graph, frontier, scc_id, fw_reached, root, decided_count);
     global_decided_count = comm.allreduce_single(kmp::send_buf(decided_count), kmp::op(MPI_SUM));
-  }
+  } while (global_decided_count < graph.n / comm.size());
   kamping::measurements::timer().stop();
 
   kamping::measurements::timer().start("kaspan_residual");
