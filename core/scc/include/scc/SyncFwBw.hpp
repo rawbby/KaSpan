@@ -88,24 +88,25 @@ sync_backward_search(
   } while (frontier.communicate(comm));
 }
 
-template <WorldPartConcept Part, typename BriefQueue>
+template<WorldPartConcept Part, typename BriefQueue>
 void
 async_forward_search(
   kamping::Communicator<> const& comm,
   GraphPart<Part> const&         graph,
-  BriefQueue& mq,
+  BriefQueue&                    mq,
   U64Buffer const&               scc_id,
   BitBuffer&                     fw_reached,
   IF(KASPAN_NORMALIZE, u64&, u64) root)
 {
   std::queue<vertex_t> local_q;
 
-  auto on_message = [&](briefkasten::Envelope<vertex_t> auto env) {
-    mq.reactivate();
-    for (auto&& v : env.message) local_q.push(v);
+  auto on_message = [&](auto env) {
+    for (auto&& v : env.message)
+      local_q.push(v);
   };
 
-  if (graph.part.contains(root)) local_q.push(root);
+  if (graph.part.contains(root))
+    local_q.push(root);
 
   do {
     while (!local_q.empty()) {
@@ -116,32 +117,34 @@ async_forward_search(
       KASSERT(graph.part.contains(u), "Vertex must be local when popped");
       auto const k = graph.part.rank(u);
 
-      if (fw_reached.get(k) || scc_id[k] != scc_id_undecided) continue;
+      if (fw_reached.get(k) || scc_id[k] != scc_id_undecided)
+        continue;
 
       fw_reached.set(k);
       IF(KASPAN_NORMALIZE, root = std::min(root, u);)
 
       // push all forward neighbors
-      auto const begin = graph.fw_head[k];
-      auto const end   = graph.fw_head[k + 1];
-      for (auto i = begin; i < end; ++i) {
-        auto const v = graph.fw_csr.get(i);
+      auto const beg = graph.fw_head[k];
+      auto const end = graph.fw_head[k + 1];
+      for (auto it = beg; it < end; ++it) {
+        auto const v = graph.fw_csr.get(it);
         if (graph.part.contains(v)) {
           local_q.push(v);
         } else {
-          mq.post_message(v, graph.part.world_rank_of(v));
+          mq.post_message_blocking(v, graph.part.world_rank_of(v), on_message);
         }
       }
+      mq.poll_throttled(on_message);
     }
   } while (!mq.terminate(on_message));
 }
 
-template <WorldPartConcept Part, typename BriefQueue>
+template<WorldPartConcept Part, typename BriefQueue>
 void
 async_backward_search(
   kamping::Communicator<> const& comm,
   GraphPart<Part> const&         graph,
-  BriefQueue& mq,
+  BriefQueue&                    mq,
   U64Buffer&                     scc_id,
   BitBuffer const&               fw_reached,
   u64                            root,
@@ -150,11 +153,12 @@ async_backward_search(
   std::queue<vertex_t> local_q;
 
   auto on_message = [&](briefkasten::Envelope<vertex_t> auto env) {
-    mq.reactivate();
-    for (auto&& v : env.message) local_q.push(v);
+    for (auto&& v : env.message)
+      local_q.push(v);
   };
 
-  if (graph.part.contains(root)) local_q.push(root);
+  if (graph.part.contains(root))
+    local_q.push(root);
 
   do {
     while (!local_q.empty()) {
@@ -165,7 +169,8 @@ async_backward_search(
       KASSERT(graph.part.contains(u), "Vertex must be local when popped");
       auto const k = graph.part.rank(u);
 
-      if (!fw_reached.get(k) || scc_id[k] != scc_id_undecided) continue;
+      if (!fw_reached.get(k) || scc_id[k] != scc_id_undecided)
+        continue;
 
       scc_id[k] = root;
       ++decided_count;
@@ -178,9 +183,10 @@ async_backward_search(
         if (graph.part.contains(v)) {
           local_q.push(v);
         } else {
-          mq.post_message(v, graph.part.world_rank_of(v));
+          mq.post_message_blocking(v, graph.part.world_rank_of(v), on_message);
         }
       }
+      mq.poll_throttled(on_message);
     }
   } while (!mq.terminate(on_message));
 }

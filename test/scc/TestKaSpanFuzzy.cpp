@@ -28,7 +28,7 @@ main(int argc, char** argv)
 
     ASSERT_TRY(auto scc_id_ispan, U64Buffer::zeroes(graph.part.size()));
 
-    scc_detection(comm, graph, scc_id_ispan);
+    sync_scc_detection(comm, graph, scc_id_ispan);
 
     std::stringstream ss;
     ss << "  index         :";

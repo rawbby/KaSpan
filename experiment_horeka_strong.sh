@@ -16,4 +16,4 @@ module load compiler/gnu/14
 module load devel/gdb/13.1
 module load mpi/impi/2021.11
 
-BUILD_DIR=. MACHINE=horeka python _deps/kaval-src/run-experiments.py --machine horeka --sbatch-template _deps/kaval-src/sbatch-templates/horeka.txt --command-template _deps/kaval-src/command-templates/horeka-IntelMPI.txt --search-dirs ../experiment/horeka/strong
+BUILD_DIR=. MACHINE=horeka python _deps/kaval-src/run-experiments.py --machine horeka --sbatch-template _deps/kaval-src/sbatch-templates/horeka.txt --command-template _deps/kaval-src/command-templates/horeka-IntelMPI.txt ----suite-files ../experiment/horeka/strong/

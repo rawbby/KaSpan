@@ -12,14 +12,13 @@
 struct CommStrategy
 {
   bool async    = false;
-  bool buffered = false;
   bool indirect = false;
 };
 
 [[noreturn]] void
 usage()
 {
-  std::cout << "usage: ./<exe> --kagen_option_string <kagen_option_string> --output_file <output_file> [--async [--async_buffered] [--async_indirect]]" << std::endl;
+  std::cout << "usage: ./<exe> --kagen_option_string <kagen_option_string> --output_file <output_file> [--async [--async_indirect]]" << std::endl;
   std::exit(1);
 }
 
@@ -28,35 +27,19 @@ select_comm_strategy(int argc, char** argv)
 {
   for (int i = 1; i < argc - 1; ++i) {
     if (strcmp(argv[i], "--async") == 0) {
-
-      bool buffered = false;
       bool indirect = false;
-
-      for (int j = 1; j < argc - 1; ++j) {
-        if (strcmp(argv[j], "--async_buffered") == 0) {
-          buffered = true;
-          break;
-        }
-      }
-
       for (int j = 1; j < argc - 1; ++j) {
         if (strcmp(argv[j], "--async_indirect") == 0) {
           indirect = true;
           break;
         }
       }
-
-      if (buffered and indirect)
-        return { true, true, true };
-      if (buffered)
-        return { true, true, false };
       if (indirect)
-        return { true, false, true };
-
-      return { true };
+        return { true, true };
+      return { true, false };
     }
   }
-  return {};
+  return { false, false };
 }
 
 std::string
@@ -98,15 +81,12 @@ main(int argc, char** argv)
   kamping::measurements::timer().synchronize_and_start("kaspan_scc");
 
   if (not comm_strategy.async)
-    scc_detection(comm, graph_part, scc_id);
-  else if (comm_strategy.buffered and comm_strategy.indirect)
-    scc_detection<true, true, true>(comm, graph_part, scc_id);
-  else if (comm_strategy.buffered)
-    scc_detection<true, true, false>(comm, graph_part, scc_id);
+    sync_scc_detection(comm, graph_part, scc_id);
+
   else if (comm_strategy.indirect)
-    scc_detection<true, false, true>(comm, graph_part, scc_id);
+    async_scc_detection<briefkasten::GridIndirectionScheme>(comm, graph_part, scc_id);
   else
-    scc_detection<true, false, false>(comm, graph_part, scc_id);
+    async_scc_detection<briefkasten::NoopIndirectionScheme>(comm, graph_part, scc_id);
 
   kamping::measurements::timer().stop();
   kamping::measurements::timer().stop();
@@ -117,7 +97,6 @@ main(int argc, char** argv)
     { "world_rank", std::to_string(comm.rank()) },
     { "world_size", std::to_string(comm.size()) },
     { "async", std::to_string(comm_strategy.async) },
-    { "async_buffered", std::to_string(comm_strategy.buffered) },
     { "async_indirect", std::to_string(comm_strategy.indirect) },
     { "kagen_option_string", std::string{ kagen_option_string } }
   };
