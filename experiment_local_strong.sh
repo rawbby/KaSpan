@@ -7,5 +7,16 @@ source .venv/bin/activate
 cd cmake-build-release
 cmake --build .
 
-BUILD_DIR=. python _deps/kaval-src/run-experiments.py --machine shared --sbatch-template _deps/kaval-src/sbatch-templates/generic_job_files.txt --command-template _deps/kaval-src/command-templates/command_template_shared_intelmpi_multithreaded.txt --suite-file ../experiment/local/strong
-echo "here"
+BUILD_DIR=.                                                                                               \
+python _deps/kaval-src/run-experiments.py                                                                 \
+  --machine shared                                                                                        \
+  --sbatch-template _deps/kaval-src/sbatch-templates/generic_job_files.txt                                \
+  --command-template _deps/kaval-src/command-templates/command_template_shared_intelmpi_multithreaded.txt \
+  --suite-files ../experiment/local/strong/kaspan_strong.suite.yaml
+
+BUILD_DIR=.                                                                                               \
+python _deps/kaval-src/run-experiments.py                                                                 \
+  --machine shared                                                                                        \
+  --sbatch-template _deps/kaval-src/sbatch-templates/generic_job_files.txt                                \
+  --command-template _deps/kaval-src/command-templates/command_template_shared_intelmpi_multithreaded.txt \
+  --suite-files ../experiment/local/strong/ispan_strong.suite.yaml
