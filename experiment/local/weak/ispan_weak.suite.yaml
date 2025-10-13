@@ -1,0 +1,17 @@
+name: ispan
+executable: bin/bench_ispan
+output_path_option_name: "output_file"
+ncores: [1, 2, 4, 8]
+time_limit: 10 # minutes
+threads_per_rank: [1]
+graphs:
+  - generator: kagen
+    type: rmat
+    N: 18
+    M: 19
+    a: 0.57
+    b: 0.19
+    c: 0.19
+    scale_weak: true
+config:
+  - alpha: [ 12, 14, 16 ] # (top-down/bottom-up threshold) 14 is often sweetspot, see "Direction-optimizing breadth-first search" (Beamer et al.)

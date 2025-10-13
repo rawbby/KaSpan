@@ -1,0 +1,27 @@
+name: kaspan
+executable: bin/bench_kaspan
+output_path_option_name: "output_file"
+ncores: [1, 2, 4, 8, 16, 32]
+time_limit: 10 # minutes
+threads_per_rank: [1]
+graphs:
+  - generator: kagen
+    type: rmat
+    N: 18
+    M: 19
+    a: 0.57
+    b: 0.19
+    c: 0.19
+    scale_weak: true
+config: [
+  {
+    async: [ True ],
+    async_buffered: [ False, True ],
+    async_indirect: [ False, True ]
+  },
+  {
+    async: [ False ],
+    async_buffered: [ False ],
+    async_indirect: [ False ]
+  }
+]
