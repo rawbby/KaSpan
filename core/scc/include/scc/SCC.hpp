@@ -30,7 +30,7 @@ normalize_scc_id(U64Buffer& scc_id, Part const& part)
   }
 }
 
-template<WorldPartConcept Part>
+template<bool async = false, bool async_buffered = false, bool async_indirect = false, WorldPartConcept Part>
 VoidResult
 scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer& scc_id)
 {
@@ -39,8 +39,19 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
   kamping::measurements::timer().start("kaspan_alloc");
   // scc id contains per local node an id that maps it to an scc
   std::ranges::fill(scc_id.range(), scc_id_undecided);
+
   auto frontier_kernel = SyncFrontier{ graph.part };
   RESULT_TRY(auto frontier, SyncAlltoallvBase<SyncFrontier<Part>>::create(comm, frontier_kernel));
+
+  auto brief_queue = [&] {
+    if constexpr (async_buffered) {
+      auto builder = briefkasten::BufferedMessageQueueBuilder<vertex_t>();
+      return builder.build();
+    } else {
+      return briefkasten::MessageQueue<vertex_t>(comm.mpi_communicator(), 100, 100);
+    }
+  }();
+
   RESULT_TRY(auto fw_reached, BitBuffer::create(graph.part.size()));
   u64 decided_count        = 0;
   u64 global_decided_count = 0;
@@ -55,14 +66,23 @@ scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Bu
   // reduce until the global graph is smaller than the partition but at least once
   // - in most cases there is a single big component here
   // - in every other case this one is nessesary as one can not gather before because of space requirements
-  do {
+  do { // NOLINT(*-avoid-do-while)
     std::memset(fw_reached.data(), 0, fw_reached.bytes());
     IF(NOT(KASPAN_NORMALIZE), const)
     auto root = pivot_selection(comm, graph, scc_id);
-    sync_forward_search(comm, graph, frontier, scc_id, fw_reached, root);
-    IF(KASPAN_NORMALIZE,
-       root = comm.allreduce_single(kmp::send_buf(root), kmp::op(MPI_MIN)));
-    sync_backward_search(comm, graph, frontier, scc_id, fw_reached, root, decided_count);
+
+    if (async)
+      async_forward_search(comm, graph, brief_queue, scc_id, fw_reached, root);
+    else
+      sync_forward_search(comm, graph, frontier, scc_id, fw_reached, root);
+
+    IF(KASPAN_NORMALIZE, root = comm.allreduce_single(kmp::send_buf(root), kmp::op(MPI_MIN)));
+
+    if (async)
+      async_backward_search(comm, graph, brief_queue, scc_id, fw_reached, root, decided_count);
+    else
+      sync_backward_search(comm, graph, frontier, scc_id, fw_reached, root, decided_count);
+
     global_decided_count = comm.allreduce_single(kmp::send_buf(decided_count), kmp::op(MPI_SUM));
   } while (global_decided_count < graph.n / comm.size());
   kamping::measurements::timer().stop();
