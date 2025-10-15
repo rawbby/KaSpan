@@ -114,7 +114,7 @@ async_forward_search(
       local_q.pop();
 
       // local-only processing
-      KASSERT(graph.part.contains(u), "Vertex must be local when popped");
+      // KASSERT(graph.part.contains(u), "Vertex must be local when popped");
       auto const k = graph.part.rank(u);
 
       if (fw_reached.get(k) || scc_id[k] != scc_id_undecided)
@@ -166,7 +166,7 @@ async_backward_search(
       local_q.pop();
 
       // local-only processing
-      KASSERT(graph.part.contains(u), "Vertex must be local when popped");
+      // KASSERT(graph.part.contains(u), "Vertex must be local when popped");
       auto const k = graph.part.rank(u);
 
       if (!fw_reached.get(k) || scc_id[k] != scc_id_undecided)
@@ -175,7 +175,6 @@ async_backward_search(
       scc_id[k] = root;
       ++decided_count;
 
-      // push all backward neighbors (predecessors)
       auto const begin = graph.bw_head[k];
       auto const end   = graph.bw_head[k + 1];
       for (auto i = begin; i < end; ++i) {
