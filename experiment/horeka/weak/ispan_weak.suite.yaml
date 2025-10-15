@@ -13,5 +13,33 @@ graphs:
     b: 0.19
     c: 0.19
     scale_weak: true
+  - generator: kagen
+    type: rgg2d
+    N: 18
+    M: 19
+    scale_weak: true
+  - generator: kagen
+    type: rgg3d
+    N: 18
+    M: 19
+    scale_weak: true
+  - generator: kagen
+    type: rmat
+    n: 262144
+    m: 393216
+    a: 0.57
+    b: 0.19
+    c: 0.19
+    scale_weak: true
+  - generator: kagen
+    type: rgg2d
+    n: 262144
+    m: 393216
+    scale_weak: true
+  - generator: kagen
+    type: rgg3d
+    n: 262144
+    m: 393216
+    scale_weak: true
 config:
   - alpha: [ 12, 14, 16 ] # (top-down/bottom-up threshold) 14 is often sweetspot, see "Direction-optimizing breadth-first search" (Beamer et al.)

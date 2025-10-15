@@ -13,10 +13,38 @@ graphs:
     b: 0.19
     c: 0.19
     scale_weak: true
+  - generator: kagen
+    type: rgg2d
+    N: 18
+    M: 19
+    scale_weak: true
+  - generator: kagen
+    type: rgg3d
+    N: 18
+    M: 19
+    scale_weak: true
+  - generator: kagen
+    type: rmat
+    n: 262144
+    m: 393216
+    a: 0.57
+    b: 0.19
+    c: 0.19
+    scale_weak: true
+  - generator: kagen
+    type: rgg2d
+    n: 262144
+    m: 393216
+    scale_weak: true
+  - generator: kagen
+    type: rgg3d
+    n: 262144
+    m: 393216
+    scale_weak: true
 config: [
   {
-    async: [ True ],
-    async_indirect: [ False, True ]
+    async: [ true ],
+    async_indirect: [ false, true ]
   },
-  { async: [ False ] }
+  { async: [ false ] }
 ]
