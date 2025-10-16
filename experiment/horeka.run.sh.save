@@ -1,0 +1,93 @@
+#!/bin/bash
+
+FLAG_S=0
+FLAG_M=0
+FLAG_X=0
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -s ) FLAG_S=1; shift ;;
+    -m ) FLAG_M=1;  shift ;;
+    -x ) FLAG_X=1; shift ;;
+    -- ) shift; break ;;
+    -* ) echo "Unknown flag: $1"; exit 1 ;;
+    *  ) POSITIONAL+=("$1"); shift ;;
+  esac
+done
+set -- "${POSITIONAL[@]}"
+
+module purge
+module load compiler/gnu/14
+module load mpi/impi/2021.11
+module load devel/cmake/3.30
+
+cmake -S . -B cmake-build-release -G Ninja -Wno-dev -DCMAKE_BUILD_TYPE=Release
+source .venv/bin/activate
+
+cd cmake-build-release
+cmake --build .
+
+PROG_ENTRY_LIST=(
+  "kaspan|bin/bench_kaspan"
+  "kaspan_async|bin/bench_kaspan --async"
+  "ispan12|bin/bench_ispan --alpha 12"
+)
+LOG_NTASKS_LIST=(6 7 8)
+GRAPH_D_PER_CENT_LIST=(60 120 240)
+
+(( FLAG_M )) && {
+  LOG_NTASKS_LIST=(4 5 6 7 8 9 10)
+  GRAPH_D_PER_CENT_LIST=(60 90 150 190 240)
+}
+(( FLAG_X )) && {
+  LOG_NTASKS_LIST=(0 1 2 3 4 5 6 7 8 9 10 11 12)
+  GRAPH_D_PER_CENT_LIST=(60 70 90 100 120 150 190 240)
+}
+
+DATE=$(date +%F)
+SEED=$(tr -dc '0-9' </dev/urandom | head -c 8)
+mkdir "${DATE}-${SEED}"
+
+for PROG_ENTRY in "${PROG_ENTRIES[@]}"; do
+for LOG_NTASKS in 0 1 2 3 4 5 6 7 8 9 10 11 12; do
+for GRAPH_D_PER_CENT in 50 75 100 150 200; do
+
+  PROG_TAG=${PROG_ENTRY%%|*}
+  PROG=${PROG_ENTRY#*|}
+
+  export NTASKS=$(( 2**LOG_NTASKS ))
+  export PARTITION="cpuonly"
+  TIME_MINUTES=$(( LOG_NTASKS + 1 ))
+  export TIME="${TIME_MINUTES}:00"
+  export MEM="230gb"
+  CPUS_PER_NODE=76
+
+  export NTASKS_PER_NODE=$(( NTASKS < ${CPUS_PER_NODE} ? NTASKS : ${CPUS_PER_NODE} ))
+  export NODES=$(( (NTASKS + ${CPUS_PER_NODE} - 1) / ${CPUS_PER_NODE} ))
+
+  GRAPH_BIG_N=$(( LOG_NTASKS + 25 )) # 2**25 vertices per rank
+  GRAPH_N=$(( 2**(GRAPH_BIG_N) ))
+  GRAPH_M=$(( (GRAPH_N * GRAPH_D_PER_CENT) / 100 ))
+  GRAPH_A=0.57
+  GRAPH_B=0.19
+  GRAPH_C=0.19
+
+  export JOB_NAME="${PROG_TAG}_weak_np${NTASKS}_N${GRAPH_BIG_N}_d${GRAPH_D_PER_CENT}"
+  RES_FILE="${DATE}-${SEED}/horeka.job.${JOB_NAME}.json"
+  JOB_SCRIPT="${DATE}-${SEED}/horeka.job.${JOB_NAME}.sh"
+
+  export OUT_FILE="${DATE}-${SEED}/horeka.job.${JOB_NAME}.out"
+  export ERR_FILE="${DATE}-${SEED}/horeka.job.${JOB_NAME}.err"
+  export CMD="${PROG} --kagen_option_string \"rmat;n=${GRAPH_N};m=${GRAPH_M};a=${GRAPH_A};b=${GRAPH_B};c=${GRAPH_C};directed;s=${SEED}\" --output_file ${RES_FILE}"
+
+  envsubst < ../experiment/horeka.job.sh > "${JOB_SCRIPT}"
+
+  echo ""
+  echo "${JOB_SCRIPT}"
+  echo '```bash'
+  cat "${JOB_SCRIPT}"
+  echo '```'
+
+done
+done
+done
