@@ -30,7 +30,7 @@ select_output_file(int argc, char** argv)
 {
   for (int i = 1; i < argc - 1; ++i)
     if (strcmp(argv[i], "--output_file") == 0)
-      return std::string{ argv[i + 1] } + ".json";
+      return argv[i + 1];
   usage();
 }
 
