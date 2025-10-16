@@ -25,7 +25,7 @@ export MEM="230gb"
 export CMD="mpiexec.hydra -n ${NTASKS} ./my_program arg1 arg2"
 
 TMP_SCRIPT=$(mktemp --suffix=.sh horeka.job.XXXXXX)
-envsubst < horeka.job.sh > "${TMP_SCRIPT}"
+envsubst < experiment/horeka.job.sh > "${TMP_SCRIPT}"
 
 echo "${TMP_SCRIPT}"
 cat "${TMP_SCRIPT}"
