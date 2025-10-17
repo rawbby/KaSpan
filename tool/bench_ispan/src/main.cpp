@@ -47,7 +47,7 @@ int
 main(int argc, char** argv)
 {
   auto const kagen_option_string = select_kagen_option_string(argc, argv);
-  auto const output_file         = std::string{ select_output_file(argc, argv) } + ".json";
+  auto const output_file         = select_output_file(argc, argv);
   auto const alpha               = select_alpha(argc, argv);
 
   MPI_Init(nullptr, nullptr);
