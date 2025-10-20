@@ -12,12 +12,12 @@
 #include <graph/AllGatherGraph.hpp>
 #include <graph/GraphPart.hpp>
 
+#include <briefkasten/aggregators.hpp>
 #include <briefkasten/buffered_queue.hpp>
 #include <briefkasten/grid_indirection.hpp>
 #include <briefkasten/indirection.hpp>
 #include <briefkasten/noop_indirection.hpp>
 #include <briefkasten/queue_builder.hpp>
-#include <briefkasten/aggregators.hpp>
 
 #include <kamping/collectives/allreduce.hpp>
 #include <kamping/communicator.hpp>
@@ -56,10 +56,10 @@ normalize_scc_id(U64Buffer& scc_id, Part const& part)
 
 template<WorldPartConcept Part>
 VoidResult
-sync_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer& scc_id)
+sync_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer& scc_id, std::vector<std::pair<std::string, std::string>>* stats = nullptr)
 {
   namespace kmp = kamping;
-  auto& t        = kmp::measurements::timer();
+  auto& t       = kmp::measurements::timer();
 
   t.start("kaspan_alloc");
   // scc id contains per local node an id that maps it to an scc
@@ -78,11 +78,15 @@ sync_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, 
   trim_1_first(graph, scc_id, decided_count);
   t.stop();
 
+  size_t const trim1reduction = global_decided_count;
+
   // reduce until the global graph is smaller than the partition but at least once
   // - in most cases there is a single big component here
   // - in every other case this one is nessesary as one can not gather before because of space requirements
   t.start("kaspan_fwbw");
-  do { // NOLINT(*-avoid-do-while)
+  size_t fwbwc = 0; // count
+  do {              // NOLINT(*-avoid-do-while)
+    ++fwbwc;
     std::memset(fw_reached.data(), 0, fw_reached.bytes());
     IF(NOT(KASPAN_NORMALIZE), const)
     auto root = pivot_selection(comm, graph, scc_id);
@@ -94,6 +98,8 @@ sync_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, 
     global_decided_count = comm.allreduce_single(kmp::send_buf(decided_count), kmp::op(MPI_SUM));
   } while (global_decided_count < graph.n / comm.size());
   t.stop();
+
+  size_t const fwbw_reduction = global_decided_count;
 
   t.start("kaspan_residual");
   RESULT_TRY(auto sub_graph_ids_inverse_and_ids, AllGatherSubGraph(graph, [&scc_id](vertex_t k) {
@@ -139,15 +145,19 @@ sync_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, 
   normalize_scc_id(scc_id, graph.part);
   kmp::measurements::timer().stop();
 
+  stats->emplace_back("fwbw_count", std::to_string(fwbwc));
+  stats->emplace_back("trim1reduction", std::to_string(trim1reduction));
+  stats->emplace_back("fwbw_reduction", std::to_string(fwbw_reduction));
+
   return VoidResult::success();
 }
 
 template<typename IndirectionScheme, WorldPartConcept Part>
 VoidResult
-async_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer& scc_id)
+async_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer& scc_id, std::vector<std::pair<std::string, std::string>>* stats = nullptr)
 {
   namespace kmp = kamping;
-  auto& t        = kmp::measurements::timer();
+  auto& t       = kmp::measurements::timer();
 
   t.start("kaspan_alloc");
   // scc id contains per local node an id that maps it to an scc
@@ -168,11 +178,15 @@ async_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph,
   trim_1_first(graph, scc_id, decided_count);
   t.stop();
 
+  size_t const trim1reduction = global_decided_count;
+
   // reduce until the global graph is smaller than the partition but at least once
   // - in most cases there is a single big component here
   // - in every other case this one is nessesary as one can not gather before because of space requirements
   t.start("kaspan_fwbw");
-  do { // NOLINT(*-avoid-do-while)
+  size_t fwbwc = 0; // count
+  do {              // NOLINT(*-avoid-do-while)
+    ++fwbwc;
     std::memset(fw_reached.data(), 0, fw_reached.bytes());
     IF(NOT(KASPAN_NORMALIZE), const)
     auto root = pivot_selection(comm, graph, scc_id);
@@ -184,6 +198,8 @@ async_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph,
     global_decided_count = comm.allreduce_single(kmp::send_buf(decided_count), kmp::op(MPI_SUM));
   } while (global_decided_count < graph.n / comm.size());
   t.stop();
+
+  size_t const fwbw_reduction = global_decided_count;
 
   t.start("kaspan_residual");
   RESULT_TRY(auto sub_graph_ids_inverse_and_ids, AllGatherSubGraph(graph, [&scc_id](vertex_t k) {
@@ -228,6 +244,10 @@ async_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph,
 
   normalize_scc_id(scc_id, graph.part);
   kmp::measurements::timer().stop();
+
+  stats->emplace_back("fwbw_count", std::to_string(fwbwc));
+  stats->emplace_back("trim1reduction", std::to_string(trim1reduction));
+  stats->emplace_back("fwbw_reduction", std::to_string(fwbw_reduction));
 
   return VoidResult::success();
 }

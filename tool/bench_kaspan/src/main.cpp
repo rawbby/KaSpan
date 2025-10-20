@@ -75,31 +75,31 @@ main(int argc, char** argv)
   ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, kagen_option_string.c_str()));
   kamping::measurements::timer().stop();
 
+  std::vector<std::pair<std::string, std::string>> config{
+        { "world_rank", std::to_string(comm.rank()) },
+        { "world_size", std::to_string(comm.size()) },
+        { "async", std::to_string(comm_strategy.async) },
+        { "async_indirect", std::to_string(comm_strategy.indirect) },
+        { "kagen_option_string", std::string{ kagen_option_string } }
+  };
+
   ASSERT_TRY(auto scc_id, U64Buffer::create(graph_part.part.n));
 
   kamping::measurements::timer().synchronize_and_start("kaspan");
   kamping::measurements::timer().synchronize_and_start("kaspan_scc");
 
   if (not comm_strategy.async)
-    sync_scc_detection(comm, graph_part, scc_id);
+    sync_scc_detection(comm, graph_part, scc_id, &config);
 
   else if (comm_strategy.indirect)
-    async_scc_detection<briefkasten::GridIndirectionScheme>(comm, graph_part, scc_id);
+    async_scc_detection<briefkasten::GridIndirectionScheme>(comm, graph_part, scc_id, &config);
   else
-    async_scc_detection<briefkasten::NoopIndirectionScheme>(comm, graph_part, scc_id);
+    async_scc_detection<briefkasten::NoopIndirectionScheme>(comm, graph_part, scc_id, &config);
 
   kamping::measurements::timer().stop();
   kamping::measurements::timer().stop();
 
   std::ofstream output_fd{ output_file };
-
-  std::vector<std::pair<std::string, std::string>> config{
-    { "world_rank", std::to_string(comm.rank()) },
-    { "world_size", std::to_string(comm.size()) },
-    { "async", std::to_string(comm_strategy.async) },
-    { "async_indirect", std::to_string(comm_strategy.indirect) },
-    { "kagen_option_string", std::string{ kagen_option_string } }
-  };
 
   kamping::measurements::timer().aggregate_and_print(kamping::measurements::SimpleJsonPrinter{ output_fd, config });
 }
