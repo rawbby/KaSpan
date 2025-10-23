@@ -54,25 +54,33 @@ main(int argc, char** argv)
   SCOPE_GUARD(MPI_Finalize());
 
   auto comm = kamping::Communicator{};
-  kamping::measurements::timer().synchronize_and_start("kagen");
+  comm.barrier();
+  KASPAN_TIME_START("kagen");
   ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, kagen_option_string.c_str()));
-  kamping::measurements::timer().stop();
+  KASPAN_TIME_STOP();
 
-  kamping::measurements::timer().synchronize_and_start("ispan");
+  KASPAN_STATISTIC_PUSH("world_rank", std::to_string(comm.rank()));
+  KASPAN_STATISTIC_PUSH("world_size", std::to_string(comm.size()));
+  KASPAN_STATISTIC_PUSH("kagen_option_string", std::string{ kagen_option_string });
+
+  std::vector<vertex_t> scc_id;
+
+  KASPAN_TIME_START("preprocessing");
   ASSERT_TRY(auto const graph, AllGatherGraph(comm, graph_part));
-  kamping::measurements::timer().synchronize_and_start("ispan_scc");
-  scc_detection(graph, alpha, comm.rank(), comm.size());
-  kamping::measurements::timer().stop();
-  kamping::measurements::timer().stop();
+  KASPAN_TIME_STOP()
+
+  KASPAN_TIME_START("scc");
+  scc_detection(graph, alpha, comm.rank(), comm.size(), &scc_id);
+  KASPAN_TIME_STOP()
+
+  IF(KASPAN_STATISTIC, size_t global_component_count = 0;)
+  for (vertex_t u = 0; u < graph_part.n; ++u)
+    if (scc_id[u] == u)
+      IF(KASPAN_STATISTIC, ++global_component_count;)
+  KASPAN_STATISTIC_PUSH("scc_count", std::to_string(global_component_count));
 
   std::ofstream output_fd{ output_file };
-
-  std::vector<std::pair<std::string, std::string>> config{
-    { "world_rank", std::to_string(comm.rank()) },
-    { "world_size", std::to_string(comm.size()) },
-    { "kagen_option_string", std::string{ kagen_option_string } },
-    { "alpha", std::to_string(alpha) }
-  };
-
-  kamping::measurements::timer().aggregate_and_print(kamping::measurements::SimpleJsonPrinter{ output_fd, config });
+  kamping::measurements::timer().aggregate_and_print(
+    kamping::measurements::SimpleJsonPrinter
+      IF(KASPAN_STATISTIC, (output_fd, g_kaspan_statistic), (output_fd)));
 }

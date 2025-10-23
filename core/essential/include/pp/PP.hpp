@@ -186,4 +186,12 @@
 #define IF_2(COND,T,F) ARGS_ELEMENT(BOOL(COND),F,T)
 #define IF(COND,...) CAT(IF_,ARGS_SIZE(__VA_ARGS__))(COND,__VA_ARGS__)
 
+// === LOGICAL OPERATORS ===
+#define AND(X,Y) IF(X,Y,0)
+#define OR(X,Y) IF(X,1,Y)
+#define NAND(X,Y) NOT(AND(X,Y))
+#define NOR(X,Y) NOT(OR(X,Y))
+#define XOR(X,Y) AND(OR(X,Y),NOT(AND(X,Y)))
+#define XNOR(X,Y) NOT(XOR(X,Y))
+
 // clang-format on

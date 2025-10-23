@@ -6,5 +6,6 @@
 /graph/
 
 /plt/experiment_data/
+/plt/experiment_data.tar.gz
 
 __pycache__/

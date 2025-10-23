@@ -11,14 +11,14 @@
 
 inline void
 fw_span(
-  vertex_t const*  scc_id,
+  vertex_t const* scc_id,
   index_t const*  fw_head,
   index_t const*  bw_head,
   vertex_t const* fw_csr,
   vertex_t const* bw_csr,
   vertex_t        local_beg,
   vertex_t        local_end,
-  depth_t*    fw_sa,
+  depth_t*        fw_sa,
   index_t*        front_comm,
   vertex_t        root,
   index_t         world_rank,
@@ -30,7 +30,7 @@ fw_span(
   vertex_t*       fq_comm,
   unsigned int*   sa_compress)
 {
-  depth_t level            = 0;
+  depth_t level                = 0;
   fw_sa[root]                  = 0;
   bool       is_top_down       = true;
   bool       is_top_down_queue = false;
@@ -252,8 +252,8 @@ bw_span(
 
   depth_t const* fw_sa,
   depth_t*       bw_sa,
-  index_t*           front_comm,
-  int*               work_comm,
+  index_t*       front_comm,
+  int*           work_comm,
 
   vertex_t      root,
   index_t       world_rank,
@@ -263,14 +263,17 @@ bw_span(
   vertex_t      m,
   vertex_t      step,
   vertex_t*     fq_comm,
-  unsigned int* sa_compress)
+  unsigned int* sa_compress,
+
+  size_t& decided_count)
 {
-  bw_sa[root]                   = 0;
-  bool        is_top_down       = true;
-  bool        is_top_down_queue = false;
+  bw_sa[root]               = 0;
+  bool    is_top_down       = true;
+  bool    is_top_down_queue = false;
   depth_t level             = 0;
-  scc_id[root]                  = scc_id_largest;
-  auto const queue_size         = std::max<index_t>(1, n / 100);
+  scc_id[root]              = scc_id_largest;
+  ++decided_count;
+  auto const queue_size = std::max<index_t>(1, n / 100);
 
   while (true) {
     index_t front_count = 0;
@@ -290,6 +293,7 @@ bw_span(
               fq_comm[front_count] = v;
               front_count++;
               scc_id[v] = scc_id_largest;
+              ++decided_count;
               sa_compress[v / 32] |= 1 << (v % 32);
             }
           }
@@ -312,6 +316,7 @@ bw_span(
               front_count++;
               sa_compress[u / 32] |= 1 << (u % 32);
               scc_id[u] = scc_id_largest;
+              ++decided_count;
               break;
             }
           }
@@ -344,7 +349,8 @@ bw_span(
             if (tail == queue_size)
               tail = 0;
             scc_id[v] = scc_id_largest;
-            bw_sa[v]  = static_cast<depth_t>(level + 1);
+            ++decided_count;
+            bw_sa[v] = static_cast<depth_t>(level + 1);
           }
         }
       }
@@ -415,7 +421,6 @@ bw_span(
               bw_sa[i] == depth_unset and
               (sa_compress[i / 32] & 1 << (i % 32)) != 0) {
             bw_sa[i] = static_cast<depth_t>(level + 1);
-            // scc_id[i] = scc_id_largest; // +(???) this is added manually
             num_sa += 1;
           }
         }
