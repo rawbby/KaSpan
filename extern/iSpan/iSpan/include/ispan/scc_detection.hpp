@@ -1,6 +1,11 @@
 #pragma once
 
 #include <comm/MpiBasic.hpp>
+#include <debug/Assert.hpp>
+#include <debug/Debug.hpp>
+#include <debug/Process.hpp>
+#include <debug/Statistic.hpp>
+#include <debug/Time.hpp>
 #include <graph/Graph.hpp>
 #include <ispan/fw_bw_span.hpp>
 #include <ispan/get_scc_result.hpp>
@@ -9,11 +14,10 @@
 #include <ispan/pivot_selection.hpp>
 #include <ispan/process_wcc.hpp>
 #include <ispan/trim_1_first.hpp>
+#include <ispan/trim_1_normal.hpp>
 #include <ispan/util.hpp>
 #include <ispan/wcc_detection.hpp>
-#include <util/Time.hpp>
-
-#include <kamping/measurements/timer.hpp>
+// #include <util/Time.hpp>
 
 #include <algorithm>
 #include <cstdio>
@@ -25,7 +29,9 @@
 inline void
 scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<index_t>* scc_id_out = nullptr)
 {
-  kamping::measurements::timer().start("ispan_alloc");
+  KASPAN_STATISTIC_PUSH("pre_alloc_memory", std::to_string(get_resident_set_bytes()));
+  KASPAN_TIME_START("alloc")
+
   auto const n = graph.n;
   auto const m = graph.m;
 
@@ -105,19 +111,23 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     sub_scc_id[i] = scc_id_undecided;
     sub_fw_sa[i]  = scc_id_undecided;
   }
-  kamping::measurements::timer().stop();
+  u64 decided_count = 0;
+  KASPAN_TIME_STOP();
+  KASPAN_STATISTIC_PUSH("post_alloc_memory", std::to_string(get_resident_set_bytes()));
 
-  kamping::measurements::timer().start("ispan_trim1_first");
-  trim_1_first(scc_id, fw_head, bw_head, local_beg, local_end);
+  KASPAN_TIME_START("trim_1_first");
+  trim_1_first(scc_id, fw_head, bw_head, local_beg, local_end, decided_count);
   // clang-format off
   MPI_Allgather(
     /* send: */ MPI_IN_PLACE, 0, mpi_vertex_t,
     /* recv: */ scc_id, step, mpi_vertex_t,
     /* comm: */ MPI_COMM_WORLD);
   // clang-format on
-  kamping::measurements::timer().stop();
+  KASPAN_TIME_STOP();
+  KASPAN_STATISTIC_PUSH("trim_1_first_decision_count", std::to_string(decided_count));
 
-  kamping::measurements::timer().start("ispan_fwbw");
+  IF(KASPAN_STATISTIC, auto pre_pecided_count = decided_count);
+  KASPAN_TIME_START("forward_backward_search");
   auto const root = pivot_selection(scc_id, fw_head, bw_head, n);
   fw_span(
     scc_id,
@@ -159,14 +169,24 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     m,
     step,
     fq_comm,
-    sa_compress);
-  kamping::measurements::timer().stop();
+    sa_compress,
+    decided_count);
+  KASPAN_TIME_STOP();
+  KASPAN_STATISTIC_PUSH("forward_backward_search_decision_count", std::to_string(decided_count - pre_pecided_count));
 
-  // optional
-  // trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
-  // trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
+  IF(KASPAN_STATISTIC, pre_pecided_count = decided_count);
+  KASPAN_TIME_START("trim_1_normal");
+  trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end, decided_count);
+  KASPAN_TIME_STOP();
+  KASPAN_STATISTIC_PUSH("trim_1_normal_decision_count", std::to_string(decided_count - pre_pecided_count));
 
-  kamping::measurements::timer().start("ispan_residual");
+  IF(KASPAN_STATISTIC, pre_pecided_count = decided_count);
+  KASPAN_TIME_START("trim_1_normal");
+  trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end, decided_count);
+  KASPAN_TIME_STOP();
+  KASPAN_STATISTIC_PUSH("trim_1_normal_decision_count", std::to_string(decided_count - pre_pecided_count));
+
+  KASPAN_TIME_START("residual");
   // clang-format off
   MPI_Allreduce(
     MPI_IN_PLACE, scc_id, n, mpi_vertex_t,
@@ -189,24 +209,24 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     sub_fw_csr,
     sub_bw_head,
     sub_bw_csr);
-  kamping::measurements::timer().stop();
+  KASPAN_TIME_STOP();
 
   if (sub_n > 0) {
 
     for (index_t i = 0; i < sub_n; ++i)
       sub_wcc_id[i] = i;
 
-    kamping::measurements::timer().start("ispan_wcc");
+    KASPAN_TIME_START("residual_wcc");
     wcc_detection(sub_wcc_id, sub_fw_head, sub_fw_csr, sub_bw_head, sub_bw_csr, sub_n);
     vertex_t sub_wcc_fq_size = 0;
     process_wcc(sub_n, sub_wcc_fq, sub_wcc_id, sub_wcc_fq_size);
-    kamping::measurements::timer().stop();
+    KASPAN_TIME_STOP();
 
-    kamping::measurements::timer().start("ispan_wcc_fwbw");
+    KASPAN_TIME_START("residual_forward_backward_search");
     mice_fw_bw(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, world_rank, world_size, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
-    kamping::measurements::timer().stop();
+    KASPAN_TIME_STOP();
 
-    kamping::measurements::timer().start("ispan_post");
+    KASPAN_TIME_START("residual_post_processing");
     // clang-format off
     MPI_Allreduce(
       MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t,
@@ -217,14 +237,14 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
       if (sub_scc_id[sub_u] != scc_id_undecided)
         scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
     }
-  } else {
-    kamping::measurements::timer().start("ispan_post");
+    KASPAN_TIME_STOP();
   }
 
+  KASPAN_TIME_START("post_processing");
   get_scc_result(scc_id, n);
   if (scc_id_out != nullptr) {
     scc_id_out->resize(n);
     std::memcpy(scc_id_out->data(), scc_id, n * sizeof(index_t));
   }
-  kamping::measurements::timer().stop();
+  KASPAN_TIME_STOP();
 }

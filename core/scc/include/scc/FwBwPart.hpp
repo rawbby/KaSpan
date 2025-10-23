@@ -1,5 +1,6 @@
 #pragma once
 
+#include <debug/Statistic.hpp>
 #include <graph/Graph.hpp>
 #include <scc/Common.hpp>
 #include <util/ScopeGuard.hpp>
@@ -17,12 +18,15 @@ FwBwPart(kamping::Communicator<>& comm, U64Buffer const& wcc_id, size_t wcc_coun
   std::vector<vertex_t>        queue;
   std::unordered_set<vertex_t> fw_reach;
 
+  IF(KASPAN_STATISTIC, size_t decision_count = 0);
+
   for (size_t root = 0; root < sub_graph.n; ++root) {
     if (sub_scc_id[root] == scc_id_undecided and part.contains(wcc_id[root])) {
 
       auto const id = sub_ids_inverse[root]; // directly use the global id so later no translation is needed
 
       sub_scc_id[root] = id;
+      IF(KASPAN_STATISTIC, ++decision_count);
 
       // fw search
       fw_reach.emplace(root);
@@ -54,6 +58,7 @@ FwBwPart(kamping::Communicator<>& comm, U64Buffer const& wcc_id, size_t wcc_coun
           if (sub_scc_id[v] == scc_id_undecided and fw_reach.contains(v)) {
             queue.emplace_back(v);
             sub_scc_id[v] = id;
+            IF(KASPAN_STATISTIC, ++decision_count);
           }
         }
       }
@@ -61,4 +66,6 @@ FwBwPart(kamping::Communicator<>& comm, U64Buffer const& wcc_id, size_t wcc_coun
       fw_reach.clear();
     }
   }
+
+  KASPAN_STATISTIC_PUSH("residual_decision_count", std::to_string(decision_count));
 }

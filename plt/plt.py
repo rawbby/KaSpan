@@ -7,16 +7,18 @@ from collections import defaultdict
 from pathlib import Path
 
 import matplotlib
-
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
-pattern = re.compile(r"^horeka\.job\.(?P<name>.+?)_np(?P<np>\d+)_rmat_N(?P<N>\d+)_d(?P<d>\d+)\.json$")
+pattern = re.compile(r"^horeka\.job\.(?P<name>.+?)_np(?P<np>\d+)_gnmd_N(?P<N>\d+)_d(?P<d>\d+)\.json$")
 
 if __name__ == "__main__":
-    directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'experiment_data', '2025-10-17-91986709'))
+    directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'experiment_data', '2025-10-20-54236512'))
 
     result = defaultdict(lambda: defaultdict(list))
+    variant_labels_set = set()  # collect all variants once during file scan
+
     for p in Path(directory).iterdir():
         if not p.is_file():
             continue
@@ -33,32 +35,39 @@ if __name__ == "__main__":
 
         result[(big_n_per_np, d_per_cent)][name].append((big_np, p.name))
 
+        # build global variant label right here for consistent color mapping
+        name_match = re.match(r'([A-Za-z]+)(.*)', name)
+        if name_match:
+            variant_parts = [it for it in name_match.group(2).split('_') if it]
+            base_name = name_match.group(1)
+            full_label = base_name if not variant_parts else f"{base_name} ({','.join(variant_parts)})"
+            variant_labels_set.add(full_label)
+
+    # global, consistent color mapping across ALL plots and subplots
+    variant_labels = sorted(variant_labels_set)
+    cmap = plt.get_cmap('tab20')
+    label_to_color = {label: cmap(i % cmap.N) for i, label in enumerate(variant_labels)}
 
     def extract_scc_seconds(output_obj, base_name_: str):
         return float(output_obj['data']['root'][base_name_][f"{base_name_}_scc"]['statistics']['max'][0])
 
-
     def extract_scc_fwbw_seconds(output_obj, base_name_: str):
-        return float(
-            output_obj['data']['root'][base_name_][f"{base_name_}_scc"][f"{base_name_}_fwbw"]['statistics']['max'][0])
-
+        return float(output_obj['data']['root'][base_name_][f"{base_name_}_scc"][f"{base_name_}_fwbw"]['statistics']['max'][0])
 
     def extract_residual_seconds(output_obj, base_name_: str):
-        return float(
-            output_obj['data']['root'][base_name_][f"{base_name_}_scc"][f"{base_name_}_residual"]['statistics']['max'][
-                0])
-
+        return float(output_obj['data']['root'][base_name_][f"{base_name_}_scc"][f"{base_name_}_residual"]['statistics']['max'][0])
 
     def extract_residual_wcc_seconds(output_obj, base_name_: str):
-        return float(
-            output_obj['data']['root'][base_name_][f"{base_name_}_scc"][f"{base_name_}_wcc"]['statistics']['max'][0])
-
+        if f"{base_name_}_wcc" in output_obj['data']['root'][base_name_][f"{base_name_}_scc"].keys():
+            return float(output_obj['data']['root'][base_name_][f"{base_name_}_scc"][f"{base_name_}_wcc"]['statistics']['max'][0])
+        else:
+            return 0.0
 
     def extract_residual_wcc_fwbw_seconds(output_obj, base_name_: str):
-        return float(
-            output_obj['data']['root'][base_name_][f"{base_name_}_scc"][f"{base_name_}_wcc_fwbw"]['statistics']['max'][
-                0])
-
+        if f"{base_name_}_wcc_fwbw" in output_obj['data']['root'][base_name_][f"{base_name_}_scc"].keys():
+            return float(output_obj['data']['root'][base_name_][f"{base_name_}_scc"][f"{base_name_}_wcc_fwbw"]['statistics']['max'][0])
+        else:
+            return 0.0
 
     plot_strategies = {
         '': extract_scc_seconds,
@@ -69,48 +78,37 @@ if __name__ == "__main__":
     }
 
     for suffix, extract_seconds in plot_strategies.items():
-
         collage_series = {}
 
+        # pass 1: collect all data for this suffix
         for (big_n_per_np, d_per_cent), names in result.items():
-            # print(f"=== weak config (N={big_n_per_np};d={d_per_cent}) ===")
-
             series_data = defaultdict(list)
 
             for name, entries in names.items():
                 name_match = re.match(r'([A-Za-z]+)(.*)', name)
                 variant_parts = [it for it in name_match.group(2).split('_') if len(it) != 0]
                 base_name = name_match.group(1)
-
-                if len(variant_parts) == 0:
-                    variant = ''
-                    full_name = base_name
-                else:
-                    variant = ','.join(variant_parts)
-                    full_name = f"{base_name} ({variant})"
-
-                # print(f"- {full_name}")
+                full_name = base_name if not variant_parts else f"{base_name} ({','.join(variant_parts)})"
 
                 entries.sort()
                 for big_np, filename in entries:
                     with open(os.path.join(directory, filename)) as fh:
                         output = json.load(fh)
-
-                    # output['data']['root'][base_name][f"{base_name}_scc"]['statistics']['max'][0]
                     seconds = extract_seconds(output, base_name)
-                    # print(f"  - {big_np}: {seconds}")
                     series_data[full_name].append((2 ** big_np, float(seconds)))
 
             collage_series[(big_n_per_np, d_per_cent)] = series_data
 
+            # per-config figure with global colors
             fig, ax = plt.subplots(figsize=(7, 4))
             for label, pts in series_data.items():
                 pts.sort()
                 xs = [x for x, _ in pts]
                 ys = [y for _, y in pts]
-                ax.plot(xs, ys, marker='o', label=label)
+                color = label_to_color.get(label, 'C0')
+                ax.plot(xs, ys, marker='o', label=label, color=color)
 
-            ax.set_title(f"WeakScaling{suffix} (rmat;$n=2^{{(np+{big_n_per_np})}}$;$m={d_per_cent / 100.0}n$)")
+            ax.set_title(f"WeakScaling{suffix} (gnm-directed;$n=2^{{(np+{big_n_per_np})}}$;$m={d_per_cent / 100.0}n$)")
             ax.set_xlabel('np')
             ax.set_ylabel('time(s)')
             ax.set_xscale('log', base=2)
@@ -123,8 +121,7 @@ if __name__ == "__main__":
             fig.savefig(out_path, dpi=300)
             plt.close(fig)
 
-            # print()
-
+        # collage figure (use the same global color mapping)
         rows = sorted({N for (N, _) in collage_series.keys()})
         cols = sorted({d for (_, d) in collage_series.keys()})
 
@@ -160,12 +157,13 @@ if __name__ == "__main__":
                     pts = sorted(pts)
                     xs = [x for x, _ in pts]
                     ys = [y for _, y in pts]
-                    ax.plot(xs, ys, marker='o', label=label)
+                    color = label_to_color.get(label, 'C0')
+                    ax.plot(xs, ys, marker='o', label=label, color=color)
                     all_xs.extend(xs)
                     all_ys.extend(ys)
 
                 if i == 0:
-                    ax.set_title(f"$m={d/100.0}n$")
+                    ax.set_title(f"$m={d / 100.0}n$")
                 if j == 0:
                     ax.set_ylabel(f"$n=np\\times2^{{{N}}}$")
 
@@ -177,7 +175,7 @@ if __name__ == "__main__":
             ax.set_yscale('log', base=2)
             ax.grid(True, linestyle='--', alpha=0.4)
 
-        # synced limits (optional but robust)
+        # synced limits
         if all_xs and all_ys:
             x_min, x_max = min(all_xs), max(all_xs)
             y_min, y_max = min(all_ys), max(all_ys)
@@ -190,23 +188,14 @@ if __name__ == "__main__":
         for ax in axes[-1]:
             if ax.get_visible():
                 ax.set_xlabel("np")
-        for row in axes:
-            if row[0].get_visible():
-                row[0].set_ylabel(row[0].get_ylabel() + "\ntime(s)")
+        for row_axes in axes:
+            if row_axes[0].get_visible():
+                row_axes[0].set_ylabel(row_axes[0].get_ylabel() + "\ntime(s)")
 
-        handles, labels, seen = [], [], set()
-        for ax in itertools.chain.from_iterable(axes):
-            if not ax.get_visible():
-                continue
-            h, l = ax.get_legend_handles_labels()
-            for hh, ll in zip(h, l):
-                if ll not in seen:
-                    seen.add(ll)
-                    handles.append(hh)
-                    labels.append(ll)
-
-        fig.legend(handles, labels, loc='upper center', ncol=max(1, len(labels)),
-                   frameon=True, bbox_to_anchor=(0.5, 1.02))
+        # single collage legend with consistent colors (use proxies for all variants)
+        legend_handles = [Line2D([0], [0], color=label_to_color[l], marker='o', linestyle='-') for l in variant_labels]
+        fig.legend(legend_handles, variant_labels, loc='upper center',
+                   ncol=max(1, len(variant_labels)), frameon=True, bbox_to_anchor=(0.5, 1.02))
 
         fig.tight_layout(rect=(0, 0, 1, 0.92))
         fig.savefig(os.path.join(directory, f"weak{suffix}_collage.png"), dpi=300, bbox_inches='tight')
