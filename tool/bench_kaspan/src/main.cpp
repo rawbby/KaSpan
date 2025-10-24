@@ -101,8 +101,11 @@ main(int argc, char** argv)
   IF(KASPAN_STATISTIC, size_t global_component_count = comm.allreduce_single(kamping::send_buf(component_count), kamping::op(MPI_SUM));)
   KASPAN_STATISTIC_PUSH("scc_count", std::to_string(global_component_count));
 
-  std::ofstream output_fd{ output_file };
-  kamping::measurements::timer().aggregate_and_print(
+  auto const aggregated_tree = kamping::measurements::timer().aggregate();
+  if (comm.is_root()) {
+    std::ofstream output_fd{ output_file };
     kamping::measurements::SimpleJsonPrinter
-      IF(KASPAN_STATISTIC, (output_fd, g_kaspan_statistic), (output_fd)));
+      IF(KASPAN_STATISTIC, (output_fd, g_kaspan_statistic), (output_fd))
+        .print(aggregated_tree.root());
+  }
 }
