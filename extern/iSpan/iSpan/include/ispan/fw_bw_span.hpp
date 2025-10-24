@@ -156,10 +156,11 @@ fw_span(
       is_top_down_queue = true;
 
       // clang-format off
+      ASSERT_EQ(local_beg, world_rank * step);
       MPI_Allgather(
-        /* send: */ fw_sa + local_beg, step, mpi_depth_t,
-        /* recv: */ fw_sa, step, mpi_depth_t,
-        /* comm: */ MPI_COMM_WORLD);
+        MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+        fw_sa, step, mpi_depth_t,
+        MPI_COMM_WORLD);
       // clang-format on
     }
     // if (!is_top_down || is_top_down_queue) { // -(???)
@@ -395,10 +396,11 @@ bw_span(
       is_top_down_queue = true;
 
       // clang-format off
+      ASSERT_EQ(local_beg, world_rank * step);
       MPI_Allgather(
-        /* send: */ bw_sa + local_beg, step, mpi_depth_t,
-        /* recv: */ bw_sa, step, mpi_depth_t,
-        /* comm: */ MPI_COMM_WORLD);
+        MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+        bw_sa, step, mpi_depth_t,
+        MPI_COMM_WORLD);
       // clang-format on
     }
 
