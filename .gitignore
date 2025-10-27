@@ -2,10 +2,8 @@
 /.idea/
 /.venv/
 /cmake-build-*/
-/experiment_data/
-/graph/
 
-/plt/experiment_data/
-/plt/experiment_data.tar.gz
+/experiment/experiment_data/
+/experiment/experiment_data.tar.gz
 
 __pycache__/
