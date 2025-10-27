@@ -1,5 +1,5 @@
 #include <scc/Fuzzy.hpp>
-#include <scc/SCC.hpp>
+#include <scc/Scc.hpp>
 #include <test/Assert.hpp>
 #include <test/SubProcess.hpp>
 #include <util/ScopeGuard.hpp>
@@ -28,7 +28,7 @@ main(int argc, char** argv)
 
     ASSERT_TRY(auto scc_id_ispan, U64Buffer::zeroes(graph.part.size()));
 
-    sync_scc_detection(comm, graph, scc_id_ispan);
+    scc(comm, graph, scc_id_ispan);
 
     std::stringstream ss;
     ss << "  index         :";

@@ -1,7 +1,7 @@
 #include <buffer/Buffer.hpp>
 #include <graph/ConvertGraph.hpp>
 #include <graph/GraphPart.hpp>
-#include <scc/SCC.hpp>
+#include <scc/Scc.hpp>
 #include <test/Assert.hpp>
 
 auto

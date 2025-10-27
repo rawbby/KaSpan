@@ -1,4 +1,4 @@
-#include <ispan/scc_detection.hpp>
+#include <ispan/scc.hpp>
 #include <scc/Fuzzy.hpp>
 #include <test/Assert.hpp>
 #include <test/SubProcess.hpp>
@@ -29,7 +29,7 @@ main(int argc, char** argv) -> int
     auto const graph       = std::move(scc_id_and_graph.second);
 
     std::vector<vertex_t> scc_id_ispan;
-    scc_detection(graph, 16, comm.rank(), comm.size(), &scc_id_ispan);
+    scc(graph, 16, comm.rank(), comm.size(), &scc_id_ispan);
 
     std::stringstream ss;
     ss << "  index        :";

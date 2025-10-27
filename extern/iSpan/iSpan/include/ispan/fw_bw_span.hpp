@@ -30,6 +30,8 @@ fw_span(
   vertex_t*       fq_comm,
   unsigned int*   sa_compress)
 {
+  KASPAN_STATISTIC_SCOPE("forward_search");
+
   depth_t level                = 0;
   fw_sa[root]                  = 0;
   bool       is_top_down       = true;
@@ -264,10 +266,11 @@ bw_span(
   vertex_t      m,
   vertex_t      step,
   vertex_t*     fq_comm,
-  unsigned int* sa_compress,
-
-  size_t& decided_count)
+  unsigned int* sa_compress)
 {
+  KASPAN_STATISTIC_SCOPE("backward_search");
+  size_t decided_count = 0;
+
   bw_sa[root]               = 0;
   bool    is_top_down       = true;
   bool    is_top_down_queue = false;
@@ -480,4 +483,6 @@ bw_span(
     }
     level++;
   }
+
+  KASPAN_STATISTIC_ADD("decided_count", decided_count);
 }

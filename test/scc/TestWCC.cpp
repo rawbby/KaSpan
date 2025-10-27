@@ -1,12 +1,7 @@
 #include <scc/Fuzzy.hpp>
-#include <wcc/WCC.hpp>
-#include <test/Assert.hpp>
+#include <scc/Wcc.hpp>
 #include <test/SubProcess.hpp>
 #include <util/ScopeGuard.hpp>
-#include <util/Time.hpp>
-#include <util/Util.hpp>
-
-#include <iomanip>
 
 int
 main(int argc, char** argv)

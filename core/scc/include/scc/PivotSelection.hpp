@@ -1,21 +1,16 @@
 #pragma once
 
-#include <buffer/Buffer.hpp>
-#include <comm/MpiBasic.hpp>
-#include <graph/GraphPart.hpp>
 #include <graph/Part.hpp>
 #include <scc/Common.hpp>
 #include <util/Arithmetic.hpp>
-#include <util/ScopeGuard.hpp>
 
-#include <kamping/collectives/allreduce.hpp>
 #include <kamping/communicator.hpp>
 
-struct Degree
+inline auto
+pivot_selection(kamping::Communicator<>& comm, Degree max_degree) -> u64
 {
-  u64 degree;
-  u64 u;
-};
+  return comm.allreduce_single(kamping::send_buf(max_degree), kamping::op(Degree::max, kamping::ops::commutative)).u;
+}
 
 template<WorldPartConcept Part>
 auto
@@ -34,13 +29,5 @@ pivot_selection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64
       }
     }
   }
-
-  auto global = comm.allreduce_single(
-    kamping::send_buf(max_degree),
-    kamping::op([](Degree const& lhs, Degree const& rhs) -> Degree const& {
-      return lhs.degree > rhs.degree or (lhs.degree == rhs.degree and lhs.u > rhs.u) ? lhs : rhs;
-    },
-                kamping::ops::commutative));
-
-  return global.u;
+  return pivot_selection(comm, max_degree);
 }

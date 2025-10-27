@@ -1,4 +1,4 @@
-#include <ispan/scc_detection.hpp>
+#include <ispan/scc.hpp>
 #include <test/Assert.hpp>
 #include <test/SubProcess.hpp>
 #include <util/ScopeGuard.hpp>
@@ -75,7 +75,7 @@ main(int argc, char** argv)
   constexpr int alpha = 1;
 
   std::vector<index_t> scc_id;
-  scc_detection(g, alpha, world_rank, world_size, &scc_id);
+  scc(g, alpha, world_rank, world_size, &scc_id);
 
   if (world_rank == 0) {
     std::cout << "scc_id_orig:  0 1 0 1 1 5 5" << std::endl;
