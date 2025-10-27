@@ -10,14 +10,13 @@
 #include <ispan/fw_bw_span.hpp>
 #include <ispan/get_scc_result.hpp>
 #include <ispan/gfq_origin.hpp>
-#include <ispan/residual_scc.hpp>
 #include <ispan/pivot_selection.hpp>
 #include <ispan/process_wcc.hpp>
+#include <ispan/residual_scc.hpp>
+#include <ispan/residual_wcc.hpp>
 #include <ispan/trim_1_first.hpp>
 #include <ispan/trim_1_normal.hpp>
 #include <ispan/util.hpp>
-#include <ispan/wcc_detection.hpp>
-// #include <util/Time.hpp>
 
 #include <algorithm>
 #include <cstdio>
@@ -30,9 +29,7 @@ inline void
 scc(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<index_t>* scc_id_out = nullptr)
 {
   KASPAN_STATISTIC_SCOPE("scc");
-
   KASPAN_STATISTIC_PUSH("alloc");
-  KASPAN_STATISTIC_ADD("pre_memory", get_resident_set_bytes());
 
   auto const n = graph.n;
   auto const m = graph.m;
@@ -114,7 +111,7 @@ scc(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<i
     sub_fw_sa[i]  = scc_id_undecided;
   }
 
-  KASPAN_STATISTIC_ADD("post_memory", get_resident_set_bytes());
+  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
   trim_1_first(scc_id, fw_head, bw_head, local_beg, local_end, step);
@@ -202,29 +199,20 @@ scc(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<i
     process_wcc(sub_n, sub_wcc_fq, sub_wcc_id, sub_wcc_fq_size);
     KASPAN_STATISTIC_POP();
 
-    KASPAN_STATISTIC_PUSH("residual_forward_backward_search");
     residual_scc(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, world_rank, world_size, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
-    KASPAN_STATISTIC_POP();
 
-    KASPAN_STATISTIC_PUSH("residual_post_processing");
-    // clang-format off
-    MPI_Allreduce(
-      MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t,
-      MPI_MIN, MPI_COMM_WORLD);
-    // clang-format on
-
+    KASPAN_STATISTIC_SCOPE("residual_post_processing");
+    MPI_Allreduce(MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t, MPI_MIN, MPI_COMM_WORLD);
     for (index_t sub_u = 0; sub_u < sub_n; ++sub_u) {
       if (sub_scc_id[sub_u] != scc_id_undecided)
         scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
     }
-    KASPAN_STATISTIC_POP();
   }
 
-  KASPAN_STATISTIC_PUSH("post_processing");
+  KASPAN_STATISTIC_SCOPE("post_processing");
   get_scc_result(scc_id, n);
   if (scc_id_out != nullptr) {
     scc_id_out->resize(n);
     std::memcpy(scc_id_out->data(), scc_id, n * sizeof(index_t));
   }
-  KASPAN_STATISTIC_POP();
 }
