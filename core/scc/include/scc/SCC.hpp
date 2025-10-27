@@ -61,8 +61,8 @@ sync_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, 
 {
   namespace kmp = kamping;
 
-  KASPAN_STATISTIC_PUSH("pre_alloc_memory", std::to_string(get_resident_set_bytes()));
-  KASPAN_TIME_START("alloc");
+  kaspan_statistic_push("alloc");
+  kaspan_statistic_add("pre_memory", get_resident_set_bytes());
   // scc id contains per local node an id that maps it to an scc
   std::ranges::fill(scc_id.range(), scc_id_undecided);
 
@@ -72,14 +72,14 @@ sync_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, 
   RESULT_TRY(auto fw_reached, BitBuffer::create(graph.part.size()));
   u64 decided_count        = 0;
   u64 global_decided_count = 0;
-  KASPAN_TIME_STOP();
-  KASPAN_STATISTIC_PUSH("post_alloc_memory", std::to_string(get_resident_set_bytes()));
+  kaspan_statistic_add("post_memory", get_resident_set_bytes());
+  kaspan_statistic_pop();
 
   // preprocess graph - remove trivial
-  KASPAN_TIME_START("trim_1_first");
+  kaspan_statistic_push("trim_1_first");
   trim_1_first(graph, scc_id, decided_count);
-  KASPAN_TIME_STOP();
-  KASPAN_STATISTIC_PUSH("trim_1_first_decision_count", std::to_string(decided_count));
+  kaspan_statistic_add("decision_count", decided_count);
+  kaspan_statistic_pop();
 
   // reduce until the global graph is smaller than the partition but at least once
   // - in most cases there is a single big component here
@@ -88,7 +88,7 @@ sync_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, 
   do { // NOLINT(*-avoid-do-while)
 
     IF(KASPAN_STATISTIC, auto const pre_pecided_count = decided_count);
-    KASPAN_TIME_START("forward_backward_search");
+    kaspan_statistic_push("forward_backward_search");
 
     std::memset(fw_reached.data(), 0, fw_reached.bytes());
     IF(NOT(KASPAN_NORMALIZE), const)
@@ -99,39 +99,39 @@ sync_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, 
     sync_backward_search(comm, graph, frontier, scc_id, fw_reached, root, decided_count);
 
     global_decided_count = comm.allreduce_single(kmp::send_buf(decided_count), kmp::op(MPI_SUM));
-    KASPAN_TIME_STOP();
-    KASPAN_STATISTIC_PUSH("forward_backward_search_decision_count", std::to_string(decided_count - pre_pecided_count));
+    kaspan_statistic_add("decision_count", decided_count - pre_pecided_count);
+    kaspan_statistic_pop();
 
   } while (global_decided_count < decided_theshold);
 
-  KASPAN_TIME_START("residual");
+  kaspan_statistic_push("residual");
   RESULT_TRY(auto sub_graph_ids_inverse_and_ids, AllGatherSubGraph(graph, [&scc_id](vertex_t k) {
                return scc_id[k] == scc_id_undecided;
              }));
   auto [sub_graph, sub_ids_inverse, sub_ids] = std::move(sub_graph_ids_inverse_and_ids);
-  KASPAN_TIME_STOP();
+  kaspan_statistic_pop();
 
-  KASPAN_STATISTIC_PUSH("pre_residual_alloc_memory", std::to_string(get_resident_set_bytes()));
-  KASPAN_TIME_START("residual_alloc");
+  kaspan_statistic_push("residual_alloc");
+  kaspan_statistic_add("pre_memory", get_resident_set_bytes());
   RESULT_TRY(auto wcc_id, U64Buffer::create(sub_graph.n));
   RESULT_TRY(auto sub_scc_id, U64Buffer::create(sub_graph.n));
   for (u64 i = 0; i < sub_graph.n; ++i) {
     wcc_id[i]     = i;
     sub_scc_id[i] = scc_id_undecided;
   }
-  KASPAN_TIME_STOP();
-  KASPAN_STATISTIC_PUSH("post_residual_alloc_memory", std::to_string(get_resident_set_bytes()));
+  kaspan_statistic_add("post_memory", get_resident_set_bytes());
+  kaspan_statistic_pop();
 
   if (sub_graph.n) {
-    KASPAN_TIME_START("residual_wcc");
+    kaspan_statistic_push("residual_wcc");
     auto const wcc_count = wcc_detection(sub_graph, wcc_id);
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
 
-    KASPAN_TIME_START("residual_forward_backward_search");
+    kaspan_statistic_push("residual_forward_backward_search");
     FwBwPart(comm, wcc_id, wcc_count, sub_scc_id, sub_graph, sub_ids_inverse);
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
 
-    KASPAN_TIME_START("residual_post_processing"); // todo replace with all to all v?
+    kaspan_statistic_push("residual_post_processing"); // todo replace with all to all v?
     MPI_Allreduce(MPI_IN_PLACE, sub_scc_id.data(), sub_graph.n, mpi_scc_id_t, MPI_MIN, MPI_COMM_WORLD);
     for (u64 sub_v = 0; sub_v < sub_graph.n; ++sub_v) {
       auto const v = sub_ids_inverse[sub_v];
@@ -140,12 +140,12 @@ sync_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph, 
         scc_id[k]    = sub_scc_id[sub_v];
       }
     }
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
   }
 
-  KASPAN_TIME_START("post_processing");
+  kaspan_statistic_push("post_processing");
   normalize_scc_id(scc_id, graph.part);
-  KASPAN_TIME_STOP();
+  kaspan_statistic_pop();
 
   return VoidResult::success();
 }
@@ -156,8 +156,9 @@ async_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph,
 {
   namespace kmp = kamping;
 
-  KASPAN_STATISTIC_PUSH("pre_alloc_memory", std::to_string(get_resident_set_bytes()));
-  KASPAN_TIME_START("alloc");
+  kaspan_statistic_push("alloc");
+  kaspan_statistic_add("pre_memory", get_resident_set_bytes());
+
   // scc id contains per local node an id that maps it to an scc
   std::ranges::fill(scc_id.range(), scc_id_undecided);
 
@@ -169,14 +170,15 @@ async_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph,
   RESULT_TRY(auto fw_reached, BitBuffer::create(graph.part.size()));
   u64 decided_count        = 0;
   u64 global_decided_count = 0;
-  KASPAN_TIME_STOP();
-  KASPAN_STATISTIC_PUSH("post_alloc_memory", std::to_string(get_resident_set_bytes()));
+
+  kaspan_statistic_add("post_memory", get_resident_set_bytes());
+  kaspan_statistic_pop();
 
   // preprocess graph - remove trivial
-  KASPAN_TIME_START("trim_1_first");
+  kaspan_statistic_push("trim_1_first");
   trim_1_first(graph, scc_id, decided_count);
-  KASPAN_TIME_STOP();
-  KASPAN_STATISTIC_PUSH("trim_1_first_decision_count", std::to_string(decided_count));
+  kaspan_statistic_add("decision_count", decided_count);
+  kaspan_statistic_pop();
 
   // reduce until the global graph is smaller than the partition but at least once
   // - in most cases there is a single big component here
@@ -184,8 +186,8 @@ async_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph,
   auto const decided_theshold = graph.n / comm.size();
   do { // NOLINT(*-avoid-do-while)
 
+    kaspan_statistic_push("forward_backward_search");
     IF(KASPAN_STATISTIC, auto const pre_pecided_count = decided_count);
-    KASPAN_TIME_START("forward_backward_search");
 
     std::memset(fw_reached.data(), 0, fw_reached.bytes());
     IF(NOT(KASPAN_NORMALIZE), const)
@@ -196,39 +198,40 @@ async_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph,
     async_backward_search(graph, brief_queue, scc_id, fw_reached, root, decided_count);
 
     global_decided_count = comm.allreduce_single(kmp::send_buf(decided_count), kmp::op(MPI_SUM));
-    KASPAN_TIME_STOP();
-    KASPAN_STATISTIC_PUSH("forward_backward_search_decision_count", std::to_string(decided_count - pre_pecided_count));
+
+    kaspan_statistic_add("decision_count", decided_count - pre_pecided_count);
+    kaspan_statistic_pop();
 
   } while (global_decided_count < decided_theshold);
 
-  KASPAN_TIME_START("residual");
+  kaspan_statistic_push("residual");
   RESULT_TRY(auto sub_graph_ids_inverse_and_ids, AllGatherSubGraph(graph, [&scc_id](vertex_t k) {
                return scc_id[k] == scc_id_undecided;
              }));
   auto [sub_graph, sub_ids_inverse, sub_ids] = std::move(sub_graph_ids_inverse_and_ids);
-  KASPAN_TIME_STOP();
+  kaspan_statistic_pop();
 
-  KASPAN_STATISTIC_PUSH("pre_residual_alloc_memory", std::to_string(get_resident_set_bytes()));
-  KASPAN_TIME_START("residual_alloc");
+  kaspan_statistic_push("residual_alloc");
+  kaspan_statistic_add("pre_memory", get_resident_set_bytes());
   RESULT_TRY(auto wcc_id, U64Buffer::create(sub_graph.n));
   RESULT_TRY(auto sub_scc_id, U64Buffer::create(sub_graph.n));
   for (u64 i = 0; i < sub_graph.n; ++i) {
     wcc_id[i]     = i;
     sub_scc_id[i] = scc_id_undecided;
   }
-  KASPAN_TIME_STOP();
-  KASPAN_STATISTIC_PUSH("post_residual_alloc_memory", std::to_string(get_resident_set_bytes()));
+  kaspan_statistic_add("post_memory", get_resident_set_bytes());
+  kaspan_statistic_pop();
 
   if (sub_graph.n) {
-    KASPAN_TIME_START("residual_wcc");
+    kaspan_statistic_push("residual_wcc");
     auto const wcc_count = wcc_detection(sub_graph, wcc_id);
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
 
-    KASPAN_TIME_START("residual_forward_backward_search");
+    kaspan_statistic_push("residual_forward_backward_search");
     FwBwPart(comm, wcc_id, wcc_count, sub_scc_id, sub_graph, sub_ids_inverse);
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
 
-    KASPAN_TIME_START("residual_post_processing"); // todo replace with all to all v?
+    kaspan_statistic_push("residual_post_processing"); // todo replace with all to all v?
     MPI_Allreduce(MPI_IN_PLACE, sub_scc_id.data(), sub_graph.n, mpi_scc_id_t, MPI_MIN, MPI_COMM_WORLD);
     for (u64 sub_v = 0; sub_v < sub_graph.n; ++sub_v) {
       auto const v = sub_ids_inverse[sub_v];
@@ -237,12 +240,12 @@ async_scc_detection(kamping::Communicator<>& comm, GraphPart<Part> const& graph,
         scc_id[k]    = sub_scc_id[sub_v];
       }
     }
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
   }
 
-  KASPAN_TIME_START("post_processing");
+  kaspan_statistic_push("post_processing");
   normalize_scc_id(scc_id, graph.part);
-  KASPAN_TIME_STOP();
+  kaspan_statistic_pop();
 
   return VoidResult::success();
 }

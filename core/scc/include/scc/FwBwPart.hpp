@@ -67,5 +67,5 @@ FwBwPart(kamping::Communicator<>& comm, U64Buffer const& wcc_id, size_t wcc_coun
     }
   }
 
-  KASPAN_STATISTIC_PUSH("residual_decision_count", std::to_string(decision_count));
+  kaspan_statistic_add("residual_decision_count", decision_count);
 }

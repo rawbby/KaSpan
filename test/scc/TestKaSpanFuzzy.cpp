@@ -51,5 +51,9 @@ main(int argc, char** argv)
 
     for (size_t k = 0; k < graph.part.size(); ++k)
       ASSERT_EQ(scc_id_orig[k], scc_id_ispan[k], "k = %lu / i = %lu\n%s", k, graph.part.select(k), status_str.c_str());
+
+    if (n == 32) {
+      kaspan_statistic_mpi_write_json("out.json");
+    }
   }
 }

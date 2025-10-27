@@ -63,6 +63,8 @@ select_output_file(int argc, char** argv)
 int
 main(int argc, char** argv)
 {
+  KASPAN_STATISTIC_SCOPE("benchmark");
+
   auto const kagen_option_string = select_kagen_option_string(argc, argv);
   auto const output_file         = select_output_file(argc, argv);
   auto const comm_strategy       = select_comm_strategy(argc, argv);
@@ -72,26 +74,26 @@ main(int argc, char** argv)
 
   auto comm = kamping::Communicator{};
   comm.barrier();
-  KASPAN_TIME_START("kagen");
-  ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, kagen_option_string.c_str()));
-  KASPAN_TIME_STOP();
 
-  KASPAN_STATISTIC_PUSH("world_rank", std::to_string(comm.rank()));
-  KASPAN_STATISTIC_PUSH("world_size", std::to_string(comm.size()));
-  KASPAN_STATISTIC_PUSH("async", std::to_string(comm_strategy.async));
-  KASPAN_STATISTIC_PUSH("async_indirect", std::to_string(comm_strategy.indirect));
-  KASPAN_STATISTIC_PUSH("kagen_option_string", std::string{ kagen_option_string });
+  kaspan_statistic_push("kagen");
+  ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, kagen_option_string.c_str()));
+  kaspan_statistic_pop();
+
+  kaspan_statistic_add("world_rank", comm.rank());
+  kaspan_statistic_add("world_size", comm.size());
+  kaspan_statistic_add("async", comm_strategy.async);
+  kaspan_statistic_add("async_indirect", comm_strategy.indirect);
 
   ASSERT_TRY(auto scc_id, U64Buffer::create(graph_part.part.n));
 
-  KASPAN_TIME_START("scc");
+  kaspan_statistic_push("scc");
   if (not comm_strategy.async)
     sync_scc_detection(comm, graph_part, scc_id);
   else if (comm_strategy.indirect)
     async_scc_detection<briefkasten::GridIndirectionScheme>(comm, graph_part, scc_id);
   else
     async_scc_detection<briefkasten::NoopIndirectionScheme>(comm, graph_part, scc_id);
-  KASPAN_TIME_STOP()
+  kaspan_statistic_pop();
 
   IF(KASPAN_STATISTIC, size_t component_count = 0;)
   for (vertex_t k = 0; k < graph_part.part.size(); ++k)
@@ -99,13 +101,28 @@ main(int argc, char** argv)
       IF(KASPAN_STATISTIC, ++component_count;)
 
   IF(KASPAN_STATISTIC, size_t global_component_count = comm.allreduce_single(kamping::send_buf(component_count), kamping::op(MPI_SUM));)
-  KASPAN_STATISTIC_PUSH("scc_count", std::to_string(global_component_count));
+  kaspan_statistic_add("local_scc_count", component_count);
+  kaspan_statistic_add("global_scc_count", global_component_count);
 
-  auto const aggregated_tree = kamping::measurements::timer().aggregate();
   if (comm.is_root()) {
-    std::ofstream output_fd{ output_file };
-    kamping::measurements::SimpleJsonPrinter
-      IF(KASPAN_STATISTIC, (output_fd, g_kaspan_statistic), (output_fd))
-        .print(aggregated_tree.root());
+    std::ofstream os{ output_file };
+    os << '{' << '"' << comm.rank() << '"' << ':';
+    kaspan_statistic_write_json(os);
+
+    std::vector<size_t> counts(comm.size(), 0);
+
+    MPI_Gather(
+      nullptr, 0, mpi_basic_type<size_t>, &counts[1], comm.size() - 1, mpi_basic_type<size_t>, comm.root_signed(), MPI_COMM_WORLD);
+
+  } else {
+    std::stringstream ss;
+    kaspan_statistic_write_json(ss);
+    auto const json = ss.str();
+
+    auto const   buffer      = std::as_bytes(std::span{ json.cbegin(), json.cend() });
+    size_t const buffer_size = buffer.size();
+
+    MPI_Gather(
+      &buffer_size, 1, mpi_basic_type<size_t>, nullptr, 0, mpi_basic_type<size_t>, comm.root_signed(), MPI_COMM_WORLD);
   }
 }

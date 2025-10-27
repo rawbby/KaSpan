@@ -29,8 +29,8 @@
 inline void
 scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<index_t>* scc_id_out = nullptr)
 {
-  KASPAN_STATISTIC_PUSH("pre_alloc_memory", std::to_string(get_resident_set_bytes()));
-  KASPAN_TIME_START("alloc")
+  kaspan_statistic_push("alloc");
+  kaspan_statistic_add("pre_memory", get_resident_set_bytes());
 
   auto const n = graph.n;
   auto const m = graph.m;
@@ -112,10 +112,10 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     sub_fw_sa[i]  = scc_id_undecided;
   }
   u64 decided_count = 0;
-  KASPAN_TIME_STOP();
-  KASPAN_STATISTIC_PUSH("post_alloc_memory", std::to_string(get_resident_set_bytes()));
+  kaspan_statistic_add("post_memory", get_resident_set_bytes());
+  kaspan_statistic_pop();
 
-  KASPAN_TIME_START("trim_1_first");
+  kaspan_statistic_push("trim_1_first");
   trim_1_first(scc_id, fw_head, bw_head, local_beg, local_end, decided_count);
   // clang-format off
   MPI_Allgather(
@@ -123,11 +123,11 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     /* recv: */ scc_id, step, mpi_vertex_t,
     /* comm: */ MPI_COMM_WORLD);
   // clang-format on
-  KASPAN_TIME_STOP();
-  KASPAN_STATISTIC_PUSH("trim_1_first_decision_count", std::to_string(decided_count));
+  kaspan_statistic_add("decision_count", decided_count);
+  kaspan_statistic_pop();
 
   IF(KASPAN_STATISTIC, auto pre_pecided_count = decided_count);
-  KASPAN_TIME_START("forward_backward_search");
+  kaspan_statistic_push("forward_backward_search");
   auto const root = pivot_selection(scc_id, fw_head, bw_head, n);
   fw_span(
     scc_id,
@@ -171,22 +171,22 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     fq_comm,
     sa_compress,
     decided_count);
-  KASPAN_TIME_STOP();
-  KASPAN_STATISTIC_PUSH("forward_backward_search_decision_count", std::to_string(decided_count - pre_pecided_count));
+  kaspan_statistic_add("decision_count", decided_count - pre_pecided_count);
+  kaspan_statistic_pop();
 
   IF(KASPAN_STATISTIC, pre_pecided_count = decided_count);
-  KASPAN_TIME_START("trim_1_normal");
+  kaspan_statistic_push("trim_1_normal");
   trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end, decided_count);
-  KASPAN_TIME_STOP();
-  KASPAN_STATISTIC_PUSH("trim_1_normal_decision_count", std::to_string(decided_count - pre_pecided_count));
+  kaspan_statistic_add("decision_count", decided_count - pre_pecided_count);
+  kaspan_statistic_pop();
 
   IF(KASPAN_STATISTIC, pre_pecided_count = decided_count);
-  KASPAN_TIME_START("trim_1_normal");
+  kaspan_statistic_push("trim_1_normal");
   trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end, decided_count);
-  KASPAN_TIME_STOP();
-  KASPAN_STATISTIC_PUSH("trim_1_normal_decision_count", std::to_string(decided_count - pre_pecided_count));
+  kaspan_statistic_add("decision_count", decided_count - pre_pecided_count);
+  kaspan_statistic_pop();
 
-  KASPAN_TIME_START("residual");
+  kaspan_statistic_push("residual");
   // clang-format off
   MPI_Allreduce(
     MPI_IN_PLACE, scc_id, n, mpi_vertex_t,
@@ -209,24 +209,24 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
     sub_fw_csr,
     sub_bw_head,
     sub_bw_csr);
-  KASPAN_TIME_STOP();
+  kaspan_statistic_pop();
 
   if (sub_n > 0) {
 
     for (index_t i = 0; i < sub_n; ++i)
       sub_wcc_id[i] = i;
 
-    KASPAN_TIME_START("residual_wcc");
+    kaspan_statistic_push("residual_wcc");
     wcc_detection(sub_wcc_id, sub_fw_head, sub_fw_csr, sub_bw_head, sub_bw_csr, sub_n);
     vertex_t sub_wcc_fq_size = 0;
     process_wcc(sub_n, sub_wcc_fq, sub_wcc_id, sub_wcc_fq_size);
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
 
-    KASPAN_TIME_START("residual_forward_backward_search");
+    kaspan_statistic_push("residual_forward_backward_search");
     mice_fw_bw(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, world_rank, world_size, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
 
-    KASPAN_TIME_START("residual_post_processing");
+    kaspan_statistic_push("residual_post_processing");
     // clang-format off
     MPI_Allreduce(
       MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t,
@@ -237,14 +237,14 @@ scc_detection(Graph const& graph, int alpha, int world_rank, int world_size, std
       if (sub_scc_id[sub_u] != scc_id_undecided)
         scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
     }
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
   }
 
-  KASPAN_TIME_START("post_processing");
+  kaspan_statistic_push("post_processing");
   get_scc_result(scc_id, n);
   if (scc_id_out != nullptr) {
     scc_id_out->resize(n);
     std::memcpy(scc_id_out->data(), scc_id, n * sizeof(index_t));
   }
-  KASPAN_TIME_STOP();
+  kaspan_statistic_pop();
 }

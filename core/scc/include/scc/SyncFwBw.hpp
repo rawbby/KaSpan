@@ -33,8 +33,8 @@ sync_forward_search(
 
   for (;;) {
 
-    IF(KASPAN_STATISTIC, size_t processed_node_count = 0;)
-    KASPAN_TIME_START("sync_forward_search_processing");
+    IF(KASPAN_STATISTIC, size_t processed_count = 0;)
+    kaspan_statistic_push("processing");
     while (frontier.has_next()) {
       auto const u = frontier.next();
       DEBUG_ASSERT(graph.part.contains(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
@@ -54,18 +54,18 @@ sync_forward_search(
       for (auto i = begin; i < end; ++i)
         frontier.push_relaxed(graph.fw_csr.get(i));
 
-      IF(KASPAN_STATISTIC, ++processed_node_count;)
+      IF(KASPAN_STATISTIC, ++processed_count;)
     }
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
 
-    KASPAN_STATISTIC_PUSH("sync_forward_search_processed_node_count", std::to_string(processed_node_count))
-    KASPAN_STATISTIC_PUSH("sync_forward_search_outbox", std::to_string(frontier.send_buf().size()))
+    kaspan_statistic_add("processed_count", processed_count);
+    kaspan_statistic_add("outbox", frontier.send_buf().size());
 
-    KASPAN_TIME_START("sync_forward_search_communication");
+    kaspan_statistic_push("communication");
     auto const messages_exchanged = frontier.communicate(comm);
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
 
-    KASPAN_STATISTIC_PUSH("sync_forward_search_inbox", std::to_string(frontier.recv_buf().size()))
+    kaspan_statistic_add("inbox", frontier.recv_buf().size());
 
     if (not messages_exchanged)
       break;
@@ -88,8 +88,8 @@ sync_backward_search(
 
   for (;;) {
 
-    IF(KASPAN_STATISTIC, size_t processed_node_count = 0;)
-    KASPAN_TIME_START("sync_backward_search_processing");
+    IF(KASPAN_STATISTIC, size_t processed_count = 0;)
+    kaspan_statistic_push("processing");
     while (frontier.has_next()) {
       auto const u = frontier.next();
       DEBUG_ASSERT(graph.part.contains(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
@@ -109,18 +109,18 @@ sync_backward_search(
       for (auto i = begin; i < end; ++i)
         frontier.push_relaxed(graph.bw_csr.get(i));
 
-      IF(KASPAN_STATISTIC, ++processed_node_count;)
+      IF(KASPAN_STATISTIC, ++processed_count;)
     }
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
 
-    KASPAN_STATISTIC_PUSH("sync_backward_search_processed_node_count", std::to_string(processed_node_count))
-    KASPAN_STATISTIC_PUSH("sync_backward_search_outbox", std::to_string(frontier.send_buf().size()))
+    kaspan_statistic_add("processed_count", processed_count);
+    kaspan_statistic_add("outbox", frontier.send_buf().size());
 
-    KASPAN_TIME_START("sync_backward_search_communication");
+    kaspan_statistic_push("communication");
     auto const messages_exchanged = frontier.communicate(comm);
-    KASPAN_TIME_STOP();
+    kaspan_statistic_pop();
 
-    KASPAN_STATISTIC_PUSH("sync_backward_search_inbox", std::to_string(frontier.recv_buf().size()))
+    kaspan_statistic_add("inbox", frontier.recv_buf().size());
 
     if (not messages_exchanged)
       break;
@@ -130,10 +130,10 @@ sync_backward_search(
 template<WorldPartConcept Part, typename BriefQueue>
 void
 async_forward_search(
-  GraphPart<Part> const&         graph,
-  BriefQueue&                    mq,
-  U64Buffer const&               scc_id,
-  BitBuffer&                     fw_reached,
+  GraphPart<Part> const& graph,
+  BriefQueue&            mq,
+  U64Buffer const&       scc_id,
+  BitBuffer&             fw_reached,
   IF(KASPAN_NORMALIZE, u64&, u64) root)
 {
   std::queue<vertex_t> local_q;
@@ -148,8 +148,8 @@ async_forward_search(
 
   for (;;) {
 
-    IF(KASPAN_STATISTIC, size_t processed_node_count = 0;)
-    KASPAN_TIME_START("async_forward_search_processing");
+    IF(KASPAN_STATISTIC, size_t processed_count = 0;)
+    kaspan_statistic_push("processing");
     while (!local_q.empty()) {
       auto const u = local_q.front();
       local_q.pop();
@@ -160,7 +160,7 @@ async_forward_search(
       if (fw_reached.get(k) || scc_id[k] != scc_id_undecided)
         continue;
 
-      IF(KASPAN_STATISTIC, ++processed_node_count;)
+      IF(KASPAN_STATISTIC, ++processed_count;)
 
       fw_reached.set(k);
       IF(KASPAN_NORMALIZE, root = std::min(root, u);)
@@ -178,15 +178,16 @@ async_forward_search(
       }
       mq.poll_throttled(on_message);
     }
-    KASPAN_TIME_STOP_SUM();
+    kaspan_statistic_pop();
 
-    IF(KASPAN_STATISTIC, if (processed_node_count)){
-      KASPAN_STATISTIC_PUSH("async_forward_search_processed_node_count", std::to_string(processed_node_count))
+    IF(KASPAN_STATISTIC, if (processed_count))
+    {
+      kaspan_statistic_add("processed_count", processed_count);
     }
 
-    KASPAN_TIME_START("async_forward_search_communication");
+    kaspan_statistic_push("communication");
     auto const finished = mq.terminate(on_message);
-    KASPAN_TIME_STOP_SUM();
+    kaspan_statistic_pop();
 
     if (finished)
       break;
@@ -196,12 +197,12 @@ async_forward_search(
 template<WorldPartConcept Part, typename BriefQueue>
 void
 async_backward_search(
-  GraphPart<Part> const&         graph,
-  BriefQueue&                    mq,
-  U64Buffer&                     scc_id,
-  BitBuffer const&               fw_reached,
-  u64                            root,
-  u64&                           decided_count)
+  GraphPart<Part> const& graph,
+  BriefQueue&            mq,
+  U64Buffer&             scc_id,
+  BitBuffer const&       fw_reached,
+  u64                    root,
+  u64&                   decided_count)
 {
   std::queue<vertex_t> local_q;
 
@@ -215,8 +216,8 @@ async_backward_search(
 
   for (;;) {
 
-    IF(KASPAN_STATISTIC, size_t processed_node_count = 0;)
-    KASPAN_TIME_START("async_backward_search_processing");
+    IF(KASPAN_STATISTIC, size_t processed_count = 0;)
+    kaspan_statistic_push("processing");
     while (!local_q.empty()) {
       auto const u = local_q.front();
       local_q.pop();
@@ -227,7 +228,7 @@ async_backward_search(
       if (!fw_reached.get(k) || scc_id[k] != scc_id_undecided)
         continue;
 
-      IF(KASPAN_STATISTIC, ++processed_node_count;)
+      IF(KASPAN_STATISTIC, ++processed_count;)
 
       scc_id[k] = root;
       ++decided_count;
@@ -244,15 +245,16 @@ async_backward_search(
       }
       mq.poll_throttled(on_message);
     }
-    KASPAN_TIME_STOP_SUM();
+    kaspan_statistic_pop();
 
-    IF(KASPAN_STATISTIC, if (processed_node_count)){
-      KASPAN_STATISTIC_PUSH("async_backward_search_processed_node_count", std::to_string(processed_node_count))
+    IF(KASPAN_STATISTIC, if (processed_count))
+    {
+      kaspan_statistic_add("processed_count", processed_count);
     }
 
-    KASPAN_TIME_START("async_backward_search_communication");
+    kaspan_statistic_push("communication");
     auto const finished = mq.terminate(on_message);
-    KASPAN_TIME_STOP_SUM();
+    kaspan_statistic_pop();
 
     if (finished)
       break;
