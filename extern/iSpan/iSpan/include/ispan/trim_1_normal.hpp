@@ -10,9 +10,10 @@ trim_1_normal(
   vertex_t const* fw_csr,
   vertex_t const* bw_csr,
   vertex_t        vert_beg,
-  vertex_t        vert_end,
-  size_t&         decided_count)
+  vertex_t        vert_end)
 {
+  KASPAN_STATISTIC_SCOPE("trim_1_normal");
+  size_t decided_count = 0;
   for (vertex_t vert_id = vert_beg; vert_id < vert_end; ++vert_id) {
     if (scc_id[vert_id] == scc_id_undecided) {
       int     my_beg     = fw_head[vert_id];
@@ -46,4 +47,5 @@ trim_1_normal(
       }
     }
   }
+  KASPAN_STATISTIC_ADD("decided_count", decided_count);
 }

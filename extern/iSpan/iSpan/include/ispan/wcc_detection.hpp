@@ -3,7 +3,7 @@
 #include <ispan/util.hpp>
 
 static void
-wcc_detection(index_t* wcc_id, index_t const* fw_head, index_t const* fw_csr, index_t const* bw_head, index_t const* bw_csr, vertex_t n)
+wcc(index_t* wcc_id, index_t const* fw_head, index_t const* fw_csr, index_t const* bw_head, index_t const* bw_csr, vertex_t n)
 {
   // use different internal name
   auto* color = wcc_id;

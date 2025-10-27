@@ -1,6 +1,6 @@
 #include <graph/Graph.hpp>
 #include <graph/KaGen.hpp>
-#include <ispan/scc_detection.hpp>
+#include <ispan/scc.hpp>
 
 #include <kamping/communicator.hpp>
 #include <kamping/measurements/printer.hpp>
@@ -46,6 +46,9 @@ select_alpha(int argc, char** argv)
 int
 main(int argc, char** argv)
 {
+  KASPAN_STATISTIC_SCOPE("benchmark");
+  KASPAN_STATISTIC_ADD("pre_memory", get_resident_set_bytes());
+
   auto const kagen_option_string = select_kagen_option_string(argc, argv);
   auto const output_file         = select_output_file(argc, argv);
   auto const alpha               = select_alpha(argc, argv);
@@ -55,28 +58,28 @@ main(int argc, char** argv)
 
   auto comm = kamping::Communicator{};
   comm.barrier();
-  kaspan_statistic_push("kagen");
-  ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, kagen_option_string.c_str()));
-  kaspan_statistic_pop();
 
-  kaspan_statistic_add("world_rank", comm.rank());
-  kaspan_statistic_add("world_size", comm.size());
+  KASPAN_STATISTIC_ADD("world_rank", comm.rank());
+  KASPAN_STATISTIC_ADD("world_size", comm.size());
+  KASPAN_STATISTIC_ADD("alpha", alpha);
+
+  KASPAN_STATISTIC_PUSH("kagen");
+  ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, kagen_option_string.c_str()));
+  KASPAN_STATISTIC_POP();
+
+  KASPAN_STATISTIC_PUSH("preprocessing");
+  ASSERT_TRY(auto const graph, AllGatherGraph(comm, graph_part));
+  graph_part.~GraphPart();
+  KASPAN_STATISTIC_POP();
 
   std::vector<vertex_t> scc_id;
+  scc(graph, alpha, comm.rank(), comm.size(), &scc_id);
 
-  kaspan_statistic_push("preprocessing");
-  ASSERT_TRY(auto const graph, AllGatherGraph(comm, graph_part));
-  kaspan_statistic_pop();
-
-  kaspan_statistic_push("scc");
-  scc_detection(graph, alpha, comm.rank(), comm.size(), &scc_id);
-  kaspan_statistic_pop();
-
-  IF(KASPAN_STATISTIC, size_t global_component_count = 0;)
-  for (vertex_t u = 0; u < graph_part.n; ++u)
+  IF_KASPAN_STATISTIC(size_t global_component_count = 0;)
+  for (vertex_t u = 0; u < graph.n; ++u)
     if (scc_id[u] == u)
-      IF(KASPAN_STATISTIC, ++global_component_count;)
-  kaspan_statistic_add("scc_count", global_component_count);
+      IF_KASPAN_STATISTIC(++global_component_count;)
+  KASPAN_STATISTIC_ADD("scc_count", global_component_count);
 
-  kaspan_statistic_mpi_write_json(output_file.c_str());
+  KASPAN_STATISTIC_MPI_WRITE_JSON(output_file.c_str());
 }

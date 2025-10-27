@@ -12,11 +12,11 @@
 #include <ostream>
 #include <vector>
 
-#include "comm/MpiBasic.hpp"
-
 #ifndef KASPAN_STATISTIC
 #define KASPAN_STATISTIC KASPAN_DEBUG
 #endif
+
+#if KASPAN_STATISTIC
 
 struct statistic_entry
 {
@@ -55,7 +55,6 @@ struct statistic_node
   }
 };
 
-#if KASPAN_STATISTIC
 inline auto g_kaspan_statistic_nodes = [] {
   auto result = std::vector<statistic_node>{};
   result.reserve(1024);
@@ -72,41 +71,27 @@ inline auto g_kaspan_statistic_stack = [] {
   result.emplace_back(SIZE_MAX); // sentinel
   return result;
 }();
-#endif
 
-/// Adds a key (string literal), value (unsigned 64-bit integer) statistic to the current scope.
-/// Ensure that `KASPAN_STATISTIC_PUSH` or `KASPAN_STATISTIC_SCOPE` was called before,
-/// else this macro may lead to undefined behaviour.
-/// note: Dont use with multithreaded applications!
 inline void
 kaspan_statistic_add(char const* name, u64 value)
 {
-#if KASPAN_STATISTIC
   DEBUG_ASSERT(not g_kaspan_statistic_stack.empty());
   auto const parent = g_kaspan_statistic_stack.back();
   g_kaspan_statistic_entries.emplace_back(parent, name, value);
-#endif
 }
 
-/// Start a new scope. Ensure every scope is finalized (via `KASPAN_STATISTIC_POP`) when the program is finished.
-/// note: Dont use with multithreaded applications!
 inline void
 kaspan_statistic_push(char const* name)
 {
-#if KASPAN_STATISTIC
   auto const new_parent = g_kaspan_statistic_nodes.size();
   auto const old_parent = g_kaspan_statistic_stack.back();
   g_kaspan_statistic_nodes.emplace_back(old_parent, new_parent, name);
   g_kaspan_statistic_stack.emplace_back(new_parent);
-#endif
 }
 
-/// Finalizes the current scope. Ensure every scope is finalized when the program is finished.
-/// note: Dont use with multithreaded applications!
 inline void
 kaspan_statistic_pop()
 {
-#if KASPAN_STATISTIC
   DEBUG_ASSERT(g_kaspan_statistic_stack.size() > 1);
   auto const old_parent = g_kaspan_statistic_stack.back();
   g_kaspan_statistic_stack.pop_back();
@@ -115,69 +100,51 @@ kaspan_statistic_pop()
   if (new_parent != SIZE_MAX) {
     g_kaspan_statistic_nodes[new_parent].end = old_parent + 1;
   }
-#endif
 }
 
-// clang-format off
-/// Compines `KASPAN_STATISTIC_PUSH` and `KASPAN_STATISTIC_POP`
-/// where push is called directly and pop is called on scope exit.
-/// note: Dont use with multithreaded applications!
-#define KASPAN_STATISTIC_SCOPE(NAME) [[maybe_unused]] auto const CAT(guard,__COUNTER__) = IF(KASPAN_STATISTIC, \
-  ScopeGuard([]{kaspan_statistic_push(NAME);}, []{kaspan_statistic_pop();}), 0)
-// clang-format on
-
 inline void
-kaspan_statistic_write_json(std::ostream& os)
-{
-#if KASPAN_STATISTIC
-  auto const& nodes   = g_kaspan_statistic_nodes;
-  auto const& entries = g_kaspan_statistic_entries;
-  auto        dfs     = [&](auto&& self, size_t& nit, size_t nend, size_t& eit) -> void {
-    os << '"' << nodes[nit].name << '"' << ':' << '{';
-    os << '"' << 'd' << 'u' << 'r' << 'a' << 't' << 'i' << 'o' << 'n' << '"' << ':' << nodes[nit].duration;
-    auto const self_nit = nit;
-    ++nit;
-    while (nit < nend) {
+kaspan_statistic_mpi_write_json(char const *file_path) {
+  constexpr auto kaspan_statistic_write_json = [](std::ostream &os) {
+    auto const &nodes = g_kaspan_statistic_nodes;
+    auto const &entries = g_kaspan_statistic_entries;
+    auto dfs = [&](auto &&self, size_t &nit, size_t nend, size_t &eit) -> void {
+      os << '"' << nodes[nit].name << '"' << ':' << '{';
+      os << '"' << 'd' << 'u' << 'r' << 'a' << 't' << 'i' << 'o' << 'n' << '"' << ':' << nodes[nit].duration;
+      auto const self_nit = nit;
+      ++nit;
+      while (nit < nend) {
+        while (eit < entries.size() and entries[eit].parent == self_nit) {
+          os << ',' << '"' << entries[eit].name << '"' << ':' << entries[eit].value;
+          ++eit;
+        }
+        DEBUG_ASSERT_EQ(nodes[nit].parent, self_nit);
+        os << ',';
+        self(self, nit, nodes[nit].end, eit);
+      }
       while (eit < entries.size() and entries[eit].parent == self_nit) {
         os << ',' << '"' << entries[eit].name << '"' << ':' << entries[eit].value;
         ++eit;
       }
-      DEBUG_ASSERT_EQ(nodes[nit].parent, self_nit);
-      os << ',';
-      self(self, nit, nodes[nit].end, eit);
-    }
-    while (eit < entries.size() and entries[eit].parent == self_nit) {
-      os << ',' << '"' << entries[eit].name << '"' << ':' << entries[eit].value;
-      ++eit;
+      os << '}';
+    };
+
+    os << '{';
+    size_t nit = 0; // node iterator
+    size_t eit = 0; // entry iterator
+    bool first_root = true;
+    while (nit < nodes.size()) {
+      DEBUG_ASSERT(nodes[nit].parent == SIZE_MAX);
+      if (not first_root)
+        os << ',';
+      first_root = false;
+
+      dfs(dfs, nit, nodes[nit].end, eit);
     }
     os << '}';
+
+    DEBUG_ASSERT_EQ(nit, nodes.size());
+    DEBUG_ASSERT_EQ(eit, entries.size());
   };
-
-  os << '{';
-  size_t nit        = 0; // node iterator
-  size_t eit        = 0; // entry iterator
-  bool   first_root = true;
-  while (nit < nodes.size()) {
-    DEBUG_ASSERT(nodes[nit].parent == SIZE_MAX);
-    if (not first_root)
-      os << ',';
-    first_root = false;
-
-    dfs(dfs, nit, nodes[nit].end, eit);
-  }
-  os << '}';
-
-  DEBUG_ASSERT_EQ(nit, nodes.size());
-  DEBUG_ASSERT_EQ(eit, entries.size());
-#else
-  os << "{}";
-#endif
-}
-
-inline void
-kaspan_statistic_mpi_write_json(char const* file_path)
-{
-#if KASPAN_STATISTIC
 
   int rank = 0;
   int size = 0;
@@ -221,5 +188,50 @@ kaspan_statistic_mpi_write_json(char const* file_path)
     MPI_Gather(&buffer_size, 1, MPI_INT, nullptr, 0, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Gatherv(json.data(), buffer_size, MPI_CHAR, nullptr, nullptr, nullptr, MPI_CHAR, 0, MPI_COMM_WORLD);
   }
-#endif
 }
+
+#else
+
+inline void
+kaspan_statistic_add(char const *name, u64 value) {
+}
+
+inline void
+kaspan_statistic_push(char const *name) {
+}
+
+inline void
+kaspan_statistic_pop() {
+}
+
+inline void
+kaspan_statistic_mpi_write_json(char const *file_path) {
+}
+
+#endif
+
+#define IF_KASPAN_STATISTIC(...) IF(KASPAN_STATISTIC, __VA_ARGS__)
+
+/// Adds a key (string literal), value (unsigned 64-bit integer) statistic to the current scope.
+/// Ensure that `KASPAN_STATISTIC_PUSH` or `KASPAN_STATISTIC_SCOPE` was called before,
+/// else this macro may lead to undefined behaviour.
+/// note: Dont use with multithreaded applications!
+#define KASPAN_STATISTIC_ADD(NAME, VALUE) kaspan_statistic_add((NAME), (VALUE))
+
+/// Start a new scope. Ensure every scope is finalized (via `KASPAN_STATISTIC_POP`) when the program is finished.
+/// note: Dont use with multithreaded applications!
+#define KASPAN_STATISTIC_PUSH(NAME) kaspan_statistic_push(NAME)
+
+/// Finalizes the current scope. Ensure every scope is finalized when the program is finished.
+/// note: Dont use with multithreaded applications!
+#define KASPAN_STATISTIC_POP() kaspan_statistic_pop()
+
+#define KASPAN_STATISTIC_MPI_WRITE_JSON(FILENAME) kaspan_statistic_mpi_write_json(FILENAME)
+
+// clang-format off
+/// Compines `KASPAN_STATISTIC_PUSH` and `KASPAN_STATISTIC_POP`
+/// where push is called directly and pop is called on scope exit.
+/// note: Dont use with multithreaded applications!
+#define KASPAN_STATISTIC_SCOPE(NAME) [[maybe_unused]] auto const CAT(guard,__COUNTER__) = IF_KASPAN_STATISTIC( \
+  ScopeGuard([]{kaspan_statistic_push(NAME);}, []{kaspan_statistic_pop();}), 0)
+// clang-format on

@@ -13,3 +13,13 @@ constexpr auto scc_id_singular  = scc_id_undecided - 1;
 
 constexpr auto mpi_scc_id_t         = mpi_basic_type<scc_id_t>;
 constexpr auto mpi_scc_id_reduction = MPI_MIN;
+
+struct Degree
+{
+  u64 degree;
+  u64 u;
+
+  static auto max(Degree const& lhs, Degree const& rhs) -> Degree const& {
+    return lhs.degree > rhs.degree or (lhs.degree == rhs.degree and lhs.u > rhs.u) ? lhs : rhs;
+  }
+};
