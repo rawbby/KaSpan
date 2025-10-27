@@ -81,6 +81,8 @@ scc(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer& scc_
                return scc_id[k] == scc_id_undecided;
              }));
   auto [sub_graph, sub_ids_inverse, sub_ids] = std::move(sub_graph_ids_inverse_and_ids);
+  KASPAN_STATISTIC_ADD("n", sub_graph.n);
+  KASPAN_STATISTIC_ADD("m", sub_graph.m);
   RESULT_TRY(auto wcc_id, U64Buffer::create(sub_graph.n));
   RESULT_TRY(auto sub_scc_id, U64Buffer::create(sub_graph.n));
   for (u64 i = 0; i < sub_graph.n; ++i) {
