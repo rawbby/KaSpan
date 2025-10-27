@@ -62,8 +62,8 @@ select_output_file(int argc, char** argv)
 int
 main(int argc, char** argv)
 {
-  KASPAN_STATISTIC_SCOPE("benchmark");
-  KASPAN_STATISTIC_ADD("pre_memory", get_resident_set_bytes());
+  KASPAN_STATISTIC_PUSH("benchmark");
+  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
   auto const kagen_option_string = select_kagen_option_string(argc, argv);
   auto const output_file         = select_output_file(argc, argv);
@@ -109,5 +109,6 @@ main(int argc, char** argv)
   KASPAN_STATISTIC_ADD("global_component_count", global_component_count);
 #endif
 
+  KASPAN_STATISTIC_POP();
   KASPAN_STATISTIC_MPI_WRITE_JSON(output_file.c_str());
 }
