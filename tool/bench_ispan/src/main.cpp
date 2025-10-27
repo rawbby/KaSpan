@@ -55,35 +55,28 @@ main(int argc, char** argv)
 
   auto comm = kamping::Communicator{};
   comm.barrier();
-  KASPAN_TIME_START("kagen");
+  kaspan_statistic_push("kagen");
   ASSERT_TRY(auto const graph_part, KaGenGraphPart(comm, kagen_option_string.c_str()));
-  KASPAN_TIME_STOP();
+  kaspan_statistic_pop();
 
-  KASPAN_STATISTIC_PUSH("world_rank", std::to_string(comm.rank()));
-  KASPAN_STATISTIC_PUSH("world_size", std::to_string(comm.size()));
-  KASPAN_STATISTIC_PUSH("kagen_option_string", std::string{ kagen_option_string });
+  kaspan_statistic_add("world_rank", comm.rank());
+  kaspan_statistic_add("world_size", comm.size());
 
   std::vector<vertex_t> scc_id;
 
-  KASPAN_TIME_START("preprocessing");
+  kaspan_statistic_push("preprocessing");
   ASSERT_TRY(auto const graph, AllGatherGraph(comm, graph_part));
-  KASPAN_TIME_STOP()
+  kaspan_statistic_pop();
 
-  KASPAN_TIME_START("scc");
+  kaspan_statistic_push("scc");
   scc_detection(graph, alpha, comm.rank(), comm.size(), &scc_id);
-  KASPAN_TIME_STOP()
+  kaspan_statistic_pop();
 
   IF(KASPAN_STATISTIC, size_t global_component_count = 0;)
   for (vertex_t u = 0; u < graph_part.n; ++u)
     if (scc_id[u] == u)
       IF(KASPAN_STATISTIC, ++global_component_count;)
-  KASPAN_STATISTIC_PUSH("scc_count", std::to_string(global_component_count));
+  kaspan_statistic_add("scc_count", global_component_count);
 
-  auto const aggregated_tree = kamping::measurements::timer().aggregate();
-  if (comm.is_root()) {
-    std::ofstream output_fd{ output_file };
-    kamping::measurements::SimpleJsonPrinter
-      IF(KASPAN_STATISTIC, (output_fd, g_kaspan_statistic), (output_fd))
-        .print(aggregated_tree.root());
-  }
+  kaspan_statistic_mpi_write_json(output_file.c_str());
 }
