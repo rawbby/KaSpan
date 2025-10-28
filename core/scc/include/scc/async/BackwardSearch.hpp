@@ -36,10 +36,7 @@ backward_search(
   if (graph.part.contains(root))
     local_q.push(root);
 
-  for (;;) {
-    size_t processed_count = 0;
-
-    KASPAN_STATISTIC_PUSH("processing");
+  do {
     while (!local_q.empty()) {
       auto const u = local_q.front();
       local_q.pop();
@@ -51,7 +48,6 @@ backward_search(
         continue;
 
       scc_id[k] = root;
-      ++processed_count;
       ++decided_count;
 
       auto const begin = graph.bw_head[k];
@@ -66,19 +62,8 @@ backward_search(
       }
       mq.poll_throttled(on_message);
     }
-    KASPAN_STATISTIC_POP();
 
-    if (processed_count) {
-      KASPAN_STATISTIC_ADD("processed_count", processed_count);
-    }
-
-    KASPAN_STATISTIC_PUSH("communication");
-    auto const finished = mq.terminate(on_message);
-    KASPAN_STATISTIC_POP();
-
-    if (finished)
-      break;
-  }
+  } while(mq.terminate(on_message));
 
   KASPAN_STATISTIC_ADD("decided_count", decided_count);
   return decided_count;
