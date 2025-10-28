@@ -34,4 +34,4 @@ class RmatDirected:
         config['graph'] = 'rmat_directed_{abc}_n{n}_m{m}_s{seed}'.format_map(config)
         options = config.setdefault('options', list())
         options.append('--kagen_option_string')
-        options.append('gnm-directed;n={n};m={m};seed={seed}'.format_map(config))
+        options.append('"gnm-directed;n={n};m={m};seed={seed}"'.format_map(config))

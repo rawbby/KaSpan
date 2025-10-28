@@ -23,7 +23,7 @@ class ISpan:
         options.append('--alpha')
         options.append(self.alpha)
         options.append('--output')
-        options.append(config['result'])
+        options.append(f"\"{config['result']}\"")
 
     def timings(self):
         result: List[str] = list()

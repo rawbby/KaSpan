@@ -1,12 +1,27 @@
 import datetime
 import math
+import shutil
+from pathlib import Path
 from typing import Any
 from typing import Dict
+import subprocess
+
+from base import build_dir
 
 __all__ = ['Horeka']
 
-horeka_template = '''
-#!/bin/bash
+horeka_run_template = f'''#!/bin/bash
+
+module purge
+module load compiler/gnu/14
+module load mpi/impi/2021.11
+module load devel/cmake/3.30
+
+cmake -S . -B {build_dir} -Wno-dev -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+cmake --build {build_dir}
+'''
+
+horeka_job_template = '''#!/bin/bash
 #SBATCH --nodes={slurm_nodes}
 #SBATCH --ntasks={np}
 #SBATCH --cpus-per-task=1
@@ -57,25 +72,48 @@ class Horeka:
         seconds = max(self.min_timeout, seconds)
         return str(seconds)
 
-    def __call__(self, config: Dict[str, Any]):
-        assert 'timeout' in config and isinstance(config['timeout'], datetime.timedelta)
-        assert 'np' in config
-        assert 'job' in config
-        assert 'err' in config
-        assert 'out' in config
-        assert 'experiment' in config
-        assert 'run' in config
-        assert 'exe' in config
+    def __call__(self, runs: Dict[str, Dict[str, Any]]):
+        experiment_dirs = set()
 
-        cmd = [config['exe']] + config.setdefault('options', list())
-        cmd = ' '.join([str(arg) for arg in cmd])
+        for run, config in runs.items():
+            assert 'timeout' in config and isinstance(config['timeout'], datetime.timedelta)
+            assert 'np' in config
+            assert 'job' in config
+            assert 'err' in config
+            assert 'out' in config
+            assert 'experiment' in config
+            assert 'experiment_dir' in config and isinstance(config['experiment_dir'], Path)
+            assert 'run' in config
+            assert 'exe' in config and isinstance(config['exe'], Path)
 
-        horeka_config = config.copy()
-        horeka_config['mpi_timeout'] = self.mpi_timeout(config['timeout'])
-        horeka_config['slurm_timeout'] = self.slurm_timeout(config['timeout'])
-        horeka_config['slurm_nodes'] = (config['np'] + 71) // 72
-        horeka_config['slurm_ntasks_per_node'] = min(72, config['np'])
-        horeka_config['cmd'] = cmd
+            original_exe: Path = config['exe']
+            experiment_binary_dir: Path = config['experiment_dir'] / 'bin'
+            experiment_exe: Path = experiment_binary_dir / original_exe.name
+            config['exe'] = experiment_exe
+            if not experiment_exe.is_file():
+                assert original_exe.is_file()
+                experiment_binary_dir.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(original_exe, experiment_exe)
 
-        config['experiment_dir'].mkdir(parents=True, exist_ok=True)
-        config['job'].write_text(horeka_template.format_map(horeka_config))
+            cmd = [config['exe']] + config.setdefault('options', list())
+            cmd = ' '.join([str(arg) for arg in cmd])
+
+            horeka_config = config.copy()
+            horeka_config['mpi_timeout'] = self.mpi_timeout(config['timeout'])
+            horeka_config['slurm_timeout'] = self.slurm_timeout(config['timeout'])
+            horeka_config['slurm_nodes'] = (config['np'] + 71) // 72
+            horeka_config['slurm_ntasks_per_node'] = min(72, config['np'])
+            horeka_config['cmd'] = cmd
+
+            config['job'].write_text(horeka_job_template.format_map(horeka_config))
+
+            if not (config['experiment_dir'] / 'run.sh').is_file():
+                (config['experiment_dir'] / 'run.sh').write_text(horeka_run_template)
+
+            with (config['experiment_dir'] / 'run.sh').open('a') as f:
+                f.write(f"sbatch {config['experiment_dir']}/{config['job']}\n")
+
+            experiment_dirs.add(config['experiment_dir'])
+
+        for experiment_dir in experiment_dirs:
+            subprocess.run(experiment_dir / 'run.sh', check=True)

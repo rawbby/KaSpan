@@ -30,7 +30,7 @@ class KaSpan:
         config['result'] = config['experiment_dir'] / f"{config['run']}.json"
 
         options.append('--output')
-        options.append(config['result'])
+        options.append(f"\"{config['result']}\"")
 
     def metricies(self):
         result: List[str] = list()
