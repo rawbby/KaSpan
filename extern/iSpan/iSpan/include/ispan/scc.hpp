@@ -187,7 +187,6 @@ scc(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<i
     sub_bw_csr);
   KASPAN_STATISTIC_ADD("n", sub_n);
   KASPAN_STATISTIC_ADD("m", sub_fw_head[sub_n]);
-  KASPAN_STATISTIC_POP();
 
   if (sub_n > 0) {
     for (index_t i = 0; i < sub_n; ++i)
@@ -201,13 +200,14 @@ scc(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<i
 
     residual_scc(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, world_rank, world_size, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
 
-    KASPAN_STATISTIC_SCOPE("residual_post_processing");
+    KASPAN_STATISTIC_SCOPE("post_processing");
     MPI_Allreduce(MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t, MPI_MIN, MPI_COMM_WORLD);
     for (index_t sub_u = 0; sub_u < sub_n; ++sub_u) {
       if (sub_scc_id[sub_u] != scc_id_undecided)
         scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
     }
   }
+  KASPAN_STATISTIC_POP();
 
   KASPAN_STATISTIC_SCOPE("post_processing");
   get_scc_result(scc_id, n);
