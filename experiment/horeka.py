@@ -87,6 +87,10 @@ class Horeka:
             assert 'run' in config
             assert 'exe' in config and isinstance(config['exe'], Path)
 
+            if not (config['experiment_dir'] / 'build.sh').is_file():
+                (config['experiment_dir'] / 'build.sh').write_text(horeka_build_template)
+                subprocess.run(config['experiment_dir'] / 'build.sh', check=True)
+
             original_exe: Path = config['exe']
             experiment_binary_dir: Path = config['experiment_dir'] / 'bin'
             experiment_exe: Path = experiment_binary_dir / original_exe.name
@@ -108,9 +112,6 @@ class Horeka:
 
             config['job'].write_text(horeka_job_template.format_map(horeka_config))
 
-            if not (config['experiment_dir'] / 'build.sh').is_file():
-                (config['experiment_dir'] / 'build.sh').write_text(horeka_build_template)
-
             if not (config['experiment_dir'] / 'run.sh').is_file():
                 (config['experiment_dir'] / 'run.sh').write_text(horeka_run_template)
 
@@ -120,5 +121,4 @@ class Horeka:
             experiment_dirs.add(config['experiment_dir'])
 
         for experiment_dir in experiment_dirs:
-            subprocess.run(experiment_dir / 'build.sh', check=True)
             subprocess.run(experiment_dir / 'run.sh', check=True)
