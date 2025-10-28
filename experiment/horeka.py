@@ -6,21 +6,20 @@ from pathlib import Path
 from typing import Any
 from typing import Dict
 
-from base import build_dir, get_git_hash
+from base import build_dir
 
 __all__ = ['Horeka']
 
-
-horeka_run_template = f'''#!/bin/bash
-
+horeka_build_template = f'''#!/bin/bash
 module purge
 module load compiler/gnu/14
 module load mpi/impi/2021.11
 module load devel/cmake/3.30
-
-# git-commit: {get_git_hash()}
 cmake -S . -B {build_dir} -Wno-dev -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 cmake --build {build_dir}
+'''
+
+horeka_run_template = f'''#!/bin/bash
 '''
 
 horeka_job_template = '''#!/bin/bash
@@ -109,6 +108,9 @@ class Horeka:
 
             config['job'].write_text(horeka_job_template.format_map(horeka_config))
 
+            if not (config['experiment_dir'] / 'build.sh').is_file():
+                (config['experiment_dir'] / 'build.sh').write_text(horeka_build_template)
+
             if not (config['experiment_dir'] / 'run.sh').is_file():
                 (config['experiment_dir'] / 'run.sh').write_text(horeka_run_template)
 
@@ -118,4 +120,5 @@ class Horeka:
             experiment_dirs.add(config['experiment_dir'])
 
         for experiment_dir in experiment_dirs:
+            subprocess.run(experiment_dir / 'build.sh', check=True)
             subprocess.run(experiment_dir / 'run.sh', check=True)
