@@ -46,15 +46,16 @@ select_alpha(int argc, char** argv)
 int
 main(int argc, char** argv)
 {
-  KASPAN_STATISTIC_PUSH("benchmark");
-  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
-
   auto const kagen_option_string = select_kagen_option_string(argc, argv);
   auto const output_file         = select_output_file(argc, argv);
   auto const alpha               = select_alpha(argc, argv);
 
   MPI_Init(nullptr, nullptr);
   SCOPE_GUARD(MPI_Finalize());
+
+  SCOPE_GUARD(KASPAN_STATISTIC_MPI_WRITE_JSON(output_file.c_str()));
+  KASPAN_STATISTIC_SCOPE("benchmark");
+  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
   auto comm = kamping::Communicator{};
   comm.barrier();
@@ -79,7 +80,4 @@ main(int argc, char** argv)
     if (scc_id[u] == u)
       IF_KASPAN_STATISTIC(++global_component_count;)
   KASPAN_STATISTIC_ADD("scc_count", global_component_count);
-
-  KASPAN_STATISTIC_POP();
-  KASPAN_STATISTIC_MPI_WRITE_JSON(output_file.c_str());
 }

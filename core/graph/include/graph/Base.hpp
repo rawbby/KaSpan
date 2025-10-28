@@ -6,12 +6,16 @@
 #include <graph/Part.hpp>
 #include <util/Arithmetic.hpp>
 
-#ifdef KASPAN_32
-using index_t  = u32;
-using vertex_t = u32;
+#ifndef KASPAN_INDEX64
+using index_t = u64;
 #else
-using index_t  = u64;
+using index_t = u32;
+#endif
+
+#ifndef KASPAN_VERTEX64
 using vertex_t = u64;
+#else
+using vertex_t = u32;
 #endif
 
 constexpr inline auto mpi_byte_t  = mpi_basic_type<byte>;
