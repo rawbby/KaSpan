@@ -64,7 +64,6 @@ forward_search(
     KASPAN_STATISTIC_ADD("inbox", frontier.recv_buf().size());
     KASPAN_STATISTIC_POP();
 
-
     if (not messages_exchanged)
       break;
   }
