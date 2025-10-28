@@ -29,7 +29,7 @@ class KaSpan:
         config['run'] = f"{config['program']}_np{config['np']}_{config['graph']}"
         config['result'] = config['experiment_dir'] / f"{config['run']}.json"
 
-        options.append('--output')
+        options.append('--output_file')
         options.append(f"\"{config['result']}\"")
 
     def metricies(self):
