@@ -117,7 +117,7 @@ class Horeka:
                 (config['experiment_dir'] / 'run.sh').write_text(horeka_run_template)
 
             with (config['experiment_dir'] / 'run.sh').open('a') as f:
-                f.write(f"sbatch {config['experiment_dir']}/{config['job']}\n")
+                f.write(f"sbatch {config['job']}\n")
 
             experiment_dirs.add(config['experiment_dir'])
 
