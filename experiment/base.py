@@ -43,7 +43,7 @@ def now_hash(length: int = 3) -> str:
     now = datetime.datetime.now()
     posix_timestamp = math.floor(now.timestamp())
     truncated_posix_timestamp = posix_timestamp % (256 ** length)
-    return truncated_posix_timestamp.to_bytes(length=length, signed=False).hex()
+    return truncated_posix_timestamp.to_bytes(length=length, byteorder='little', signed=False).hex()
 
 
 def get_git_hash():
