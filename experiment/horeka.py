@@ -88,6 +88,7 @@ class Horeka:
             assert 'exe' in config and isinstance(config['exe'], Path)
 
             if not (config['experiment_dir'] / 'build.sh').is_file():
+                (config['experiment_dir'] / 'build.sh').parent.mkdir(parents=True, exist_ok=True)
                 (config['experiment_dir'] / 'build.sh').write_text(horeka_build_template)
                 subprocess.run(config['experiment_dir'] / 'build.sh', check=True)
 
