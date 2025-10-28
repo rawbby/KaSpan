@@ -22,7 +22,7 @@ class ISpan:
         options = config.setdefault('options', list())
         options.append('--alpha')
         options.append(self.alpha)
-        options.append('--output')
+        options.append('--output_file')
         options.append(f"\"{config['result']}\"")
 
     def timings(self):
