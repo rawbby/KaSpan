@@ -36,7 +36,7 @@ def random_seeds(n: int) -> List[str]:
 
 
 def seed_hash(length: int = 2) -> str:
-    return random.randint(0, (256 ** length) - 1).to_bytes(length=length, signed=False).hex()
+    return random.randint(0, (256 ** length) - 1).to_bytes(length=length, byteorder='little', signed=False).hex()
 
 
 def now_hash(length: int = 3) -> str:
