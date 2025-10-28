@@ -1,14 +1,15 @@
 import datetime
 import math
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Any
 from typing import Dict
-import subprocess
 
-from base import build_dir
+from base import build_dir, get_git_hash
 
 __all__ = ['Horeka']
+
 
 horeka_run_template = f'''#!/bin/bash
 
@@ -17,6 +18,7 @@ module load compiler/gnu/14
 module load mpi/impi/2021.11
 module load devel/cmake/3.30
 
+# git-commit: {get_git_hash()}
 cmake -S . -B {build_dir} -Wno-dev -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 cmake --build {build_dir}
 '''
