@@ -90,7 +90,7 @@ class Horeka:
             if not (config['experiment_dir'] / 'build.sh').is_file():
                 (config['experiment_dir'] / 'build.sh').parent.mkdir(parents=True, exist_ok=True)
                 (config['experiment_dir'] / 'build.sh').write_text(horeka_build_template)
-                subprocess.run(config['experiment_dir'] / 'build.sh', check=True)
+                subprocess.run(['/bin/bash', str(config['experiment_dir'] / 'build.sh')], check=True)
 
             original_exe: Path = config['exe']
             experiment_binary_dir: Path = config['experiment_dir'] / 'bin'
@@ -122,4 +122,4 @@ class Horeka:
             experiment_dirs.add(config['experiment_dir'])
 
         for experiment_dir in experiment_dirs:
-            subprocess.run(experiment_dir / 'run.sh', check=True)
+            subprocess.run(['/bin/bash', str(experiment_dir / 'run.sh')], check=True)
