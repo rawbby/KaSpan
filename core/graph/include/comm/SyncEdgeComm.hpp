@@ -7,7 +7,6 @@
 
 #include <kamping/collectives/allreduce.hpp>
 #include <kamping/collectives/alltoall.hpp>
-#include <kamping/collectives/barrier.hpp>
 #include <kamping/communicator.hpp>
 
 template<class Impl>

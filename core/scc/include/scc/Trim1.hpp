@@ -16,7 +16,7 @@ trim_1_first(GraphPart<Part> const& graph, U64Buffer& scc_id) -> std::tuple<u64,
   size_t decided_count = 0;
   Degree max{};
 
-  for (vertex_t k = 0; k < graph.part.size(); ++k) {
+  for (vertex_t k = 0; k < graph.part.local_n(); ++k) {
     auto const od = graph.fw_degree(k); // out degree
     auto const id = graph.bw_degree(k); // in degree
 
@@ -25,7 +25,7 @@ trim_1_first(GraphPart<Part> const& graph, U64Buffer& scc_id) -> std::tuple<u64,
       ++decided_count;
 
     } else if (auto const dp = od * id; dp >= max.degree) { // degree product
-      max = { dp, graph.part.select(k) };
+      max = { dp, graph.part.to_global(k) };
     }
   }
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <graph/GraphPart.hpp>
 #include <graph/Graph.hpp>
+#include <graph/GraphPart.hpp>
 #include <graph/convert/Graph2GraphPart.hpp>
 
 #include <buffer/Buffer.hpp>
@@ -9,11 +9,11 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <map>
 #include <random>
+#include <set>
 #include <utility>
 #include <vector>
-#include <map>
-#include <set>
 
 inline auto
 fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0) -> Result<std::pair<U64Buffer, Graph>>
@@ -147,9 +147,9 @@ fuzzy_local_scc_id_and_graph(u64 seed, Part part, double degree = -1.0) -> Resul
   RESULT_TRY(auto global_scc_id_and_graph, fuzzy_global_scc_id_and_graph(seed, part.n, degree));
   auto [global_scc_id, global_graph] = std::move(global_scc_id_and_graph);
 
-  RESULT_TRY(auto local_scc_id, U64Buffer::create(part.size()));
-  for (size_t k = 0; k < part.size(); ++k)
-    local_scc_id[k] = global_scc_id[part.select(k)];
+  RESULT_TRY(auto local_scc_id, U64Buffer::create(part.local_n()));
+  for (size_t k = 0; k < part.local_n(); ++k)
+    local_scc_id[k] = global_scc_id[part.to_global(k)];
 
   RESULT_TRY(auto local_graph, load_local(global_graph, std::move(part)));
 

@@ -1,112 +1,124 @@
 #pragma once
 
 #include <scc/Common.hpp>
-#include <scc/PivotSelection.hpp>
-#include <scc/SyncFwBw.hpp>
-#include <util/Result.hpp>
 
-#include <graph/AllGatherGraph.hpp>
+#include <buffer/ArrayAccessor.hpp>
+#include <buffer/BitAccessor.hpp>
+#include <buffer/StackAccessor.hpp>
+#include <debug/Statistic.hpp>
 #include <graph/GraphPart.hpp>
 
-#include <briefkasten/aggregators.hpp>
-#include <briefkasten/buffered_queue.hpp>
-#include <briefkasten/grid_indirection.hpp>
-
-#include <algorithm>
-#include <cstdio>
-
+/**
+ * @param[in] part partition of the graph to work on
+ * @param[in] head head buffer of size local_n+1 pointing into csr entries
+ * @param[in] csr compressed sparse row of the local partition of the graph
+ * @param[out] scc_id map vertex to strongly connected component id
+ * @param[in] memory temp memory of:
+ *   - 3 * page_ceil(local_n * sizeof(vertex_t))                 // index, low, st
+ *   - page_ceil(local_n * (sizeof(vertex_t) + sizeof(index_t))) // dfs stack
+ *   - page_ceil(ceil(local_n/64) * sizeof(u64))                 // on_stack bitset
+ * @return number of strongly connected components
+ */
 template<WorldPartConcept Part>
-static void
-local_trajan_dfs(
-  size_t                 root,
-  GraphPart<Part> const& graph,
-  U64Buffer&             local_scc_id,
-  std::vector<i32>&      t_discovered,
-  std::vector<i32>&      t_parent,
-  std::vector<u8>&       onstack,
-  std::vector<size_t>&   stack,
-  i32&                   t,
-  u64&                   next_scc_id)
+vertex_t
+tarjan(Part const& part,
+       index_t const* __restrict head,
+       vertex_t const* __restrict csr,
+       vertex_t* __restrict scc_id,
+       void* __restrict memory) noexcept
 {
+  KASPAN_STATISTIC_SCOPE("tarjan");
+  constexpr auto index_undecided = scc_id_undecided;
+  struct Frame
+  {
+    vertex_t local_u;
+    index_t  it;
+  };
 
-  t_discovered[root] = t_parent[root] = t++;
+  vertex_t const local_n      = part.size();
+  vertex_t       index_count  = 0;
+  vertex_t       scc_id_count = 0;
 
-  stack.push_back(root);
-  onstack[root] = 1;
+  auto index    = ArrayAccessor<vertex_t>::borrow_filled(memory, index_undecided, local_n);
+  auto low      = ArrayAccessor<vertex_t>::borrow_clean(memory, local_n);
+  auto on_stack = BitAccessor::borrow_clean(memory, local_n);
+  auto st       = StackAccessor<vertex_t>::borrow(memory, local_n);
+  auto dfs      = StackAccessor<Frame>::borrow(memory, local_n);
 
-  auto const beg = graph.fw_head.get(root);
-  auto const end = graph.fw_head.get(root + 1);
-  for (auto it = beg; it < end; ++it) {
-
-    auto const u = graph.fw_csr.get(it);
-    if (not graph.part.contains(u)) // skip edges leaving the part
+  for (vertex_t local_root = 0; local_root < local_n; ++local_root) {
+    if (index[local_root] != index_undecided)
       continue;
 
-    auto const k = graph.part.rank(u);
+    index[local_root] = low[local_root] = index_count++;
+    st.push(local_root);
+    on_stack.set(local_root);
+    dfs.push({ local_root, head[local_root] });
 
-    if (local_scc_id.get(k) != scc_id_undecided)
-      continue; // already decided
+    while (not dfs.empty()) {
 
-    if (t_discovered[k] == -1) {
-      local_trajan_dfs(k, graph, local_scc_id, t_discovered, t_parent, onstack, stack, t, next_scc_id);
-      t_parent[root] = std::min(t_parent[root], t_parent[k]);
-    } else if (onstack[k]) {
-      t_parent[root] = std::min(t_parent[root], t_discovered[k]);
+      auto& [local_u, it] = dfs.back();
+      if (it < head[local_u + 1]) {
+        auto const v = csr[it++];
+
+        if (part.contains(v)) { // ignore non local edges
+          auto const local_v = part.rank(v);
+          auto const v_index = index[local_v];
+
+          if (v_index == index_undecided) {
+            index[local_v] = low[local_v] = index_count++;
+            st.push(local_v);
+            on_stack.set(local_v);
+            dfs.push({ local_v, head[local_v] });
+          }
+
+          else if (on_stack.get(local_v) and v_index < low[local_u]) {
+            low[local_u] = v_index;
+          }
+        }
+
+        continue;
+      }
+
+      if (low[local_u] == index[local_u]) {
+        while (true) {
+          auto const local_v = st.back();
+          st.pop();
+          on_stack.unset(local_v);
+          scc_id[local_v] = scc_id_count;
+          if (local_v == local_u)
+            break;
+        }
+        ++scc_id_count;
+      }
+
+      dfs.pop();
+      if (not dfs.empty()) {
+        auto const local_p = dfs.back().local_u;
+        low[local_p]       = std::min(low[local_p], low[local_u]);
+      }
     }
   }
 
-  if (t_parent[root] == t_discovered[root]) {
-    while (true) {
-      auto const w = stack.back();
-      stack.pop_back();
-      onstack[w] = 0;
-
-      local_scc_id.set(w, next_scc_id);
-      if (w == root)
-        break;
-    }
-    ++next_scc_id;
-  }
+  return scc_id_count;
 }
 
-template<WorldPartConcept Part>
-static void
-local_trajan(
-  GraphPart<Part> const& graph,
-  U64Buffer&             local_scc_id,
-  std::vector<i32>&      t_discovered,
-  std::vector<i32>&      t_parent,
-  std::vector<u8>&       onstack,
-  std::vector<size_t>&   stack,
-  i32&                   t,
-  u64&                   next_scc_id)
+/**
+ * @param[in] n number of vertices in the graph
+ * @param[in] head head buffer of size n+1 pointing into csr entries
+ * @param[in] csr compressed sparse row of the graph
+ * @param[out] scc_id map vertex to strongly connected component id
+ * @param[in] memory temp memory of:
+ *   - 3 * page_ceil(n * sizeof(vertex_t))                 // index, low, st
+ *   - page_ceil(n * (sizeof(vertex_t) + sizeof(index_t))) // dfs stack
+ *   - page_ceil(ceil(n/64) * sizeof(u64))                 // on_stack bitset
+ * @return number of strongly connected components
+ */
+inline vertex_t
+tarjan(vertex_t const n,
+       index_t const* __restrict head,
+       vertex_t const* __restrict csr,
+       vertex_t* __restrict scc_id,
+       void* __restrict memory) noexcept
 {
-  for (size_t root = 0; root < graph.part.size(); ++root) {
-    if (local_scc_id.get(root) == scc_id_undecided && t_discovered[root] == -1) {
-      local_trajan_dfs(root, graph, local_scc_id, t_discovered, t_parent, onstack, stack, t, next_scc_id);
-    }
-  }
-}
-
-template<WorldPartConcept Part>
-VoidResult
-local_scc_detection(GraphPart<Part> const& graph, U64Buffer& local_scc_id)
-{
-  auto const n = graph.part.size();
-  if (n == 0)
-    return {};
-
-  // Tarjan buffers
-  std::vector t_discovered(n, -1);
-  std::vector t_parent(n, -1);
-  u64         next_scc_id = 0;
-
-  std::vector<u8>     onstack(n, 0);
-  std::vector<size_t> stack;
-  stack.reserve(n);
-
-  i32 t = 0;
-  local_trajan(graph, local_scc_id, t_discovered, t_parent, onstack, stack, t, next_scc_id);
-
-  return VoidResult::success();
+  return tarjan(SingleWorldPart{ n }, head, csr, scc_id, memory);
 }

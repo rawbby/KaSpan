@@ -22,7 +22,7 @@ backward_search(
   KASPAN_STATISTIC_SCOPE("backward_search");
   size_t decided_count = 0;
 
-  if (graph.part.contains(root))
+  if (graph.part.has_local(root))
     frontier.push_relaxed(root);
 
   for (;;) {
@@ -31,8 +31,8 @@ backward_search(
     KASPAN_STATISTIC_PUSH("processing");
     while (frontier.has_next()) {
       auto const u = frontier.next();
-      DEBUG_ASSERT(graph.part.contains(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
-      auto const k = graph.part.rank(u);
+      DEBUG_ASSERT(graph.part.has_local(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
+      auto const k = graph.part.to_local(u);
 
       // skip if not in fw-reached or decided
       if (!fw_reached.get(k) or scc_id[k] != scc_id_undecided)

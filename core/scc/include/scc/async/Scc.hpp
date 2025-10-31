@@ -6,7 +6,6 @@
 #include <graph/AllGatherGraph.hpp>
 #include <graph/GraphPart.hpp>
 #include <scc/Common.hpp>
-#include <scc/GraphReduction.hpp>
 #include <scc/NormalizeSccId.hpp>
 #include <scc/PivotSelection.hpp>
 #include <scc/ResidualScc.hpp>
@@ -55,7 +54,7 @@ scc(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer& scc_
   KASPAN_STATISTIC_PUSH("alloc");
   std::ranges::fill(scc_id.range(), scc_id_undecided);
   auto brief_queue = make_briefkasten<IndirectionScheme>(comm);
-  RESULT_TRY(auto fw_reached, BitBuffer::create(graph.part.size()));
+  RESULT_TRY(auto fw_reached, BitBuffer::create(graph.part.local_n()));
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
@@ -99,8 +98,8 @@ scc(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer& scc_
       MPI_Allreduce(MPI_IN_PLACE, sub_scc_id.data(), sub_graph.n, mpi_scc_id_t, MPI_MIN, MPI_COMM_WORLD);
       for (u64 sub_v = 0; sub_v < sub_graph.n; ++sub_v) {
         auto const v = sub_ids_inverse[sub_v];
-        if (graph.part.contains(v)) {
-          auto const k = graph.part.rank(v);
+        if (graph.part.has_local(v)) {
+          auto const k = graph.part.to_local(v);
           scc_id[k]    = sub_scc_id[sub_v];
         }
       }

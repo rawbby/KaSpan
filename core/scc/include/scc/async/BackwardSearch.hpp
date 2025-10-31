@@ -33,7 +33,7 @@ backward_search(
       local_q.push(v);
   };
 
-  if (graph.part.contains(root))
+  if (graph.part.has_local(root))
     local_q.push(root);
 
   do {
@@ -41,8 +41,8 @@ backward_search(
       auto const u = local_q.front();
       local_q.pop();
 
-      DEBUG_ASSERT(graph.part.contains(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
-      auto const k = graph.part.rank(u);
+      DEBUG_ASSERT(graph.part.has_local(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
+      auto const k = graph.part.to_local(u);
 
       if (!fw_reached.get(k) || scc_id[k] != scc_id_undecided)
         continue;
@@ -54,7 +54,7 @@ backward_search(
       auto const end   = graph.bw_head[k + 1];
       for (auto i = begin; i < end; ++i) {
         auto const v = graph.bw_csr.get(i);
-        if (graph.part.contains(v)) {
+        if (graph.part.has_local(v)) {
           local_q.push(v);
         } else {
           mq.post_message_blocking(v, graph.part.world_rank_of(v), on_message);

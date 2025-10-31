@@ -3,6 +3,7 @@
 #include <util/Result.hpp>
 
 #include <algorithm>
+#include <bit>
 #include <cerrno>
 #include <cstddef>
 #include <cstring>
@@ -38,18 +39,67 @@ page_count() -> Result<size_t>
 }
 
 inline auto
-page_size() -> Result<size_t>
+page_size() -> u64
 {
-  auto const page_size = sysconf(_SC_PAGESIZE);
-  RESULT_ASSERT(page_size > 0, IO_ERROR);
-  return static_cast<size_t>(page_size);
+  static auto const ps = []() -> u64 {
+    auto const sys_ps = sysconf(_SC_PAGESIZE);
+    if (sys_ps > 0) {
+      return sys_ps;
+    }
+    return 4096;
+  }();
+  return ps;
 }
 
 inline auto
 page_aligned_size(size_t size) -> Result<size_t>
 {
-  RESULT_TRY(auto const page_size, page_size());
-  return (size + page_size - 1) / page_size * page_size;
+  auto const ps = page_size();
+  return (size + ps - 1) / ps * ps;
+}
+
+inline auto
+page_ceil(u64 size) -> u64
+{
+  auto const ps = page_size();
+  return (size + ps - 1) / ps * ps;
+}
+
+inline auto
+page_align_ceil(void const* data) -> void const*
+{
+  return std::bit_cast<void*>(page_ceil(std::bit_cast<u64>(data)));
+}
+
+inline auto
+page_align_ceil(void* data) -> void*
+{
+  return std::bit_cast<void*>(page_ceil(std::bit_cast<u64>(data)));
+}
+
+inline auto
+page_floor(u64 size) -> u64
+{
+  auto const ps = page_size();
+  return size / ps * ps;
+}
+
+inline auto
+page_align_floor(void const* data) -> void const*
+{
+  return std::bit_cast<void*>(page_floor(std::bit_cast<u64>(data)));
+}
+
+inline auto
+page_align_floor(void* data) -> void*
+{
+  return std::bit_cast<void*>(page_floor(std::bit_cast<u64>(data)));
+}
+
+inline auto
+page_aligned(void const* data) -> bool
+{
+  return data == page_align_floor(data);
 }
 
 inline auto
@@ -58,8 +108,8 @@ page_aligned_alloc(size_t bytes) -> Result<void*>
   if (bytes == 0)
     return nullptr;
   RESULT_TRY(auto const page_aligned_size, page_aligned_size(bytes));
-  RESULT_TRY(auto const page_size, page_size());
-  auto const data = std::aligned_alloc(page_size, page_aligned_size);
+  auto const ps   = page_size();
+  auto const data = std::aligned_alloc(ps, page_aligned_size);
   RESULT_ASSERT(data, ALLOCATION_ERROR);
   return data;
 }

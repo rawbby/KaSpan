@@ -24,10 +24,10 @@ forward_search(
 {
   KASPAN_STATISTIC_SCOPE("forward_search");
 
-  if (graph.part.contains(root)) {
+  if (graph.part.has_local(root)) {
     frontier.push_relaxed(root);
-    ASSERT(not fw_reached.get(graph.part.rank(root)));
-    ASSERT(scc_id[graph.part.rank(root)] == scc_id_undecided, " for root=%lu", root);
+    ASSERT(not fw_reached.get(graph.part.to_local(root)));
+    ASSERT(scc_id[graph.part.to_local(root)] == scc_id_undecided, " for root=%lu", root);
   }
 
   for (;;) {
@@ -36,8 +36,8 @@ forward_search(
     KASPAN_STATISTIC_PUSH("processing");
     while (frontier.has_next()) {
       auto const u = frontier.next();
-      DEBUG_ASSERT(graph.part.contains(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
-      auto const k = graph.part.rank(u);
+      DEBUG_ASSERT(graph.part.has_local(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
+      auto const k = graph.part.to_local(u);
 
       // skip if reached or decided
       if (fw_reached.get(k) or scc_id[k] != scc_id_undecided)

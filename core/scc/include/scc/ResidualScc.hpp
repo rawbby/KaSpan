@@ -23,7 +23,7 @@ residual_scc(kamping::Communicator<>& comm, U64Buffer const& wcc_id, size_t wcc_
   size_t decision_count = 0;
 
   for (size_t root = 0; root < sub_graph.n; ++root) {
-    if (sub_scc_id[root] == scc_id_undecided and part.contains(wcc_id[root])) {
+    if (sub_scc_id[root] == scc_id_undecided and part.has_local(wcc_id[root])) {
 
       auto const id = sub_ids_inverse[root]; // directly use the global id so later no translation is needed
 
