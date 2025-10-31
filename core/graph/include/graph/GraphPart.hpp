@@ -180,7 +180,7 @@ struct GraphPart
     auto const beg = fw_head.get(k);
     auto const end = fw_head.get(k + 1);
     for (index_t it = beg; it < end; ++it) {
-      auto const u = part.select(k);
+      auto const u = part.to_global(k);
       fn(u, fw_csr[it]);
     }
   }
@@ -191,7 +191,7 @@ struct GraphPart
     auto const beg = bw_head.get(k);
     auto const end = bw_head.get(k + 1);
     for (index_t it = beg; it < end; ++it) {
-      auto const u = part.select(k);
+      auto const u = part.to_global(k);
       fn(u, bw_csr[it]);
     }
   }
@@ -199,7 +199,7 @@ struct GraphPart
   template<typename Fn>
   void foreach_fw_edge(Fn&& fn) const
   {
-    for (vertex_t k = 0; k < part.size(); ++k) {
+    for (vertex_t k = 0; k < part.local_n(); ++k) {
       foreach_fw_edge(k, fn);
     }
   }
@@ -207,7 +207,7 @@ struct GraphPart
   template<typename Fn>
   void foreach_bw_edge(Fn&& fn) const
   {
-    for (vertex_t k = 0; k < part.size(); ++k) {
+    for (vertex_t k = 0; k < part.local_n(); ++k) {
       foreach_bw_edge(k, fn);
     }
   }

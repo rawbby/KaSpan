@@ -20,11 +20,11 @@ namespace async {
 template<WorldPartConcept Part, typename BriefQueue>
 void
 forward_search(
-  kamping::Communicator<> & comm,
-  GraphPart<Part> const& graph,
-  BriefQueue&            mq,
-  U64Buffer const&       scc_id,
-  BitBuffer&             fw_reached,
+  kamping::Communicator<>& comm,
+  GraphPart<Part> const&   graph,
+  BriefQueue&              mq,
+  U64Buffer const&         scc_id,
+  BitBuffer&               fw_reached,
   IF(KASPAN_NORMALIZE, u64&, u64) root)
 {
   KASPAN_STATISTIC_SCOPE("forward_search");
@@ -36,7 +36,7 @@ forward_search(
       local_q.push(v);
   };
 
-  if (graph.part.contains(root))
+  if (graph.part.has_local(root))
     local_q.push(root);
 
   do {
@@ -44,8 +44,8 @@ forward_search(
       auto const u = local_q.front();
       local_q.pop();
 
-      DEBUG_ASSERT(graph.part.contains(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
-      auto const k = graph.part.rank(u);
+      DEBUG_ASSERT(graph.part.has_local(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
+      auto const k = graph.part.to_local(u);
 
       if (fw_reached.get(k) || scc_id[k] != scc_id_undecided)
         continue;
@@ -58,7 +58,7 @@ forward_search(
       auto const end = graph.fw_head[k + 1];
       for (auto it = beg; it < end; ++it) {
         auto const v = graph.fw_csr.get(it);
-        if (graph.part.contains(v)) {
+        if (graph.part.has_local(v)) {
           local_q.push(v);
         } else {
           mq.post_message_blocking(v, graph.part.world_rank_of(v), on_message);
@@ -67,7 +67,7 @@ forward_search(
       mq.poll_throttled(on_message);
     }
 
-  } while(mq.terminate(on_message));
+  } while (mq.terminate(on_message));
 
   IF(KASPAN_NORMALIZE, root = comm.allreduce_single(kamping::send_buf(root), kamping::op(MPI_MIN)));
 }

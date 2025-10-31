@@ -20,15 +20,15 @@ concept PartConcept =
 
   and requires(T t, size_t i) {
         { t.n } -> std::convertible_to<size_t>;
-        { t.contains(i) } -> std::convertible_to<bool>;
-        { t.rank(i) } -> std::convertible_to<size_t>;
-        { t.select(i) } -> std::convertible_to<size_t>;
-        { t.size() } -> std::convertible_to<size_t>;
+        { t.has_local(i) } -> std::convertible_to<bool>;
+        { t.to_local(i) } -> std::convertible_to<size_t>;
+        { t.to_global(i) } -> std::convertible_to<size_t>;
+        { t.local_n() } -> std::convertible_to<size_t>;
         { T::continuous } -> std::convertible_to<bool>;
         { T::ordered } -> std::convertible_to<bool>;
       }
 
-  // if ordered then must be continous
+  // if ordered then must be continuous
   and (not T::ordered or T::continuous)
 
   // if continuous then defines range
@@ -48,6 +48,108 @@ concept WorldPartConcept =
         { t.world_rank_of(i) } -> std::convertible_to<size_t>;
         { t.world_part_of(r) } -> std::same_as<T>;
       };
+
+struct SinglePart
+{
+  static constexpr bool   continuous = true;
+  static constexpr bool   ordered    = true;
+  static constexpr size_t begin      = 0;
+
+  size_t n   = 0;
+  size_t end = 0;
+
+  constexpr SinglePart() noexcept  = default;
+  constexpr ~SinglePart() noexcept = default;
+
+  explicit constexpr SinglePart(size_t n) noexcept
+    : n(n)
+    , end(n)
+  {
+  }
+
+  constexpr SinglePart(SinglePart const&) noexcept = default;
+  constexpr SinglePart(SinglePart&&) noexcept      = default;
+
+  constexpr auto operator=(SinglePart const&) noexcept -> SinglePart& = default;
+  constexpr auto operator=(SinglePart&&) noexcept -> SinglePart&      = default;
+
+  [[nodiscard]] static constexpr auto has_local(size_t /* i */) noexcept -> bool
+  {
+    return true;
+  }
+
+  [[nodiscard]] static constexpr auto to_local(size_t i) noexcept -> size_t
+  {
+    return i;
+  }
+
+  [[nodiscard]] static constexpr auto to_global(size_t k) noexcept -> size_t
+  {
+    return k;
+  }
+
+  [[nodiscard]] constexpr auto local_n() const noexcept -> size_t
+  {
+    return n;
+  }
+};
+
+struct SingleWorldPart
+{
+  static constexpr bool   continuous = true;
+  static constexpr bool   ordered    = true;
+  static constexpr size_t begin      = 0;
+  static constexpr size_t world_rank = 0;
+  static constexpr size_t world_size = 1;
+
+  size_t n   = 0;
+  size_t end = 0;
+
+  constexpr SingleWorldPart() noexcept  = default;
+  constexpr ~SingleWorldPart() noexcept = default;
+
+  explicit constexpr SingleWorldPart(size_t n) noexcept
+    : n(n)
+    , end(n)
+  {
+  }
+
+  constexpr SingleWorldPart(SingleWorldPart const&) noexcept = default;
+  constexpr SingleWorldPart(SingleWorldPart&&) noexcept      = default;
+
+  constexpr auto operator=(SingleWorldPart const&) noexcept -> SingleWorldPart& = default;
+  constexpr auto operator=(SingleWorldPart&&) noexcept -> SingleWorldPart&      = default;
+
+  [[nodiscard]] static constexpr auto has_local(size_t /* i */) noexcept -> bool
+  {
+    return true;
+  }
+
+  [[nodiscard]] static constexpr auto to_local(size_t i) noexcept -> size_t
+  {
+    return i;
+  }
+
+  [[nodiscard]] static constexpr auto to_global(size_t k) noexcept -> size_t
+  {
+    return k;
+  }
+
+  [[nodiscard]] constexpr auto local_n() const noexcept -> size_t
+  {
+    return n;
+  }
+
+  [[nodiscard]] static constexpr auto world_rank_of(size_t /* i */) noexcept -> size_t
+  {
+    return 0;
+  }
+
+  [[nodiscard]] auto world_part_of(size_t /* r */) const -> SingleWorldPart
+  {
+    return SingleWorldPart{ n };
+  }
+};
 
 struct ExplicitContinuousPart
 {
@@ -79,22 +181,22 @@ struct ExplicitContinuousPart
   constexpr auto operator=(ExplicitContinuousPart const&) noexcept -> ExplicitContinuousPart& = default;
   constexpr auto operator=(ExplicitContinuousPart&&) noexcept -> ExplicitContinuousPart&      = default;
 
-  [[nodiscard]] constexpr auto contains(size_t i) const noexcept -> bool
+  [[nodiscard]] constexpr auto has_local(size_t i) const noexcept -> bool
   {
     return i >= begin && i < end;
   }
 
-  [[nodiscard]] constexpr auto rank(size_t i) const noexcept -> size_t
+  [[nodiscard]] constexpr auto to_local(size_t i) const noexcept -> size_t
   {
     return i - begin;
   }
 
-  [[nodiscard]] constexpr auto select(size_t k) const noexcept -> size_t
+  [[nodiscard]] constexpr auto to_global(size_t k) const noexcept -> size_t
   {
     return begin + k;
   }
 
-  [[nodiscard]] constexpr auto size() const noexcept -> size_t
+  [[nodiscard]] constexpr auto local_n() const noexcept -> size_t
   {
     return end - begin;
   }
@@ -125,7 +227,7 @@ struct CyclicPart final
   constexpr auto operator=(CyclicPart const&) noexcept -> CyclicPart& = default;
   constexpr auto operator=(CyclicPart&&) noexcept -> CyclicPart&      = default;
 
-  [[nodiscard]] constexpr auto contains(size_t i) const noexcept -> bool
+  [[nodiscard]] constexpr auto has_local(size_t i) const noexcept -> bool
   {
     return world_size == 1 || (i % world_size) == world_rank;
   }
@@ -135,21 +237,21 @@ struct CyclicPart final
     return world_size == 1 ? 0 : (i % world_size);
   }
 
-  [[nodiscard]] constexpr auto rank(size_t i) const noexcept -> size_t
+  [[nodiscard]] constexpr auto to_local(size_t i) const noexcept -> size_t
   {
     if (world_size == 1)
       return i;
     return (i - world_rank) / world_size;
   }
 
-  [[nodiscard]] constexpr auto select(size_t k) const noexcept -> size_t
+  [[nodiscard]] constexpr auto to_global(size_t k) const noexcept -> size_t
   {
     if (world_size == 1)
       return k;
     return world_rank + (k * world_size);
   }
 
-  [[nodiscard]] constexpr auto size() const noexcept -> size_t
+  [[nodiscard]] constexpr auto local_n() const noexcept -> size_t
   {
     if (world_size == 1)
       return n;
@@ -192,7 +294,7 @@ struct BlockCyclicPart final
   constexpr auto operator=(BlockCyclicPart const&) noexcept -> BlockCyclicPart& = default;
   constexpr auto operator=(BlockCyclicPart&&) noexcept -> BlockCyclicPart&      = default;
 
-  [[nodiscard]] constexpr auto contains(size_t i) const noexcept -> bool
+  [[nodiscard]] constexpr auto has_local(size_t i) const noexcept -> bool
   {
     if (world_size == 1)
       return true;
@@ -208,8 +310,8 @@ struct BlockCyclicPart final
     return block % world_size;
   }
 
-  // Precondition: contains(i)
-  [[nodiscard]] constexpr auto rank(size_t i) const noexcept -> size_t
+  // Precondition: has_local(i)
+  [[nodiscard]] constexpr auto to_local(size_t i) const noexcept -> size_t
   {
     if (world_size == 1)
       return i;
@@ -219,8 +321,8 @@ struct BlockCyclicPart final
     return (num_full_owned_blocks_before * block_size) + offset_in_block;
   }
 
-  // Precondition: k < size()
-  [[nodiscard]] constexpr auto select(size_t k) const noexcept -> size_t
+  // Precondition: k < local_n()
+  [[nodiscard]] constexpr auto to_global(size_t k) const noexcept -> size_t
   {
     if (world_size == 1)
       return k;
@@ -231,7 +333,7 @@ struct BlockCyclicPart final
     return global_block_start + offset;
   }
 
-  [[nodiscard]] constexpr auto size() const noexcept -> size_t
+  [[nodiscard]] constexpr auto local_n() const noexcept -> size_t
   {
     if (world_size == 1)
       return n;
@@ -250,7 +352,7 @@ struct BlockCyclicPart final
     if (owned_blocks == 0)
       return 0;
 
-    // Elements = (owned_blocks - 1) full blocks + size of last owned block
+    // Elements = (owned_blocks - 1) full blocks + local_n of last owned block
     size_t const last_owned_block       = world_rank + ((owned_blocks - 1) * world_size);
     bool const   owns_global_last_block = last_owned_block == num_blocks - 1;
     size_t const last_block_size        = owns_global_last_block ? n - (last_owned_block * block_size) : block_size;

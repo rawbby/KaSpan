@@ -6,7 +6,6 @@
 #include <scc/BackwardSearch.hpp>
 #include <scc/Common.hpp>
 #include <scc/ForwardSearch.hpp>
-#include <scc/GraphReduction.hpp>
 #include <scc/NormalizeSccId.hpp>
 #include <scc/PivotSelection.hpp>
 #include <scc/ResidualScc.hpp>
@@ -32,7 +31,7 @@ scc(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer& scc_
   std::ranges::fill(scc_id.range(), scc_id_undecided);
   auto frontier_kernel = SyncFrontier{ graph.part };
   RESULT_TRY(auto frontier, SyncAlltoallvBase<SyncFrontier<Part>>::create(comm, frontier_kernel));
-  RESULT_TRY(auto fw_reached, BitBuffer::create(graph.part.size()));
+  RESULT_TRY(auto fw_reached, BitBuffer::create(graph.part.local_n()));
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
@@ -76,8 +75,8 @@ scc(kamping::Communicator<>& comm, GraphPart<Part> const& graph, U64Buffer& scc_
       MPI_Allreduce(MPI_IN_PLACE, sub_scc_id.data(), sub_graph.n, mpi_scc_id_t, MPI_MIN, MPI_COMM_WORLD);
       for (u64 sub_v = 0; sub_v < sub_graph.n; ++sub_v) {
         auto const v = sub_ids_inverse[sub_v];
-        if (graph.part.contains(v)) {
-          scc_id[graph.part.rank(v)] = sub_scc_id[sub_v];
+        if (graph.part.has_local(v)) {
+          scc_id[graph.part.to_local(v)] = sub_scc_id[sub_v];
         }
       }
     }

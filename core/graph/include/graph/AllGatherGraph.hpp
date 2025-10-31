@@ -60,7 +60,7 @@ ComplementBackwardsGraph(GraphPart<Part>& graph)
   if (graph.bw_head.size()) {
     memset(graph.bw_head.data(), 0, graph.bw_head.bytes());
     for (auto const [v, u] : comm.recv_buf()) {
-      auto const k = graph.part.rank(v);
+      auto const k = graph.part.to_local(v);
       ++graph.bw_head[k + 1];
     }
   }
@@ -69,7 +69,7 @@ ComplementBackwardsGraph(GraphPart<Part>& graph)
   // after the loop: bw_head[u + 1] == sum_{k < u} indegree(k)
   // thus bw_head[v + 1] = row_begin(v) for the transposed graph
   vertex_t prevDegree = 0;
-  for (vertex_t k = 0; k < graph.part.size(); ++k) {
+  for (vertex_t k = 0; k < graph.part.local_n(); ++k) {
     auto const thisDegree = graph.bw_head[k + 1];
     graph.bw_head[k + 1]  = graph.bw_head[k] + prevDegree;
     prevDegree            = thisDegree;
@@ -79,7 +79,7 @@ ComplementBackwardsGraph(GraphPart<Part>& graph)
   // for each edge (u,v), write u at bw_csr[bw_head[v + 1]] and increment that cursor
   // upon completion, each cursor advanced by indegree(v), so bw_head[v + 1] == row_end(v)
   for (auto const [v, u] : comm.recv_buf()) {
-    auto const k                         = graph.part.rank(v);
+    auto const k                         = graph.part.to_local(v);
     graph.bw_csr[graph.bw_head[k + 1]++] = u;
   }
 }
@@ -106,8 +106,8 @@ AllGatherGraph(kamping::Communicator<>& comm, GraphPart<Part> const& graph_part)
 
   std::memset(result_graph.fw_head.data(), 0, result_graph.fw_head.bytes());
 
-  for (size_t k = 0; k < graph_part.part.size(); ++k)
-    result_graph.fw_head.set(1 + graph_part.part.select(k), graph_part.fw_degree(k));
+  for (size_t k = 0; k < graph_part.part.local_n(); ++k)
+    result_graph.fw_head.set(1 + graph_part.part.to_global(k), graph_part.fw_degree(k));
 
   comm.allreduce_inplace(
     kamping::send_recv_buf(std::span{
@@ -128,10 +128,10 @@ AllGatherGraph(kamping::Communicator<>& comm, GraphPart<Part> const& graph_part)
 
   std::memset(result_graph.fw_csr.data(), 0, result_graph.fw_csr.bytes());
 
-  for (size_t k = 0; k < graph_part.part.size(); ++k) {
+  for (size_t k = 0; k < graph_part.part.local_n(); ++k) {
     auto const begin = graph_part.fw_head.get(k);
     auto const end   = graph_part.fw_head.get(k + 1);
-    auto const u     = graph_part.part.select(k);
+    auto const u     = graph_part.part.to_global(k);
     auto const head  = result_graph.fw_head[u];
     for (size_t it = begin; it < end; ++it) {
       auto const v                             = graph_part.fw_csr[it];
@@ -169,7 +169,7 @@ AllGatherGraph(kamping::Communicator<>& comm, GraphPart<Part> const& graph_part)
   comm.allgatherv(
     kamping::send_buf(std::span{
       static_cast<index_t const*>(graph_part.fw_head.data()) + 1,
-      graph_part.part.size() }),
+      graph_part.part.local_n() }),
     kamping::recv_buf(std::span{
       static_cast<index_t*>(result_graph.fw_head.data()) + 1,
       result_graph.n }));
@@ -180,7 +180,7 @@ AllGatherGraph(kamping::Communicator<>& comm, GraphPart<Part> const& graph_part)
   for (size_t rank = 0; rank < comm.size(); ++rank) {
     auto const rank_part   = graph_part.part.world_part_of(rank);
     auto const rank_offset = result_graph.fw_head.get(i - 1);
-    for (size_t k = 0; k < rank_part.size(); ++k, ++i) {
+    for (size_t k = 0; k < rank_part.local_n(); ++k, ++i) {
       result_graph.fw_head.set(i, rank_offset + result_graph.fw_head.get(i));
     }
   }
@@ -209,10 +209,10 @@ AllGatherSubGraph(GraphPart<Part> const& graph_part, Fn&& in_sub_graph) -> Resul
   kamping::Communicator<> const comm;
 
   std::vector<vertex_t> sub_ids_inverse_part; // all vertices in part that are active as global id
-  sub_ids_inverse_part.reserve(graph_part.part.size());
-  for (size_t k = 0; k < graph_part.part.size(); ++k) {
+  sub_ids_inverse_part.reserve(graph_part.part.local_n());
+  for (size_t k = 0; k < graph_part.part.local_n(); ++k) {
     if (static_cast<bool>(in_sub_graph(k)))
-      sub_ids_inverse_part.push_back(graph_part.part.select(k));
+      sub_ids_inverse_part.push_back(graph_part.part.to_global(k));
   }
 
   vertex_t sub_n = sub_ids_inverse_part.size();
@@ -239,7 +239,7 @@ AllGatherSubGraph(GraphPart<Part> const& graph_part, Fn&& in_sub_graph) -> Resul
 
   //
   for (vertex_t const u : sub_ids_inverse_part) { // for each vertex in part and in sub graph
-    auto const k   = graph_part.part.rank(u);
+    auto const k   = graph_part.part.to_local(u);
     auto const beg = graph_part.fw_head.get(k);
     auto const end = graph_part.fw_head.get(k + 1);
 

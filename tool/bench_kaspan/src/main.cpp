@@ -1,8 +1,8 @@
+#include <debug/Statistic.hpp>
 #include <graph/Graph.hpp>
 #include <graph/KaGen.hpp>
 #include <scc/Scc.hpp>
 #include <scc/async/Scc.hpp>
-#include <debug/Statistic.hpp>
 
 #include <kamping/communicator.hpp>
 #include <kamping/measurements/printer.hpp>
@@ -101,8 +101,8 @@ main(int argc, char** argv)
 
 #if KASPAN_STATISTIC
   size_t local_component_count = 0;
-  for (vertex_t k = 0; k < graph_part.part.size(); ++k)
-    if (scc_id.get(k) == graph_part.part.select(k))
+  for (vertex_t k = 0; k < graph_part.part.local_n(); ++k)
+    if (scc_id.get(k) == graph_part.part.to_global(k))
       ++local_component_count;
 
   auto const global_component_count = comm.allreduce_single(kamping::send_buf(local_component_count), kamping::op(MPI_SUM));
