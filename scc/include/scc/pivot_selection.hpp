@@ -1,0 +1,34 @@
+#pragma once
+
+#include <scc/base.hpp>
+#include <scc/part.hpp>
+
+inline auto
+pivot_selection(Degree max_degree) -> vertex_t
+{
+  return mpi_basic_allreduce_single(max_degree, mpi_degree_t, mpi_degree_max_op).u;
+}
+
+template<WorldPartConcept Part>
+auto
+pivot_selection(
+  Part const&     part,
+  index_t const*  fw_head,
+  index_t const*  bw_head,
+  vertex_t const* scc_id) -> vertex_t
+{
+  Degree max_degree{};
+  for (vertex_t k = 0; k < part.local_n(); ++k) {
+    if (scc_id[k] == scc_id_undecided) {
+      auto const out_degree     = fw_head[k + 1] - fw_head[k];
+      auto const in_degree      = bw_head[k + 1] - bw_head[k];
+      auto const degree_product = out_degree * in_degree;
+
+      if (degree_product >= max_degree.degree_product) {
+        max_degree.degree_product = degree_product;
+        max_degree.u              = part.to_global(k);
+      }
+    }
+  }
+  return pivot_selection(max_degree);
+}

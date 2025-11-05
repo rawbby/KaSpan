@@ -5,7 +5,7 @@
 static void
 gfq_origin(
   index_t const   n,
-  index_t const*  scc_id,
+  vertex_t const*  scc_id,
   index_t const*  fw_head,
   vertex_t const* fw_csr,
   index_t const*  bw_head,

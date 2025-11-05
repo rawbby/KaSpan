@@ -3,8 +3,8 @@
 // ReSharper disable CppDFAUnreadVariable
 // ReSharper disable CppDFAUnreachableCode
 
-#include <test/Assert.hpp>
-#include <util/Result.hpp>
+#include <../../core/essential/include/debug/Assert.hpp>
+#include <util/result.hpp>
 
 #include <string>
 #include <utility>

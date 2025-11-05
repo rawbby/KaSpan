@@ -1,8 +1,8 @@
-#include <buffer/Buffer.hpp>
-#include <graph/ConvertGraph.hpp>
-#include <graph/GraphPart.hpp>
-#include <scc/Scc.hpp>
-#include <test/Assert.hpp>
+#include <../../../core/essential/include/debug/assert.hpp>
+#include <memory/buffer.hpp>
+#include <scc/ConvertGraph.hpp>
+#include <scc/graph.hpp>
+#include <scc/scc.hpp>
 
 auto
 main(int argc, char** argv) -> int

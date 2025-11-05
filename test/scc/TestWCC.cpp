@@ -1,7 +1,7 @@
+#include <../../core/essential/include/debug/SubProcess.hpp>
 #include <scc/Fuzzy.hpp>
 #include <scc/Wcc.hpp>
-#include <test/SubProcess.hpp>
-#include <util/ScopeGuard.hpp>
+#include <util/scope_guard.hpp>
 
 int
 main(int argc, char** argv)
@@ -10,6 +10,4 @@ main(int argc, char** argv)
 
   MPI_Init(nullptr, nullptr);
   SCOPE_GUARD(MPI_Finalize());
-
-  auto comm = kamping::Communicator{};
 }

@@ -2,9 +2,6 @@ include(FetchContent)
 
 block()
 
-    set(KASSERT_WARNINGS_ARE_ERRORS OFF CACHE BOOL "" FORCE)
-    set(KASSERT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-
     set(CMAKE_MESSAGE_LOG_LEVEL WARNING)
     set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1)
     set(CMAKE_WARN_DEPRECATED OFF)
@@ -29,7 +26,6 @@ block()
     set(USE_BOOST OFF)
     set(INSTALL_GTEST OFF)
 
-    include("${TARGET_DIR}/kamping.cmake")
     include("${TARGET_DIR}/stxxl.cmake")
     include("${TARGET_DIR}/KaGen.cmake")
     include("${TARGET_DIR}/BriefKAsten.cmake")
