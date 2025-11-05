@@ -1,12 +1,12 @@
 #pragma once
 
-#include <comm/MpiBasic.hpp>
-#include <debug/Assert.hpp>
-#include <debug/Debug.hpp>
-#include <debug/Process.hpp>
-#include <debug/Statistic.hpp>
-#include <debug/Time.hpp>
-#include <graph/Graph.hpp>
+#include <debug/assert.hpp>
+#include <debug/debug.hpp>
+#include <debug/process.hpp>
+#include <debug/statistic.hpp>
+#include <util/mpi_basic.hpp>
+
+#include <scc/graph.hpp>
 #include <ispan/fw_bw_span.hpp>
 #include <ispan/get_scc_result.hpp>
 #include <ispan/gfq_origin.hpp>
@@ -34,10 +34,10 @@ scc(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<i
   auto const n = graph.n;
   auto const m = graph.m;
 
-  auto const* fw_head = static_cast<index_t const*>(graph.fw_head.data());
-  auto const* fw_csr  = static_cast<vertex_t const*>(graph.fw_csr.data());
-  auto const* bw_head = static_cast<index_t const*>(graph.bw_head.data());
-  auto const* bw_csr  = static_cast<vertex_t const*>(graph.bw_csr.data());
+  auto const* fw_head = static_cast<index_t const*>(graph.fw_head);
+  auto const* fw_csr  = static_cast<vertex_t const*>(graph.fw_csr);
+  auto const* bw_head = static_cast<index_t const*>(graph.bw_head);
+  auto const* bw_csr  = static_cast<vertex_t const*>(graph.bw_csr);
 
   auto* front_comm = new index_t[world_size]{};
   SCOPE_GUARD(delete[] front_comm);

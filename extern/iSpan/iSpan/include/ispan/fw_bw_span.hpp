@@ -1,9 +1,9 @@
 #pragma once
 
-#include <comm/MpiBasic.hpp>
+#include <debug/assert.hpp>
 #include <ispan/util.hpp>
-#include <test/Assert.hpp>
-#include <util/ScopeGuard.hpp>
+#include <util/mpi_basic.hpp>
+#include <util/scope_guard.hpp>
 
 #include <cstring>
 #include <mpi.h>

@@ -1,15 +1,16 @@
-#include <comm/SyncFrontierComm.hpp>
-#include <test/Assert.hpp>
-#include <test/SubProcess.hpp>
-#include <util/Arithmetic.hpp>
-#include <util/ScopeGuard.hpp>
+#include <comm/SyncAlltoall.hpp>
+#include <debug/assert.hpp>
+#include <debug/sub_process.hpp>
+#include <memory/buffer.hpp>
+#include <util/arithmetic.hpp>
+#include <util/scope_guard.hpp>
 
-#include <kamping/communicator.hpp>
 #include <mpi.h>
 #include <sys/wait.h>
 
 #include <cstdio>
 #include <random>
+#include <span>
 #include <vector>
 
 namespace {
@@ -17,29 +18,26 @@ namespace {
 /// sanitize the state of the frontier communicator pre and post communication
 template<class Part>
 auto
-sanitized_communication(kamping::Communicator<> const& comm, Part const& part, SyncFrontierComm<Part>& frontier) -> Result<bool>
+sanitized_communication(Part const& part, auto& frontier) -> Result<bool>
 {
-  auto const rank = comm.rank();
-  auto const size = comm.size();
-
-  auto const& recv_buf    = frontier.recv_buf();    // vector
-  auto const  recv_counts = frontier.recv_counts(); // buffer
-  auto const  recv_displs = frontier.recv_displs(); // buffer
-  auto const& send_buf    = frontier.send_buf();    // vector
-  auto const  send_counts = frontier.send_counts(); // buffer
-  auto const  send_displs = frontier.send_displs(); // buffer
+  auto const& recv_buf    = frontier.recv_buf_;    // vector
+  auto const  recv_counts = frontier.recv_counts_; // buffer
+  auto const  recv_displs = frontier.recv_displs_; // buffer
+  auto const& send_buf    = frontier.send_buf_;    // vector
+  auto const  send_counts = frontier.send_counts_; // buffer
+  auto const  send_displs = frontier.send_displs_; // buffer
 
   // pre checks
   ASSERT_EQ(send_displs[0], 0);
   size_t total_send_count = 0;
-  for (auto const send_count : send_counts)
+  for (auto const send_count : std::span{ send_counts, mpi_world_size })
     total_send_count += send_count;
   ASSERT_EQ(total_send_count, send_buf.size());
 
   for (auto v : recv_buf)
-    ASSERT_EQ(part.world_rank_of(v), rank);
+    ASSERT_EQ(part.world_rank_of(v), mpi_world_rank);
 
-  for (size_t i = 0; i < size; ++i) {
+  for (size_t i = 0; i < mpi_world_size; ++i) {
     size_t total_messages_to_i = 0;
     for (size_t j = 0; j < send_buf.size(); ++j)
       if (part.world_rank_of(send_buf[j]) == i)
@@ -49,7 +47,7 @@ sanitized_communication(kamping::Communicator<> const& comm, Part const& part, S
 
   auto const recv_buf_size_before = recv_buf.size();
 
-  auto const result = frontier.template communicate<false>(comm, part);
+  auto const result = frontier.template communicate<false>();
 
   if (result) { // only check if the buffer where changed
 
@@ -58,7 +56,7 @@ sanitized_communication(kamping::Communicator<> const& comm, Part const& part, S
     ASSERT_GE(recv_counts[0], 0);
     ASSERT_EQ(send_displs[0], 0);
     ASSERT_EQ(recv_displs[0], 0);
-    for (size_t i = 1; i < size; ++i) {
+    for (size_t i = 1; i < mpi_world_size; ++i) {
       ASSERT_GE(send_counts[i], 0);
       ASSERT_GE(recv_counts[i], 0);
       ASSERT_EQ(send_displs[i], send_displs[i - 1] + send_counts[i - 1]);
@@ -66,22 +64,22 @@ sanitized_communication(kamping::Communicator<> const& comm, Part const& part, S
     }
 
     // Ends match totals
-    auto const send_end = send_displs[size - 1] + send_counts[size - 1];
+    auto const send_end = send_displs[mpi_world_size - 1] + send_counts[mpi_world_size - 1];
     ASSERT_EQ(send_end, send_buf.size());
 
     size_t total_recv_count = 0;
-    for (auto const recv_count : recv_counts)
+    for (auto const recv_count : std::span{ recv_counts, mpi_world_size })
       total_recv_count += recv_count;
 
-    auto const recv_end = recv_displs[size - 1] + recv_counts[size - 1];
+    auto const recv_end = recv_displs[mpi_world_size - 1] + recv_counts[mpi_world_size - 1];
     ASSERT_EQ(recv_end, total_recv_count);
     ASSERT_EQ(recv_buf.size(), recv_buf_size_before + total_recv_count);
 
     // Received entries belong to self
     for (auto v : recv_buf)
-      ASSERT_EQ(part.world_rank_of(v), rank);
+      ASSERT_EQ(part.world_rank_of(v), mpi_world_rank);
 
-    for (size_t i = 0; i < size; ++i) {
+    for (size_t i = 0; i < mpi_world_size; ++i) {
       size_t total_messages_to_i = 0;
       for (size_t j = 0; j < send_buf.size(); ++j)
         if (part.world_rank_of(send_buf[j]) == i)
@@ -119,13 +117,14 @@ random_messages(u64 seed, size_t max_count = 4096, u64 value_range = 8192) -> st
 /// notice: Fuzzy = 0 means hard coded sample
 template<bool Relaxed, u64 Fuzzy, int Runs, class Part>
 void
-test_kernel(kamping::Communicator<> const& comm, Part const& part, char const* part_name)
+test_kernel(Part const& part, char const* part_name)
 {
-  auto frontier_result = SyncFrontierComm<Part>::create(comm);
-  ASSERT(frontier_result.has_value());
-  auto frontier = std::move(frontier_result.value());
+  ASSERT_TRY(auto buffer, Buffer::create(4 * page_ceil(mpi_world_size * sizeof(i32))));
+  void* memory = buffer.data();
 
-  if (comm.rank() == 0) {
+  auto frontier = SyncAlltoallvBase{ SyncFrontier{ part }, memory };
+
+  if (mpi_world_rank == 0) {
     std::cout << "[Test] " << Runs << " Runs";
     std::cout << ' ' << part_name;
     if (Relaxed)
@@ -158,28 +157,28 @@ test_kernel(kamping::Communicator<> const& comm, Part const& part, char const* p
     std::vector<u64> got;
 
     size_t expected_relaxed_count = 0;
-    for (auto const v : msgs[comm.rank()]) {
+    for (auto const v : msgs[mpi_world_rank]) {
       if (Relaxed) {
-        if (part.world_rank_of(v) == comm.rank())
+        if (part.world_rank_of(v) == mpi_world_rank)
           ++expected_relaxed_count;
-        frontier.push_relaxed(comm, part, v);
+        frontier.push_relaxed(v);
       } else {
-        frontier.push(part, v);
+        frontier.push(v);
       }
     }
 
     while (frontier.has_next()) {
       auto const v = frontier.next();
-      ASSERT_EQ(part.world_rank_of(v), comm.rank());
+      ASSERT_EQ(part.world_rank_of(v), mpi_world_rank);
       got.push_back(v);
     }
 
-    ASSERT_LE(got.size(), msgs[comm.rank()].size());
+    ASSERT_LE(got.size(), msgs[mpi_world_rank].size());
 
     auto const relaxed_count = got.size();
     ASSERT_EQ(expected_relaxed_count, relaxed_count);
 
-    auto const result0 = sanitized_communication(comm, part, frontier);
+    auto const result0 = sanitized_communication(part, frontier);
     ASSERT(result0.has_value());
     // ASSERT(result0.value());
 
@@ -189,22 +188,22 @@ test_kernel(kamping::Communicator<> const& comm, Part const& part, char const* p
     }
 
     size_t expected_message_count = 0;
-    for (size_t r = 0; r < comm.size(); ++r)
+    for (size_t r = 0; r < mpi_world_size; ++r)
       for (auto const v : msgs[r])
-        if (part.world_rank_of(v) == comm.rank())
+        if (part.world_rank_of(v) == mpi_world_rank)
           ++expected_message_count;
 
     auto const message_count = got.size();
     ASSERT_EQ(expected_message_count, message_count);
   }
 
-  ASSERT(not frontier.communicate(comm, part));
+  ASSERT(not frontier.communicate());
 }
 
 auto
 main(int argc, char** argv) -> int
 {
-  constexpr auto n = std::numeric_limits<size_t>::max();
+  constexpr auto n = std::numeric_limits<vertex_t>::max();
 
   constexpr int npc      = 4;
   constexpr int npv[npc] = { 1, 2, 3, 4 };
@@ -213,11 +212,15 @@ main(int argc, char** argv) -> int
   MPI_Init(nullptr, nullptr);
   SCOPE_GUARD(MPI_Finalize());
 
-  auto const comm     = kamping::Communicator{};
-  auto const part     = CyclicPart{ n, comm.rank(), comm.size() };
-  auto const blk_part = BlockCyclicPart{ n, comm.rank(), comm.size() };
-  auto const bs_part  = BalancedSlicePart{ n, comm.rank(), comm.size() };
-  auto const ts_part  = TrivialSlicePart{ n, comm.rank(), comm.size() };
+  i32 world_rank = 0;
+  i32 world_size = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+  auto const part     = CyclicPart{ n, world_rank, world_size };
+  auto const blk_part = BlockCyclicPart{ n, world_rank, world_size };
+  auto const bs_part  = BalancedSlicePart{ n, world_rank, world_size };
+  auto const ts_part  = TrivialSlicePart{ n, world_rank, world_size };
 
   constexpr int  NO_FUZZ         = 0;
   constexpr int  HARD_CODED_RUNS = 3;
@@ -226,23 +229,23 @@ main(int argc, char** argv) -> int
   constexpr bool NON_RELAXED     = false;
   constexpr int  FUZZ_SEEDS[8]{ 0x8067e9, 0xdf00dd, 0xd0ecf0, 0x22d80b, 0x17e615, 0xd59eef, 0x215869, 0xa2a5a5 };
 
-  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, bs_part, "BalancedSlicePart");
-  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, ts_part, "TrivialSlicePart");
-  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, part, "CyclicPart");
-  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, blk_part, "BlockCyclicPart");
+  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(bs_part, "BalancedSlicePart");
+  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(ts_part, "TrivialSlicePart");
+  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(part, "CyclicPart");
+  test_kernel<NON_RELAXED, NO_FUZZ, HARD_CODED_RUNS>(blk_part, "BlockCyclicPart");
 
-  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, bs_part, "BalancedSlicePart");
-  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, ts_part, "TrivialSlicePart");
-  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, part, "CyclicPart");
-  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(comm, blk_part, "BlockCyclicPart");
+  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(bs_part, "BalancedSlicePart");
+  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(ts_part, "TrivialSlicePart");
+  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(part, "CyclicPart");
+  test_kernel<RELAXED, NO_FUZZ, HARD_CODED_RUNS>(blk_part, "BlockCyclicPart");
 
-  test_kernel<NON_RELAXED, FUZZ_SEEDS[2], FUZZ_RUNS>(comm, bs_part, "BalancedSlicePart");
-  test_kernel<NON_RELAXED, FUZZ_SEEDS[3], FUZZ_RUNS>(comm, ts_part, "TrivialSlicePart");
-  test_kernel<NON_RELAXED, FUZZ_SEEDS[0], FUZZ_RUNS>(comm, part, "CyclicPart");
-  test_kernel<NON_RELAXED, FUZZ_SEEDS[1], FUZZ_RUNS>(comm, blk_part, "BlockCyclicPart");
+  test_kernel<NON_RELAXED, FUZZ_SEEDS[2], FUZZ_RUNS>(bs_part, "BalancedSlicePart");
+  test_kernel<NON_RELAXED, FUZZ_SEEDS[3], FUZZ_RUNS>(ts_part, "TrivialSlicePart");
+  test_kernel<NON_RELAXED, FUZZ_SEEDS[0], FUZZ_RUNS>(part, "CyclicPart");
+  test_kernel<NON_RELAXED, FUZZ_SEEDS[1], FUZZ_RUNS>(blk_part, "BlockCyclicPart");
 
-  test_kernel<RELAXED, FUZZ_SEEDS[6], FUZZ_RUNS>(comm, bs_part, "BalancedSlicePart");
-  test_kernel<RELAXED, FUZZ_SEEDS[7], FUZZ_RUNS>(comm, ts_part, "TrivialSlicePart");
-  test_kernel<RELAXED, FUZZ_SEEDS[4], FUZZ_RUNS>(comm, part, "CyclicPart");
-  test_kernel<RELAXED, FUZZ_SEEDS[5], FUZZ_RUNS>(comm, blk_part, "BlockCyclicPart");
+  test_kernel<RELAXED, FUZZ_SEEDS[6], FUZZ_RUNS>(bs_part, "BalancedSlicePart");
+  test_kernel<RELAXED, FUZZ_SEEDS[7], FUZZ_RUNS>(ts_part, "TrivialSlicePart");
+  test_kernel<RELAXED, FUZZ_SEEDS[4], FUZZ_RUNS>(part, "CyclicPart");
+  test_kernel<RELAXED, FUZZ_SEEDS[5], FUZZ_RUNS>(blk_part, "BlockCyclicPart");
 }

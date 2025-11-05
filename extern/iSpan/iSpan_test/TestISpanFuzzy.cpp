@@ -1,10 +1,10 @@
+#include <../../../core/essential/include/debug/assert.hpp>
+#include <../../../core/essential/include/debug/sub_process.hpp>
 #include <ispan/scc.hpp>
 #include <scc/Fuzzy.hpp>
-#include <test/Assert.hpp>
-#include <test/SubProcess.hpp>
-#include <util/ScopeGuard.hpp>
 #include <util/Time.hpp>
 #include <util/Util.hpp>
+#include <util/scope_guard.hpp>
 
 #include <iomanip>
 #include <iostream>
@@ -16,8 +16,6 @@ main(int argc, char** argv) -> int
 
   MPI_Init(nullptr, nullptr);
   SCOPE_GUARD(MPI_Finalize());
-
-  auto comm = kamping::Communicator{};
 
   for (size_t n = 32; n < 64; n += 8) {
 

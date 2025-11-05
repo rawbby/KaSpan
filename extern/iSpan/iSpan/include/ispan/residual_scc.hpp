@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ispan/util.hpp>
-#include <util/ScopeGuard.hpp>
+#include <util/scope_guard.hpp>
 
 #include <algorithm>
 

@@ -1,4 +1,4 @@
-#include <util/Arithmetic.hpp>
+#include <util/arithmetic.hpp>
 
 int
 main()

@@ -1,5 +1,5 @@
-#include <test/Assert.hpp>
-#include <util/ScopeGuard.hpp>
+#include <../../core/essential/include/debug/Assert.hpp>
+#include <util/scope_guard.hpp>
 
 #include <cassert>
 #include <stdexcept>

@@ -1,8 +1,10 @@
+#include <../../../core/essential/include/debug/assert.hpp>
+#include <../../../core/essential/include/debug/sub_process.hpp>
 #include <ispan/scc.hpp>
-#include <test/Assert.hpp>
-#include <test/SubProcess.hpp>
-#include <util/ScopeGuard.hpp>
 #include <util/Util.hpp>
+#include <util/scope_guard.hpp>
+
+#include <iostream>
 
 int
 main(int argc, char** argv)
@@ -25,10 +27,13 @@ main(int argc, char** argv)
   g.n                = n;
   g.m                = m;
 
-  ASSERT_TRY(g.fw_head, create_head_buffer(n, m));
-  ASSERT_TRY(g.bw_head, create_head_buffer(n, m));
-  ASSERT_TRY(g.fw_csr, create_csr_buffer(n, m));
-  ASSERT_TRY(g.bw_csr, create_csr_buffer(n, m));
+  ASSERT_TRY(auto buffer, Buffer::create(2 * page_ceil((n + 1) * sizeof(index_t)) + 2 * page_ceil(m * sizeof(vertex_t))));
+  auto* memory = buffer.data();
+
+  g.fw_head = ::borrow<index_t>(memory, n + 1);
+  g.bw_head = ::borrow<index_t>(memory, n + 1);
+  g.fw_csr = ::borrow<vertex_t>(memory, m);
+  g.bw_csr = ::borrow<vertex_t>(memory, m);
 
   g.fw_csr[0]  = 2; // 0 2
   g.fw_csr[1]  = 0; // 1 0
