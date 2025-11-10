@@ -1,1 +1,1 @@
-target_link_libraries(${TARGET_NAME} PRIVATE iSpan)
+target_link_libraries(${TARGET_NAME} PRIVATE ispan)
