@@ -1,59 +1,95 @@
 cmake_minimum_required(VERSION 3.18)
 
-block()
+find_package(Git)
 
-    set(BRIEFKASTEN_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    set(BRIEFKASTEN_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-    set(BRIEFKASTEN_USE_CXX23 OFF CACHE BOOL "" FORCE)
+set(BriefKAsten_TAG main)
+set(BriefKAsten_SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps/BriefKAsten-src")
+set(BriefKAsten_BUILD_DIR "${CMAKE_BINARY_DIR}/_deps/BriefKAsten-build")
+set(BriefKAsten_INSTALL_DIR "${CMAKE_BINARY_DIR}/_deps/BriefKAsten")
+set(BriefKAsten_VALID OFF)
+if (EXISTS "${BriefKAsten_INSTALL_DIR}/.valid")
+    file(READ "${BriefKAsten_INSTALL_DIR}/.valid" CONTENTS)
+    string(STRIP "${CONTENTS}" CONTENTS)
+    if (CONTENTS STREQUAL "${BriefKAsten_TAG}")
+        set(BriefKAsten_VALID ON)
+    endif ()
+endif ()
 
-    FetchContent_Declare(BriefKAsten
-            GIT_REPOSITORY https://github.com/niklas-uhl/BriefKAsten
-            GIT_TAG main)
+if (NOT BriefKAsten_VALID)
 
-    FetchContent_MakeAvailable(BriefKAsten)
+    # clear
+    file(REMOVE_RECURSE "${BriefKAsten_SOURCE_DIR}" "${BriefKAsten_BUILD_DIR}" "${BriefKAsten_INSTALL_DIR}")
+    file(MAKE_DIRECTORY "${BriefKAsten_SOURCE_DIR}")
+    file(MAKE_DIRECTORY "${BriefKAsten_BUILD_DIR}")
+    file(MAKE_DIRECTORY "${BriefKAsten_INSTALL_DIR}")
 
-    # Print all (set) properties of a target
-    function(print_target_properties tgt)
-        if(NOT TARGET "${tgt}")
-            message(FATAL_ERROR "Target '${tgt}' not found.")
-        endif()
+    # git clone
+    execute_process(COMMAND ${GIT_EXECUTABLE} clone
+            --depth 1
+            --recurse-submodules
+            --shallow-submodules
+            --branch "${BriefKAsten_TAG}"
+            https://github.com/niklas-uhl/BriefKAsten
+            "${BriefKAsten_SOURCE_DIR}"
+            RESULT_VARIABLE CLONE_RESULT
+            OUTPUT_QUIET ERROR_QUIET)
 
-        execute_process(
-                COMMAND ${CMAKE_COMMAND} --help-property-list
-                OUTPUT_VARIABLE _all_props_raw
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        string(REPLACE "\n" ";" _all_props "${_all_props_raw}")
+    if (NOT CLONE_RESULT EQUAL 0)
+        message(FATAL_ERROR "Failed to clone BriefKAsten")
+    endif ()
 
-        # Configs for <CONFIG>-suffixed properties
-        set(_cfgs)
-        if(CMAKE_CONFIGURATION_TYPES)
-            set(_cfgs ${CMAKE_CONFIGURATION_TYPES})
-        elseif(CMAKE_BUILD_TYPE)
-            set(_cfgs ${CMAKE_BUILD_TYPE})
-        else()
-            set(_cfgs Debug Release RelWithDebInfo MinSizeRel)
-        endif()
+    # cmake configure
+    execute_process(COMMAND ${CMAKE_COMMAND}
+            -S "${BriefKAsten_SOURCE_DIR}"
+            -B "${BriefKAsten_BUILD_DIR}"
+            -G "${CMAKE_GENERATOR}"
+            -DCMAKE_INSTALL_PREFIX="${BriefKAsten_INSTALL_DIR}"
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DBRIEFKASTEN_BUILD_EXAMPLES=OFF
+            -DBRIEFKASTEN_BUILD_TESTS=OFF
+            -DBRIEFKASTEN_USE_CXX23=OFF
+            RESULT_VARIABLE CONFIGURE_RESULT
+            OUTPUT_QUIET ERROR_QUIET)
 
-        foreach(_p IN LISTS _all_props)
-            if(_p MATCHES "<CONFIG>")
-                foreach(_c IN LISTS _cfgs)
-                    string(REPLACE "<CONFIG>" "${_c}" _pc "${_p}")
-                    get_target_property(_v "${tgt}" "${_pc}")
-                    if(NOT _v STREQUAL "NOTFOUND" AND NOT _v STREQUAL "_v-NOTFOUND")
-                        message("${tgt}:${_pc} = ${_v}")
-                    endif()
-                endforeach()
-            else()
-                get_target_property(_v "${tgt}" "${_p}")
-                if(NOT _v STREQUAL "NOTFOUND" AND NOT _v STREQUAL "_v-NOTFOUND")
-                    message("${tgt}:${_p} = ${_v}")
-                endif()
-            endif()
-        endforeach()
-    endfunction()
+    if (NOT CONFIGURE_RESULT EQUAL 0)
+        message(FATAL_ERROR "Configure failed for BriefKAsten")
+    endif ()
 
-    # Usage:
-    print_target_properties(BriefKAsten::BriefKAsten)
+    # cmake build
+    execute_process(COMMAND "${CMAKE_COMMAND}"
+            --build "${BriefKAsten_BUILD_DIR}"
+            --config "${CMAKE_BUILD_TYPE}"
+            RESULT_VARIABLE BUILD_RESULT
+            OUTPUT_QUIET ERROR_QUIET)
 
-endblock()
+    if (NOT BUILD_RESULT EQUAL 0)
+        message(FATAL_ERROR "Build failed for BriefKAsten")
+    endif ()
+
+    # cmake install
+    execute_process(COMMAND "${CMAKE_COMMAND}"
+            --install "${BriefKAsten_BUILD_DIR}"
+            --config ${CMAKE_BUILD_TYPE}
+            --prefix "${BriefKAsten_INSTALL_DIR}"
+            RESULT_VARIABLE INSTALL_RESULT
+            OUTPUT_QUIET ERROR_QUIET)
+
+    if (NOT INSTALL_RESULT EQUAL 0)
+        message(FATAL_ERROR "Install failed for BriefKAsten")
+    endif ()
+
+    file(WRITE "${BriefKAsten_INSTALL_DIR}/.valid" "${BriefKAsten_TAG}")
+    set(BriefKAsten_VALID ON)
+endif ()
+
+list(PREPEND CMAKE_PREFIX_PATH "${BriefKAsten_INSTALL_DIR}")
+find_package(MPI REQUIRED)
+include("${BriefKAsten_INSTALL_DIR}/lib/cmake/kassert/kassertConfig.cmake")
+include("${BriefKAsten_INSTALL_DIR}/lib/cmake/range-v3/range-v3-config.cmake")
+
+add_library(BriefKAsten INTERFACE IMPORTED GLOBAL)
+set_target_properties(BriefKAsten PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${BriefKAsten_SOURCE_DIR}/src")
+set_property(TARGET BriefKAsten PROPERTY INTERFACE_COMPILE_FEATURES cxx_std_20)
+set_property(TARGET BriefKAsten APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS BRIEFKASTEN_CXX20)
+target_link_libraries(BriefKAsten INTERFACE MPI::MPI_CXX kassert::kassert range-v3::range-v3)
+add_library(BriefKAsten::BriefKAsten ALIAS BriefKAsten)

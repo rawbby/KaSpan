@@ -1,52 +1,85 @@
 cmake_minimum_required(VERSION 3.18)
 
-block()
+find_package(Git)
 
-    cmake_policy(SET CMP0048 NEW)
-    cmake_policy(SET CMP0069 OLD)
-    cmake_policy(SET CMP0077 NEW)
+set(stxxl_TAG 1.4.1)
+set(stxxl_SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps/stxxl-src")
+set(stxxl_BUILD_DIR "${CMAKE_BINARY_DIR}/_deps/stxxl-build")
+set(stxxl_INSTALL_DIR "${CMAKE_BINARY_DIR}/_deps/stxxl")
+set(stxxl_VALID OFF)
+if (EXISTS "${stxxl_INSTALL_DIR}/.valid")
+    file(READ "${stxxl_INSTALL_DIR}/.valid" CONTENTS)
+    string(STRIP "${CONTENTS}" CONTENTS)
+    if (CONTENTS STREQUAL "${stxxl_TAG}")
+        set(stxxl_VALID ON)
+    endif ()
+endif ()
 
-    set(CMAKE_POLICY_DEFAULT_CMP0048 NEW)
-    set(CMAKE_POLICY_DEFAULT_CMP0069 OLD)
-    set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+if (NOT stxxl_VALID)
 
-    set(INTERPROCEDURAL_OPTIMIZATION OFF)
+    # clear
+    file(REMOVE_RECURSE "${stxxl_SOURCE_DIR}" "${stxxl_BUILD_DIR}" "${stxxl_INSTALL_DIR}")
+    file(MAKE_DIRECTORY "${stxxl_SOURCE_DIR}")
+    file(MAKE_DIRECTORY "${stxxl_BUILD_DIR}")
+    file(MAKE_DIRECTORY "${stxxl_INSTALL_DIR}")
 
-    set(BUILD_EXAMPLES OFF)
-    set(BUILD_TESTS OFF)
-    set(BUILD_EXTRAS OFF)
-    set(USE_BOOST OFF)
-    set(USE_VALGRIND OFF)
-    set(USE_GCOV OFF)
-    set(USE_TPIE OFF)
-    set(BUILD_STATIC_LIBS ON)
-    set(BUILD_SHARED_LIBS OFF)
-    set(CMAKE_SKIP_INSTALL_RULES ON)
+    # git clone
+    execute_process(COMMAND ${GIT_EXECUTABLE} clone
+            --depth 1
+            --recurse-submodules
+            --shallow-submodules
+            --branch "${stxxl_TAG}"
+            https://github.com/stxxl/stxxl.git
+            "${stxxl_SOURCE_DIR}"
+            RESULT_VARIABLE CLONE_RESULT
+            OUTPUT_QUIET ERROR_QUIET)
 
-    FetchContent_Declare(stxxl GIT_REPOSITORY https://github.com/stxxl/stxxl.git GIT_TAG 1.4.1)
-    FetchContent_GetProperties(stxxl)
-    if (NOT stxxl_POPULATED)
-        FetchContent_Populate(stxxl)
-        execute_process(COMMAND
-                ${GIT_EXECUTABLE} -C "${stxxl_SOURCE_DIR}" apply --check "${TARGET_DIR}/stxxl.patch"
-                RESULT_VARIABLE PATCH_ALREADY_APPLIED
-                OUTPUT_QUIET ERROR_QUIET)
-        if (PATCH_ALREADY_APPLIED EQUAL 0)
-            execute_process(COMMAND ${GIT_EXECUTABLE} -C "${stxxl_SOURCE_DIR}" apply "${TARGET_DIR}/stxxl.patch")
-        endif ()
-        add_subdirectory(${stxxl_SOURCE_DIR} ${stxxl_BINARY_DIR})
+    if (NOT CLONE_RESULT EQUAL 0)
+        message(FATAL_ERROR "Failed to clone stxxl (${stxxl_SOURCE_DIR}) (${CLONE_RESULT})")
     endif ()
 
-    target_include_directories(stxxl INTERFACE
-            $<BUILD_INTERFACE:${stxxl_SOURCE_DIR}/include;${stxxl_BINARY_DIR}/include>
-            $<INSTALL_INTERFACE:include>)
+    # cmake configure
+    execute_process(COMMAND ${CMAKE_COMMAND}
+            -S "${stxxl_SOURCE_DIR}"
+            -B "${stxxl_BUILD_DIR}"
+            -G "${CMAKE_GENERATOR}"
+            -DCMAKE_INSTALL_PREFIX="${stxxl_INSTALL_DIR}"
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DBUILD_TESTING=OFF
+            RESULT_VARIABLE CONFIGURE_RESULT
+            OUTPUT_QUIET ERROR_QUIET)
 
-    # suppress compilation warnings for external target
-    target_compile_options(stxxl PRIVATE
-            $<$<CXX_COMPILER_ID:GNU>:-w>
-            $<$<CXX_COMPILER_ID:Clang>:-w>
-            $<$<CXX_COMPILER_ID:MSVC>:/W0>)
+    if (NOT CONFIGURE_RESULT EQUAL 0)
+        message(FATAL_ERROR "Configure failed for stxxl")
+    endif ()
 
-    add_library(stxxl::stxxl ALIAS stxxl)
+    # cmake build
+    execute_process(COMMAND "${CMAKE_COMMAND}"
+            --build "${stxxl_BUILD_DIR}"
+            --config "${CMAKE_BUILD_TYPE}"
+            RESULT_VARIABLE BUILD_RESULT
+            OUTPUT_QUIET ERROR_QUIET)
 
-endblock()
+    if (NOT BUILD_RESULT EQUAL 0)
+        message(FATAL_ERROR "Build failed for stxxl")
+    endif ()
+
+    # cmake install
+    execute_process(COMMAND "${CMAKE_COMMAND}"
+            --install "${stxxl_BUILD_DIR}"
+            --config ${CMAKE_BUILD_TYPE}
+            --prefix "${stxxl_INSTALL_DIR}"
+            RESULT_VARIABLE INSTALL_RESULT
+            OUTPUT_QUIET ERROR_QUIET)
+
+    if (NOT INSTALL_RESULT EQUAL 0)
+        message(FATAL_ERROR "Install failed for stxxl")
+    endif ()
+
+    file(WRITE "${stxxl_INSTALL_DIR}/.valid" "${stxxl_TAG}")
+    set(stxxl_VALID ON)
+endif ()
+
+list(PREPEND CMAKE_PREFIX_PATH "${stxxl_INSTALL_DIR}")
+find_package(stxxl CONFIG QUIET)
+add_library(stxxl::stxxl ALIAS stxxl)

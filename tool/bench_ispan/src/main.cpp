@@ -1,4 +1,4 @@
-#include "scc/allgather_graph.hpp"
+#include <scc/allgather_graph.hpp>
 
 #include <ispan/scc.hpp>
 #include <scc/adapter/kagen.hpp>
