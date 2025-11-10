@@ -2,7 +2,7 @@
 
 #include <memory/buffer.hpp>
 #include <memory/stack_accessor.hpp>
-#include <scc/Base.hpp>
+#include <scc/base.hpp>
 #include <scc/graph.hpp>
 #include <scc/part.hpp>
 
@@ -116,7 +116,7 @@ allgather_sub_graph(
   // gather the ids_inverse array
   AllGatherSubGraphResult sub;
   mpi_basic_allgatherv_counts(local_sub_n, counts);
-  sub.n                  = static_cast<vertex_t>(mpi_basic_displs<vertex_t>(counts, displs));
+  sub.n                  = static_cast<vertex_t>(mpi_basic_displs(counts, displs));
   sub.ids_inverse_buffer = Buffer::create<vertex_t>(sub.n);
   sub.ids_inverse        = static_cast<vertex_t*>(sub.ids_inverse_buffer.data());
   mpi_basic_allgatherv<vertex_t>(local_sub_ids_inverse.data(), local_sub_n, sub.ids_inverse, counts, displs);
@@ -162,7 +162,7 @@ allgather_sub_graph(
     // allocate graph buffer and gather forward csr
     {
       mpi_basic_allgatherv_counts(local_sub_fw_csr.size(), counts);
-      auto const sub_m = mpi_basic_displs<vertex_t>(counts, displs);
+      auto const sub_m = mpi_basic_displs(counts, displs);
 
       // allocate sub graph memory in one buffer as now sub_n and sub_m are known
       sub.buffer = Buffer::create(
@@ -181,7 +181,7 @@ allgather_sub_graph(
     {
       auto const send_count = local_sub_n + mpi_world_root;
       mpi_basic_allgatherv_counts(send_count, counts);
-      auto const recv_count = mpi_basic_displs<index_t>(counts, displs);
+      auto const recv_count = mpi_basic_displs(counts, displs);
       DEBUG_ASSERT_EQ(sub.n + 1, recv_count);
       sub.fw_head = borrow<index_t>(graph_memory, recv_count);
       mpi_basic_allgatherv<index_t>(local_sub_fw_degrees.data(), send_count, sub.fw_head, counts, displs);
@@ -221,7 +221,7 @@ allgather_sub_graph(
     // gather backward csr
     {
       mpi_basic_allgatherv_counts(local_sub_bw_csr.size(), counts);
-      auto const recv_count = mpi_basic_displs<vertex_t>(counts, displs);
+      auto const recv_count = mpi_basic_displs(counts, displs);
       DEBUG_ASSERT_EQ(sub.m, recv_count);
       sub.bw_csr = borrow<vertex_t>(graph_memory, recv_count);
       mpi_basic_allgatherv<vertex_t>(local_sub_bw_csr.data(), local_sub_bw_csr.size(), sub.bw_csr, counts, displs);
@@ -231,7 +231,7 @@ allgather_sub_graph(
     {
       auto const send_count = local_sub_n + mpi_world_root;
       mpi_basic_allgatherv_counts(send_count, counts);
-      auto const recv_count = mpi_basic_displs<index_t>(counts, displs);
+      auto const recv_count = mpi_basic_displs(counts, displs);
       DEBUG_ASSERT_EQ(sub.n + 1, recv_count);
       sub.bw_head = borrow<index_t>(graph_memory, recv_count);
       mpi_basic_allgatherv<index_t>(local_sub_bw_degrees.data(), send_count, sub.bw_head, counts, displs);

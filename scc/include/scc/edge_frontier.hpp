@@ -39,8 +39,17 @@ struct edge_frontier
 
   void push(i32 rank, Edge const& edge)
   {
-    recv_buffer.emplace_back(edge);
+    send_buffer.emplace_back(edge);
     ++send_counts[rank];
+  }
+
+  void relaxed_push(i32 rank, Edge const& edge)
+  {
+    if (rank == mpi_world_rank) {
+      local_push(edge);
+    } else {
+      push(rank, edge);
+    }
   }
 
   auto has_next() -> bool
@@ -50,7 +59,9 @@ struct edge_frontier
 
   auto next() -> Edge
   {
-    return recv_buffer.back();
+    auto const edge = recv_buffer.back();
+    recv_buffer.pop_back();
+    return edge;
   }
 
   template<WorldPartConcept Part>
@@ -58,7 +69,7 @@ struct edge_frontier
   {
     DEBUG_ASSERT_NE(mpi_edge_t, MPI_DATATYPE_NULL);
 
-    auto const send_count = mpi_basic_displs<vertex_t>(send_counts, send_displs);
+    auto const send_count = mpi_basic_displs(send_counts, send_displs);
     DEBUG_ASSERT_EQ(send_count, send_buffer.size());
 
     auto const total_messages = mpi_basic_allreduce_single(send_count, MPI_SUM);
@@ -67,7 +78,7 @@ struct edge_frontier
     }
 
     mpi_basic_alltoallv_counts(send_counts, recv_counts);
-    auto const recv_count = mpi_basic_displs<vertex_t>(recv_counts, recv_displs);
+    auto const recv_count = mpi_basic_displs(recv_counts, recv_displs);
 
     auto const recv_offset = recv_buffer.size();
     recv_buffer.resize(recv_offset + recv_count);

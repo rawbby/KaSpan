@@ -404,8 +404,8 @@ struct TrivialSlicePart final : ExplicitContinuousPart
       return;
     }
 
-    vertex_t const base  = n / world_size;
-    vertex_t const start = static_cast<vertex_t>(world_rank) * base;
+    auto const base  = n / world_size;
+    auto const start = static_cast<vertex_t>(world_rank) * base;
     begin                = start;
     if (world_rank + 1 == world_size) {
       end = n;

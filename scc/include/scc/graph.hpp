@@ -1,18 +1,18 @@
 #pragma once
 
+#include <memory/buffer.hpp>
 #include <scc/base.hpp>
 #include <scc/part.hpp>
-#include <memory/buffer.hpp>
 
 struct LocalGraph
 {
   Buffer    buffer;
-  vertex_t  n;
-  index_t   m;
-  index_t*  fw_head;
-  vertex_t* fw_csr;
-  index_t*  bw_head;
-  vertex_t* bw_csr;
+  vertex_t  n       = 0;
+  index_t   m       = 0;
+  index_t*  fw_head = nullptr;
+  vertex_t* fw_csr  = nullptr;
+  index_t*  bw_head = nullptr;
+  vertex_t* bw_csr  = nullptr;
 };
 
 template<WorldPartConcept Part>
@@ -20,23 +20,26 @@ struct LocalGraphPart
 {
   Buffer    buffer;
   Part      part;
-  index_t   m;
-  index_t   local_fw_m;
-  index_t   local_bw_m;
-  index_t*  fw_head;
-  index_t*  bw_head;
-  vertex_t* fw_csr;
-  vertex_t* bw_csr;
+  index_t   m          = 0;
+  index_t   local_fw_m = 0;
+  index_t   local_bw_m = 0;
+  index_t*  fw_head    = nullptr;
+  index_t*  bw_head    = nullptr;
+  vertex_t* fw_csr     = nullptr;
+  vertex_t* bw_csr     = nullptr;
 };
 
 struct Graph
 {
-  vertex_t  n;
-  index_t   m;
-  index_t*  fw_head;
-  vertex_t* fw_csr;
-  index_t*  bw_head;
-  vertex_t* bw_csr;
+  vertex_t  n       = 0;
+  index_t   m       = 0;
+  index_t*  fw_head = nullptr;
+  vertex_t* fw_csr  = nullptr;
+  index_t*  bw_head = nullptr;
+  vertex_t* bw_csr  = nullptr;
+
+  Graph() = default;
+  ~Graph() = default;
 
   explicit Graph(LocalGraph const& rhs)
     : n(rhs.n)
@@ -53,13 +56,16 @@ template<WorldPartConcept Part>
 struct GraphPart
 {
   Part      part;
-  index_t   m;
-  index_t   local_fw_m;
-  index_t   local_bw_m;
-  index_t*  fw_head;
-  index_t*  bw_head;
-  vertex_t* fw_csr;
-  vertex_t* bw_csr;
+  index_t   m          = 0;
+  index_t   local_fw_m = 0;
+  index_t   local_bw_m = 0;
+  index_t*  fw_head    = nullptr;
+  index_t*  bw_head    = nullptr;
+  vertex_t* fw_csr     = nullptr;
+  vertex_t* bw_csr     = nullptr;
+
+  GraphPart() = default;
+  ~GraphPart() = default;
 
   explicit GraphPart(LocalGraphPart<Part> const& rhs)
     : part(rhs.part)

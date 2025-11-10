@@ -1,6 +1,6 @@
 #pragma once
 
-#include <scc/Base.hpp>
+#include <scc/base.hpp>
 #include <memory/Buffer.hpp>
 #include <util/Result.hpp>
 

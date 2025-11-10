@@ -53,7 +53,15 @@ main(int argc, char** argv)
   KASPAN_STATISTIC_POP();
 
   std::vector<vertex_t> scc_id;
-  scc(graph, alpha, mpi_world_rank, mpi_world_size, &scc_id);
+  scc(
+    graph.n,
+    graph.m,
+    graph.fw_head,
+    graph.fw_csr,
+    graph.bw_head,
+    graph.bw_csr,
+    alpha,
+    &scc_id);
 
   IF_KASPAN_STATISTIC(size_t global_component_count = 0;)
   for (vertex_t u = 0; u < graph.n; ++u)

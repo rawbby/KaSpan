@@ -38,31 +38,36 @@ inline MPI_Datatype mpi_edge_t = MPI_DATATYPE_NULL;
 inline void
 init_mpi_edge_t()
 {
-  if (mpi_edge_t == MPI_DATATYPE_NULL) {
-    int          blocklengths[2] = { 1, 1 };
-    MPI_Aint     displs[2];
-    MPI_Datatype types[2] = { mpi_vertex_t, mpi_vertex_t };
+  DEBUG_ASSERT_EQ(mpi_edge_t, MPI_DATATYPE_NULL);
+  int          blocklengths[2] = { 1, 1 };
+  MPI_Aint     displs[2];
+  MPI_Datatype types[2] = { mpi_vertex_t, mpi_vertex_t };
 
-    constexpr Edge dummy{};
-    MPI_Aint       base;
-    MPI_Get_address(&dummy, &base);
-    MPI_Get_address(&dummy.u, &displs[0]);
-    MPI_Get_address(&dummy.v, &displs[1]);
-    displs[0] -= base;
-    displs[1] -= base;
+  constexpr Edge dummy{};
+  MPI_Aint       base;
+  MPI_Get_address(&dummy, &base);
+  MPI_Get_address(&dummy.u, &displs[0]);
+  MPI_Get_address(&dummy.v, &displs[1]);
+  displs[0] -= base;
+  displs[1] -= base;
 
-    MPI_Type_create_struct(2, blocklengths, displs, types, &mpi_edge_t);
-    MPI_Type_commit(&mpi_edge_t);
-  }
+  MPI_Type_create_struct(2, blocklengths, displs, types, &mpi_edge_t);
+  MPI_Type_commit(&mpi_edge_t);
+
+#if KASPAN_DEBUG
+  MPI_Aint lb     = 0;
+  MPI_Aint extent = 0;
+  MPI_Type_get_extent(mpi_edge_t, &lb, &extent);
+  ASSERT_EQ(extent, sizeof(Edge));
+#endif
 }
 
 inline void
 free_mpi_edge_t()
 {
-  if (mpi_edge_t != MPI_DATATYPE_NULL) {
-    MPI_Type_free(&mpi_edge_t);
-    mpi_edge_t = MPI_DATATYPE_NULL;
-  }
+  DEBUG_ASSERT_NE(mpi_edge_t, MPI_DATATYPE_NULL);
+  MPI_Type_free(&mpi_edge_t);
+  mpi_edge_t = MPI_DATATYPE_NULL;
 }
 
 constexpr auto scc_id_undecided = std::numeric_limits<vertex_t>::max();
@@ -80,31 +85,36 @@ inline MPI_Op       mpi_degree_max_op = MPI_OP_NULL;
 inline void
 init_mpi_degree_t()
 {
-  if (mpi_degree_t == MPI_DATATYPE_NULL) {
-    int          blocklengths[2] = { 1, 1 };
-    MPI_Aint     displs[2];
-    MPI_Datatype types[2] = { mpi_index_t, mpi_vertex_t };
+  DEBUG_ASSERT_EQ(mpi_degree_t, MPI_DATATYPE_NULL);
+  int          blocklengths[2] = { 1, 1 };
+  MPI_Aint     displs[2];
+  MPI_Datatype types[2] = { mpi_index_t, mpi_vertex_t };
 
-    constexpr Degree dummy{};
-    MPI_Aint         base;
-    MPI_Get_address(&dummy, &base);
-    MPI_Get_address(&dummy.degree_product, &displs[0]);
-    MPI_Get_address(&dummy.u, &displs[1]);
-    displs[0] -= base;
-    displs[1] -= base;
+  constexpr Degree dummy{};
+  MPI_Aint         base;
+  MPI_Get_address(&dummy, &base);
+  MPI_Get_address(&dummy.degree_product, &displs[0]);
+  MPI_Get_address(&dummy.u, &displs[1]);
+  displs[0] -= base;
+  displs[1] -= base;
 
-    MPI_Type_create_struct(2, blocklengths, displs, types, &mpi_degree_t);
-    MPI_Type_commit(&mpi_degree_t);
-  }
+  MPI_Type_create_struct(2, blocklengths, displs, types, &mpi_degree_t);
+  MPI_Type_commit(&mpi_degree_t);
+
+#if KASPAN_DEBUG
+  MPI_Aint lb     = 0;
+  MPI_Aint extent = 0;
+  MPI_Type_get_extent(mpi_degree_t, &lb, &extent);
+  ASSERT_EQ(extent, sizeof(Degree));
+#endif
 }
 
 inline void
 free_mpi_degree_t()
 {
-  if (mpi_degree_t != MPI_DATATYPE_NULL) {
-    MPI_Type_free(&mpi_degree_t);
-    mpi_degree_t = MPI_DATATYPE_NULL;
-  }
+  DEBUG_ASSERT_NE(mpi_degree_t, MPI_DATATYPE_NULL);
+  MPI_Type_free(&mpi_degree_t);
+  mpi_degree_t = MPI_DATATYPE_NULL;
 }
 
 inline void
@@ -126,16 +136,20 @@ degree_max_reduce(void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatyp
 inline void
 init_mpi_degree_max_op()
 {
-  if (mpi_degree_max_op == MPI_OP_NULL) {
-    MPI_Op_create(&degree_max_reduce, /*commute=*/1, &mpi_degree_max_op);
-  }
+  DEBUG_ASSERT_EQ(mpi_degree_max_op, MPI_OP_NULL);
+  MPI_Op_create(&degree_max_reduce, /*commute=*/1, &mpi_degree_max_op);
 }
 
 inline void
 free_mpi_degree_max_op()
 {
-  if (mpi_degree_max_op != MPI_OP_NULL) {
-    MPI_Op_free(&mpi_degree_max_op);
-    mpi_degree_max_op = MPI_OP_NULL;
-  }
+  DEBUG_ASSERT_NE(mpi_degree_max_op, MPI_OP_NULL);
+  MPI_Op_free(&mpi_degree_max_op);
+  mpi_degree_max_op = MPI_OP_NULL;
 }
+
+#define KASPAN_DEFAULT_INIT() \
+  MPI_DEFAULT_INIT();         \
+  init_mpi_edge_t();          \
+  init_mpi_degree_t();        \
+  init_mpi_degree_max_op();

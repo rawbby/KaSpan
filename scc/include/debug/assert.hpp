@@ -81,6 +81,7 @@ deferred_static_cast(T&& t) -> U
   }                                                                                            \
   ((void)0)
 
+#define ASSERT_NOT(COND, ...) ASSERT(not(COND), __VA_ARGS__)
 #define ASSERT_LT(LHS, RHS, ...) ASSERT_CMP(<, LHS, RHS, __VA_ARGS__)
 #define ASSERT_GT(LHS, RHS, ...) ASSERT_CMP(>, LHS, RHS, __VA_ARGS__)
 #define ASSERT_LE(LHS, RHS, ...) ASSERT_CMP(<=, LHS, RHS, __VA_ARGS__)
@@ -89,6 +90,7 @@ deferred_static_cast(T&& t) -> U
 #define ASSERT_NE(LHS, RHS, ...) ASSERT_CMP(!=, LHS, RHS, __VA_ARGS__)
 
 #define DEBUG_ASSERT(...) IF(KASPAN_DEBUG, ASSERT(__VA_ARGS__))
+#define DEBUG_ASSERT_NOT(...) IF(KASPAN_DEBUG, ASSERT_NOT(__VA_ARGS__))
 #define DEBUG_ASSERT_LT(...) IF(KASPAN_DEBUG, ASSERT_LT(__VA_ARGS__))
 #define DEBUG_ASSERT_GT(...) IF(KASPAN_DEBUG, ASSERT_GT(__VA_ARGS__))
 #define DEBUG_ASSERT_LE(...) IF(KASPAN_DEBUG, ASSERT_LE(__VA_ARGS__))

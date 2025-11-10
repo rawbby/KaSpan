@@ -26,37 +26,29 @@
 #include <vector>
 
 inline void
-scc(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<index_t>* scc_id_out = nullptr)
+scc(vertex_t n, vertex_t m, index_t const * fw_head, vertex_t const * fw_csr, index_t const * bw_head, vertex_t const * bw_csr, int alpha, std::vector<index_t>* scc_id_out = nullptr)
 {
   KASPAN_STATISTIC_SCOPE("scc");
   KASPAN_STATISTIC_PUSH("alloc");
 
-  auto const n = graph.n;
-  auto const m = graph.m;
-
-  auto const* fw_head = static_cast<index_t const*>(graph.fw_head);
-  auto const* fw_csr  = static_cast<vertex_t const*>(graph.fw_csr);
-  auto const* bw_head = static_cast<index_t const*>(graph.bw_head);
-  auto const* bw_csr  = static_cast<vertex_t const*>(graph.bw_csr);
-
-  auto* front_comm = new index_t[world_size]{};
+  auto* front_comm = new index_t[mpi_world_size]{};
   SCOPE_GUARD(delete[] front_comm);
 
-  auto* work_comm = new int[world_size]{};
+  auto* work_comm = new int[mpi_world_size]{};
   SCOPE_GUARD(delete[] work_comm);
 
   vertex_t s = n / 32;
   if (n % 32 != 0)
     s += 1;
 
-  vertex_t t = s / world_size;
-  if (s % world_size != 0)
+  vertex_t t = s / mpi_world_size;
+  if (s % mpi_world_size != 0)
     t += 1;
 
   vertex_t const step          = t * 32;
-  vertex_t const virtual_count = t * world_size * 32;
-  vertex_t const local_beg     = std::min<index_t>(step * world_rank, n);
-  vertex_t const local_end     = std::min<index_t>(step * (world_rank + 1), n);
+  vertex_t const virtual_count = t * mpi_world_size * 32;
+  vertex_t const local_beg     = std::min<index_t>(step * mpi_world_rank, n);
+  vertex_t const local_end     = std::min<index_t>(step * (mpi_world_rank + 1), n);
 
   auto* sa_compress = new unsigned int[s]{};
   SCOPE_GUARD(delete[] sa_compress);
@@ -128,8 +120,6 @@ scc(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<i
     fw_sa,
     front_comm,
     root,
-    world_rank,
-    world_size,
     alpha,
     n,
     m,
@@ -150,8 +140,6 @@ scc(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<i
     front_comm,
     work_comm,
     root,
-    world_rank,
-    world_size,
     alpha,
     n,
     m,
@@ -198,7 +186,7 @@ scc(Graph const& graph, int alpha, int world_rank, int world_size, std::vector<i
     process_wcc(sub_n, sub_wcc_fq, sub_wcc_id, sub_wcc_fq_size);
     KASPAN_STATISTIC_POP();
 
-    residual_scc(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, world_rank, world_size, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
+    residual_scc(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
 
     KASPAN_STATISTIC_SCOPE("post_processing");
     MPI_Allreduce(MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t, MPI_MIN, MPI_COMM_WORLD);

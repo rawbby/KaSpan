@@ -4,17 +4,13 @@
 #include <sys/stat.h>
 #include <util/mpi_basic.hpp>
 
-#include <limits>
-
 using depth_t = i16;
 
 constexpr inline auto mpi_depth_t = mpi_basic_type<depth_t>;
 
 constexpr inline depth_t depth_unset = -1;
 
-constexpr inline vertex_t scc_id_undecided = std::numeric_limits<vertex_t>::max();
-constexpr inline vertex_t scc_id_singular  = scc_id_undecided - 1;
-constexpr inline vertex_t scc_id_largest   = scc_id_undecided - 2;
+constexpr inline vertex_t scc_id_largest = scc_id_undecided - 2;
 
 inline off_t
 fsize(char const* filename)

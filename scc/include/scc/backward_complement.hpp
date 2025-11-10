@@ -110,6 +110,7 @@ backward_complement_graph_part(
 
   StackAccessor<Edge> send_stack{ send_stack_memory };
   auto [sb, send_counts, send_displs] = mpi_basic_counts_and_displs();
+  std::memset(send_counts, 0, mpi_world_size * sizeof(MPI_Count));
 
   index_t it = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -137,7 +138,7 @@ backward_complement_graph_part(
 
   auto [rb, recv_counts, recv_displs] = mpi_basic_counts_and_displs();
   mpi_basic_alltoallv_counts(send_counts, recv_counts);
-  auto const recv_count = mpi_basic_displs<Edge>(recv_counts, recv_displs);
+  auto const recv_count = mpi_basic_displs(recv_counts, recv_displs);
   mpi_basic_inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&part](Edge const& e) {
     return part.world_rank_of(e.u);
   });

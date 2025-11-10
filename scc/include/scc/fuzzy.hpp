@@ -2,10 +2,10 @@
 
 #include <memory/stack_accessor.hpp>
 
+#include <memory/buffer.hpp>
 #include <scc/base.hpp>
 #include <scc/graph.hpp>
 #include <scc/partion_graph.hpp>
-#include <memory/buffer.hpp>
 
 #include <algorithm>
 #include <map>
@@ -14,49 +14,53 @@
 #include <utility>
 #include <vector>
 
-struct LocalSccGraph
-{
-  Buffer buffer;
-  Graph  graph;
-  vertex_t*  scc_id;
-};
-
-/// memory = 4 * page_ceil(n * sizeof(vertex_t))
 inline auto
-fuzzy_global_scc_id_and_graph(u64 seed, u64 n, void*  memory, double degree = -1.0) -> Result<LocalSccGraph>
+fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_memory = nullptr)
 {
+  struct LocalSccGraph : LocalGraph
+  {
+    Buffer    scc_id_buffer;
+    vertex_t* scc_id = nullptr;
+  };
+
+  LocalSccGraph result;
+  result.scc_id_buffer = Buffer::create(page_ceil<vertex_t>(n));
+  result.scc_id        = static_cast<vertex_t*>(result.scc_id_buffer.data());
+
+  Buffer temp_buffer;
+  if (temp_memory == nullptr) {
+    temp_buffer = Buffer::create(3 * page_ceil<vertex_t>(n));
+    temp_memory = temp_buffer.data();
+  }
+
   if (degree < 0.0)
     degree = std::log(std::max(0.0, std::log(n)));
 
   auto rng       = std::mt19937{ seed };
   auto start_new = std::bernoulli_distribution{ 0.25 };
 
-  auto scc_id    = ::borrow<vertex_t>(memory, n);
-  auto fw_degree = ::borrow_clean<vertex_t>(memory, n);
-  auto bw_degree = ::borrow_clean<vertex_t>(memory, n);
+  auto fw_degree = ::borrow_clean<vertex_t>(temp_memory, n);
+  auto bw_degree = ::borrow_clean<vertex_t>(temp_memory, n);
 
   auto comps = std::map<u64, std::vector<u64>>{};
+  auto reps  = StackAccessor<vertex_t>::borrow(temp_memory, n);
+  for (u64 v = 0; v < n; ++v) {
+    if (v == 0 or start_new(rng)) {
 
-  {
-    auto reps = StackAccessor<vertex_t>::borrow(memory, n);
-    for (u64 v = 0; v < n; ++v) {
-      if (v == 0 or start_new(rng)) {
+      reps.push(v);
+      comps[v].push_back(v);
 
-        reps.push(v);
-        comps[v].push_back(v);
+      result.scc_id[v] = v;
 
-        scc_id[v] = v;
+    } else {
 
-      } else {
+      auto       pick = std::uniform_int_distribution<size_t>{ 0, reps.size() - 1 };
+      auto const p    = pick(rng);
 
-        auto       pick = std::uniform_int_distribution<size_t>{ 0, reps.size() - 1 };
-        auto const p    = pick(rng);
+      auto const root = reps[p];
 
-        auto const root = reps[p];
-
-        scc_id[v] = root;
-        comps[root].push_back(v);
-      }
+      result.scc_id[v] = root;
+      comps[root].push_back(v);
     }
   }
 
@@ -113,41 +117,37 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, void*  memory, double degree = -1
 
   auto const m = edges.size();
 
-  LocalSccGraph result;
-  RESULT_TRY(result.buffer, Buffer::create(2 * page_ceil((n + 1) * sizeof(index_t)) + 2 * page_ceil(m * sizeof(vertex_t)) + page_ceil(n * sizeof(vertex_t))));
-  auto access = result.buffer.data();
+  result.buffer      = Buffer::create(2 * page_ceil<index_t>(n + 1) + 2 * page_ceil<vertex_t>(m));
+  auto* graph_memory = result.buffer.data();
 
-  result.scc_id = ::borrow<vertex_t>(access, n);
-  std::memcpy(result.scc_id, scc_id, n * sizeof(vertex_t));
-
-  result.graph.n       = n;
-  result.graph.m       = m;
-  result.graph.fw_head = ::borrow<index_t>(memory, n + 1);
-  result.graph.bw_head = ::borrow<index_t>(memory, n + 1);
-  result.graph.fw_csr  = ::borrow<vertex_t>(memory, m);
-  result.graph.bw_csr  = ::borrow<vertex_t>(memory, m);
+  result.n       = n;
+  result.m       = m;
+  result.fw_head = borrow<index_t>(graph_memory, n + 1);
+  result.bw_head = borrow<index_t>(graph_memory, n + 1);
+  result.fw_csr  = borrow<vertex_t>(graph_memory, m);
+  result.bw_csr  = borrow<vertex_t>(graph_memory, m);
 
   {
-    u64 pos                 = 0;
-    result.graph.fw_head[0] = pos;
+    u64 pos           = 0;
+    result.fw_head[0] = pos;
     for (u64 i = 0; i < n; ++i) {
       pos += fw_degree[i];
-      result.graph.fw_head[i + 1] = pos;
+      result.fw_head[i + 1] = pos;
     }
-    pos                     = 0;
-    result.graph.bw_head[0] = pos;
+    pos               = 0;
+    result.bw_head[0] = pos;
     for (u64 i = 0; i < n; ++i) {
       pos += bw_degree[i];
-      result.graph.bw_head[i + 1] = pos;
+      result.bw_head[i + 1] = pos;
     }
     std::vector<u64> fw_pos(n), bw_pos(n);
     for (u64 i = 0; i < n; ++i) {
-      fw_pos[i] = result.graph.fw_head[i];
-      bw_pos[i] = result.graph.bw_head[i];
+      fw_pos[i] = result.fw_head[i];
+      bw_pos[i] = result.bw_head[i];
     }
     for (auto const& [u, v] : edges) {
-      result.graph.fw_csr[fw_pos[u]++] = v;
-      result.graph.bw_csr[bw_pos[v]++] = u;
+      result.fw_csr[fw_pos[u]++] = v;
+      result.bw_csr[bw_pos[v]++] = u;
     }
   }
 
@@ -157,8 +157,25 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, void*  memory, double degree = -1
 /// memory = 4 * page_ceil(n * sizeof(vertex_t))
 template<WorldPartConcept Part>
 auto
-fuzzy_local_scc_id_and_graph(u64 seed, Part const& part, void*  memory, double degree = -1.0) -> Result<LocalSccGraphPart<Part>>
+fuzzy_local_scc_id_and_graph(u64 seed, Part const& part, double degree = -1.0, void* memory = nullptr)
 {
-  RESULT_TRY(auto fuzzy_scc_graph, fuzzy_global_scc_id_and_graph(seed, part.n, memory, degree));
-  return partition(fuzzy_scc_graph.graph, fuzzy_scc_graph.scc_id, part);
+  struct LocalSccGraphPart : LocalGraphPart<Part>
+  {
+    Buffer    scc_id_part_buffer;
+    vertex_t* scc_id_part = nullptr;
+  };
+
+  auto const local_n = part.local_n();
+
+  auto g = fuzzy_global_scc_id_and_graph(seed, part.n, degree, memory);
+
+  LocalSccGraphPart gp;
+  static_cast<LocalGraphPart<Part>&>(gp) = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, part);
+  gp.scc_id_part_buffer = Buffer::create<vertex_t>(local_n);
+  gp.scc_id_part        = static_cast<vertex_t*>(gp.scc_id_part_buffer.data());
+  for (vertex_t k = 0; k < local_n; ++k) {
+    gp.scc_id_part[k] = g.scc_id[part.to_global(k)];
+  }
+
+  return gp;
 }
