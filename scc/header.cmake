@@ -3,5 +3,4 @@ target_link_libraries(${TARGET_NAME} INTERFACE
         stxxl::stxxl
         KaGen::KaGen
         MPI::MPI_CXX)
-target_compile_definitions(${TARGET_NAME} INTERFACE
-        $<$<CONFIG:Debug>:KASPAN_DEBUG>)
+target_compile_definitions(${TARGET_NAME} INTERFACE $<$<CONFIG:Debug>:KASPAN_DEBUG>)

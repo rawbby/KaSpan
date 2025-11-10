@@ -1,8 +1,8 @@
 #pragma once
 
 #include <memory/buffer.hpp>
-#include <scc/Base.hpp>
 #include <scc/backward_complement.hpp>
+#include <scc/base.hpp>
 #include <scc/graph.hpp>
 #include <scc/part.hpp>
 
@@ -44,9 +44,8 @@ template<WorldPartConcept Part>
 auto
 allgather_graph(Part const& part, index_t m, index_t local_fw_m, index_t const* fw_head, vertex_t const* fw_csr) -> LocalGraph
 {
-  constexpr MPI_Aint sizeof_index  = sizeof(index_t);
-  constexpr MPI_Aint sizeof_vertex = sizeof(vertex_t);
-  auto const         local_n       = part.local_n();
+  auto const n       = part.n;
+  auto const local_n = part.local_n();
 
   LocalGraph result;
   result.buffer = Buffer::create(
@@ -74,7 +73,7 @@ allgather_graph(Part const& part, index_t m, index_t local_fw_m, index_t const* 
     for (i32 rank = 1; rank < mpi_world_size; ++rank) {
       auto const rank_part = part.world_part_of(rank);
       counts[rank]         = static_cast<MPI_Count>(rank_part.end - rank_part.begin);
-      displs[rank]         = static_cast<MPI_Aint>(rank_part.begin + 1) * sizeof_index;
+      displs[rank]         = static_cast<MPI_Aint>(rank_part.begin + 1);
     }
 
     auto const* send_buffer = fw_head + (mpi_world_root ? 0 : 1);
@@ -89,16 +88,16 @@ allgather_graph(Part const& part, index_t m, index_t local_fw_m, index_t const* 
     auto vertex_it = static_cast<vertex_t>(counts[0]); // start at first vertex of rank 1
     auto offset    = result.fw_head[vertex_it - 1];    // head at boundary (rank 0 end)
     counts[0]      = static_cast<MPI_Count>(offset);   // edge elements of rank 0
-    displs[0]      = static_cast<MPI_Aint>(0);         // bytes
+    displs[0]      = static_cast<MPI_Aint>(0);
 
     for (i32 rank = 1; rank < mpi_world_size; ++rank) {
       for (MPI_Count k = 0; k < counts[rank]; ++k) {
         result.fw_head[vertex_it++] += offset; // shift to global
       }
-      auto const last = result.fw_head[vertex_it - 1];                 // global head at end of rank
-      displs[rank]    = static_cast<MPI_Aint>(offset) * sizeof_vertex; // bytes
-      counts[rank]    = static_cast<MPI_Count>(last - offset);         // elements
-      offset          = last;                                          // next rank base
+      auto const last = result.fw_head[vertex_it - 1]; // global head at end of rank
+      displs[rank]    = static_cast<MPI_Aint>(offset);
+      counts[rank]    = static_cast<MPI_Count>(last - offset); // elements
+      offset          = last;                                  // next rank base
     }
   }
 

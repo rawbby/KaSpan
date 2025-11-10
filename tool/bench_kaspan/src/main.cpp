@@ -34,8 +34,7 @@ main(int argc, char** argv)
   if (async_indirect and not async)
     usage(argc, argv);
 
-  MPI_DEFAULT_INIT();
-  init_mpi_edge_t();
+  KASPAN_DEFAULT_INIT();
   SCOPE_GUARD(KASPAN_STATISTIC_MPI_WRITE_JSON(output_file));
 
   KASPAN_STATISTIC_SCOPE("benchmark");

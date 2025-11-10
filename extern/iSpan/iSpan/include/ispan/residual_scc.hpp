@@ -6,15 +6,15 @@
 #include <algorithm>
 
 inline void
-residual_scc(index_t const* sub_wcc_id, index_t* sub_scc_id, index_t const* sub_fw_head, index_t const* sub_bw_head, vertex_t const* sub_fw_csr, vertex_t const* sub_bw_csr, vertex_t* sub_fw_sa, index_t world_rank, index_t world_size, vertex_t sub_n, vertex_t const* sub_wcc_fq, vertex_t sub_wcc_fq_size, vertex_t const* sub_vertices)
+residual_scc(index_t const* sub_wcc_id, index_t* sub_scc_id, index_t const* sub_fw_head, index_t const* sub_bw_head, vertex_t const* sub_fw_csr, vertex_t const* sub_bw_csr, vertex_t* sub_fw_sa, vertex_t sub_n, vertex_t const* sub_wcc_fq, vertex_t sub_wcc_fq_size, vertex_t const* sub_vertices)
 {
   KASPAN_STATISTIC_SCOPE("residual_scc");
   size_t decided_count = 0;
 
   // prepare the local slice this rank calculates
 
-  index_t const step         = (sub_wcc_fq_size + world_size - 1) / world_size;
-  index_t const rank_wcc_beg = world_rank * step;
+  index_t const step         = (sub_wcc_fq_size + mpi_world_size - 1) / mpi_world_size;
+  index_t const rank_wcc_beg = mpi_world_rank * step;
   index_t const rank_wcc_end = rank_wcc_beg + step;
 
   auto* q = new index_t[sub_n]{};

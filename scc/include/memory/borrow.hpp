@@ -12,9 +12,12 @@
 template<typename T = byte>
   requires(std::is_trivially_copyable_v<T> and std::is_trivially_constructible_v<T> and std::is_trivially_destructible_v<T>)
 static auto
-borrow(void* & memory, u64 count) noexcept -> T*
+borrow(void*& memory, u64 count) noexcept -> T*
 {
-  DEBUG_ASSERT_NE(memory, nullptr);
+  DEBUG_ASSERT_GE(count, 0);
+  if (count > 0) {
+    DEBUG_ASSERT_NE(memory, nullptr);
+  }
   DEBUG_ASSERT_EQ(reinterpret_cast<std::uintptr_t>(memory) % alignof(T), 0);
   DEBUG_ASSERT(is_page_aligned(memory));
   auto const result    = static_cast<T*>(memory);
@@ -25,7 +28,7 @@ borrow(void* & memory, u64 count) noexcept -> T*
 
 template<typename T = byte>
 static auto
-borrow_clean(void* & memory, u64 count) noexcept -> T*
+borrow_clean(void*& memory, u64 count) noexcept -> T*
 {
   auto result = borrow<T>(memory, count);
   std::memset(result, 0, count * sizeof(T));
@@ -34,7 +37,7 @@ borrow_clean(void* & memory, u64 count) noexcept -> T*
 
 template<typename T = byte>
 static auto
-borrow_filled(void* & memory, u64 count) noexcept -> T*
+borrow_filled(void*& memory, u64 count) noexcept -> T*
 {
   auto result = borrow<T>(memory, count);
   std::memset(result, ~0, count * sizeof(T));
@@ -43,7 +46,7 @@ borrow_filled(void* & memory, u64 count) noexcept -> T*
 
 template<typename T = byte>
 static auto
-borrow_filled(void* & memory, T const& value, u64 count) noexcept -> T*
+borrow_filled(void*& memory, T const& value, u64 count) noexcept -> T*
 {
   auto result = borrow<T>(memory, count);
   for (u64 i = 0; i < count; ++i) {

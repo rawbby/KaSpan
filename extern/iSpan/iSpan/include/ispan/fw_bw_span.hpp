@@ -21,8 +21,6 @@ fw_span(
   depth_t*        fw_sa,
   index_t*        front_comm,
   vertex_t        root,
-  index_t         world_rank,
-  index_t         world_size,
   double          alpha,
   vertex_t        n,
   index_t         m,
@@ -125,7 +123,7 @@ fw_span(
       break;
     }
 
-    front_comm[world_rank] = front_count;
+    front_comm[mpi_world_rank] = front_count;
     if (is_top_down) {
 
       // clang-format off
@@ -158,7 +156,7 @@ fw_span(
       is_top_down_queue = true;
 
       // clang-format off
-      ASSERT_EQ(local_beg, world_rank * step);
+      ASSERT_EQ(local_beg, mpi_world_rank * step);
       MPI_Allgather(
         MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
         fw_sa, step, mpi_depth_t,
@@ -188,7 +186,7 @@ fw_span(
         }
       } else {
 
-        auto const rank_count = front_comm[world_rank];
+        auto const rank_count = front_comm[mpi_world_rank];
 
         // clang-format off
         // option 1:
@@ -197,29 +195,29 @@ fw_span(
         //   front_comm, 1, mpi_basic_type<decltype(*front_comm)>,
         //   MPI_COMM_WORLD);
         // option 2:
-        memset(front_comm, 0, world_size * sizeof(*front_comm));
-        front_comm[world_rank] = rank_count;
+        memset(front_comm, 0, mpi_world_size * sizeof(*front_comm));
+        front_comm[mpi_world_rank] = rank_count;
         MPI_Allreduce(
-          MPI_IN_PLACE, front_comm, world_size, mpi_basic_type<decltype(*front_comm)>,
+          MPI_IN_PLACE, front_comm, mpi_world_size, mpi_basic_type<decltype(*front_comm)>,
           MPI_MAX, MPI_COMM_WORLD);
         // clang-format on
 
         MPI_Request request;
-        for (int i = 0; i < world_size; ++i) {
-          if (i != world_rank) {
+        for (int i = 0; i < mpi_world_size; ++i) {
+          if (i != mpi_world_rank) {
 
             // clang-format off
             MPI_Isend(
-              fq_comm, front_comm[world_rank], mpi_basic_type<decltype(*fq_comm)>,
+              fq_comm, front_comm[mpi_world_rank], mpi_basic_type<decltype(*fq_comm)>,
               i, 0, MPI_COMM_WORLD, &request);
             // clang-format on
 
             MPI_Request_free(&request);
           }
         }
-        auto fq_begin = front_comm[world_rank];
-        for (int i = 0; i < world_size; ++i) {
-          if (i != world_rank) {
+        auto fq_begin = front_comm[mpi_world_rank];
+        for (int i = 0; i < mpi_world_size; ++i) {
+          if (i != mpi_world_rank) {
 
             // clang-format off
             MPI_Recv(
@@ -230,7 +228,7 @@ fw_span(
             fq_begin += front_comm[i];
           }
         }
-        for (int i = front_comm[world_rank]; i < front_count; ++i) {
+        for (int i = front_comm[mpi_world_rank]; i < front_count; ++i) {
           auto const v = fq_comm[i];
           if (fw_sa[v] == depth_unset) {
             fw_sa[v] = static_cast<depth_t>(level + 1);
@@ -259,8 +257,6 @@ bw_span(
   int*           work_comm,
 
   vertex_t      root,
-  index_t       world_rank,
-  index_t       world_size,
   double        alpha,
   vertex_t      n,
   vertex_t      m,
@@ -303,7 +299,7 @@ bw_span(
           }
         }
       }
-      work_comm[world_rank] = next_work;
+      work_comm[mpi_world_rank] = next_work;
     } else if (!is_top_down_queue) {
       for (auto u = local_beg; u < local_end; u++) {
         if (bw_sa[u] == depth_unset && fw_sa[u] != depth_unset) {
@@ -326,7 +322,7 @@ bw_span(
           }
         }
       }
-      work_comm[world_rank] = next_work;
+      work_comm[mpi_world_rank] = next_work;
     } else {
 
       auto* q = new index_t[queue_size]{};
@@ -367,7 +363,7 @@ bw_span(
 
       break;
     }
-    front_comm[world_rank] = front_count;
+    front_comm[mpi_world_rank] = front_count;
 
     // clang-format off
     MPI_Allreduce(
@@ -399,7 +395,7 @@ bw_span(
       is_top_down_queue = true;
 
       // clang-format off
-      ASSERT_EQ(local_beg, world_rank * step);
+      ASSERT_EQ(local_beg, mpi_world_rank * step);
       MPI_Allgather(
         MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
         bw_sa, step, mpi_depth_t,
@@ -431,7 +427,7 @@ bw_span(
         }
       } else {
 
-        auto const rank_count = front_comm[world_rank];
+        auto const rank_count = front_comm[mpi_world_rank];
 
         // clang-format off
         // option 1:
@@ -440,29 +436,29 @@ bw_span(
         //   front_comm, 1, mpi_basic_type<decltype(*front_comm)>,
         //   MPI_COMM_WORLD);
         // option 2:
-        memset(front_comm, 0, world_size * sizeof(*front_comm));
-        front_comm[world_rank] = rank_count;
+        memset(front_comm, 0, mpi_world_size * sizeof(*front_comm));
+        front_comm[mpi_world_rank] = rank_count;
         MPI_Allreduce(
-          MPI_IN_PLACE, front_comm, world_size, mpi_basic_type<decltype(*front_comm)>,
+          MPI_IN_PLACE, front_comm, mpi_world_size, mpi_basic_type<decltype(*front_comm)>,
           MPI_MAX, MPI_COMM_WORLD);
         // clang-format on
 
         MPI_Request request;
-        for (int i = 0; i < world_size; ++i) {
-          if (i != world_rank) {
+        for (int i = 0; i < mpi_world_size; ++i) {
+          if (i != mpi_world_rank) {
 
             // clang-format off
             MPI_Isend(
-              fq_comm, front_comm[world_rank], mpi_basic_type<decltype(*fq_comm)>,
+              fq_comm, front_comm[mpi_world_rank], mpi_basic_type<decltype(*fq_comm)>,
               i, 0, MPI_COMM_WORLD, &request);
             // clang-format on
 
             MPI_Request_free(&request);
           }
         }
-        auto fq_begin = front_comm[world_rank];
-        for (int i = 0; i < world_size; ++i) {
-          if (i != world_rank) {
+        auto fq_begin = front_comm[mpi_world_rank];
+        for (int i = 0; i < mpi_world_size; ++i) {
+          if (i != mpi_world_rank) {
 
             // clang-format off
             MPI_Recv(
