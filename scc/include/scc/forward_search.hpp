@@ -21,7 +21,7 @@ forward_search(
   if (part.has_local(root)) {
     frontier.local_push(root);
     ASSERT(not fw_reached.get(part.to_local(root)));
-    ASSERT(scc_id[part.to_local(root)] == scc_id_undecided, " for root=%lu", root);
+    ASSERT(scc_id[part.to_local(root)] == scc_id_undecided, "root=%d", root);
   }
 
   for (;;) {

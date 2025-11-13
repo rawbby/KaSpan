@@ -1,5 +1,7 @@
 #pragma once
 
+#include "memory/bit_accessor.hpp"
+
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
 #include <scc/allgather_graph.hpp>
@@ -45,13 +47,13 @@ make_briefkasten()
 
 template<typename IndirectionScheme, WorldPartConcept Part>
 VoidResult
-scc(GraphPart<Part> const& graph, vertex_t*  scc_id)
+scc(auto const& graph, vertex_t* scc_id)
 {
   KASPAN_STATISTIC_SCOPE("scc");
   KASPAN_STATISTIC_PUSH("alloc");
   std::ranges::fill(scc_id.range(), scc_id_undecided);
   auto brief_queue = make_briefkasten<IndirectionScheme>();
-  RESULT_TRY(auto fw_reached, BitBuffer::create(graph.part.local_n()));
+  auto fw_reached, BitAccessor::create(graph.part.local_n());
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 

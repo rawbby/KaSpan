@@ -1,22 +1,65 @@
 #pragma once
 
+#include <memory/buffer.hpp>
+#include <memory/dense_unsigned_accessor.hpp>
 #include <scc/base.hpp>
-#include <memory/Buffer.hpp>
-#include <util/Result.hpp>
+#include <util/result.hpp>
 
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <stxxl/mng>
 #include <stxxl/sorter>
-#include <utility>
 
 namespace convert_graph_internal {
 
+struct Edge64
+{
+  u64 u;
+  u64 v;
+};
+
+struct Edge64Less
+{
+  constexpr auto operator()(Edge64 const& lhs, Edge64 const& rhs) const noexcept -> bool
+  {
+    return lhs.u < rhs.u or (lhs.u == rhs.u and lhs.v < rhs.v);
+  }
+
+  static constexpr auto min_value() -> Edge64
+  {
+    return { std::numeric_limits<u64>::min(), std::numeric_limits<u64>::min() };
+  }
+
+  static constexpr auto max_value() -> Edge64
+  {
+    return { std::numeric_limits<u64>::max(), std::numeric_limits<u64>::max() };
+  }
+};
+
+struct Edge64Greater
+{
+  constexpr auto operator()(Edge64 const& lhs, Edge64 const& rhs) const noexcept -> bool
+  {
+    return lhs.u > rhs.u or (lhs.u == rhs.u and lhs.v > rhs.v);
+  }
+
+  static constexpr auto min_value() -> Edge64
+  {
+    return { std::numeric_limits<u64>::min(), std::numeric_limits<u64>::min() };
+  }
+
+  static constexpr auto max_value() -> Edge64
+  {
+    return { std::numeric_limits<u64>::max(), std::numeric_limits<u64>::max() };
+  }
+};
+
 inline auto
-parse_uv(std::string const& s) -> Result<std::pair<u64, u64>>
+parse_uv(std::string const& s) -> Edge64
 {
   u64 pos = 0;
 
@@ -25,43 +68,125 @@ parse_uv(std::string const& s) -> Result<std::pair<u64, u64>>
       ++pos;
   };
 
-  auto read_u64 = [&]() -> Result<u64> {
+  auto read_u64 = [&]() -> u64 {
     u64         val      = 0;
     char const* begin    = s.data() + pos;
     char const* end      = s.data() + s.size();
     auto const [ptr, ec] = std::from_chars(begin, end, val, 10);
-    RESULT_ASSERT(ec == std::errc(), DESERIALIZE_ERROR);
-    RESULT_ASSERT(ptr != begin, DESERIALIZE_ERROR);
+    ASSERT(ec == std::errc(), "failed to parse '%s'", s.c_str());
+    ASSERT(ptr != begin, "failed to parse '%s'", s.c_str());
     pos = static_cast<u64>(ptr - s.data());
     return val;
   };
 
   skip_ws();
-  RESULT_TRY(auto const u, read_u64());
+  auto const u = read_u64();
   skip_ws();
-  RESULT_TRY(auto const v, read_u64());
-  skip_ws();
-  RESULT_ASSERT(pos == s.size(), DESERIALIZE_ERROR);
+  auto const v = read_u64();
 
-  return std::pair{ u, v };
+  // skip_ws();
+  // ASSERT(pos == s.size(), "failed to parse '%s' (remaining line content)", s.c_str());
+
+  return Edge64{ u, v };
 }
 
-} // namespace convert_graph_internal
+struct LocalSortAdapter
+{
+  std::vector<Edge64> buffer;
 
-inline auto
+  explicit LocalSortAdapter(u64 memory)
+  {
+    buffer.reserve(memory / sizeof(Edge64));
+  }
+
+  void push(Edge64 edge)
+  {
+    buffer.push_back(edge);
+  }
+
+  void operator()()
+  {
+    std::ranges::sort(buffer, Edge64Greater{});
+  }
+
+  [[nodiscard]] auto size() const -> size_t
+  {
+    return buffer.size();
+  }
+
+  [[nodiscard]] auto has_next() const -> bool
+  {
+    return not buffer.empty();
+  }
+
+  [[nodiscard]] auto next() -> Edge64
+  {
+    auto const e = buffer.back();
+    buffer.pop_back();
+    return e;
+  }
+
+  void clear()
+  {
+    buffer.clear();
+  }
+};
+
+struct ExternSortAdapter
+{
+  stxxl::sorter<Edge64, Edge64Less> buffer;
+
+  explicit ExternSortAdapter(u64 memory)
+    : buffer(Edge64Less{}, memory)
+  {
+  }
+
+  void push(Edge64 edge)
+  {
+    buffer.push(edge);
+  }
+
+  void operator()()
+  {
+    buffer.sort();
+  }
+
+  [[nodiscard]] auto size() const -> size_t
+  {
+    return buffer.size();
+  }
+
+  [[nodiscard]] auto has_next() const -> bool
+  {
+    return not buffer.empty();
+  }
+
+  [[nodiscard]] auto next() -> Edge64
+  {
+    auto const e = *buffer;
+    ++buffer;
+    return e;
+  }
+
+  void clear()
+  {
+    buffer.clear();
+  }
+};
+
+template<typename Sorter>
+auto
 convert_graph(std::string const& input_file,
               u64                mem_bytes,
               std::string const& graph_name = std::string()) -> VoidResult
 {
-  using namespace convert_graph_internal;
 
   std::string const code = input_file.substr(0, input_file.find_first_of('.'));
   std::string const name = graph_name.empty() ? code : graph_name;
 
   std::ifstream in{ input_file };
-  RESULT_ASSERT(in, IO_ERROR);
+  ASSERT(in);
 
-  u64  max_node       = 0;
   u64  m              = 0;
   u64  n              = 0;
   u8   head_bytes     = 0;
@@ -75,42 +200,43 @@ convert_graph(std::string const& input_file,
   std::string const bw_head_path  = code + ".bw.head.bin";
   std::string const bw_csr_path   = code + ".bw.csr.bin";
 
+  Sorter sort{ mem_bytes };
+
   // first pass for forward
   {
-    stxxl::sorter<Edge, decltype(edge_less)> fw{ edge_less, mem_bytes };
+    u64 max_node = 0;
 
     std::string line;
     while (std::getline(in, line)) {
       if (line.empty() or line[0] == '%' or line[0] == '#' or (line[0] == '/' and line[1] == '/'))
         continue;
 
-      RESULT_TRY(auto const uv, parse_uv(line));
-      auto const [u, v] = uv;
+      auto const [u, v] = parse_uv(line);
+      sort.push({ u, v });
 
-      fw.push(Edge{ u, v });
-      ++m;
-
-      max_node = std::max(u, max_node);
-      max_node = std::max(v, max_node);
-      if (u == v)
-        has_self_loops = true;
+      max_node = std::max(std::max(v, u), max_node);
+      has_self_loops |= u == v;
     }
+    ASSERT(not in.bad());
 
+    sort();
+    m          = sort.size();
     n          = m == 0 ? 0 : max_node + 1;
     head_bytes = needed_bytes(m);
     csr_bytes  = needed_bytes(max_node);
 
-    RESULT_ASSERT(not in.bad(), IO_ERROR);
+    std::cout << "opening files ..." << std::endl;
+    auto head_buffer = FileBuffer::create_w<true>(fw_head_path.c_str(), (n + 1) * head_bytes);
+    auto csr_buffer  = FileBuffer::create_w<true>(fw_csr_path.c_str(), m * csr_bytes);
+    std::cout << "files open" << std::endl;
 
-    fw.sort();
-
-    RESULT_TRY(auto head_file, CU64Buffer<FileBuffer>::create_w(fw_head_path.c_str(), n + 1, head_bytes, true));
-    RESULT_TRY(auto csr_file, CU64Buffer<FileBuffer>::create_w(fw_csr_path.c_str(), m, csr_bytes, true));
+    auto head = DenseUnsignedAccessor<>::view(head_buffer.data(), head_bytes);
+    auto csr  = DenseUnsignedAccessor<>::view(csr_buffer.data(), csr_bytes);
 
     size_t i = 0;
     size_t j = 0;
 
-    head_file.set(i++, 0);
+    head.set(i++, 0);
 
     u64 current_node = 0;
     u64 current_off  = 0;
@@ -118,8 +244,8 @@ convert_graph(std::string const& input_file,
     u64 last_u = n;
     u64 last_v = n;
 
-    for (; !fw.empty(); ++fw) {
-      auto const [u, v] = *fw;
+    while (sort.has_next()) {
+      auto const [u, v] = sort.next();
 
       if (u == last_u and v == last_v)
         has_duplicates = true;
@@ -128,69 +254,71 @@ convert_graph(std::string const& input_file,
 
       while (current_node < u) {
         ++current_node;
-        head_file.set(i++, current_off);
+        head.set(i++, current_off);
       }
 
-      csr_file.set(j++, v);
+      csr.set(j++, v);
       ++current_off;
     }
 
     // close remaining head entries up to n
     while (current_node < n) {
       ++current_node;
-      head_file.set(i++, current_off);
+      head.set(i++, current_off);
     }
   }
 
+  in.clear();
+  in.seekg(0);
+  DEBUG_ASSERT(not sort.has_next());
+  sort.clear();
+
   // second pass backward
   {
-    in.clear();
-    in.seekg(0);
-
-    stxxl::sorter<Edge, EdgeLess> bw{ EdgeLess{}, mem_bytes };
-
     std::string line;
     while (std::getline(in, line)) {
       if (line.empty() or line[0] == '%' or line[0] == '#' or (line[0] == '/' and line[1] == '/'))
         continue;
 
-      RESULT_TRY(auto const uv, parse_uv(line));
-      auto const [u, v] = uv;
-
-      bw.push(Edge{ v, u });
+      auto const [u, v] = parse_uv(line);
+      sort.push(Edge64{ v, u });
     }
 
-    RESULT_ASSERT(not in.bad(), IO_ERROR);
+    ASSERT(not in.bad());
+    sort();
 
-    bw.sort();
+    std::cout << "opening files ..." << std::endl;
+    auto head_buffer = FileBuffer::create_w<true>(bw_head_path.c_str(), (n + 1) * head_bytes);
+    auto csr_buffer  = FileBuffer::create_w<true>(bw_csr_path.c_str(), m * csr_bytes);
+    std::cout << "files open" << std::endl;
 
-    RESULT_TRY(auto head_file, CU64Buffer<FileBuffer>::create_w(bw_head_path.c_str(), n + 1, head_bytes, true));
-    RESULT_TRY(auto csr_file, CU64Buffer<FileBuffer>::create_w(bw_csr_path.c_str(), m, csr_bytes, true));
+    auto head = DenseUnsignedAccessor<>::view(head_buffer.data(), head_bytes);
+    auto csr  = DenseUnsignedAccessor<>::view(csr_buffer.data(), csr_bytes);
 
     size_t i = 0;
     size_t j = 0;
 
-    head_file.set(i++, 0);
+    head.set(i++, 0);
 
     u64 current_node = 0;
     u64 current_off  = 0;
 
-    for (; !bw.empty(); ++bw) {
-      auto const [u, v] = *bw;
+    while (sort.has_next()) {
+      auto const [u, v] = sort.next();
 
       while (current_node < u) {
         ++current_node;
-        head_file.set(i++, current_off);
+        head.set(i++, current_off);
       }
 
-      csr_file.set(j++, v);
+      csr.set(j++, v);
       ++current_off;
     }
 
     // close remaining head entries up to n
     while (current_node < n) {
       ++current_node;
-      head_file.set(i++, current_off);
+      head.set(i++, current_off);
     }
   }
 
@@ -218,4 +346,18 @@ convert_graph(std::string const& input_file,
   manifest_file.flush();
   RESULT_ASSERT(manifest_file, IO_ERROR);
   return VoidResult::success();
+}
+
+} // namespace convert_graph_internal
+
+inline auto
+convert_graph(
+  std::string const& input_file,
+  u64                mem_bytes,
+  std::string const& graph_name = std::string{}) -> VoidResult
+{
+  auto const file_size = std::filesystem::file_size(input_file);
+  if (file_size < mem_bytes)
+    return convert_graph_internal::convert_graph<convert_graph_internal::LocalSortAdapter>(input_file, file_size, graph_name);
+  return convert_graph_internal::convert_graph<convert_graph_internal::ExternSortAdapter>(input_file, file_size, graph_name);
 }

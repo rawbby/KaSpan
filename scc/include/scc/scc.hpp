@@ -1,5 +1,7 @@
 #pragma once
 
+#include "trim_tarjan.hpp"
+
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
 #include <memory/bit_accessor.hpp>
@@ -18,7 +20,7 @@
 #include <algorithm>
 #include <cstdio>
 
-template<WorldPartConcept Part>
+template<bool use_trim_tarjan = false, WorldPartConcept Part>
 VoidResult
 scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id)
 {
@@ -34,19 +36,40 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
-  auto [local_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
-  {
-    auto root = pivot_selection(max);
-    forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, root);
-    local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, root);
-  }
-
+  vertex_t   local_decided     = 0;
   auto const decided_threshold = n / mpi_world_size;
-  while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
-    fw_reached.clear(local_n);
-    auto root = pivot_selection(part, fw_head, bw_head, scc_id);
-    forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, root);
-    local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, root);
+
+  // refactor ugly tarjan switch
+  if (use_trim_tarjan) {
+    auto const trim_tarjan_decided = trim_tarjan(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
+    local_decided += trim_tarjan_decided;
+
+    while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
+      fw_reached.clear(local_n);
+      auto root = pivot_selection(part, fw_head, bw_head, scc_id);
+      forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, root);
+      KASPAN_STATISTIC_ADD("root", root);
+      local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, root);
+    }
+
+  } else {
+    auto [trim_1_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
+    local_decided += trim_1_decided;
+
+    if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
+      auto root = pivot_selection(max);
+      forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, root);
+      KASPAN_STATISTIC_ADD("root", root);
+      local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, root);
+
+      while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
+        fw_reached.clear(local_n);
+        auto root = pivot_selection(part, fw_head, bw_head, scc_id);
+        forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, root);
+        KASPAN_STATISTIC_ADD("root", root);
+        local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, root);
+      }
+    }
   }
 
   {
@@ -68,26 +91,37 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     if (sub_graph.n) {
 
-      auto const wcc_count = wcc(sub_graph.n, sub_graph.fw_head, sub_graph.fw_csr, wcc_id);
-      residual_scc(
-        wcc_id,
-        wcc_count,
-        sub_scc_id,
-        sub_graph.n,
-        sub_graph.fw_head,
-        sub_graph.fw_csr,
-        sub_graph.bw_head,
-        sub_graph.bw_csr,
-        sub_graph.ids_inverse);
-
-      KASPAN_STATISTIC_SCOPE("post_processing");
-      mpi_basic_allreduce_inplace(sub_scc_id, sub_graph.n, MPI_MIN);
-      for (vertex_t sub_v = 0; sub_v < sub_graph.n; ++sub_v) {
-        auto const v = sub_graph.ids_inverse[sub_v];
-        if (part.has_local(v)) {
-          scc_id[part.to_local(v)] = sub_scc_id[sub_v];
+      tarjan(sub_graph.n, sub_graph.fw_head, sub_graph.fw_csr, [&](vertex_t cn, vertex_t* cs) {
+        vertex_t min_v = std::numeric_limits<vertex_t>::max();
+        for (vertex_t ci = 0; ci < cn; ++ci) {
+          cs[ci] = sub_graph.ids_inverse[cs[ci]];
+          min_v  = std::min(min_v, cs[ci]);
         }
-      }
+        for (vertex_t ci = 0; ci < cn; ++ci) {
+          scc_id[part.to_local(cs[ci])] = min_v;
+        }
+      });
+
+      // auto const wcc_count = wcc(sub_graph.n, sub_graph.fw_head, sub_graph.fw_csr, wcc_id);
+      // residual_scc(
+      //   wcc_id,
+      //   wcc_count,
+      //   sub_scc_id,
+      //   sub_graph.n,
+      //   sub_graph.fw_head,
+      //   sub_graph.fw_csr,
+      //   sub_graph.bw_head,
+      //   sub_graph.bw_csr,
+      //   sub_graph.ids_inverse);
+
+      // KASPAN_STATISTIC_SCOPE("post_processing");
+      // mpi_basic_allreduce_inplace(sub_scc_id, sub_graph.n, MPI_MIN);
+      // for (vertex_t sub_v = 0; sub_v < sub_graph.n; ++sub_v) {
+      //   auto const v = sub_graph.ids_inverse[sub_v];
+      //   if (part.has_local(v)) {
+      //     scc_id[part.to_local(v)] = sub_scc_id[sub_v];
+      //   }
+      // }
     }
   }
 

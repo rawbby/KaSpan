@@ -261,27 +261,27 @@ public:
     return *this;
   }
 
-  [[nodiscard]] static auto create_r(char const* file, size_t byte_size) -> Result<FileBuffer>
+  [[nodiscard]] static auto create_r(char const* file, size_t byte_size) -> FileBuffer
   {
     if (byte_size == 0)
       return FileBuffer{};
 
     auto const fd = open(file, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
-    RESULT_ASSERT(fd != -1, IO_ERROR);
+    ASSERT(fd != -1);
     SCOPE_GUARD(close(fd));
 
     struct stat st{};
-    RESULT_ASSERT(fstat(fd, &st) == 0, FILESYSTEM_ERROR);
-    RESULT_ASSERT(S_ISREG(st.st_mode), FILESYSTEM_ERROR);
-    RESULT_ASSERT(st.st_size == byte_size, IO_ERROR);
+    ASSERT(fstat(fd, &st) == 0);
+    ASSERT(S_ISREG(st.st_mode));
+    ASSERT(st.st_size == byte_size);
 
     auto* data = mmap(nullptr, byte_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    RESULT_ASSERT(data != MAP_FAILED, MEMORY_MAPPING_ERROR);
+    ASSERT(data != MAP_FAILED);
     return FileBuffer{ data, byte_size };
   }
 
   template<bool allocate = false>
-  [[nodiscard]] static auto create_w(char const* file, size_t size) -> Result<FileBuffer>
+  [[nodiscard]] static auto create_w(char const* file, size_t size) -> FileBuffer
   {
     if (size == 0)
       return FileBuffer{};
@@ -292,25 +292,25 @@ public:
       }
       return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
     }();
-    RESULT_ASSERT(fd != -1, IO_ERROR);
+    ASSERT(fd != -1);
     SCOPE_GUARD(close(fd));
 
     if (allocate) {
-      RESULT_ASSERT(ftruncate(fd, static_cast<off_t>(size)) == 0, IO_ERROR);
+      ASSERT(ftruncate(fd, static_cast<off_t>(size)) == 0);
     } else {
       struct stat st{};
-      RESULT_ASSERT(fstat(fd, &st) == 0, FILESYSTEM_ERROR);
-      RESULT_ASSERT(S_ISREG(st.st_mode), FILESYSTEM_ERROR);
-      RESULT_ASSERT(st.st_size == size, IO_ERROR);
+      ASSERT(fstat(fd, &st) == 0);
+      ASSERT(S_ISREG(st.st_mode));
+      ASSERT(st.st_size == size);
     }
 
     auto* data = mmap(nullptr, size, PROT_WRITE, MAP_SHARED, fd, 0);
-    RESULT_ASSERT(data != MAP_FAILED, MEMORY_MAPPING_ERROR);
+    ASSERT(data != MAP_FAILED);
     return FileBuffer{ data, size };
   }
 
   template<bool allocate = false>
-  [[nodiscard]] static auto create_rw(char const* file, size_t byte_size) -> Result<FileBuffer>
+  [[nodiscard]] static auto create_rw(char const* file, size_t byte_size) -> FileBuffer
   {
     if (byte_size == 0) {
       return FileBuffer{};
@@ -322,20 +322,20 @@ public:
       }
       return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
     }();
-    RESULT_ASSERT(fd != -1, IO_ERROR);
+    ASSERT(fd != -1);
     SCOPE_GUARD(close(fd));
 
     if (allocate) {
-      RESULT_ASSERT(ftruncate(fd, static_cast<off_t>(byte_size)) == 0, IO_ERROR);
+      ASSERT(ftruncate(fd, static_cast<off_t>(byte_size)) == 0);
     } else {
       struct stat st{};
-      RESULT_ASSERT(fstat(fd, &st) == 0, FILESYSTEM_ERROR);
-      RESULT_ASSERT(S_ISREG(st.st_mode), FILESYSTEM_ERROR);
-      RESULT_ASSERT(st.st_size == byte_size, INVALID_INPUT_ERROR);
+      ASSERT(fstat(fd, &st) == 0);
+      ASSERT(S_ISREG(st.st_mode));
+      ASSERT(st.st_size == byte_size);
     }
 
     auto* data = mmap(nullptr, byte_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    RESULT_ASSERT(data != MAP_FAILED, MEMORY_MAPPING_ERROR);
+    ASSERT(data != MAP_FAILED);
     return FileBuffer{ data, byte_size };
   }
 

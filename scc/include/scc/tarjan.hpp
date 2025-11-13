@@ -1,11 +1,10 @@
 #pragma once
 
-#include <scc/Common.hpp>
-
-#include <buffer/ArrayAccessor.hpp>
-#include <buffer/BitAccessor.hpp>
-#include <buffer/StackAccessor.hpp>
-#include <debug/Statistic.hpp>
+#include <debug/statistic.hpp>
+#include <iostream>
+#include <memory/bit_accessor.hpp>
+#include <memory/buffer.hpp>
+#include <memory/stack_accessor.hpp>
 #include <scc/Graph.hpp>
 
 /**
@@ -15,17 +14,18 @@
  * @param[out] scc_id map vertex to strongly connected component id
  * @param[in] memory temp memory of:
  *   - 3 * page_ceil(local_n * sizeof(vertex_t))                 // index, low, st
- *   - page_ceil(local_n * (sizeof(vertex_t) + sizeof(index_t))) // dfs stack
+ *   - page_ceil(local_n * sizeof(vertex_t) + sizeof(index_t)) // dfs stack
  *   - page_ceil(ceil(local_n/64) * sizeof(u64))                 // on_stack bitset
  * @return number of strongly connected components
  */
-template<WorldPartConcept Part>
-vertex_t
-tarjan(Part const& part,
+template<WorldPartConcept Part, typename Fn>
+  requires(std::same_as<std::invoke_result_t<Fn, vertex_t*, vertex_t*>, void>)
+void
+tarjan(Part const&     part,
        index_t const*  head,
-       vertex_t const*  csr,
-       vertex_t*  scc_id,
-       void*  memory) noexcept
+       vertex_t const* csr,
+       Fn              callback,
+       void*           memory = nullptr) noexcept
 {
   KASPAN_STATISTIC_SCOPE("tarjan");
   constexpr auto index_undecided = scc_id_undecided;
@@ -35,12 +35,21 @@ tarjan(Part const& part,
     index_t  it;
   };
 
-  vertex_t const local_n      = part.size();
-  vertex_t       index_count  = 0;
-  vertex_t       scc_id_count = 0;
+  auto const local_n = part.local_n();
 
-  auto index    = ArrayAccessor<vertex_t>::borrow_filled(memory, index_undecided, local_n);
-  auto low      = ArrayAccessor<vertex_t>::borrow_clean(memory, local_n);
+  Buffer buffer;
+  if (memory == nullptr) {
+    buffer = Buffer::create(
+      3 * page_ceil<vertex_t>(local_n),
+      page_ceil<Frame>(local_n),
+      page_ceil<u64>((local_n + 63) / 64));
+    memory = buffer.data();
+  }
+
+  vertex_t index_count = 0;
+
+  auto index    = borrow_filled<vertex_t>(memory, index_undecided, local_n);
+  auto low      = borrow_clean<vertex_t>(memory, local_n);
   auto on_stack = BitAccessor::borrow_clean(memory, local_n);
   auto st       = StackAccessor<vertex_t>::borrow(memory, local_n);
   auto dfs      = StackAccessor<Frame>::borrow(memory, local_n);
@@ -60,8 +69,8 @@ tarjan(Part const& part,
       if (it < head[local_u + 1]) {
         auto const v = csr[it++];
 
-        if (part.contains(v)) { // ignore non local edges
-          auto const local_v = part.rank(v);
+        if (part.has_local(v)) { // ignore non local edges
+          auto const local_v = part.to_local(v);
           auto const v_index = index[local_v];
 
           if (v_index == index_undecided) {
@@ -80,15 +89,18 @@ tarjan(Part const& part,
       }
 
       if (low[local_u] == index[local_u]) {
+        auto const end = st.size();
+
         while (true) {
           auto const local_v = st.back();
           st.pop();
           on_stack.unset(local_v);
-          scc_id[local_v] = scc_id_count;
           if (local_v == local_u)
             break;
         }
-        ++scc_id_count;
+
+        auto const begin = st.size();
+        callback(st.data() + begin, st.data() + end);
       }
 
       dfs.pop();
@@ -98,8 +110,6 @@ tarjan(Part const& part,
       }
     }
   }
-
-  return scc_id_count;
 }
 
 /**
@@ -113,12 +123,14 @@ tarjan(Part const& part,
  *   - page_ceil(ceil(n/64) * sizeof(u64))                 // on_stack bitset
  * @return number of strongly connected components
  */
-inline vertex_t
-tarjan(vertex_t const n,
+template<typename Fn>
+  requires(std::same_as<std::invoke_result_t<Fn, vertex_t*, vertex_t*>, void>)
+void
+tarjan(vertex_t const  n,
        index_t const*  head,
-       vertex_t const*  csr,
-       vertex_t*  scc_id,
-       void*  memory) noexcept
+       vertex_t const* csr,
+       Fn              callback,
+       void*           memory = nullptr) noexcept
 {
-  return tarjan(SingleWorldPart{ n }, head, csr, scc_id, memory);
+  tarjan(SingleWorldPart{ n }, head, csr, callback, memory);
 }
