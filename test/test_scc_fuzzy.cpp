@@ -27,16 +27,16 @@ main(int argc, char** argv)
 
     std::stringstream ss;
     ss << "  index         :";
-    for (size_t k = 0; k < part.local_n(); ++k)
+    for (vertex_t k = 0; k < part.local_n(); ++k)
       ss << ' ' << std::right << std::setw(2) << graph.part.to_global(k);
     ss << "\n  scc_id_orig   :";
-    for (size_t k = 0; k < part.local_n(); ++k)
+    for (vertex_t k = 0; k < part.local_n(); ++k)
       ss << ' ' << std::right << std::setw(2) << graph.scc_id_part[k];
     ss << "\n  scc_id_kaspan :";
-    for (size_t k = 0; k < part.local_n(); ++k)
+    for (vertex_t k = 0; k < part.local_n(); ++k)
       ss << ' ' << std::right << std::setw(2) << scc_id[k];
     ss << "\n                 ";
-    for (size_t k = 0; k < part.local_n(); ++k)
+    for (vertex_t k = 0; k < part.local_n(); ++k)
       ss << (graph.scc_id_part[k] == scc_id[k] ? "   " : " ^^");
     ss << std::endl;
 

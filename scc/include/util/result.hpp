@@ -212,7 +212,7 @@ public:
 
 #define ASSERT_TRY_1(EXPR, TMP) \
   auto&& TMP = (EXPR);          \
-  ASSERT(TMP)
+  ASSERT(TMP, #EXPR)
 #define ASSERT_TRY_2(VAR_1, EXPR, TMP) \
   ASSERT_TRY_1(EXPR, TMP);             \
   VAR_1 = std::move(TMP.value())

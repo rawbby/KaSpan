@@ -1,7 +1,7 @@
 #pragma once
 
-#include <scc/Graph.hpp>
-#include <util/Result.hpp>
+#include <scc/graph.hpp>
+#include <util/result.hpp>
 
 #include <charconv>
 #include <filesystem>
@@ -181,7 +181,7 @@ struct Manifest
 };
 
 static auto
-load_graph_from_manifest(Manifest const& manifest, void*  memory) -> Result<Graph>
+load_graph_from_manifest(Manifest const& manifest, void* memory) -> Result<Graph>
 {
   auto const  n            = manifest.graph_node_count;
   auto const  m            = manifest.graph_edge_count;
@@ -193,17 +193,17 @@ load_graph_from_manifest(Manifest const& manifest, void*  memory) -> Result<Grap
   char const* bw_head_file = manifest.bw_head_path.c_str();
   char const* bw_csr_file  = manifest.bw_csr_path.c_str();
 
-  RESULT_ASSERT(n < std::numeric_limits<vertex_t>::max(), ASSUMPTION_ERROR);
-  RESULT_ASSERT(m < std::numeric_limits<index_t>::max(), ASSUMPTION_ERROR);
-  RESULT_TRY(auto fw_head_buffer, FileBuffer::create_r(fw_head_file, (n + 1) * head_bytes));
-  RESULT_TRY(auto fw_csr_buffer, FileBuffer::create_r(fw_csr_file, m * csr_bytes));
-  RESULT_TRY(auto bw_head_buffer, FileBuffer::create_r(bw_head_file, (n + 1) * head_bytes));
-  RESULT_TRY(auto bw_csr_buffer, FileBuffer::create_r(bw_csr_file, m * csr_bytes));
+  ASSERT(n < std::numeric_limits<vertex_t>::max());
+  ASSERT(m < std::numeric_limits<index_t>::max());
+  auto fw_head_buffer = FileBuffer::create_r(fw_head_file, (n + 1) * head_bytes);
+  auto fw_csr_buffer = FileBuffer::create_r(fw_csr_file, m * csr_bytes);
+  auto bw_head_buffer = FileBuffer::create_r(bw_head_file, (n + 1) * head_bytes);
+  auto bw_csr_buffer = FileBuffer::create_r(bw_csr_file, m * csr_bytes);
 
-  auto fw_head_access = DenseUnsignedAccessor<index_t>::view(fw_head_buffer.data(), head_bytes, load_endian);
-  auto fw_csr_access  = DenseUnsignedAccessor<vertex_t>::view(fw_csr_buffer.data(), head_bytes, load_endian);
-  auto bw_head_access = DenseUnsignedAccessor<index_t>::view(bw_head_buffer.data(), head_bytes, load_endian);
-  auto bw_csr_access  = DenseUnsignedAccessor<vertex_t>::view(bw_csr_buffer.data(), head_bytes, load_endian);
+  auto fw_head_access = DenseUnsignedAccessor<>::view(fw_head_buffer.data(), head_bytes, load_endian);
+  auto fw_csr_access  = DenseUnsignedAccessor<>::view(fw_csr_buffer.data(), head_bytes, load_endian);
+  auto bw_head_access = DenseUnsignedAccessor<>::view(bw_head_buffer.data(), head_bytes, load_endian);
+  auto bw_csr_access  = DenseUnsignedAccessor<>::view(bw_csr_buffer.data(), head_bytes, load_endian);
 
   auto g    = Graph{};
   g.n       = n;
@@ -232,65 +232,77 @@ load_graph_from_manifest(Manifest const& manifest, void*  memory) -> Result<Grap
   return g;
 }
 
-static auto
-load_graph_part_from_manifest(Part part, Manifest const& manifest, void*  memory) -> Result<GraphPart>
-{
-  auto const  n            = manifest.graph_node_count;
-  auto const  m            = manifest.graph_edge_count;
-  auto const  head_bytes   = manifest.graph_head_bytes;
-  auto const  csr_bytes    = manifest.graph_csr_bytes;
-  auto const  load_endian  = manifest.graph_endian;
-  auto const* fw_head_file = manifest.fw_head_path.c_str();
-  auto const* fw_csr_file  = manifest.fw_csr_path.c_str();
-  auto const* bw_head_file = manifest.bw_head_path.c_str();
-  auto const* bw_csr_file  = manifest.bw_csr_path.c_str();
-
-  RESULT_ASSERT(n < std::numeric_limits<vertex_t>::max(), ASSUMPTION_ERROR);
-  RESULT_ASSERT(m < std::numeric_limits<index_t>::max(), ASSUMPTION_ERROR);
-
-  auto load_dir = [&](char const* head_file, char const* csr_file, auto& graph_head, auto& graph_csr) -> VoidResult {
-    RESULT_TRY(auto head_buffer, FileBuffer::create_r(head_file, (n + 1) * head_bytes));
-    RESULT_TRY(auto csr_buffer, FileBuffer::create_r(csr_file, (n + 1) * csr_bytes));
-
-    auto head_access = DenseUnsignedAccessor<index_t>::view(head_buffer.data(), head_bytes, load_endian);
-    auto csr_access  = DenseUnsignedAccessor<index_t>::view(csr_buffer.data(), csr_bytes, load_endian);
-
-    vertex_t const local_n = part.size();
-    index_t        local_m = 0;
-
-    if constexpr (Part::continuous) {
-      if (local_n > 0)
-        local_m = head_access.get(part.end) - head_access.get(part.begin);
-    } else {
-      for (vertex_t k = 0; k < local_n; ++k) {
-        auto const u = part.select(k);
-        local_m += head_access.get(u + 1) - head_access.get(u);
-      }
-    }
-
-    graph_head = ::borrow<index_t>(memory, local_n);
-    graph_csr  = ::borrow<vertex_t>(memory, local_m);
-
-    u64 pos = 0;
-    for (u64 k = 0; k < local_n; ++k) {
-      auto const index = part.select(k);
-      auto const begin = head_access.get(index);
-      auto const end   = head_access.get(index + 1);
-
-      graph_head.set(k, pos);
-
-      for (auto it = begin; it != end; ++it)
-        graph_csr.set(pos++, csr_access.get(it));
-    }
-    graph_head.set(local_n, pos);
-    return VoidResult::success();
-  };
-
-  auto result = GraphPart{};
-  RESULT_TRY(load_dir(fw_head_file, fw_csr_file, result.fw_head, result.fw_csr));
-  RESULT_TRY(load_dir(bw_head_file, bw_csr_file, result.bw_head, result.bw_csr));
-  result.part = std::move(part);
-  result.n    = n;
-  result.m    = m;
-  return result;
-}
+// template<WorldPartConcept Part>
+// static auto
+// load_graph_part_from_manifest(Part const& part, Manifest const& manifest, void* memory) -> Result<LocalGraphPart<Part>>
+// {
+//   auto const  n            = manifest.graph_node_count;
+//   auto const  m            = manifest.graph_edge_count;
+//   auto const  head_bytes   = manifest.graph_head_bytes;
+//   auto const  csr_bytes    = manifest.graph_csr_bytes;
+//   auto const  load_endian  = manifest.graph_endian;
+//   auto const* fw_head_file = manifest.fw_head_path.c_str();
+//   auto const* fw_csr_file  = manifest.fw_csr_path.c_str();
+//   auto const* bw_head_file = manifest.bw_head_path.c_str();
+//   auto const* bw_csr_file  = manifest.bw_csr_path.c_str();
+//
+//   RESULT_ASSERT(n < std::numeric_limits<vertex_t>::max(), ASSUMPTION_ERROR);
+//   RESULT_ASSERT(m < std::numeric_limits<index_t>::max(), ASSUMPTION_ERROR);
+//
+//   auto load_dir = [&](char const* head_file, char const* csr_file, auto& graph_head, auto& graph_csr) -> VoidResult {
+//     RESULT_TRY(auto head_buffer, FileBuffer::create_r(head_file, (n + 1) * head_bytes));
+//     RESULT_TRY(auto csr_buffer, FileBuffer::create_r(csr_file, (n + 1) * csr_bytes));
+//
+//     auto head_access = DenseUnsignedAccessor<>::view(head_buffer.data(), head_bytes, load_endian);
+//     auto csr_access  = DenseUnsignedAccessor<>::view(csr_buffer.data(), csr_bytes, load_endian);
+//
+//     vertex_t const local_n = part.size();
+//     index_t        local_m = 0;
+//
+//     if constexpr (Part::continuous) {
+//       if (local_n > 0)
+//         local_m = head_access.get(part.end) - head_access.get(part.begin);
+//     } else {
+//       for (vertex_t k = 0; k < local_n; ++k) {
+//         auto const u = part.select(k);
+//         local_m += head_access.get(u + 1) - head_access.get(u);
+//       }
+//     }
+//
+//     graph_head = ::borrow<index_t>(memory, local_n);
+//     graph_csr  = ::borrow<vertex_t>(memory, local_m);
+//
+//     u64 pos = 0;
+//     for (u64 k = 0; k < local_n; ++k) {
+//       auto const index = part.select(k);
+//       auto const begin = head_access.get(index);
+//       auto const end   = head_access.get(index + 1);
+//
+//       graph_head.set(k, pos);
+//
+//       for (auto it = begin; it != end; ++it)
+//         graph_csr.set(pos++, csr_access.get(it));
+//     }
+//     graph_head.set(local_n, pos);
+//     return VoidResult::success();
+//   };
+//
+//   auto result        = LocalGraphPart<Part>{};
+//   result.buffer      = Buffer::create(2 * page_ceil<index_t>(n + 1), 2 * page_ceil<vertex_t>(m));
+//   auto* graph_memory = result.data();
+//
+//   result.fw_head = borrow<index_t>(graph_memory, n + 1);
+//   result.fw_csr  = borrow<vertex_t>(graph_memory, m);
+//   result.bw_head = borrow<index_t>(graph_memory, n + 1);
+//   result.bw_csr  = borrow<vertex_t>(graph_memory, m);
+//
+//   RESULT_TRY(load_dir(fw_head_file, fw_csr_file, result.fw_head, result.fw_csr));
+//   RESULT_TRY(load_dir(bw_head_file, bw_csr_file, result.bw_head, result.bw_csr));
+//
+//   result.part = std::move(part);
+//   result.n    = n;
+//   result.m    = m;
+//
+//   return result;
+// }
+//
