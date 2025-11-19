@@ -1,8 +1,8 @@
 #pragma once
 
+#include <memory/buffer.hpp>
 #include <scc/base.hpp>
 #include <scc/part.hpp>
-#include <memory/buffer.hpp>
 #include <util/arithmetic.hpp>
 
 template<WorldPartConcept Part>
@@ -19,7 +19,10 @@ trim_1_first(Part const& part, index_t const* fw_head, index_t const* bw_head, v
   auto const local_n = part.local_n();
 
   vertex_t decided_count = 0;
-  Degree   max{};
+  Degree   max{
+      .degree_product = std::numeric_limits<index_t>::min(),
+      .u              = scc_id_undecided
+  };
 
   for (vertex_t k = 0; k < local_n; ++k) {
     DEBUG_ASSERT_EQ(scc_id[k], scc_id_undecided, "trim_1_first relies on completely undecided scc ids");
@@ -28,7 +31,7 @@ trim_1_first(Part const& part, index_t const* fw_head, index_t const* bw_head, v
     auto const in_degree  = bw_head[k + 1] - bw_head[k];
 
     if (out_degree == 0 or in_degree == 0) {
-      scc_id[k] = scc_id_singular;
+      scc_id[k] = part.to_global(k);
       ++decided_count;
       continue;
     }

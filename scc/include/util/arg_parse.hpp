@@ -29,7 +29,7 @@ arg_select_str(int argc, char** argv, char const* flag, void (*usage)(int, char*
 }
 
 inline auto
-arg_select_optional_str(int argc, char** argv, char const* flag, void (*usage)(int, char**)) -> char const*
+arg_select_optional_str(int argc, char** argv, char const* flag) -> char const*
 {
   for (int i = 1; i < argc - 1; ++i) {
     if (strcmp(argv[i], flag) == 0) {

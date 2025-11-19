@@ -10,12 +10,13 @@ template<WorldPartConcept Part>
 auto
 backward_search(
   Part const&      part,
-  index_t const*         bw_head,
-  vertex_t const*        bw_csr,
+  index_t const*   bw_head,
+  vertex_t const*  bw_csr,
   vertex_frontier& frontier,
   vertex_t*        scc_id,
   BitAccessor      fw_reached,
-  vertex_t         root) -> vertex_t
+  vertex_t         root,
+  vertex_t         id) -> vertex_t
 {
   KASPAN_STATISTIC_SCOPE("backward_search");
   vertex_t decided_count = 0;
@@ -37,7 +38,7 @@ backward_search(
         continue;
 
       // (inside fw-reached and bw-reached => contributes to scc)
-      scc_id[k] = root;
+      scc_id[k] = id;
       ++processed_count;
       ++decided_count;
 

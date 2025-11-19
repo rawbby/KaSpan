@@ -6,7 +6,7 @@
 #include <util/pp.hpp>
 
 template<WorldPartConcept Part>
-void
+auto
 forward_search(
   Part const&      part,
   index_t const*   fw_head,
@@ -14,7 +14,7 @@ forward_search(
   vertex_frontier& frontier,
   vertex_t const*  scc_id,
   BitAccessor      fw_reached,
-  IF(KASPAN_NORMALIZE, vertex_t&, vertex_t) root)
+  vertex_t         root) -> vertex_t
 {
   KASPAN_STATISTIC_SCOPE("forward_search");
 
@@ -41,7 +41,7 @@ forward_search(
 
       // now it is reached
       fw_reached.set(k);
-      IF(KASPAN_NORMALIZE, root = std::min(root, u);)
+      root = std::min(root, u);
 
       // add all neighbours to frontier
       auto const beg = fw_head[k];
@@ -69,7 +69,5 @@ forward_search(
       break;
   }
 
-#if KASPAN_NORMALIZE
-  mpi_basic_allreduce_inplace(&root, 1, MPI_MIN);
-#endif
+  return mpi_basic_allreduce_single(root, MPI_MIN);
 }

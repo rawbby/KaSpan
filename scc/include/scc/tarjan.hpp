@@ -7,6 +7,12 @@
 #include <memory/stack_accessor.hpp>
 #include <scc/Graph.hpp>
 
+constexpr auto
+no_filter(vertex_t /* k */) -> bool
+{
+  return true;
+}
+
 /**
  * @param[in] part partition of the graph to work on
  * @param[in] head head buffer of size local_n+1 pointing into csr entries
@@ -18,14 +24,9 @@
  *   - page_ceil(ceil(local_n/64) * sizeof(u64))                 // on_stack bitset
  * @return number of strongly connected components
  */
-template<WorldPartConcept Part, typename Fn>
-  requires(std::same_as<std::invoke_result_t<Fn, vertex_t*, vertex_t*>, void>)
+template<WorldPartConcept Part, typename Callback, typename Filter = decltype(no_filter)>
 void
-tarjan(Part const&     part,
-       index_t const*  head,
-       vertex_t const* csr,
-       Fn              callback,
-       void*           memory = nullptr) noexcept
+tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback callback, Filter filter = no_filter, void* memory = nullptr) noexcept
 {
   KASPAN_STATISTIC_SCOPE("tarjan");
   constexpr auto index_undecided = scc_id_undecided;
@@ -55,6 +56,9 @@ tarjan(Part const&     part,
   auto dfs      = StackAccessor<Frame>::borrow(memory, local_n);
 
   for (vertex_t local_root = 0; local_root < local_n; ++local_root) {
+    if (not filter(local_root))
+      continue;
+
     if (index[local_root] != index_undecided)
       continue;
 
@@ -71,6 +75,9 @@ tarjan(Part const&     part,
 
         if (part.has_local(v)) { // ignore non local edges
           auto const local_v = part.to_local(v);
+          if (not filter(local_v))
+            continue;
+
           auto const v_index = index[local_v];
 
           if (v_index == index_undecided) {
@@ -123,14 +130,9 @@ tarjan(Part const&     part,
  *   - page_ceil(ceil(n/64) * sizeof(u64))                 // on_stack bitset
  * @return number of strongly connected components
  */
-template<typename Fn>
-  requires(std::same_as<std::invoke_result_t<Fn, vertex_t*, vertex_t*>, void>)
+template<typename Callback, typename Filter = decltype(no_filter)>
 void
-tarjan(vertex_t const  n,
-       index_t const*  head,
-       vertex_t const* csr,
-       Fn              callback,
-       void*           memory = nullptr) noexcept
+tarjan(vertex_t const n, index_t const* head, vertex_t const* csr, Callback callback, Filter filter = no_filter, void* memory = nullptr) noexcept
 {
-  tarjan(SingleWorldPart{ n }, head, csr, callback, memory);
+  tarjan(SingleWorldPart{ n }, head, csr, callback, filter, memory);
 }

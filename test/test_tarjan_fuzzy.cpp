@@ -63,9 +63,9 @@ main(int argc, char** argv)
     }
 
     vertex_t component_count = 0;
-    tarjan(n, graph.fw_head, graph.fw_csr, [&component_count, scc_id](vertex_t cn, vertex_t* c) -> void {
-      for (vertex_t k = 0; k < cn; ++k) {
-        scc_id[c[k]] = component_count;
+    tarjan(n, graph.fw_head, graph.fw_csr, [&component_count, scc_id](auto const* beg, auto const* end) -> void {
+      for (auto const k : std::span{ beg, end }) {
+        scc_id[k] = component_count;
       }
       ++component_count;
     });
