@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <cstdio>
 
-template<bool use_trim_tarjan = false, WorldPartConcept Part>
+template<WorldPartConcept Part>
 VoidResult
 scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id)
 {
@@ -38,42 +38,25 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   vertex_t   local_decided     = 0;
   auto const decided_threshold = n / mpi_world_size;
 
-  // refactor ugly tarjan switch
-  if (use_trim_tarjan) {
-    auto const trim_tarjan_decided = trim_tarjan(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
-    local_decided += trim_tarjan_decided;
+  auto [trim_1_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
+  local_decided += trim_1_decided;
 
-    do {
-      fw_reached.clear(local_n);
-      auto root = pivot_selection(part, fw_head, bw_head, scc_id);
-      DEBUG_ASSERT_NE(root, scc_id_undecided);
-      auto const id = forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, root);
-      KASPAN_STATISTIC_ADD("root", root);
-      KASPAN_STATISTIC_ADD("root_id", id);
-      local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, root, id);
-    } while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold);
+  auto first_root = pivot_selection(max);
+  DEBUG_ASSERT_NE(first_root, scc_id_undecided);
+  fw_reached.clear(local_n);
+  auto const first_id = forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, first_root);
+  KASPAN_STATISTIC_ADD("root", first_root);
+  KASPAN_STATISTIC_ADD("root_id", first_id);
+  local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, first_root, first_id);
 
-  } else {
-    auto [trim_1_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
-    local_decided += trim_1_decided;
-
-    auto first_root = pivot_selection(max);
-    DEBUG_ASSERT_NE(first_root, scc_id_undecided);
+  while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
+    auto root = pivot_selection(part, fw_head, bw_head, scc_id);
+    DEBUG_ASSERT_NE(root, scc_id_undecided);
     fw_reached.clear(local_n);
-    auto const first_id = forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, first_root);
-    KASPAN_STATISTIC_ADD("root", first_root);
-    KASPAN_STATISTIC_ADD("root_id", first_id);
-    local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, first_root, first_id);
-
-    while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
-      auto root = pivot_selection(part, fw_head, bw_head, scc_id);
-      DEBUG_ASSERT_NE(root, scc_id_undecided);
-      fw_reached.clear(local_n);
-      auto const id = forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, root);
-      KASPAN_STATISTIC_ADD("root", root);
-      KASPAN_STATISTIC_ADD("root_id", id);
-      local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, root, id);
-    }
+    auto const id = forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, root);
+    KASPAN_STATISTIC_ADD("root", root);
+    KASPAN_STATISTIC_ADD("root_id", id);
+    local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, root, id);
   }
 
   auto const trim_tarjan_decided = trim_tarjan(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, [=, &scc_id](vertex_t k) {
