@@ -25,11 +25,10 @@ usage(int /* argc */, char** argv)
 }
 
 void
-benchmark(auto const& graph, bool use_async, bool use_async_indirect, bool use_trim_tarjan)
+benchmark(auto const& graph, bool use_async, bool use_async_indirect)
 {
   KASPAN_STATISTIC_ADD("async", use_async);
   KASPAN_STATISTIC_ADD("async_indirect", use_async_indirect);
-  KASPAN_STATISTIC_ADD("trim_tarjan", use_trim_tarjan);
 
   KASPAN_STATISTIC_ADD("n", graph.part.n);
   KASPAN_STATISTIC_ADD("local_n", graph.part.local_n());
@@ -44,12 +43,7 @@ benchmark(auto const& graph, bool use_async, bool use_async_indirect, bool use_t
 
   MPI_Barrier(MPI_COMM_WORLD);
   if (not use_async) {
-
-    if (use_trim_tarjan) {
-      scc<true>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
-    } else {
-      scc<false>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
-    }
+    scc(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
   }
 
   // else if (use_async_indirect) {
@@ -87,8 +81,6 @@ main(int argc, char** argv)
   if (use_async_indirect and not use_async)
     usage(argc, argv);
 
-  auto const use_trim_tarjan = arg_select_flag(argc, argv, "--trim_tarjan");
-
   KASPAN_DEFAULT_INIT();
   SCOPE_GUARD(KASPAN_STATISTIC_MPI_WRITE_JSON(output_file));
 
@@ -101,13 +93,13 @@ main(int argc, char** argv)
     KASPAN_STATISTIC_PUSH("kagen");
     auto const kagen_graph = kagen_graph_part(kagen_option_string);
     KASPAN_STATISTIC_POP();
-    benchmark(kagen_graph, use_async, use_async_indirect, use_trim_tarjan);
+    benchmark(kagen_graph, use_async, use_async_indirect);
   } else {
     KASPAN_STATISTIC_PUSH("load");
     auto const manifest       = Manifest::load(manifest_file);
     auto const part           = BalancedSlicePart(manifest.graph_node_count);
     auto const manifest_graph = load_graph_part_from_manifest(part, manifest);
     KASPAN_STATISTIC_POP();
-    benchmark(manifest_graph, use_async, use_async_indirect, use_trim_tarjan);
+    benchmark(manifest_graph, use_async, use_async_indirect);
   }
 }

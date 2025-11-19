@@ -61,7 +61,7 @@ trim_tarjan(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, in
     auto const component = std::span{ cbeg, cend };
 
     DEBUG_ASSERT_GT(component.size(), 0);
-    DEBUG_ASSERT_LT(component.size(), part.local_n());
+    DEBUG_ASSERT_LE(component.size(), part.local_n());
     [[maybe_unused]] auto const clen = static_cast<vertex_t>(component.size());
 
     if (clen == 1) {
