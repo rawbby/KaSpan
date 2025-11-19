@@ -41,7 +41,7 @@ struct vertex_frontier
     ++send_counts[rank];
   }
 
-  auto has_next() -> bool
+  [[nodiscard]] auto has_next() const -> bool
   {
     return not recv_buffer.empty();
   }

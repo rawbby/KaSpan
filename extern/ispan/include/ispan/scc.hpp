@@ -6,7 +6,6 @@
 #include <debug/statistic.hpp>
 #include <util/mpi_basic.hpp>
 
-#include <scc/graph.hpp>
 #include <ispan/fw_bw_span.hpp>
 #include <ispan/get_scc_result.hpp>
 #include <ispan/gfq_origin.hpp>
@@ -17,6 +16,7 @@
 #include <ispan/trim_1_first.hpp>
 #include <ispan/trim_1_normal.hpp>
 #include <ispan/util.hpp>
+#include <scc/graph.hpp>
 
 #include <algorithm>
 #include <cstdio>
@@ -26,7 +26,7 @@
 #include <vector>
 
 inline void
-scc(vertex_t n, vertex_t m, index_t const * fw_head, vertex_t const * fw_csr, index_t const * bw_head, vertex_t const * bw_csr, int alpha, std::vector<index_t>* scc_id_out = nullptr)
+scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, int alpha, std::vector<index_t>* scc_id_out = nullptr)
 {
   KASPAN_STATISTIC_SCOPE("scc");
   KASPAN_STATISTIC_PUSH("alloc");
@@ -109,6 +109,7 @@ scc(vertex_t n, vertex_t m, index_t const * fw_head, vertex_t const * fw_csr, in
   trim_1_first(scc_id, fw_head, bw_head, local_beg, local_end, step);
 
   auto const root = pivot_selection(scc_id, fw_head, bw_head, n);
+  KASPAN_STATISTIC_ADD("root", root);
   fw_span(
     scc_id,
     fw_head,

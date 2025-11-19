@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory/dense_unsigned_accessor.hpp>
 #include <scc/graph.hpp>
 #include <util/result.hpp>
 
@@ -54,8 +55,8 @@ parse_int(std::string_view value_str) -> Result<T>
   auto const [ptr, ec] = std::from_chars(begin, end, t);
 
   // check for non empty full match
-  RESULT_ASSERT(ec == std::errc(), DESERIALIZE_ERROR);
-  RESULT_ASSERT(ptr == end, DESERIALIZE_ERROR);
+  ASSERT_EQ(ec, std::errc());
+  ASSERT_EQ(ptr, end);
 
   return t;
 }
@@ -64,37 +65,37 @@ constexpr auto
 parse_bool(std::string_view value_str) -> Result<bool>
 {
   if (value_str.size() == 4) {
-    RESULT_ASSERT(value_str[0] == 't', DESERIALIZE_ERROR);
-    RESULT_ASSERT(value_str[1] == 'r', DESERIALIZE_ERROR);
-    RESULT_ASSERT(value_str[2] == 'u', DESERIALIZE_ERROR);
-    RESULT_ASSERT(value_str[3] == 'e', DESERIALIZE_ERROR);
+    ASSERT_EQ(value_str[0], 't');
+    ASSERT_EQ(value_str[1], 'r');
+    ASSERT_EQ(value_str[2], 'u');
+    ASSERT_EQ(value_str[3], 'e');
     return true;
   }
-  RESULT_ASSERT(value_str.size() == 5, DESERIALIZE_ERROR);
-  RESULT_ASSERT(value_str[0] == 'f', DESERIALIZE_ERROR);
-  RESULT_ASSERT(value_str[1] == 'a', DESERIALIZE_ERROR);
-  RESULT_ASSERT(value_str[2] == 'l', DESERIALIZE_ERROR);
-  RESULT_ASSERT(value_str[3] == 's', DESERIALIZE_ERROR);
-  RESULT_ASSERT(value_str[4] == 'e', DESERIALIZE_ERROR);
+  ASSERT_EQ(value_str.size(), 5);
+  ASSERT_EQ(value_str[0], 'f');
+  ASSERT_EQ(value_str[1], 'a');
+  ASSERT_EQ(value_str[2], 'l');
+  ASSERT_EQ(value_str[3], 's');
+  ASSERT_EQ(value_str[4], 'e');
   return false;
 }
 
 constexpr auto
-parse_endian(std::string_view value_str) -> Result<std::endian>
+parse_endian(std::string_view value_str) -> std::endian
 {
   if (value_str.size() == 6) {
-    RESULT_ASSERT(value_str[0] == 'l', DESERIALIZE_ERROR);
-    RESULT_ASSERT(value_str[1] == 'i', DESERIALIZE_ERROR);
-    RESULT_ASSERT(value_str[2] == 't', DESERIALIZE_ERROR);
-    RESULT_ASSERT(value_str[3] == 't', DESERIALIZE_ERROR);
-    RESULT_ASSERT(value_str[4] == 'l', DESERIALIZE_ERROR);
-    RESULT_ASSERT(value_str[5] == 'e', DESERIALIZE_ERROR);
+    ASSERT_EQ(value_str[0], 'l');
+    ASSERT_EQ(value_str[1], 'i');
+    ASSERT_EQ(value_str[2], 't');
+    ASSERT_EQ(value_str[3], 't');
+    ASSERT_EQ(value_str[4], 'l');
+    ASSERT_EQ(value_str[5], 'e');
     return std::endian::little;
   }
-  RESULT_ASSERT(value_str.size() == 3, DESERIALIZE_ERROR);
-  RESULT_ASSERT(value_str[0] == 'b', DESERIALIZE_ERROR);
-  RESULT_ASSERT(value_str[1] == 'i', DESERIALIZE_ERROR);
-  RESULT_ASSERT(value_str[2] == 'g', DESERIALIZE_ERROR);
+  ASSERT_EQ(value_str.size(), 3);
+  ASSERT_EQ(value_str[0], 'b');
+  ASSERT_EQ(value_str[1], 'i');
+  ASSERT_EQ(value_str[2], 'g');
   return std::endian::big;
 }
 
@@ -121,58 +122,58 @@ struct Manifest
   std::filesystem::path bw_csr_path;
 
   static auto
-  load(std::filesystem::path const& file) -> Result<Manifest>
+  load(std::filesystem::path const& file) -> Manifest
   {
     using namespace manifest_internal;
 
     auto const base = file.parent_path();
-    RESULT_TRY(auto const kv, parse_kv_map(file));
+    ASSERT_TRY(auto const kv, parse_kv_map(file));
 
     auto const get_value_str = [&kv](auto const& key) -> Result<std::string_view> {
       auto const it = kv.find(key);
-      RESULT_ASSERT(it != kv.end(), DESERIALIZE_ERROR);
+      ASSERT(it != kv.end());
       return it->second;
     };
     auto const path_from_base = [&base](auto const& p) -> Result<std::filesystem::path> {
       try {
         auto full_path = std::filesystem::canonical(base / p);
-        RESULT_ASSERT(std::filesystem::is_regular_file(full_path), IO_ERROR);
+        ASSERT(std::filesystem::is_regular_file(full_path));
         return full_path;
       } catch (std::filesystem::filesystem_error const&) {
         return ErrorCode::IO_ERROR;
       }
     };
 
-    RESULT_TRY(auto const schema_version_str, get_value_str("schema.version"));
-    RESULT_TRY(auto const graph_code_str, get_value_str("graph.code"));
-    RESULT_TRY(auto const graph_name_str, get_value_str("graph.name"));
-    RESULT_TRY(auto const graph_endian_str, get_value_str("graph.endian"));
-    RESULT_TRY(auto const graph_node_count_str, get_value_str("graph.node_count"));
-    RESULT_TRY(auto const graph_edge_count_str, get_value_str("graph.edge_count"));
-    RESULT_TRY(auto const graph_contains_self_loops, get_value_str("graph.contains_self_loops"));
-    RESULT_TRY(auto const graph_contains_duplicate_edges, get_value_str("graph.contains_duplicate_edges"));
-    RESULT_TRY(auto const graph_head_bytes_str, get_value_str("graph.head.bytes"));
-    RESULT_TRY(auto const graph_csr_bytes_str, get_value_str("graph.csr.bytes"));
-    RESULT_TRY(auto const fw_head_path_str, get_value_str("fw.head.path"));
-    RESULT_TRY(auto const fw_csr_path_str, get_value_str("fw.csr.path"));
-    RESULT_TRY(auto const bw_head_path_str, get_value_str("bw.head.path"));
-    RESULT_TRY(auto const bw_csr_path_str, get_value_str("bw.csr.path"));
+    ASSERT_TRY(auto const schema_version_str, get_value_str("schema.version"));
+    ASSERT_TRY(auto const graph_code_str, get_value_str("graph.code"));
+    ASSERT_TRY(auto const graph_name_str, get_value_str("graph.name"));
+    ASSERT_TRY(auto const graph_endian_str, get_value_str("graph.endian"));
+    ASSERT_TRY(auto const graph_node_count_str, get_value_str("graph.node_count"));
+    ASSERT_TRY(auto const graph_edge_count_str, get_value_str("graph.edge_count"));
+    ASSERT_TRY(auto const graph_contains_self_loops, get_value_str("graph.contains_self_loops"));
+    ASSERT_TRY(auto const graph_contains_duplicate_edges, get_value_str("graph.contains_duplicate_edges"));
+    ASSERT_TRY(auto const graph_head_bytes_str, get_value_str("graph.head.bytes"));
+    ASSERT_TRY(auto const graph_csr_bytes_str, get_value_str("graph.csr.bytes"));
+    ASSERT_TRY(auto const fw_head_path_str, get_value_str("fw.head.path"));
+    ASSERT_TRY(auto const fw_csr_path_str, get_value_str("fw.csr.path"));
+    ASSERT_TRY(auto const bw_head_path_str, get_value_str("bw.head.path"));
+    ASSERT_TRY(auto const bw_csr_path_str, get_value_str("bw.csr.path"));
 
     Manifest manifest;
-    RESULT_TRY(manifest.schema_version, parse_int<u32>(schema_version_str));
-    manifest.graph_code = graph_code_str;
-    manifest.graph_name = graph_name_str;
-    RESULT_TRY(manifest.graph_endian, parse_endian(graph_endian_str));
-    RESULT_TRY(manifest.graph_node_count, parse_int<u64>(graph_node_count_str));
-    RESULT_TRY(manifest.graph_edge_count, parse_int<u64>(graph_edge_count_str));
-    RESULT_TRY(manifest.graph_contains_self_loops, parse_bool(graph_contains_self_loops));
-    RESULT_TRY(manifest.graph_contains_duplicate_edges, parse_bool(graph_contains_duplicate_edges));
-    RESULT_TRY(manifest.graph_head_bytes, parse_int<size_t>(graph_head_bytes_str));
-    RESULT_TRY(manifest.graph_csr_bytes, parse_int<size_t>(graph_csr_bytes_str));
-    RESULT_TRY(manifest.fw_head_path, path_from_base(fw_head_path_str));
-    RESULT_TRY(manifest.fw_csr_path, path_from_base(fw_csr_path_str));
-    RESULT_TRY(manifest.bw_head_path, path_from_base(bw_head_path_str));
-    RESULT_TRY(manifest.bw_csr_path, path_from_base(bw_csr_path_str));
+    ASSERT_TRY(manifest.schema_version, parse_int<u32>(schema_version_str));
+    manifest.graph_code   = graph_code_str;
+    manifest.graph_name   = graph_name_str;
+    manifest.graph_endian = parse_endian(graph_endian_str);
+    ASSERT_TRY(manifest.graph_node_count, parse_int<u64>(graph_node_count_str));
+    ASSERT_TRY(manifest.graph_edge_count, parse_int<u64>(graph_edge_count_str));
+    ASSERT_TRY(manifest.graph_contains_self_loops, parse_bool(graph_contains_self_loops));
+    ASSERT_TRY(manifest.graph_contains_duplicate_edges, parse_bool(graph_contains_duplicate_edges));
+    ASSERT_TRY(manifest.graph_head_bytes, parse_int<size_t>(graph_head_bytes_str));
+    ASSERT_TRY(manifest.graph_csr_bytes, parse_int<size_t>(graph_csr_bytes_str));
+    ASSERT_TRY(manifest.fw_head_path, path_from_base(fw_head_path_str));
+    ASSERT_TRY(manifest.fw_csr_path, path_from_base(fw_csr_path_str));
+    ASSERT_TRY(manifest.bw_head_path, path_from_base(bw_head_path_str));
+    ASSERT_TRY(manifest.bw_csr_path, path_from_base(bw_csr_path_str));
     return manifest;
   }
 
@@ -181,7 +182,7 @@ struct Manifest
 };
 
 static auto
-load_graph_from_manifest(Manifest const& manifest, void* memory) -> Result<Graph>
+load_graph_from_manifest(Manifest const& manifest) -> LocalGraph
 {
   auto const  n            = manifest.graph_node_count;
   auto const  m            = manifest.graph_edge_count;
@@ -193,116 +194,187 @@ load_graph_from_manifest(Manifest const& manifest, void* memory) -> Result<Graph
   char const* bw_head_file = manifest.bw_head_path.c_str();
   char const* bw_csr_file  = manifest.bw_csr_path.c_str();
 
-  ASSERT(n < std::numeric_limits<vertex_t>::max());
-  ASSERT(m < std::numeric_limits<index_t>::max());
+  ASSERT_GE(n, 0);
+  ASSERT_LE(n + 1, std::numeric_limits<vertex_t>::max());
+
+  ASSERT_GE(m, 0);
+  ASSERT_LE(m, std::numeric_limits<index_t>::max());
+
+  ASSERT_GT(head_bytes, 0);
+  ASSERT_LE(head_bytes, 8);
+  ASSERT_GT(csr_bytes, 0);
+  ASSERT_LE(csr_bytes, 8);
+
   auto fw_head_buffer = FileBuffer::create_r(fw_head_file, (n + 1) * head_bytes);
-  auto fw_csr_buffer = FileBuffer::create_r(fw_csr_file, m * csr_bytes);
+  auto fw_csr_buffer  = FileBuffer::create_r(fw_csr_file, m * csr_bytes);
   auto bw_head_buffer = FileBuffer::create_r(bw_head_file, (n + 1) * head_bytes);
-  auto bw_csr_buffer = FileBuffer::create_r(bw_csr_file, m * csr_bytes);
+  auto bw_csr_buffer  = FileBuffer::create_r(bw_csr_file, m * csr_bytes);
 
-  auto fw_head_access = DenseUnsignedAccessor<>::view(fw_head_buffer.data(), head_bytes, load_endian);
-  auto fw_csr_access  = DenseUnsignedAccessor<>::view(fw_csr_buffer.data(), head_bytes, load_endian);
-  auto bw_head_access = DenseUnsignedAccessor<>::view(bw_head_buffer.data(), head_bytes, load_endian);
-  auto bw_csr_access  = DenseUnsignedAccessor<>::view(bw_csr_buffer.data(), head_bytes, load_endian);
+  auto const fw_head_access = DenseUnsignedAccessor<>::view(fw_head_buffer.data(), head_bytes, load_endian);
+  auto const fw_csr_access  = DenseUnsignedAccessor<>::view(fw_csr_buffer.data(), csr_bytes, load_endian);
+  auto const bw_head_access = DenseUnsignedAccessor<>::view(bw_head_buffer.data(), head_bytes, load_endian);
+  auto const bw_csr_access  = DenseUnsignedAccessor<>::view(bw_csr_buffer.data(), csr_bytes, load_endian);
 
-  auto g    = Graph{};
-  g.n       = n;
-  g.m       = m;
+  auto g = LocalGraph{};
+
+  g.buffer     = Buffer::create(2 * page_ceil<index_t>(n + 1), 2 * page_ceil<vertex_t>(m));
+  auto* memory = g.buffer.data();
+
+  g.n       = static_cast<vertex_t>(n);
+  g.m       = static_cast<index_t>(m);
   g.fw_head = borrow<index_t>(memory, n + 1);
   g.fw_csr  = borrow<vertex_t>(memory, m);
   g.bw_head = borrow<index_t>(memory, n + 1);
   g.bw_csr  = borrow<vertex_t>(memory, m);
 
   for (vertex_t i = 0; i < n + 1; ++i) {
-    g.fw_head[i] = fw_head_access.get(i);
+    DEBUG_ASSERT_GE(fw_head_access.get(i), 0);
+    DEBUG_ASSERT_LE(fw_head_access.get(i), m);
+    g.fw_head[i] = static_cast<index_t>(fw_head_access.get(i));
   }
 
-  for (vertex_t i = 0; i < m; ++i) {
-    g.fw_csr[i] = fw_csr_access.get(i);
+  for (index_t i = 0; i < m; ++i) {
+    DEBUG_ASSERT_GE(fw_csr_access.get(i), 0);
+    DEBUG_ASSERT_LE(fw_csr_access.get(i), n);
+    g.fw_csr[i] = static_cast<vertex_t>(fw_csr_access.get(i));
   }
 
   for (vertex_t i = 0; i < n + 1; ++i) {
-    g.bw_head[i] = bw_head_access.get(i);
+    DEBUG_ASSERT_GE(bw_head_access.get(i), 0);
+    DEBUG_ASSERT_LE(bw_head_access.get(i), m);
+    g.bw_head[i] = static_cast<index_t>(bw_head_access.get(i));
   }
 
-  for (vertex_t i = 0; i < m; ++i) {
-    g.bw_csr[i] = bw_csr_access.get(i);
+  for (index_t i = 0; i < m; ++i) {
+    DEBUG_ASSERT_GE(bw_csr_access.get(i), 0);
+    DEBUG_ASSERT_LE(bw_csr_access.get(i), n);
+    g.bw_csr[i] = static_cast<vertex_t>(bw_csr_access.get(i));
   }
 
   return g;
 }
 
-// template<WorldPartConcept Part>
-// static auto
-// load_graph_part_from_manifest(Part const& part, Manifest const& manifest, void* memory) -> Result<LocalGraphPart<Part>>
-// {
-//   auto const  n            = manifest.graph_node_count;
-//   auto const  m            = manifest.graph_edge_count;
-//   auto const  head_bytes   = manifest.graph_head_bytes;
-//   auto const  csr_bytes    = manifest.graph_csr_bytes;
-//   auto const  load_endian  = manifest.graph_endian;
-//   auto const* fw_head_file = manifest.fw_head_path.c_str();
-//   auto const* fw_csr_file  = manifest.fw_csr_path.c_str();
-//   auto const* bw_head_file = manifest.bw_head_path.c_str();
-//   auto const* bw_csr_file  = manifest.bw_csr_path.c_str();
-//
-//   RESULT_ASSERT(n < std::numeric_limits<vertex_t>::max(), ASSUMPTION_ERROR);
-//   RESULT_ASSERT(m < std::numeric_limits<index_t>::max(), ASSUMPTION_ERROR);
-//
-//   auto load_dir = [&](char const* head_file, char const* csr_file, auto& graph_head, auto& graph_csr) -> VoidResult {
-//     RESULT_TRY(auto head_buffer, FileBuffer::create_r(head_file, (n + 1) * head_bytes));
-//     RESULT_TRY(auto csr_buffer, FileBuffer::create_r(csr_file, (n + 1) * csr_bytes));
-//
-//     auto head_access = DenseUnsignedAccessor<>::view(head_buffer.data(), head_bytes, load_endian);
-//     auto csr_access  = DenseUnsignedAccessor<>::view(csr_buffer.data(), csr_bytes, load_endian);
-//
-//     vertex_t const local_n = part.size();
-//     index_t        local_m = 0;
-//
-//     if constexpr (Part::continuous) {
-//       if (local_n > 0)
-//         local_m = head_access.get(part.end) - head_access.get(part.begin);
-//     } else {
-//       for (vertex_t k = 0; k < local_n; ++k) {
-//         auto const u = part.select(k);
-//         local_m += head_access.get(u + 1) - head_access.get(u);
-//       }
-//     }
-//
-//     graph_head = ::borrow<index_t>(memory, local_n);
-//     graph_csr  = ::borrow<vertex_t>(memory, local_m);
-//
-//     u64 pos = 0;
-//     for (u64 k = 0; k < local_n; ++k) {
-//       auto const index = part.select(k);
-//       auto const begin = head_access.get(index);
-//       auto const end   = head_access.get(index + 1);
-//
-//       graph_head.set(k, pos);
-//
-//       for (auto it = begin; it != end; ++it)
-//         graph_csr.set(pos++, csr_access.get(it));
-//     }
-//     graph_head.set(local_n, pos);
-//     return VoidResult::success();
-//   };
-//
-//   auto result        = LocalGraphPart<Part>{};
-//   result.buffer      = Buffer::create(2 * page_ceil<index_t>(n + 1), 2 * page_ceil<vertex_t>(m));
-//   auto* graph_memory = result.data();
-//
-//   result.fw_head = borrow<index_t>(graph_memory, n + 1);
-//   result.fw_csr  = borrow<vertex_t>(graph_memory, m);
-//   result.bw_head = borrow<index_t>(graph_memory, n + 1);
-//   result.bw_csr  = borrow<vertex_t>(graph_memory, m);
-//
-//   RESULT_TRY(load_dir(fw_head_file, fw_csr_file, result.fw_head, result.fw_csr));
-//   RESULT_TRY(load_dir(bw_head_file, bw_csr_file, result.bw_head, result.bw_csr));
-//
-//   result.part = std::move(part);
-//   result.n    = n;
-//   result.m    = m;
-//
-//   return result;
-// }
-//
+template<WorldPartConcept Part>
+static auto
+load_graph_part_from_manifest(Part const& part, Manifest const& manifest) -> LocalGraphPart<Part>
+{
+  DEBUG_ASSERT_EQ(manifest.graph_node_count, part.n);
+
+  auto const  n            = part.n;
+  auto const  local_n      = part.local_n();
+  auto const  m            = manifest.graph_edge_count;
+  auto const  head_bytes   = manifest.graph_head_bytes;
+  auto const  csr_bytes    = manifest.graph_csr_bytes;
+  auto const  load_endian  = manifest.graph_endian;
+  auto const* fw_head_file = manifest.fw_head_path.c_str();
+  auto const* fw_csr_file  = manifest.fw_csr_path.c_str();
+  auto const* bw_head_file = manifest.bw_head_path.c_str();
+  auto const* bw_csr_file  = manifest.bw_csr_path.c_str();
+
+  ASSERT_LE(0, part.begin);
+  ASSERT_LE(part.begin, part.end);
+  ASSERT_LE(part.end, m);
+
+  ASSERT_GE(n, 0);
+  ASSERT_LE(n + 1, std::numeric_limits<vertex_t>::max());
+
+  ASSERT_GE(local_n, 0);
+  ASSERT_LE(local_n, n);
+
+  ASSERT_GE(m, 0);
+  ASSERT_LE(m, std::numeric_limits<index_t>::max());
+
+  ASSERT_GT(head_bytes, 0);
+  ASSERT_LE(head_bytes, 8);
+  ASSERT_GT(csr_bytes, 0);
+  ASSERT_LE(csr_bytes, 8);
+
+  auto fw_head_buffer = FileBuffer::create_r(fw_head_file, (n + 1) * head_bytes);
+  auto fw_csr_buffer  = FileBuffer::create_r(fw_csr_file, m * csr_bytes);
+  auto bw_head_buffer = FileBuffer::create_r(bw_head_file, (n + 1) * head_bytes);
+  auto bw_csr_buffer  = FileBuffer::create_r(bw_csr_file, m * csr_bytes);
+
+  auto fw_head_access = DenseUnsignedAccessor<>::view(fw_head_buffer.data(), head_bytes, load_endian);
+  auto fw_csr_access  = DenseUnsignedAccessor<>::view(fw_csr_buffer.data(), csr_bytes, load_endian);
+  auto bw_head_access = DenseUnsignedAccessor<>::view(bw_head_buffer.data(), head_bytes, load_endian);
+  auto bw_csr_access  = DenseUnsignedAccessor<>::view(bw_csr_buffer.data(), csr_bytes, load_endian);
+
+  auto const local_m = [=, &part](DenseUnsignedAccessor<> const& head) -> index_t {
+    if constexpr (Part::continuous) {
+      if (local_n > 0) {
+
+        DEBUG_ASSERT_GE(head.get(part.begin), 0);
+        DEBUG_ASSERT_LE(head.get(part.begin), m);
+
+        DEBUG_ASSERT_GE(head.get(part.end), 0);
+        DEBUG_ASSERT_LE(head.get(part.end), m);
+
+        return head.get(part.end) - head.get(part.begin);
+      }
+      return 0;
+    } else {
+      index_t sum = 0;
+      for (vertex_t k = 0; k < local_n; ++k) {
+        auto const u = part.select(k);
+
+        DEBUG_ASSERT_GE(u, 0);
+        DEBUG_ASSERT_LT(u, n);
+
+        DEBUG_ASSERT_GE(head.get(u + 1), 0);
+        DEBUG_ASSERT_LE(head.get(u + 1), m);
+
+        DEBUG_ASSERT_GE(head.get(u), 0);
+        DEBUG_ASSERT_LE(head.get(u), m);
+
+        sum += head.get(u + 1) - head.get(u);
+      }
+      return sum;
+    }
+  };
+
+  LocalGraphPart<Part> result;
+  result.m          = m;
+  result.local_fw_m = local_m(fw_head_access);
+  result.local_bw_m = local_m(bw_head_access);
+
+  DEBUG_ASSERT_GE(result.local_fw_m, 0);
+  DEBUG_ASSERT_LE(result.local_fw_m, result.m);
+  DEBUG_ASSERT_GE(result.local_bw_m, 0);
+  DEBUG_ASSERT_LE(result.local_bw_m, result.m);
+
+  result.buffer = Buffer::create(
+    2 * page_ceil<index_t>(local_n + 1),
+    page_ceil<vertex_t>(result.local_fw_m),
+    page_ceil<vertex_t>(result.local_bw_m));
+  auto* graph_memory = result.buffer.data();
+
+  result.fw_head = borrow<index_t>(graph_memory, local_n + 1);
+  result.bw_head = borrow<index_t>(graph_memory, local_n + 1);
+  result.fw_csr  = borrow<vertex_t>(graph_memory, result.local_fw_m);
+  result.bw_csr  = borrow<vertex_t>(graph_memory, result.local_bw_m);
+
+  u64 pos = 0;
+  for (u64 k = 0; k < local_n; ++k) {
+    auto const index  = part.to_global(k);
+    auto const begin  = fw_head_access.get(index);
+    auto const end    = fw_head_access.get(index + 1);
+    result.fw_head[k] = pos;
+    for (auto it = begin; it != end; ++it)
+      result.fw_csr[pos++] = fw_csr_access.get(it);
+  }
+  result.fw_head[local_n] = pos;
+
+  pos = 0;
+  for (u64 k = 0; k < local_n; ++k) {
+    auto const index  = part.to_global(k);
+    auto const begin  = bw_head_access.get(index);
+    auto const end    = bw_head_access.get(index + 1);
+    result.bw_head[k] = pos;
+    for (auto it = begin; it != end; ++it)
+      result.bw_csr[pos++] = bw_csr_access.get(it);
+  }
+  result.bw_head[local_n] = pos;
+
+  result.part = std::move(part);
+  return result;
+}

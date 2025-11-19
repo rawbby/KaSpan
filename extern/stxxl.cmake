@@ -46,6 +46,7 @@ if (NOT stxxl_VALID)
             -DCMAKE_INSTALL_PREFIX="${stxxl_INSTALL_DIR}"
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
             -DBUILD_TESTING=OFF
+            -DCMAKE_BUILD_PARALLEL_LEVEL="${DCMAKE_BUILD_PARALLEL_LEVEL}"
             RESULT_VARIABLE CONFIGURE_RESULT
             OUTPUT_QUIET ERROR_QUIET)
 
@@ -81,5 +82,6 @@ if (NOT stxxl_VALID)
 endif ()
 
 list(PREPEND CMAKE_PREFIX_PATH "${stxxl_INSTALL_DIR}")
-find_package(stxxl CONFIG QUIET)
+find_package(stxxl REQUIRED CONFIG PATHS "${stxxl_INSTALL_DIR}")
+target_include_directories(stxxl SYSTEM INTERFACE "${stxxl_INSTALL_DIR}/include")
 add_library(stxxl::stxxl ALIAS stxxl)

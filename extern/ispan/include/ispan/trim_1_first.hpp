@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ispan/util.hpp>
+#include <debug/statistic.hpp>
 
 inline void
 trim_1_first(vertex_t* scc_id, index_t const* fw_head, index_t const* bw_head, vertex_t local_beg, vertex_t local_end, vertex_t step)

@@ -126,8 +126,8 @@ degree_max_reduce(void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatyp
   for (int i = 0; i < *len; ++i) {
     auto const& a = inout[i];
     auto const& b = in[i];
-    if (b.degree_product > a.degree_product ||
-        (b.degree_product == a.degree_product && b.u > a.u)) {
+    if (b.degree_product > a.degree_product or
+        (b.degree_product == a.degree_product and b.u > a.u)) {
       inout[i] = b;
     }
   }

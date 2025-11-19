@@ -1,6 +1,7 @@
 #pragma once
 
 #include <debug/assert.hpp>
+#include <debug/statistic.hpp>
 #include <ispan/util.hpp>
 #include <util/mpi_basic.hpp>
 #include <util/scope_guard.hpp>
@@ -31,14 +32,14 @@ fw_span(
   KASPAN_STATISTIC_SCOPE("forward_search");
 
   depth_t level                = 0;
-  fw_sa[root]                  = 0;
+  fw_sa[root]                  = level;
   bool       is_top_down       = true;
   bool       is_top_down_queue = false;
   auto const queue_size        = std::max<index_t>(1, n / 100);
 
   while (true) {
     index_t front_count = 0;
-    int     next_work   = 0;
+    index_t next_work   = 0;
 
     if (is_top_down) { // TOP DOWN STRATEGY
 
@@ -52,10 +53,10 @@ fw_span(
 
             if (scc_id[v] == scc_id_undecided && fw_sa[v] == depth_unset) {
               fw_sa[v] = static_cast<depth_t>(level + 1);
-              sa_compress[v / 32] |= 1 << (static_cast<index_t>(v) % 32);
+              sa_compress[v / 32] |= static_cast<index_t>(1) << (v % 32);
               next_work += fw_head[v + 1] - fw_head[v];
               fq_comm[front_count] = v;
-              front_count++;
+              ++front_count;
             }
           }
         }
@@ -125,10 +126,9 @@ fw_span(
 
     front_comm[mpi_world_rank] = front_count;
     if (is_top_down) {
-
       // clang-format off
-      MPI_Allreduce(
-        MPI_IN_PLACE, &next_work, 1, mpi_basic_type<decltype(next_work)>,
+      MPI_Allreduce_c(
+        MPI_IN_PLACE, &next_work, 1, mpi_index_t,
         MPI_SUM, MPI_COMM_WORLD);
       // clang-format on
     }
