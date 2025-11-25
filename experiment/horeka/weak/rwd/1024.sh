@@ -36,7 +36,7 @@ for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
 
   srun                   \
-    --mpi=pmi            \
+    --mpi=pmi2           \
     --nodes=14           \
     --exclusive          \
     --ntasks=1024        \
