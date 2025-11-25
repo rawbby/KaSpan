@@ -85,8 +85,8 @@ endif ()
 
 list(PREPEND CMAKE_PREFIX_PATH "${BriefKAsten_INSTALL_DIR}")
 find_package(MPI REQUIRED)
-include("${BriefKAsten_INSTALL_DIR}/lib/cmake/kassert/kassertConfig.cmake")
-include("${BriefKAsten_INSTALL_DIR}/lib/cmake/range-v3/range-v3-config.cmake")
+find_package(kassert::kassert REQUIRED CONFIG PATHS "${BriefKAsten_INSTALL_DIR}")
+find_package(range-v3::range-v3 REQUIRED CONFIG PATHS "${BriefKAsten_INSTALL_DIR}")
 
 add_library(BriefKAsten INTERFACE IMPORTED GLOBAL)
 set_target_properties(BriefKAsten PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${BriefKAsten_SOURCE_DIR}/src")
