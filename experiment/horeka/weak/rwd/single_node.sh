@@ -32,7 +32,9 @@ export I_MPI_JOB_TIMEOUT=4
 
 set +eu
 
-need_wait=0
+max_jobs=2 # one per socket
+running_jobs=0
+
 for np in 1 2 4 8 16 32; do
   for manifest in "${rwd[@]}"; do
     manifest_name="$(basename "${manifest%.manifest}")"
@@ -50,10 +52,11 @@ for np in 1 2 4 8 16 32; do
         --output_file "${app_name}_${manifest_name}_np${np}.json" \
         --manifest_file "$manifest" &
 
-    if (( need_wait )); then
-      wait
+    ((running_jobs++))
+    if (( running_jobs >= max_jobs )); then
+      wait -n
+      ((running_jobs--))
     fi
-    need_wait=$(( 1 - need_wait ))
   done
 done
 wait
