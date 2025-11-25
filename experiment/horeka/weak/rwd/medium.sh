@@ -36,7 +36,7 @@ for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
 
   srun                   \
-    --mpi=mpix           \
+    --mpi=mpi            \
     --nodes=1            \
     --exclusive          \
     --ntasks=64          \
@@ -48,7 +48,7 @@ for manifest in "${rwd[@]}"; do
       --manifest_file "$manifest" &
 
   srun                   \
-    --mpi=mpix           \
+    --mpi=mpi            \
     --nodes=2            \
     --exclusive          \
     --ntasks=128         \
@@ -60,7 +60,7 @@ for manifest in "${rwd[@]}"; do
       --manifest_file "$manifest" &
 
   srun                   \
-    --mpi=mpix           \
+    --mpi=mpi            \
     --nodes=4            \
     --exclusive          \
     --ntasks=256         \
@@ -74,7 +74,7 @@ for manifest in "${rwd[@]}"; do
   wait
 
   srun                   \
-    --mpi=mpix           \
+    --mpi=mpi            \
     --nodes=7            \
     --exclusive          \
     --ntasks=512         \
