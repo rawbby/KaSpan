@@ -1,0 +1,67 @@
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --ntasks=76
+#SBATCH --cpus-per-task=1
+#SBATCH --ntasks-per-socket=38
+#SBATCH --ntasks-per-node=76
+#SBATCH -o single_node.out
+#SBATCH -e single_node.err
+#SBATCH -J single_node
+#SBATCH --partition=cpuonly
+#SBATCH --time=45:00
+#SBATCH --export=ALL
+
+set -euo pipefail
+
+module purge
+module load compiler/gnu/14
+module load mpi/impi/2021.11
+module load devel/cmake/3.30
+
+app_name=kaspan
+app=~/workspace/KaSpan/cmake-build-release/bin/bench_kaspan
+
+rwd=( ~/workspace/KaSpan/experiment/rwd/*.manifest )
+
+set +eu
+
+need_wait=0
+for np in 1 2 4 8 16 32; do
+  for manifest in "${rwd[@]}"; do
+    manifest_name="$(basename "${manifest%.manifest}")"
+
+    srun                          \
+      --nodes=1                   \
+      --exclusive                 \
+      --ntasks="${np}"            \
+      --ntasks-per-socket="${np}" \
+      --cpus-per-task=1           \
+      --hint=nomultithread        \
+      --cpu-bind=cores            \
+      "$app"                      \
+        --output_file "${app_name}_${manifest_name}_np${np}.json" \
+        --manifest_file "$manifest" &
+
+    if (( need_wait )); then
+      wait
+    fi
+    need_wait=$(( 1 - need_wait ))
+  done
+done
+wait
+
+for manifest in "${rwd[@]}"; do
+  manifest_name="$(basename "${manifest%.manifest}")"
+
+  srun                     \
+    --nodes=1              \
+    --exclusive            \
+    --ntasks=64            \
+    --ntasks-per-socket=38 \
+    --cpus-per-task=1      \
+    --hint=nomultithread   \
+    --cpu-bind=cores       \
+    "$app"                 \
+      --output_file "${app_name}_${manifest_name}_np64.json" \
+      --manifest_file "$manifest"
+done
