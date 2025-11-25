@@ -32,48 +32,64 @@ export I_MPI_JOB_TIMEOUT=4
 
 set +eu
 
+for manifest in "${rwd[@]}"; do
+  manifest_name="$(basename "${manifest%.manifest}")"
+  output_file="${app_name}_${manifest_name}_np64.json"
+
+  if [[ -s "$output_file" ]]; then
+    echo "[SKIPPING] ${app_name} NP=64 Graph=${manifest_name}"
+
+  else
+    echo "[STARTING] ${app_name} NP=64 Graph=${manifest_name}"
+
+    srun                     \
+      --mpi=pmi2             \
+      --nodes=1              \
+      --exclusive            \
+      --ntasks=64            \
+      --ntasks-per-socket=38 \
+      --cpus-per-task=1      \
+      --hint=nomultithread   \
+      --cpu-bind=cores       \
+      "$app"                 \
+        --output_file "${app_name}_${manifest_name}_np64.json" \
+        --manifest_file "$manifest"
+  fi
+done
+
 max_jobs=2 # one per socket
 running_jobs=0
 
-for np in 1 2 4 8 16 32; do
-  for manifest in "${rwd[@]}"; do
+for manifest in "${rwd[@]}"; do
+  for np in 32 16 8 4 2 1; do
     manifest_name="$(basename "${manifest%.manifest}")"
+    output_file="${app_name}_${manifest_name}_np${np}.json"
 
-    srun                          \
-      --mpi=pmi2                  \
-      --nodes=1                   \
-      --exclusive                 \
-      --ntasks="${np}"            \
-      --ntasks-per-socket="${np}" \
-      --cpus-per-task=1           \
-      --hint=nomultithread        \
-      --cpu-bind=cores            \
-      "$app"                      \
-        --output_file "${app_name}_${manifest_name}_np${np}.json" \
-        --manifest_file "$manifest" &
+    if [[ -s "$output_file" ]]; then
+      echo "[SKIPPING] ${app_name} NP=${np} Graph=${manifest_name}"
 
-    ((running_jobs++))
-    if (( running_jobs >= max_jobs )); then
-      wait -n
-      ((running_jobs--))
+    else
+      echo "[STARTING] ${app_name} NP=${np} Graph=${manifest_name}"
+
+      srun                          \
+        --mpi=pmi2                  \
+        --nodes=1                   \
+        --exclusive                 \
+        --ntasks="${np}"            \
+        --ntasks-per-socket="${np}" \
+        --cpus-per-task=1           \
+        --hint=nomultithread        \
+        --cpu-bind=cores            \
+        "$app"                      \
+          --output_file "$output_file" \
+          --manifest_file "$manifest" &
+
+      ((running_jobs++))
+      if (( running_jobs >= max_jobs )); then
+        wait -n
+        ((running_jobs--))
+      fi
     fi
   done
 done
 wait
-
-for manifest in "${rwd[@]}"; do
-  manifest_name="$(basename "${manifest%.manifest}")"
-
-  srun                     \
-    --mpi=pmi2             \
-    --nodes=1              \
-    --exclusive            \
-    --ntasks=64            \
-    --ntasks-per-socket=38 \
-    --cpus-per-task=1      \
-    --hint=nomultithread   \
-    --cpu-bind=cores       \
-    "$app"                 \
-      --output_file "${app_name}_${manifest_name}_np64.json" \
-      --manifest_file "$manifest"
-done
