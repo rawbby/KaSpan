@@ -1,7 +1,7 @@
 #pragma once
 
-#include <memory/Borrow.hpp>
-#include <util/Arithmetic.hpp>
+#include <memory/borrow.hpp>
+#include <util/arithmetic.hpp>
 
 #include <algorithm>
 #include <bit>
