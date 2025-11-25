@@ -36,7 +36,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   KASPAN_STATISTIC_POP();
 
   vertex_t   local_decided     = 0;
-  auto const decided_threshold = n / mpi_world_size;
+  auto const decided_threshold = n - n / mpi_world_size;
 
   auto [trim_1_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
   local_decided += trim_1_decided;
