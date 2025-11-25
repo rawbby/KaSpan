@@ -20,13 +20,27 @@
 #include <cstdio>
 
 template<WorldPartConcept Part>
-VoidResult
+void
 scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id)
 {
   KASPAN_STATISTIC_SCOPE("scc");
 
   auto const n       = part.n;
   auto const local_n = part.local_n();
+
+  if (mpi_world_size == 1) {
+    // fallback to tarjan
+    tarjan(part, fw_head, fw_csr, [&](vertex_t const* cbeg, vertex_t const* cend) {
+      vertex_t min_u = n;
+      for (auto it = cbeg; it < cend; ++it) {
+        min_u = std::min(min_u, *it);
+      }
+      for (auto it = cbeg; it < cend; ++it) {
+        scc_id[*it] = min_u;
+      }
+    });
+    return;
+  }
 
   KASPAN_STATISTIC_PUSH("alloc");
   std::ranges::fill(scc_id, scc_id + local_n, scc_id_undecided);
@@ -103,5 +117,4 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
   KASPAN_STATISTIC_SCOPE("post_processing");
   normalize_scc_id(part, scc_id);
-  return VoidResult::success();
 }
