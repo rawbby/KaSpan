@@ -5,7 +5,7 @@
 #include <memory/bit_accessor.hpp>
 #include <memory/buffer.hpp>
 #include <memory/stack_accessor.hpp>
-#include <scc/Graph.hpp>
+#include <scc/graph.hpp>
 
 constexpr auto
 no_filter(vertex_t /* k */) -> bool

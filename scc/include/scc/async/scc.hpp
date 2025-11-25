@@ -5,7 +5,7 @@
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
 #include <scc/allgather_graph.hpp>
-#include <scc/async/ForwardSearch.hpp>
+#include <scc/async/forward_search.hpp>
 #include <scc/async/backward_search.hpp>
 #include <scc/base.hpp>
 #include <scc/graph.hpp>
