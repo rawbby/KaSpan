@@ -23,6 +23,13 @@ app=~/workspace/KaSpan/cmake-build-release/bin/bench_kaspan
 
 rwd=( ~/workspace/KaSpan/experiment/rwd/*.manifest )
 
+export I_MPI_HYDRA_BOOTSTRAP=slurm
+export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi2.so
+export I_MPI_PIN=1
+export I_MPI_PIN_DOMAIN=core
+export I_MPI_PIN_ORDER=compact
+export I_MPI_JOB_TIMEOUT=4
+
 set +eu
 
 for manifest in "${rwd[@]}"; do
