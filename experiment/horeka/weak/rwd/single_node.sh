@@ -38,6 +38,7 @@ for np in 1 2 4 8 16 32; do
     manifest_name="$(basename "${manifest%.manifest}")"
 
     srun                          \
+      --mpi=mpix                  \
       --nodes=1                   \
       --exclusive                 \
       --ntasks="${np}"            \
@@ -61,6 +62,7 @@ for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
 
   srun                     \
+    --mpi=mpix             \
     --nodes=1              \
     --exclusive            \
     --ntasks=64            \

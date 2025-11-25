@@ -36,13 +36,14 @@ for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
 
   srun                   \
-    --nodes=7            \
+    --mpi=mpix           \
+    --nodes=14           \
     --exclusive          \
-    --ntasks=512         \
+    --ntasks=1024        \
     --cpus-per-task=1    \
     --hint=nomultithread \
     --cpu-bind=cores     \
     "$app"               \
-      --output_file "${app_name}_${manifest_name}_np512.json" \
+      --output_file "${app_name}_${manifest_name}_np1024.json" \
       --manifest_file "$manifest"
 done
