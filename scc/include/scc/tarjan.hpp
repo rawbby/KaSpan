@@ -1,5 +1,6 @@
 #pragma once
 
+#include <debug/process.hpp>
 #include <debug/statistic.hpp>
 #include <iostream>
 #include <memory/bit_accessor.hpp>
@@ -54,6 +55,7 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
   auto on_stack = BitAccessor::borrow_clean(memory, local_n);
   auto st       = StackAccessor<vertex_t>::borrow(memory, local_n);
   auto dfs      = StackAccessor<Frame>::borrow(memory, local_n);
+  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
   for (vertex_t local_root = 0; local_root < local_n; ++local_root) {
     if (not filter(local_root))
