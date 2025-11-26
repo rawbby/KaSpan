@@ -10,7 +10,8 @@ cwd = pathlib.Path(os.getcwd())
 pattern = re.compile(r"kaspan_(.*)_np([0-9]+)\.json")
 
 paths = [p for p in cwd.iterdir() if p.is_file()]
-data = {}
+duration_data = {}
+memory_data = {}
 
 for path in paths:
     try:
@@ -24,7 +25,10 @@ for path in paths:
 
         with path.open("r") as file:
             output = json.load(file)
-            data.setdefault(graph, {})[n] = max(
+            duration_data.setdefault(graph, {})[n] = max(
+                int(output[str(i)]["benchmark"]["scc"]["duration"]) for i in range(n)
+            )
+            memory_data.setdefault(graph, {})[n] = max(
                 int(output[str(i)]["benchmark"]["scc"]["duration"]) for i in range(n)
             )
 
@@ -34,7 +38,7 @@ for path in paths:
         continue
 
 
-for graph, values in data.items():
+for graph, values in duration_data.items():
     nps = sorted(values.keys())
     durations = [float(values[n]) / 10e9 for n in nps]
 
