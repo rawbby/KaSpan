@@ -1,7 +1,7 @@
 #include <debug/assert.hpp>
 #include <debug/sub_process.hpp>
-#include <scc/Fuzzy.hpp>
-#include <scc/Scc.hpp>
+#include <scc/fuzzy.hpp>
+#include <scc/scc.hpp>
 #include <scc/tarjan.hpp>
 #include <util/scope_guard.hpp>
 

@@ -1,7 +1,7 @@
 #include <debug/assert.hpp>
 #include <debug/sub_process.hpp>
 #include <ispan/scc.hpp>
-#include <scc/Fuzzy.hpp>
+#include <scc/fuzzy.hpp>
 #include <util/scope_guard.hpp>
 
 #include <iomanip>
