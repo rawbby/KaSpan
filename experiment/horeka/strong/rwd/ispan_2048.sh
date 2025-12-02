@@ -53,6 +53,7 @@ for manifest in "${rwd[@]}"; do
         --output_file "$output_file" \
         --manifest_file "$manifest"; ec=$?
     if [[ $ec -ne 0 ]]; then
+      [[ $ec -eq 137 ]] && ec="${ec} (oom)"
       echo "[FAILURE] ${app_name} NP=2048 Graph=${manifest_name} ec=${ec}"
     else
       echo "[SUCCESS] ${app_name} NP=2048 Graph=${manifest_name}"
