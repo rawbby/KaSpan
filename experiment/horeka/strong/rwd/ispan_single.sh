@@ -66,10 +66,8 @@ for manifest in "${rwd[@]}"; do
 
     if [[ -s "$output_file" ]]; then
       echo "[SKIPPING] ${app_name} NP=${np} Graph=${manifest_name}"
-
     else
       echo "[STARTING] ${app_name} NP=${np} Graph=${manifest_name}"
-
       srun                             \
         --time=3:00                    \
         --oom-kill-step=1              \
@@ -83,7 +81,12 @@ for manifest in "${rwd[@]}"; do
         --cpu-bind=cores               \
         "$app"                         \
           --output_file "$output_file" \
-          --manifest_file "$manifest"
+          --manifest_file "$manifest"; ec=$?
+      if [[ $ec -ne 0 ]]; then
+        echo "[FAILURE] ${app_name} NP=${np} Graph=${manifest_name} ec=${ec}"
+      else
+        echo "[SUCCESS] ${app_name} NP=${np} Graph=${manifest_name}"
+      fi
     fi
   done
 done

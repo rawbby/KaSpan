@@ -51,6 +51,11 @@ for manifest in "${rwd[@]}"; do
       --cpu-bind=cores     \
       "$app"               \
         --output_file "$output_file" \
-        --manifest_file "$manifest"
+        --manifest_file "$manifest"; ec=$?
+    if [[ $ec -ne 0 ]]; then
+      echo "[FAILURE] ${app_name} NP=2048 Graph=${manifest_name} ec=${ec}"
+    else
+      echo "[SUCCESS] ${app_name} NP=2048 Graph=${manifest_name}"
+    fi
   fi
 done
