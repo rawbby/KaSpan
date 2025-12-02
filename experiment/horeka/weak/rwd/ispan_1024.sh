@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --nodes=27
-#SBATCH --ntasks=2052
+#SBATCH --nodes=14
+#SBATCH --ntasks=1064
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-socket=38
 #SBATCH --ntasks-per-node=76
-#SBATCH -o 2048.out
-#SBATCH -e 2048.err
-#SBATCH -J 2048
+#SBATCH -o 1024.out
+#SBATCH -e 1024.err
+#SBATCH -J ispan_1024
 #SBATCH --partition=cpuonly
 #SBATCH --time=20:00
 #SBATCH --export=ALL
@@ -18,8 +18,8 @@ module load compiler/gnu/14
 module load mpi/impi/2021.11
 module load devel/cmake/3.30
 
-app_name=kaspan
-app=~/workspace/KaSpan/cmake-build-release/bin/bench_kaspan
+app_name=ispan
+app=~/workspace/KaSpan/cmake-build-release/bin/bench_ispan
 
 rwd=( ~/workspace/KaSpan/experiment/rwd/*.manifest )
 
@@ -38,13 +38,13 @@ for manifest in "${rwd[@]}"; do
   srun                   \
     --time=2:00          \
     --mpi=pmi2           \
-    --nodes=27           \
+    --nodes=14           \
     --exclusive          \
-    --ntasks=2048        \
+    --ntasks=1024        \
     --cpus-per-task=1    \
     --hint=nomultithread \
     --cpu-bind=cores     \
     "$app"               \
-      --output_file "${app_name}_${manifest_name}_np2048.json" \
+      --output_file "${app_name}_${manifest_name}_np1024.json" \
       --manifest_file "$manifest"
 done

@@ -6,7 +6,7 @@
 #SBATCH --ntasks-per-node=76
 #SBATCH -o single_node.out
 #SBATCH -e single_node.err
-#SBATCH -J single_node
+#SBATCH -J ispan_single_node
 #SBATCH --partition=cpuonly
 #SBATCH --time=30:00
 #SBATCH --export=ALL
@@ -18,8 +18,8 @@ module load compiler/gnu/14
 module load mpi/impi/2021.11
 module load devel/cmake/3.30
 
-app_name=kaspan
-app=~/workspace/KaSpan/cmake-build-release/bin/bench_kaspan
+app_name=ispan
+app=~/workspace/KaSpan/cmake-build-release/bin/bench_ispan
 
 rwd=( ~/workspace/KaSpan/experiment/rwd/*.manifest )
 
@@ -44,6 +44,7 @@ for manifest in "${rwd[@]}"; do
 
     srun                     \
       --time=2:00            \
+      --oom-kill-step=1      \
       --mpi=pmi2             \
       --nodes=1              \
       --exclusive            \
@@ -74,6 +75,7 @@ for manifest in "${rwd[@]}"; do
 
       srun                          \
         --time=2:00                 \
+        --oom-kill-step=1           \
         --mpi=pmi2                  \
         --nodes=1                   \
         --exclusive                 \
