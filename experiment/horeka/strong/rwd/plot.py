@@ -3,7 +3,6 @@ import os
 import pathlib
 import re
 import traceback
-from enum import unique
 
 import matplotlib.pyplot as plt
 
@@ -66,26 +65,27 @@ for app_graph, values in duration_data.items():
 
     print(cwd / f"{app}_{graph}.png")
 
-
 for graph in graphs:
-    data = { app_graph[1]: values for app_graph, values in duration_data.items() if app_graph[0] == graph }
+    # map app -> {n: duration}
+    data = {app_graph[0]: values
+            for app_graph, values in duration_data.items()
+            if app_graph[1] == graph}
 
-    nps = []
-    for app, values in data:
-        nps.extend(values)
-    nps = sorted(list(set(nps)))
+    # union of all nps across apps
+    nps = sorted({n for values in data.values() for n in values.keys()})
 
     plt.figure()
-
-    for app, values in data:
-        durations = [float(values[n]) * 10e-9 for n in nps]
-        plt.plot(nps, durations)
+    for app, values in data.items():
+        # build durations aligned with union nps, use NaN for missing
+        durations = [float(values[n]) * 1e-8 if n in values else float('nan') for n in nps]
+        plt.plot(nps, durations, marker='o', label=app)
 
     plt.xlabel("np")
     plt.ylabel("seconds")
     plt.title(f"Strong Scaling '{graph}'")
     plt.grid(True)
     plt.xscale("log", base=2)
+    plt.legend()
     plt.tight_layout()
 
     plt.savefig(cwd / f"{graph}.png", dpi=200)
