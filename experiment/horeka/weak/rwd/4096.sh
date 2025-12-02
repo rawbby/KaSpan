@@ -8,7 +8,7 @@
 #SBATCH -e 4096.err
 #SBATCH -J 4096
 #SBATCH --partition=cpuonly
-#SBATCH --time=25:00
+#SBATCH --time=20:00
 #SBATCH --export=ALL
 
 set -euo pipefail
@@ -36,6 +36,7 @@ for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
 
   srun                   \
+    --time=2:00          \
     --mpi=pmi2           \
     --nodes=54           \
     --exclusive          \
