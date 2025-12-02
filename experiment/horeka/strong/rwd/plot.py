@@ -1,3 +1,4 @@
+import itertools
 import json
 import os
 import pathlib
@@ -46,13 +47,20 @@ for path in paths:
         print(traceback.format_exc())
         continue
 
+apps = sorted(apps)
+colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+markers = ["o", "s", "D", "^", "v", "P", "X", "d", "<", ">"]
+style_cycle = itertools.cycle(zip(itertools.cycle(colors), itertools.cycle(markers)))
+app_style = {app: next(style_cycle) for app in apps}
+
 for app_graph, values in duration_data.items():
     app, graph = app_graph
     nps = sorted(values.keys())
     durations = [float(values[n]) * 10e-9 for n in nps]
 
     plt.figure()
-    plt.plot(nps, durations, marker="o")
+    color, marker = app_style[app]
+    plt.plot(nps, durations, color=color, marker=marker)
     plt.xlabel("np")
     plt.ylabel("seconds")
     plt.title(f"Strong Scaling {app} '{graph}'")
@@ -84,7 +92,8 @@ for graph in graphs:
     for app, values in data.items():
         # build durations aligned with union nps, use NaN for missing
         durations = [values.get(n, float("nan")) for n in nps]
-        plt.plot(nps, durations, marker="o", label=app)
+        color, marker = app_style[app]
+        plt.plot(nps, durations, label=app, color=color, marker=marker)
 
     plt.xlabel("np")
     plt.ylabel("seconds")
