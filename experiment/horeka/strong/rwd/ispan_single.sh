@@ -4,11 +4,11 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-socket=38
 #SBATCH --ntasks-per-node=76
-#SBATCH -o single_node.out
-#SBATCH -e single_node.err
-#SBATCH -J ispan_single_node
+#SBATCH -o isapn_single.out
+#SBATCH -e isapn_single.err
+#SBATCH -J ispan_single
 #SBATCH --partition=cpuonly
-#SBATCH --time=30:00
+#SBATCH --time=45:00
 #SBATCH --export=ALL
 
 set -euo pipefail
@@ -28,7 +28,7 @@ export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi2.so
 export I_MPI_PIN=1
 export I_MPI_PIN_DOMAIN=core
 export I_MPI_PIN_ORDER=compact
-export I_MPI_JOB_TIMEOUT=4
+export I_MPI_JOB_TIMEOUT=3
 
 set +eu
 
@@ -42,25 +42,22 @@ for manifest in "${rwd[@]}"; do
   else
     echo "[STARTING] ${app_name} NP=64 Graph=${manifest_name}"
 
-    srun                     \
-      --time=2:00            \
-      --oom-kill-step=1      \
-      --mpi=pmi2             \
-      --nodes=1              \
-      --exclusive            \
-      --ntasks=64            \
-      --ntasks-per-socket=38 \
-      --cpus-per-task=1      \
-      --hint=nomultithread   \
-      --cpu-bind=cores       \
-      "$app"                 \
-        --output_file "${app_name}_${manifest_name}_np64.json" \
+    srun                             \
+      --time=3:00                    \
+      --oom-kill-step=1              \
+      --mpi=pmi2                     \
+      --nodes=1                      \
+      --exclusive                    \
+      --ntasks=64                    \
+      --ntasks-per-socket=38         \
+      --cpus-per-task=1              \
+      --hint=nomultithread           \
+      --cpu-bind=cores               \
+      "$app"                         \
+        --output_file "$output_file" \
         --manifest_file "$manifest"
   fi
 done
-
-max_jobs=2 # one per socket
-running_jobs=0
 
 for manifest in "${rwd[@]}"; do
   for np in 32 16 8 4 2 1; do
@@ -73,27 +70,20 @@ for manifest in "${rwd[@]}"; do
     else
       echo "[STARTING] ${app_name} NP=${np} Graph=${manifest_name}"
 
-      srun                          \
-        --time=2:00                 \
-        --oom-kill-step=1           \
-        --mpi=pmi2                  \
-        --nodes=1                   \
-        --exclusive                 \
-        --ntasks="${np}"            \
-        --ntasks-per-socket="${np}" \
-        --cpus-per-task=1           \
-        --hint=nomultithread        \
-        --cpu-bind=cores            \
-        "$app"                      \
+      srun                             \
+        --time=3:00                    \
+        --oom-kill-step=1              \
+        --mpi=pmi2                     \
+        --nodes=1                      \
+        --exclusive                    \
+        "--ntasks=$np"                 \
+        "--ntasks-per-socket=$np"      \
+        --cpus-per-task=1              \
+        --hint=nomultithread           \
+        --cpu-bind=cores               \
+        "$app"                         \
           --output_file "$output_file" \
-          --manifest_file "$manifest" &
-
-      ((running_jobs++))
-      if (( running_jobs >= max_jobs )); then
-        wait -n
-        ((running_jobs--))
-      fi
+          --manifest_file "$manifest"
     fi
   done
 done
-wait

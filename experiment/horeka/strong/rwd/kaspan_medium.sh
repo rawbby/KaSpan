@@ -4,9 +4,9 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-socket=38
 #SBATCH --ntasks-per-node=76
-#SBATCH -o ispan_medium.out
-#SBATCH -e ispan_medium.err
-#SBATCH -J ispan_medium
+#SBATCH -o kaspan_medium.out
+#SBATCH -e kaspan_medium.err
+#SBATCH -J kaspan_medium
 #SBATCH --partition=cpuonly
 #SBATCH --time=35:00
 #SBATCH --export=ALL
@@ -18,8 +18,8 @@ module load compiler/gnu/14
 module load mpi/impi/2021.11
 module load devel/cmake/3.30
 
-app_name=ispan
-app=~/workspace/KaSpan/cmake-build-release/bin/bench_ispan
+app_name=kaspan
+app=~/workspace/KaSpan/cmake-build-release/bin/bench_kaspan
 
 rwd=( ~/workspace/KaSpan/experiment/rwd/*.manifest )
 

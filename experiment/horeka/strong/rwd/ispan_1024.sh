@@ -4,11 +4,11 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-socket=38
 #SBATCH --ntasks-per-node=76
-#SBATCH -o 1024.out
-#SBATCH -e 1024.err
+#SBATCH -o ispan_1024.out
+#SBATCH -e ispan_1024.err
 #SBATCH -J ispan_1024
 #SBATCH --partition=cpuonly
-#SBATCH --time=20:00
+#SBATCH --time=25:00
 #SBATCH --export=ALL
 
 set -euo pipefail
@@ -28,23 +28,29 @@ export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi2.so
 export I_MPI_PIN=1
 export I_MPI_PIN_DOMAIN=core
 export I_MPI_PIN_ORDER=compact
-export I_MPI_JOB_TIMEOUT=4
+export I_MPI_JOB_TIMEOUT=3
 
 set +eu
 
 for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
-
-  srun                   \
-    --time=2:00          \
-    --mpi=pmi2           \
-    --nodes=14           \
-    --exclusive          \
-    --ntasks=1024        \
-    --cpus-per-task=1    \
-    --hint=nomultithread \
-    --cpu-bind=cores     \
-    "$app"               \
-      --output_file "${app_name}_${manifest_name}_np1024.json" \
-      --manifest_file "$manifest"
+  output_file="${app_name}_${manifest_name}_np1024.json"
+  if [[ -s "$output_file" ]]; then
+    echo "[SKIPPING] ${app_name} NP=1024 Graph=${manifest_name}"
+  else
+    echo "[STARTING] ${app_name} NP=1024 Graph=${manifest_name}"
+    srun                   \
+      --time=3:00          \
+      --oom-kill-step=1    \
+      --mpi=pmi2           \
+      --nodes=14           \
+      --exclusive          \
+      --ntasks=1024        \
+      --cpus-per-task=1    \
+      --hint=nomultithread \
+      --cpu-bind=cores     \
+      "$app"               \
+        --output_file "$output_file" \
+        --manifest_file "$manifest"
+  fi
 done

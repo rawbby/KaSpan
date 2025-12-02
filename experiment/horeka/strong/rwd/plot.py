@@ -38,7 +38,6 @@ for path in paths:
         print(traceback.format_exc())
         continue
 
-
 for app_graph, values in duration_data.items():
     app, graph = app_graph
     nps = sorted(values.keys())
