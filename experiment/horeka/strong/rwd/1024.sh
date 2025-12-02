@@ -18,10 +18,7 @@ module load compiler/gnu/14
 module load mpi/impi/2021.11
 module load devel/cmake/3.30
 
-app_name=kaspan
-app=~/workspace/KaSpan/cmake-build-release/bin/bench_kaspan
-
-rwd=( ~/workspace/KaSpan/experiment/rwd/*.manifest )
+source ~/workspace/KaSpan/.venv/bin/activate
 
 export I_MPI_HYDRA_BOOTSTRAP=slurm
 export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi2.so
@@ -30,13 +27,18 @@ export I_MPI_PIN_DOMAIN=core
 export I_MPI_PIN_ORDER=compact
 export I_MPI_JOB_TIMEOUT=4
 
+app_name=kaspan
+app=~/workspace/KaSpan/cmake-build-release/bin/bench_kaspan
+
+rwd=( ~/workspace/KaSpan/experiment/rwd/*.manifest )
+
 set +eu
 
 for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
 
   srun                   \
-    --time=2:00          \
+    --time=3:00          \
     --mpi=pmi2           \
     --nodes=14           \
     --exclusive          \
