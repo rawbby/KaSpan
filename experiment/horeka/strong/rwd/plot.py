@@ -66,10 +66,16 @@ for app_graph, values in duration_data.items():
     print(cwd / f"{app}_{graph}.png")
 
 for graph in graphs:
-    # map app -> {n: duration}
-    data = {app_graph[0]: values
-            for app_graph, values in duration_data.items()
-            if app_graph[1] == graph}
+    # map app -> {n: duration_seconds}, filter out durations > 4 minutes
+    data = {
+        app_graph[0]: {
+            n: (float(v) * 1e-9)
+            for n, v in values.items()
+            if (float(v) * 1e-9) <= 4 * 60
+        }
+        for app_graph, values in duration_data.items()
+        if app_graph[1] == graph
+    }
 
     # union of all nps across apps
     nps = sorted({n for values in data.values() for n in values.keys()})
@@ -77,13 +83,14 @@ for graph in graphs:
     plt.figure()
     for app, values in data.items():
         # build durations aligned with union nps, use NaN for missing
-        durations = [float(values[n]) * 1e-8 if n in values else float('nan') for n in nps]
-        plt.plot(nps, durations, marker='o', label=app)
+        durations = [values.get(n, float("nan")) for n in nps]
+        plt.plot(nps, durations, marker="o", label=app)
 
     plt.xlabel("np")
     plt.ylabel("seconds")
     plt.title(f"Strong Scaling '{graph}'")
     plt.grid(True)
+    plt.yscale("log", base=10)  # use base-10 log scale on seconds
     plt.xscale("log", base=2)
     plt.legend()
     plt.tight_layout()
