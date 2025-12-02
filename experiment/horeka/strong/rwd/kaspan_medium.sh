@@ -80,6 +80,7 @@ for manifest in "${rwd[@]}"; do
   if [[ $pid128 ]]; then
     wait "$pid128"; ec=$?
     if [[ $ec -ne 0 ]]; then
+      [[ $ec -eq 137 ]] && ec="${ec} (oom)"
       echo "[FAILURE] ${app_name} NP=128 Graph=${manifest_name}"
     else
       echo "[SUCCESS] ${app_name} NP=128 Graph=${manifest_name}"
@@ -89,6 +90,7 @@ for manifest in "${rwd[@]}"; do
   if [[ $pid256 ]]; then
     wait "$pid256"; ec=$?
     if [[ $ec -ne 0 ]]; then
+      [[ $ec -eq 137 ]] && ec="${ec} (oom)"
       echo "[FAILURE] ${app_name} NP=256 Graph=${manifest_name}"
     else
       echo "[SUCCESS] ${app_name} NP=256 Graph=${manifest_name}"
@@ -114,6 +116,7 @@ for manifest in "${rwd[@]}"; do
         --output_file "$output_file" \
         --manifest_file "$manifest"; ec=$?
     if [[ $ec -ne 0 ]]; then
+      [[ $ec -eq 137 ]] && ec="${ec} (oom)"
       echo "[FAILURE] ${app_name} NP=512 Graph=${manifest_name} ec=${ec}"
     else
       echo "[SUCCESS] ${app_name} NP=512 Graph=${manifest_name}"
