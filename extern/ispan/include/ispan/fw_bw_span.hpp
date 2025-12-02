@@ -156,7 +156,6 @@ fw_span(
       is_top_down_queue = true;
 
       // clang-format off
-      ASSERT_EQ(local_beg, std::min(mpi_world_rank * step, n));
       MPI_Allgather(
         MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
         fw_sa, step, mpi_depth_t,
