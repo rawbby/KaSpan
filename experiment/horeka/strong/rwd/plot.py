@@ -50,6 +50,7 @@ for path in paths:
                     memory[n] += int(output[str(i)]["benchmark"]["scc"]["residual"]["memory"]) - base_mem
                 else:
                     memory[n] += int(output[str(i)]["benchmark"]["scc"]["alloc"]["memory"]) - base_mem
+            memory[n] /= n
 
     except (KeyError, json.JSONDecodeError):
         print(f"[SKIPPING] {path} (invalid)")
@@ -109,6 +110,8 @@ for graph in graphs:
     ax1.set_ylabel("seconds")
     ax1.set_yscale("log", base=10)
     ax1.set_xscale("log", base=2)
+    ax1.ticklabel_format(style='plain', axis='x', useOffset=False)
+    ax1.ticklabel_format(style='plain', axis='y', useOffset=False)
     ax1.grid(True)
 
     #     plt.savefig(cwd / f"{graph}.png", dpi=200)
@@ -135,9 +138,10 @@ for graph in graphs:
         ax2.plot(nps, memory, label=app, color=color, marker=marker)
 
     ax2.set_xlabel("np")
-    ax2.set_ylabel("bytes")
+    ax2.set_ylabel("bytes/np")
     ax2.set_yscale("log", base=8)
     ax2.set_xscale("log", base=2)
+    ax2.ticklabel_format(style='plain', axis='x', useOffset=False)
     ax2.grid(True)
 
     fig.suptitle(f"Strong Scaling '{graph}'")
