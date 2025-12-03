@@ -137,7 +137,7 @@ for graph in graphs:
 
     ax2.set_xlabel("np")
     ax2.set_ylabel("bytes/np")
-    ax2.set_yscale("log", base=1024)
+    # ax2.set_yscale("log", base=1024)
     ax2.set_xscale("log", base=2)
     ax2.grid(True)
 
