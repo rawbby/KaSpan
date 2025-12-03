@@ -63,25 +63,25 @@ markers = ["o", "s", "D", "^", "v", "P", "X", "d", "<", ">"]
 style_cycle = itertools.cycle(zip(itertools.cycle(colors), itertools.cycle(markers)))
 app_style = {app: next(style_cycle) for app in apps}
 
-for app_graph, values in duration_data.items():
-    app, graph = app_graph
-    nps = sorted(values.keys())
-    memory = [float(values[n]) * 10e-9 for n in nps]
-
-    plt.figure()
-    color, marker = app_style[app]
-    plt.plot(nps, memory, color=color, marker=marker)
-    plt.xlabel("np")
-    plt.ylabel("seconds")
-    plt.title(f"Strong Scaling {app} '{graph}'")
-    plt.grid(True)
-    plt.xscale("log", base=2)
-    plt.tight_layout()
-
-    plt.savefig(cwd / f"{app}_{graph}.png", dpi=200)
-    plt.close()
-
-    print(cwd / f"{app}_{graph}.png")
+# for app_graph, values in duration_data.items():
+#     app, graph = app_graph
+#     nps = sorted(values.keys())
+#     memory = [float(values[n]) * 10e-9 for n in nps]
+#
+#     plt.figure()
+#     color, marker = app_style[app]
+#     plt.plot(nps, memory, color=color, marker=marker)
+#     plt.xlabel("np")
+#     plt.ylabel("seconds")
+#     plt.title(f"Strong Scaling {app} '{graph}'")
+#     plt.grid(True)
+#     plt.xscale("log", base=2)
+#     plt.tight_layout()
+#
+#     plt.savefig(cwd / f"{app}_{graph}.png", dpi=200)
+#     plt.close()
+#
+#     print(cwd / f"{app}_{graph}.png")
 
 for graph in graphs:
     # map app -> {n: duration_seconds}, filter out durations > 4 minutes
@@ -110,8 +110,6 @@ for graph in graphs:
     ax1.set_ylabel("seconds")
     ax1.set_yscale("log", base=10)
     ax1.set_xscale("log", base=2)
-    ax1.ticklabel_format(style='plain', axis='x', useOffset=False)
-    ax1.ticklabel_format(style='plain', axis='y', useOffset=False)
     ax1.grid(True)
 
     #     plt.savefig(cwd / f"{graph}.png", dpi=200)
@@ -141,7 +139,6 @@ for graph in graphs:
     ax2.set_ylabel("bytes/np")
     ax2.set_yscale("log", base=8)
     ax2.set_xscale("log", base=2)
-    ax2.ticklabel_format(style='plain', axis='x', useOffset=False)
     ax2.grid(True)
 
     fig.suptitle(f"Strong Scaling '{graph}'")
