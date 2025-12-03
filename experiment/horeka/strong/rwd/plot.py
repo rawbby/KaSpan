@@ -88,21 +88,20 @@ for graph in graphs:
     # union of all nps across apps
     nps = sorted({n for values in data.values() for n in values.keys()})
 
-    plt.figure()
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
     for app, values in data.items():
         # build durations aligned with union nps, use NaN for missing
         memory = [values.get(n, float("nan")) for n in nps]
         color, marker = app_style[app]
-        plt.plot(nps, memory, label=app, color=color, marker=marker)
+        ax1.plot(nps, memory, label=app, color=color, marker=marker)
 
-    plt.xlabel("np")
-    plt.ylabel("seconds")
-    plt.title(f"Strong Scaling '{graph}'")
-    plt.grid(True)
-    plt.yscale("log", base=10)
-    plt.xscale("log", base=2)
-    plt.legend()
-    plt.tight_layout()
+    ax1.xlabel("np")
+    ax1.ylabel("seconds")
+    ax1.title(f"Strong Scaling '{graph}'")
+    ax1.grid(True)
+    ax1.yscale("log", base=10)
+    ax1.xscale("log", base=2)
 
     #     plt.savefig(cwd / f"{graph}.png", dpi=200)
     #     plt.close()
@@ -121,23 +120,22 @@ for graph in graphs:
     # union of all nps across apps
     nps = sorted({n for values in data.values() for n in values.keys()})
 
-    plt.figure()
     for app, values in data.items():
         # build durations aligned with union nps, use NaN for missing
         memory = [values.get(n, float("nan")) for n in nps]
         color, marker = app_style[app]
-        plt.plot(nps, memory, label=app, color=color, marker=marker)
+        ax2.plot(nps, memory, label=app, color=color, marker=marker)
 
-    plt.xlabel("np")
-    plt.ylabel("bytes")
-    plt.title(f"Strong Scaling '{graph}'")
-    plt.grid(True)
-    plt.yscale("log", base=8)
-    plt.xscale("log", base=2)
-    plt.legend()
-    plt.tight_layout()
+    ax2.xlabel("np")
+    ax2.ylabel("bytes")
+    ax2.grid(True)
+    ax2.yscale("log", base=8)
+    ax2.xscale("log", base=2)
 
-    plt.savefig(cwd / f"{graph}.png", dpi=200)
-    plt.close()
+    fig.title(f"Strong Scaling '{graph}'")
+    fig.legend()
+    fig.tight_layout()
+    fig.savefig(cwd / f"{graph}.png", dpi=200)
+    fig.close()
 
     print(cwd / f"{graph}.png")
