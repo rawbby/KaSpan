@@ -135,6 +135,6 @@ for graph in graphs:
     fig.legend()
     fig.tight_layout()
     fig.savefig(cwd / f"{graph}.png", dpi=200)
-    fig.close()
+    plt.close(fig)
 
     print(cwd / f"{graph}.png")
