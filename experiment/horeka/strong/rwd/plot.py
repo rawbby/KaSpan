@@ -96,12 +96,10 @@ for graph in graphs:
         color, marker = app_style[app]
         ax1.plot(nps, memory, label=app, color=color, marker=marker)
 
-    ax1.xlabel("np")
-    ax1.ylabel("seconds")
-    ax1.title(f"Strong Scaling '{graph}'")
-    ax1.grid(True)
-    ax1.yscale("log", base=10)
-    ax1.xscale("log", base=2)
+    ax1.set_xlabel("np")
+    ax1.set_ylabel("seconds")
+    ax1.set_yscale("log", base=10)
+    ax1.set_xscale("log", base=2)
 
     #     plt.savefig(cwd / f"{graph}.png", dpi=200)
     #     plt.close()
@@ -126,13 +124,13 @@ for graph in graphs:
         color, marker = app_style[app]
         ax2.plot(nps, memory, label=app, color=color, marker=marker)
 
-    ax2.xlabel("np")
-    ax2.ylabel("bytes")
-    ax2.grid(True)
-    ax2.yscale("log", base=8)
-    ax2.xscale("log", base=2)
+    ax2.set_xlabel("np")
+    ax2.set_ylabel("bytes")
+    ax2.set_yscale("log", base=8)
+    ax2.set_xscale("log", base=2)
 
-    fig.title(f"Strong Scaling '{graph}'")
+    fig.suptitle(f"Strong Scaling '{graph}'")
+    fig.grid(True)
     fig.legend()
     fig.tight_layout()
     fig.savefig(cwd / f"{graph}.png", dpi=200)
