@@ -38,9 +38,18 @@ for path in paths:
             duration_data.setdefault((app, graph), {})[n] = max(
                 int(output[str(i)]["benchmark"]["scc"]["duration"]) for i in range(n)
             )
-            memory_data.setdefault((app, graph), {})[n] = max(
-                int(output[str(i)]["benchmark"]["scc"]["duration"]) for i in range(n)
-            )
+
+            memory = memory_data.setdefault((app, graph), {})
+            memory[n] = 0
+            for i in range(n):
+                base_mem = int(output[str(i)]["benchmark"]["memory"])
+
+                if app != "ispan" and n == 1:
+                    memory[n] += int(output[str(i)]["benchmark"]["scc"]["tarjan"]["memory"]) - base_mem
+                elif app != "ispan" and "residual" in output[str(i)]["benchmark"]["scc"].keys():
+                    memory[n] += int(output[str(i)]["benchmark"]["scc"]["residual"]["memory"]) - base_mem
+                else:
+                    memory[n] += int(output[str(i)]["benchmark"]["scc"]["alloc"]["memory"]) - base_mem
 
     except (KeyError, json.JSONDecodeError):
         print(f"[SKIPPING] {path} (invalid)")
