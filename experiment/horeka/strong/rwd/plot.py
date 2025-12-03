@@ -100,6 +100,7 @@ for graph in graphs:
     ax1.set_ylabel("seconds")
     ax1.set_yscale("log", base=10)
     ax1.set_xscale("log", base=2)
+    ax1.grid(True)
 
     #     plt.savefig(cwd / f"{graph}.png", dpi=200)
     #     plt.close()
@@ -128,9 +129,9 @@ for graph in graphs:
     ax2.set_ylabel("bytes")
     ax2.set_yscale("log", base=8)
     ax2.set_xscale("log", base=2)
+    ax2.grid(True)
 
     fig.suptitle(f"Strong Scaling '{graph}'")
-    fig.grid(True)
     fig.legend()
     fig.tight_layout()
     fig.savefig(cwd / f"{graph}.png", dpi=200)
