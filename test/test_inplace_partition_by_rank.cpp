@@ -15,8 +15,7 @@ struct Item
 static void
 check_case(Item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts, MPI_Aint* send_displs)
 {
-  ASSERT_GE(mpi_world_rank, 0);
-  ASSERT_GT(mpi_world_size, mpi_world_rank);
+  ASSERT_IN_RANGE(mpi_world_rank, 0, mpi_world_size);
 
   send_displs[0] = 0;
   for (i32 r = 1; r < mpi_world_size; ++r) {
@@ -77,8 +76,7 @@ main(int argc, char** argv)
 
       i32 send_count = dist(rng) + dist(rng) + min_send_count;
 
-      ASSERT_GE(send_count, 0);
-      ASSERT_LE(send_count, max_send_count);
+      ASSERT_IN_RANGE(send_count, 0, max_send_count + 1);
 
       for (i32 i = 0; i < send_count; ++i) {
         i32 const destination = dist(rng);

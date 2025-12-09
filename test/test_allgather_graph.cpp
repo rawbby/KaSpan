@@ -17,8 +17,7 @@ check_gp(auto const& gp)
   auto const local_fw_m = gp.local_fw_m;
   auto const local_bw_m = gp.local_bw_m;
 
-  ASSERT_GE(n, local_n);
-  ASSERT_GE(local_n, 0);
+  ASSERT_IN_RANGE(local_n, 0, n + 1);
 
   ASSERT_GE(m, 0);
   ASSERT_GE(local_fw_m, 0);
@@ -83,8 +82,7 @@ check_p(auto const& p)
   ASSERT_GE(p.end, p.begin);
   ASSERT_GE(p.n, p.end);
 
-  ASSERT_GE(p.world_rank, 0);
-  ASSERT_GT(p.world_size, p.world_rank);
+  ASSERT_IN_RANGE(p.world_rank, 0, p.world_size);
 }
 
 void

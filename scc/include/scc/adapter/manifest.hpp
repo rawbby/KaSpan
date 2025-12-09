@@ -228,26 +228,22 @@ load_graph_from_manifest(Manifest const& manifest) -> LocalGraph
   g.bw_csr  = borrow<vertex_t>(memory, m);
 
   for (vertex_t i = 0; i < n + 1; ++i) {
-    DEBUG_ASSERT_GE(fw_head_access.get(i), 0);
-    DEBUG_ASSERT_LE(fw_head_access.get(i), m);
+    DEBUG_ASSERT_IN_RANGE(fw_head_access.get(i), 0, m + 1);
     g.fw_head[i] = static_cast<index_t>(fw_head_access.get(i));
   }
 
   for (index_t i = 0; i < m; ++i) {
-    DEBUG_ASSERT_GE(fw_csr_access.get(i), 0);
-    DEBUG_ASSERT_LE(fw_csr_access.get(i), n);
+    DEBUG_ASSERT_IN_RANGE(fw_csr_access.get(i), 0, n);
     g.fw_csr[i] = static_cast<vertex_t>(fw_csr_access.get(i));
   }
 
   for (vertex_t i = 0; i < n + 1; ++i) {
-    DEBUG_ASSERT_GE(bw_head_access.get(i), 0);
-    DEBUG_ASSERT_LE(bw_head_access.get(i), m);
+    DEBUG_ASSERT_IN_RANGE(bw_head_access.get(i), 0, m + 1);
     g.bw_head[i] = static_cast<index_t>(bw_head_access.get(i));
   }
 
   for (index_t i = 0; i < m; ++i) {
-    DEBUG_ASSERT_GE(bw_csr_access.get(i), 0);
-    DEBUG_ASSERT_LE(bw_csr_access.get(i), n);
+    DEBUG_ASSERT_IN_RANGE(bw_csr_access.get(i), 0, n);
     g.bw_csr[i] = static_cast<vertex_t>(bw_csr_access.get(i));
   }
 
@@ -275,14 +271,12 @@ load_graph_part_from_manifest(Part const& part, Manifest const& manifest) -> Loc
   ASSERT_LE(part.begin, part.end);
   ASSERT_LE(part.end, m);
 
-  ASSERT_GE(n, 0);
-  ASSERT_LE(n + 1, std::numeric_limits<vertex_t>::max());
+  ASSERT_IN_RANGE(n, 0, std::numeric_limits<vertex_t>::max());
 
   ASSERT_GE(local_n, 0);
   ASSERT_LE(local_n, n);
 
-  ASSERT_GE(m, 0);
-  ASSERT_LE(m, std::numeric_limits<index_t>::max());
+  ASSERT_IN_RANGE(m, 0, std::numeric_limits<index_t>::max());
 
   ASSERT_GT(head_bytes, 0);
   ASSERT_LE(head_bytes, 8);

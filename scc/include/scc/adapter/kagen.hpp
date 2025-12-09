@@ -46,18 +46,14 @@ kagen_forward_graph_part(char const* generator_args)
   result.csr     = borrow<vertex_t>(memory, local_fw_m);
 
   for (vertex_t k = 0; k <= local_n; ++k) {
-    DEBUG_ASSERT_GE(ka_graph.xadj[k], 0, "k={}", k);
-    DEBUG_ASSERT_LE(ka_graph.xadj[k], local_fw_m, "k={}", k);
+    DEBUG_ASSERT_IN_RANGE(ka_graph.xadj[k], 0, local_fw_m + 1, "k={}", k);
     result.head[k] = static_cast<index_t>(ka_graph.xadj[k]);
-    DEBUG_ASSERT_GE(result.head[k], 0, "k={}", k);
-    DEBUG_ASSERT_LE(result.head[k], local_fw_m, "k={}", k);
+    DEBUG_ASSERT_IN_RANGE(result.head[k], 0, local_fw_m + 1, "k={}", k);
   }
   for (index_t it = 0; it < local_fw_m; ++it) {
-    DEBUG_ASSERT_GE(ka_graph.adjncy[it], 0);
-    DEBUG_ASSERT_LT(ka_graph.adjncy[it], global_n);
+    DEBUG_ASSERT_IN_RANGE(ka_graph.adjncy[it], 0, global_n);
     result.csr[it] = static_cast<vertex_t>(ka_graph.adjncy[it]);
-    DEBUG_ASSERT_GE(result.csr[it], 0);
-    DEBUG_ASSERT_LT(result.csr[it], global_n);
+    DEBUG_ASSERT_IN_RANGE(result.csr[it], 0, global_n);
   }
 
   DEBUG_ASSERT_VALID_GRAPH_PART(result.part, result.head, result.csr);

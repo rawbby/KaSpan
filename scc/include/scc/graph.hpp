@@ -99,8 +99,7 @@ struct GraphPart
     }                                                              \
     std::remove_cvref_t<decltype(M)> const _m = M;                 \
     for (std::remove_cvref_t<decltype(M)> _i = 1; _i < _m; ++_i) { \
-      DEBUG_ASSERT_GE(CSR[_i], 0);                                 \
-      DEBUG_ASSERT_LT(CSR[_i], N);                                 \
+      DEBUG_ASSERT_IN_RANGE(CSR[_i], 0, N);                                 \
     }                                                              \
   });
 
