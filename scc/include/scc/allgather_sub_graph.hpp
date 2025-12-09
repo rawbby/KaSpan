@@ -44,11 +44,8 @@ struct AllGatherSubGraphResult
  * @tparam Part Graph partition type; must satisfy Part::ordered.
  * @tparam Fn   Predicate type; callable as bool(vertex_t local_id).
  *
- * @param graph_part Distributed graph partition (disjoint global ownership).
+ * @param part Distributed graph partition (disjoint global ownership).
  * @param in_sub_graph Predicate on local vertex ids; true selects the vertex.
- * @param temp_memory Optional scratch space. If null, a temporary Buffer is allocated.
- *        Required capacity (at least): page_ceil<vertex_t>(local_n) + page_ceil<vertex_t>(max(local_fw_m, local_bw_m))
- *        + page_ceil<index_t>(local_n+1).
  *
  * @return AllGatherSubGraphResult containing:
  *         - ids_inverse: new->old (global) vertex mapping,
@@ -87,39 +84,39 @@ allgather_sub_graph(
   vertex_t const* fw_csr,
   index_t const*  bw_head,
   vertex_t const* bw_csr,
-  Fn&&            in_sub_graph,
-  void*           temp_memory = nullptr) -> AllGatherSubGraphResult
+  Fn&&            in_sub_graph) -> AllGatherSubGraphResult
 {
+  DEBUG_ASSERT_VALID_GRAPH_PART(part, fw_head, fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH_PART(part, bw_head, bw_csr);
+
   auto const local_n    = part.local_n();
   auto const local_fw_m = fw_head[local_n];
   auto const local_bw_m = bw_head[local_n];
 
-  Buffer temp_buffer;
-  if (temp_memory == nullptr) {
-    temp_buffer = Buffer::create(
-      page_ceil<vertex_t>(local_n),
-      page_ceil<vertex_t>(std::max(local_fw_m, local_bw_m)),
-      page_ceil<index_t>(local_n + 1));
-    temp_memory = temp_buffer.data();
-  }
+  Buffer temp_buffer{
+    page_ceil<vertex_t>(local_n),
+    page_ceil<vertex_t>(std::max(local_fw_m, local_bw_m)),
+    page_ceil<index_t>(local_n + 1)
+  };
+  void* temp_memory = temp_buffer.data();
 
-  auto local_sub_ids_inverse = StackAccessor<vertex_t>::borrow(temp_memory, local_n);
+  auto local_ids_inverse = StackAccessor<vertex_t>::borrow(temp_memory, local_n);
   for (vertex_t k = 0; k < local_n; ++k) {
     if (static_cast<bool>(in_sub_graph(k))) {
-      local_sub_ids_inverse.push(part.to_global(k));
+      local_ids_inverse.push(part.to_global(k));
     }
   }
 
-  auto const local_sub_n    = local_sub_ids_inverse.size();
+  auto const local_sub_n    = local_ids_inverse.size();
   auto [cb, counts, displs] = mpi_basic_counts_and_displs();
 
   // gather the ids_inverse array
   AllGatherSubGraphResult sub;
   mpi_basic_allgatherv_counts(local_sub_n, counts);
   sub.n                  = static_cast<vertex_t>(mpi_basic_displs(counts, displs));
-  sub.ids_inverse_buffer = Buffer::create<vertex_t>(sub.n);
+  sub.ids_inverse_buffer = Buffer{ sub.n * sizeof(vertex_t) };
   sub.ids_inverse        = static_cast<vertex_t*>(sub.ids_inverse_buffer.data());
-  mpi_basic_allgatherv<vertex_t>(local_sub_ids_inverse.data(), local_sub_n, sub.ids_inverse, counts, displs);
+  mpi_basic_allgatherv<vertex_t>(local_ids_inverse.data(), local_sub_n, sub.ids_inverse, counts, displs);
 
   // compute sub_ids mapping to check
   // containment + mapping in reasonable space and time
@@ -142,7 +139,7 @@ allgather_sub_graph(
     }
 
     for (vertex_t i = 0; i < local_sub_n; ++i) { // for each vertex in part and in sub graph
-      auto const u   = local_sub_ids_inverse[i];
+      auto const u   = local_ids_inverse[i];
       auto const k   = part.to_local(u);
       auto const beg = fw_head[k];
       auto const end = fw_head[k + 1];
@@ -165,7 +162,7 @@ allgather_sub_graph(
       auto const sub_m = mpi_basic_displs(counts, displs);
 
       // allocate sub graph memory in one buffer as now sub_n and sub_m are known
-      sub.buffer = Buffer::create(
+      sub.buffer = Buffer(
         2 * page_ceil<index_t>(sub.n + 1),
         2 * page_ceil<vertex_t>(sub_m));
 
@@ -201,7 +198,7 @@ allgather_sub_graph(
     }
 
     for (vertex_t i = 0; i < local_sub_n; ++i) { // for each vertex in part and in sub graph
-      auto const u   = local_sub_ids_inverse[i];
+      auto const u   = local_ids_inverse[i];
       auto const k   = part.to_local(u);
       auto const beg = bw_head[k];
       auto const end = bw_head[k + 1];
@@ -241,5 +238,7 @@ allgather_sub_graph(
     }
   }
 
+  DEBUG_ASSERT_VALID_GRAPH(sub.n, sub.fw_head[sub.n], sub.fw_head, sub.fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(sub.n, sub.bw_head[sub.n], sub.bw_head, sub.bw_csr);
   return sub;
 }

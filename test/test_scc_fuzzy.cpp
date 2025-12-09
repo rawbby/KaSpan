@@ -19,7 +19,7 @@ main(int argc, char** argv)
 
     auto const graph = fuzzy_local_scc_id_and_graph(seed, part);
 
-    auto  buffer = Buffer::create<vertex_t>(part.local_n());
+    auto  buffer = Buffer{ part.local_n() * sizeof(vertex_t) };
     auto* memory = buffer.data();
     auto* scc_id = borrow<vertex_t>(memory, part.local_n());
 
@@ -45,7 +45,7 @@ main(int argc, char** argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
     for (size_t k = 0; k < part.local_n(); ++k) {
-      ASSERT_EQ(graph.scc_id_part[k], scc_id[k], "k = %lu / i = %d\n%s", k, part.to_global(k), status_str.c_str());
+      ASSERT_EQ(graph.scc_id_part[k], scc_id[k], "k={} / i={}\n{}", k, part.to_global(k), status_str.c_str());
     }
   }
 }

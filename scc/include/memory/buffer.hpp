@@ -154,27 +154,35 @@ needed_bytes(u64 max_val) -> u8
 class Buffer final
 {
 public:
-  Buffer() = default;
+  Buffer() noexcept = default;
   ~Buffer()
   {
     if (data_ != nullptr) {
-      page_aligned_free(data_, byte_size_);
-      data_      = nullptr;
-      byte_size_ = 0;
+      page_aligned_free(data_, size_);
+      data_ = nullptr;
+      size_ = 0;
     }
   }
 
-  Buffer(void* data, size_t byte_size)
-    : data_(data)
-    , byte_size_(byte_size)
+  explicit Buffer(std::convertible_to<u64> auto... sizes) noexcept(false)
+    : Buffer()
   {
+    auto const size = static_cast<u64>(0) + (static_cast<u64>(sizes) + ...);
+    if (size) {
+      auto const bytes = size;
+      data_            = page_aligned_alloc(bytes);
+      if (data_ == nullptr) {
+        throw std::bad_alloc{};
+      }
+      size_ = bytes;
+    }
   }
 
   Buffer(Buffer const&) = delete;
   Buffer(Buffer&& rhs) noexcept
   {
     std::swap(data_, rhs.data_);
-    std::swap(byte_size_, rhs.byte_size_);
+    std::swap(size_, rhs.size_);
   }
 
   auto operator=(Buffer const&) -> Buffer& = delete;
@@ -182,22 +190,9 @@ public:
   {
     if (this != &rhs) {
       std::swap(data_, rhs.data_);
-      std::swap(byte_size_, rhs.byte_size_);
+      std::swap(size_, rhs.size_);
     }
     return *this;
-  }
-
-  template<typename T = std::byte, std::convertible_to<u64>... Sizes>
-  [[nodiscard]] static auto create(Sizes... counts) -> Buffer
-  {
-    u64 const count = 0 + (counts + ...);
-    if (count == 0)
-      return Buffer{};
-
-    auto* data = page_aligned_alloc(count * sizeof(T));
-    ASSERT(data != nullptr, "failed alloc is a fatal error!");
-
-    return Buffer{ data, count };
   }
 
   [[nodiscard]] auto operator[](size_t byte_index) -> std::byte
@@ -217,12 +212,12 @@ public:
 
   [[nodiscard]] auto byte_size() const -> size_t
   {
-    return byte_size_;
+    return size_;
   }
 
 private:
-  void*  data_      = nullptr;
-  size_t byte_size_ = 0;
+  void*  data_ = nullptr;
+  size_t size_ = 0;
 };
 
 class FileBuffer final

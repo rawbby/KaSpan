@@ -4,12 +4,11 @@
 #include <memory/buffer.hpp>
 #include <scc/backward_complement.hpp>
 #include <scc/part.hpp>
-#include <util/result.hpp>
 
 inline auto
 kagen_forward_graph_part(char const* generator_args)
 {
-  struct LocalKaGenForwardGraph
+  struct
   {
     using Part = ExplicitSortedContinuousWorldPart;
     Buffer    buffer;
@@ -18,40 +17,50 @@ kagen_forward_graph_part(char const* generator_args)
     index_t   local_m;
     index_t*  head;
     vertex_t* csr;
-  };
+  } result;
 
   kagen::KaGen graph_generator{ MPI_COMM_WORLD };
   graph_generator.UseCSRRepresentation();
 
-  auto const     ka_graph   = graph_generator.GenerateFromOptionString(generator_args);
-  vertex_t const global_n   = ka_graph.NumberOfGlobalVertices();
-  index_t const  global_m   = ka_graph.NumberOfGlobalEdges();
-  vertex_t const local_n    = ka_graph.NumberOfLocalVertices();
-  index_t const  local_m    = ka_graph.NumberOfLocalEdges();
-  vertex_t const vertex_end = ka_graph.vertex_range.second;
+  auto const ka_graph   = graph_generator.GenerateFromOptionString(generator_args);
+  auto const global_n   = static_cast<vertex_t>(ka_graph.NumberOfGlobalVertices());
+  auto const global_m   = static_cast<index_t>(ka_graph.NumberOfGlobalEdges());
+  auto const local_n    = static_cast<vertex_t>(ka_graph.NumberOfLocalVertices());
+  auto const local_fw_m = static_cast<index_t>(ka_graph.NumberOfLocalEdges());
+  auto const vertex_end = static_cast<vertex_t>(ka_graph.vertex_range.second);
 
-  LocalKaGenForwardGraph result;
+  result.buffer = Buffer{
+    page_ceil<i32>(mpi_world_size),
+    page_ceil<index_t>(local_n + 1),
+    page_ceil<vertex_t>(local_fw_m)
+  };
+  void* memory = result.buffer.data();
 
-  auto const part_bytes = page_ceil<i32>(mpi_world_size);
-  auto const head_bytes = page_ceil<index_t>(local_n + 1);
-  auto const csr_bytes  = page_ceil<vertex_t>(local_m);
+  result.part = ExplicitSortedContinuousWorldPart{ global_n, vertex_end, mpi_world_rank, mpi_world_size, memory };
+  DEBUG_ASSERT_EQ(result.part.n, global_n);
+  DEBUG_ASSERT_EQ(result.part.local_n(), local_n);
 
-  result.buffer = Buffer::create(part_bytes + head_bytes + csr_bytes);
-  void* memory  = result.buffer.data();
-
-  result.part    = ExplicitSortedContinuousWorldPart{ global_n, vertex_end, mpi_world_rank, mpi_world_size, memory };
   result.m       = global_m;
-  result.local_m = local_m;
+  result.local_m = local_fw_m;
   result.head    = borrow<index_t>(memory, local_n + 1);
-  result.csr     = borrow<vertex_t>(memory, local_m);
+  result.csr     = borrow<vertex_t>(memory, local_fw_m);
 
   for (vertex_t k = 0; k <= local_n; ++k) {
-    result.head[k] = ka_graph.xadj[k];
+    DEBUG_ASSERT_GE(ka_graph.xadj[k], 0, "k={}", k);
+    DEBUG_ASSERT_LE(ka_graph.xadj[k], local_fw_m, "k={}", k);
+    result.head[k] = static_cast<index_t>(ka_graph.xadj[k]);
+    DEBUG_ASSERT_GE(result.head[k], 0, "k={}", k);
+    DEBUG_ASSERT_LE(result.head[k], local_fw_m, "k={}", k);
   }
-  for (index_t it = 0; it < local_m; ++it) {
-    result.csr[it] = ka_graph.adjncy[it];
+  for (index_t it = 0; it < local_fw_m; ++it) {
+    DEBUG_ASSERT_GE(ka_graph.adjncy[it], 0);
+    DEBUG_ASSERT_LT(ka_graph.adjncy[it], global_n);
+    result.csr[it] = static_cast<vertex_t>(ka_graph.adjncy[it]);
+    DEBUG_ASSERT_GE(result.csr[it], 0);
+    DEBUG_ASSERT_LT(result.csr[it], global_n);
   }
 
+  DEBUG_ASSERT_VALID_GRAPH_PART(result.part, result.head, result.csr);
   return result;
 }
 
@@ -74,7 +83,7 @@ kagen_graph_part(char const* generator_args)
   };
 
   auto fw_graph = kagen_forward_graph_part(generator_args);
-  auto bw_graph = backward_complement_graph_part(fw_graph.part, fw_graph.m, fw_graph.head, fw_graph.csr);
+  auto bw_graph = backward_complement_graph_part(fw_graph.part, fw_graph.local_m, fw_graph.head, fw_graph.csr);
 
   LocalKaGenGraph result;
   result.fw_buffer  = std::move(fw_graph.buffer);

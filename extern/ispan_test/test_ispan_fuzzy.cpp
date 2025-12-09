@@ -41,6 +41,6 @@ main(int argc, char** argv) -> int
     MPI_Barrier(MPI_COMM_WORLD);
 
     for (size_t i = 0; i < n; ++i)
-      ASSERT_EQ(g.scc_id[i], scc_id_ispan[i], "i = %lu\n%s", i, status_str.c_str());
+      ASSERT_EQ(g.scc_id[i], scc_id_ispan[i], "i={}\n{}", i, status_str.c_str());
   }
 }

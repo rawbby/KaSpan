@@ -27,7 +27,7 @@ check_case(Item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts
     return x.dest;
   });
 
-  auto  buffer = Buffer::create(2 * page_ceil<MPI_Count>(mpi_world_size));
+  auto  buffer = Buffer(2 * page_ceil<MPI_Count>(mpi_world_size));
   auto* memory = buffer.data();
 
   auto* beg = borrow<MPI_Count>(memory, mpi_world_size);

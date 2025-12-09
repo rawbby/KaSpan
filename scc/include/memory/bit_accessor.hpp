@@ -45,7 +45,7 @@ public:
 
   static auto create(u64 count) noexcept -> std::pair<Buffer, BitAccessor>
   {
-    auto  buffer = Buffer::create<u64>((count + static_cast<u64>(63)) >> 6);
+    auto  buffer = Buffer(((count + static_cast<u64>(63)) >> 6) * sizeof(u64));
     auto* memory = buffer.data();
     return { std::move(buffer), BitAccessor{ memory } };
   }
@@ -53,7 +53,7 @@ public:
   static auto create_clean(u64 count) noexcept -> std::pair<Buffer, BitAccessor>
   {
     auto const u64_count = (count + static_cast<u64>(63)) >> 6;
-    auto       buffer    = Buffer::create<u64>(u64_count);
+    auto       buffer    = Buffer{ u64_count * sizeof(u64) };
     auto*      memory    = buffer.data();
     return { std::move(buffer), BitAccessor{ ::borrow_clean<u64>(memory, u64_count) } };
   }
@@ -61,7 +61,7 @@ public:
   static auto create_filled(u64 count) noexcept -> std::pair<Buffer, BitAccessor>
   {
     auto const u64_count = (count + static_cast<u64>(63)) >> 6;
-    auto       buffer    = Buffer::create<u64>(u64_count);
+    auto       buffer    = Buffer{ u64_count * sizeof(u64) };
     auto*      memory    = buffer.data();
     return { std::move(buffer), BitAccessor{ ::borrow_filled<u64>(memory, ~0, u64_count) } };
   }

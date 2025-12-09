@@ -36,8 +36,12 @@ auto
 partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, Part const& part) -> LocalGraphPart<Part>
 {
   auto const local_n = part.local_n();
+  DEBUG_ASSERT_VALID_GRAPH(part.n, m, fw_head, fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(part.n, m, bw_head, bw_csr);
 
-  auto partition_direction = [&part, local_n](index_t const* head, vertex_t const* csr, index_t* out_head, vertex_t* out_csr) {
+  auto partition_direction = [&part, local_n, m](index_t const* head, vertex_t const* csr, index_t* out_head, vertex_t* out_csr) {
+    DEBUG_ASSERT_VALID_GRAPH(part.n, m, head, csr);
+
     vertex_t pos = 0;
     for (vertex_t k = 0; k < local_n; ++k) {
       auto const u = part.to_global(k);
@@ -58,7 +62,7 @@ partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t con
   auto const local_bw_m = partition_degree(bw_head, part);
 
   LocalGraphPart<Part> result;
-  result.buffer = Buffer::create(
+  result.buffer = Buffer(
     page_ceil<index_t>(local_n + 1),
     page_ceil<vertex_t>(local_fw_m),
     page_ceil<index_t>(local_n + 1),
@@ -77,6 +81,51 @@ partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t con
   result.bw_head = borrow<index_t>(memory, local_n + 1);
   result.bw_csr  = borrow<vertex_t>(memory, local_bw_m);
   partition_direction(bw_head, bw_csr, result.bw_head, result.bw_csr);
+
+  return result;
+}
+
+template<WorldPartConcept Part>
+auto
+partition(index_t m, index_t const* head, vertex_t const* csr, Part const& part)
+{
+  struct PartitionResult
+  {
+    Buffer    buffer;
+    Part      part;
+    index_t   m       = 0;
+    index_t   local_m = 0;
+    index_t*  head    = nullptr;
+    vertex_t* csr     = nullptr;
+  };
+
+  auto const local_n = part.local_n();
+  auto const local_m = partition_degree(head, part);
+
+  PartitionResult result;
+  result.buffer = Buffer(page_ceil<index_t>(local_n + 1), page_ceil<vertex_t>(local_m));
+  auto* memory  = result.buffer.data();
+
+  result.part    = part;
+  result.m       = m;
+  result.local_m = local_m;
+
+  result.head  = borrow<index_t>(memory, local_n + 1);
+  result.csr   = borrow<vertex_t>(memory, local_m);
+  vertex_t pos = 0;
+  for (vertex_t k = 0; k < local_n; ++k) {
+    auto const u = part.to_global(k);
+
+    auto const beg = head[u];
+    auto const end = head[u + 1];
+
+    result.head[k] = pos;
+    for (auto it = beg; it < end; ++it) {
+      result.csr[pos] = csr[it];
+      ++pos;
+    }
+  }
+  result.head[local_n] = pos;
 
   return result;
 }

@@ -23,6 +23,8 @@ template<WorldPartConcept Part>
 void
 scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id)
 {
+  DEBUG_ASSERT_VALID_GRAPH_PART(part, fw_head, fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH_PART(part, bw_head, bw_csr);
   KASPAN_STATISTIC_SCOPE("scc");
 
   auto const n       = part.n;
@@ -60,8 +62,6 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   DEBUG_ASSERT_NE(first_root, scc_id_undecided);
   fw_reached.clear(local_n);
   auto const first_id = forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, first_root);
-  // KASPAN_STATISTIC_ADD("root", first_root);
-  // KASPAN_STATISTIC_ADD("root_id", first_id);
   local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, first_root, first_id);
 
   while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
@@ -69,8 +69,6 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     DEBUG_ASSERT_NE(root, scc_id_undecided);
     fw_reached.clear(local_n);
     auto const id = forward_search(part, fw_head, fw_csr, frontier, scc_id, fw_reached, root);
-    // KASPAN_STATISTIC_ADD("root", root);
-    // KASPAN_STATISTIC_ADD("root_id", id);
     local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, fw_reached, root, id);
   }
   KASPAN_STATISTIC_POP();
@@ -89,28 +87,27 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
       DEBUG_ASSERT_LT(k, local_n);
       return scc_id[k] == scc_id_undecided;
     });
+    DEBUG_ASSERT_VALID_GRAPH(sub_graph.n, sub_graph.m, sub_graph.fw_head, sub_graph.fw_csr);
 
     KASPAN_STATISTIC_ADD("n", sub_graph.n);
     KASPAN_STATISTIC_ADD("m", sub_graph.m);
-    auto  buffer     = Buffer::create(2 * page_ceil<vertex_t>(sub_graph.n));
+    auto  buffer     = Buffer(page_ceil<vertex_t>(sub_graph.n));
     auto* memory     = buffer.data();
-    auto* wcc_id     = ::borrow<vertex_t>(memory, sub_graph.n);
-    auto* sub_scc_id = ::borrow<vertex_t>(memory, sub_graph.n);
+    auto* sub_scc_id = borrow<vertex_t>(memory, sub_graph.n);
     for (vertex_t i = 0; i < sub_graph.n; ++i) {
-      wcc_id[i]     = i;
       sub_scc_id[i] = scc_id_undecided;
     }
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     if (sub_graph.n) {
       tarjan(sub_graph.n, sub_graph.fw_head, sub_graph.fw_csr, [&](vertex_t* beg, vertex_t* end) {
-        vertex_t min_v = std::numeric_limits<vertex_t>::max();
-        for (auto& c : std::span{ beg, end }) {
-          c     = sub_graph.ids_inverse[c];
-          min_v = std::min(min_v, c);
+        vertex_t min_u = std::numeric_limits<vertex_t>::max();
+        for (auto& sub_u : std::span{ beg, end }) {
+          sub_u = sub_graph.ids_inverse[sub_u];
+          min_u = std::min(min_u, sub_u);
         }
-        for (auto const& c : std::span{ beg, end }) {
-          if (part.has_local(c)) {
-            scc_id[part.to_local(c)] = min_v;
+        for (auto const& sub_u : std::span{ beg, end }) {
+          if (part.has_local(sub_u)) {
+            scc_id[part.to_local(sub_u)] = min_u;
           }
         }
       });

@@ -3,16 +3,13 @@
 #include <scc/adapter/external_edgelist.hpp>
 #include <scc/adapter/manifest.hpp>
 #include <scc/scc.hpp>
+#include <stack>
 #include <util/arg_parse.hpp>
 
 [[noreturn]] void
 usage(int /* argc */, char** argv)
 {
-  std::cout
-    << "usage: " << argv[0]
-    << " --edge_list <edge_list>"
-    << " [--memory <memory>]"
-    << std::endl;
+  std::println("usage: {} --edge_list <edge_list> [--memory <memory>]", argv[0]);
   std::exit(1);
 }
 

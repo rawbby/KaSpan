@@ -66,22 +66,19 @@ inline i32  mpi_world_size = 1;
 inline auto
 mpi_basic_counts_and_displs()
 {
-  struct Result
+  struct
   {
     Buffer     buffer;
     MPI_Count* counts;
     MPI_Aint*  displs;
-  };
+  } result;
 
-  auto buffer = Buffer::create(
-    page_ceil<MPI_Count>(mpi_world_size),
-    page_ceil<MPI_Aint>(mpi_world_size));
+  result.buffer = Buffer{ page_ceil<MPI_Count>(mpi_world_size), page_ceil<MPI_Aint>(mpi_world_size) };
+  void* memory  = result.buffer.data();
+  result.counts = borrow<MPI_Count>(memory, mpi_world_size);
+  result.displs = borrow<MPI_Aint>(memory, mpi_world_size);
 
-  void* memory = buffer.data();
-  auto* counts = borrow<MPI_Count>(memory, mpi_world_size);
-  auto* displs = borrow<MPI_Aint>(memory, mpi_world_size);
-
-  return Result{ std::move(buffer), counts, displs };
+  return result;
 }
 
 /**
@@ -127,6 +124,7 @@ mpi_basic_displs(MPI_Count const* counts, MPI_Aint* displs) -> MPI_Count
   DEBUG_ASSERT_NE(displs, nullptr);
   MPI_Count count = 0;
   for (i32 i = 0; i < mpi_world_size; ++i) {
+    DEBUG_ASSERT_GE(counts[i], 0);
     displs[i] = static_cast<MPI_Aint>(count);
     count += counts[i];
   }
@@ -352,8 +350,9 @@ mpi_basic_allgatherv(T const* send_buffer, MPI_Count send_count)
   Result result;
   auto [buffer, counts, displs] = mpi_basic_counts_and_displs();
   mpi_basic_allgatherv_counts(send_count, counts);
+
   result.count  = mpi_basic_displs(counts, displs);
-  result.buffer = Buffer::create<T>(result.count);
+  result.buffer = Buffer{ result.count * sizeof(T) };
   result.recv   = static_cast<T*>(result.buffer.data());
 
   mpi_basic_allgatherv<T>(send_buffer, send_count, result.recv, counts, displs);

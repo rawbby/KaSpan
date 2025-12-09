@@ -41,7 +41,7 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
 
   Buffer buffer;
   if (memory == nullptr) {
-    buffer = Buffer::create(
+    buffer = Buffer(
       3 * page_ceil<vertex_t>(local_n),
       page_ceil<Frame>(local_n),
       page_ceil<u64>((local_n + 63) / 64));

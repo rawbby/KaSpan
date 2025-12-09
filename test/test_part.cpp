@@ -8,7 +8,7 @@ template<bool sorted_variant>
 void
 test_explicit_continuous_world_part()
 {
-  auto buffer = Buffer::create(2 * mpi_world_size * sizeof(vertex_t));
+  auto  buffer = Buffer(2 * mpi_world_size * sizeof(vertex_t));
   auto* memory = buffer.data();
 
   auto const part = [&memory] {

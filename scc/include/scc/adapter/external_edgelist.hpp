@@ -10,6 +10,7 @@
 #include <charconv>
 #include <filesystem>
 #include <fstream>
+#include <print>
 #include <string>
 #include <stxxl/mng>
 #include <stxxl/sorter>
@@ -225,10 +226,10 @@ convert_graph(std::string const& input_file,
     head_bytes = needed_bytes(m);
     csr_bytes  = needed_bytes(max_node);
 
-    std::cout << "opening files ..." << std::endl;
+    std::println("opening files ...");
     auto head_buffer = FileBuffer::create_w<true>(fw_head_path.c_str(), (n + 1) * head_bytes);
     auto csr_buffer  = FileBuffer::create_w<true>(fw_csr_path.c_str(), m * csr_bytes);
-    std::cout << "files open" << std::endl;
+    std::println("files open");
 
     auto head = DenseUnsignedAccessor<>::view(head_buffer.data(), head_bytes);
     auto csr  = DenseUnsignedAccessor<>::view(csr_buffer.data(), csr_bytes);
@@ -287,10 +288,10 @@ convert_graph(std::string const& input_file,
     ASSERT(not in.bad());
     sort();
 
-    std::cout << "opening files ..." << std::endl;
+    std::println("opening files ...");
     auto head_buffer = FileBuffer::create_w<true>(bw_head_path.c_str(), (n + 1) * head_bytes);
     auto csr_buffer  = FileBuffer::create_w<true>(bw_csr_path.c_str(), m * csr_bytes);
-    std::cout << "files open" << std::endl;
+    std::println("files open");
 
     auto head = DenseUnsignedAccessor<>::view(head_buffer.data(), head_bytes);
     auto csr  = DenseUnsignedAccessor<>::view(csr_buffer.data(), csr_bytes);
