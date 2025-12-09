@@ -87,8 +87,9 @@ main(int argc, char** argv)
     benchmark(kagen_graph, use_async, use_async_indirect);
   } else {
     KASPAN_STATISTIC_PUSH("load");
-    auto const manifest       = Manifest::load(manifest_file);
-    auto const part           = BalancedSlicePart(manifest.graph_node_count);
+    auto const manifest = Manifest::load(manifest_file);
+    ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
+    auto const part           = BalancedSlicePart{ static_cast<vertex_t>(manifest.graph_node_count) };
     auto const manifest_graph = load_graph_part_from_manifest(part, manifest);
     KASPAN_STATISTIC_POP();
     benchmark(manifest_graph, use_async, use_async_indirect);
