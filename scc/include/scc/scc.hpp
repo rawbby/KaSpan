@@ -90,9 +90,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     auto  buffer     = Buffer(page_ceil<vertex_t>(sub_graph.n));
     auto* memory     = buffer.data();
     auto* sub_scc_id = borrow<vertex_t>(memory, sub_graph.n);
-    for (vertex_t i = 0; i < sub_graph.n; ++i) {
-      sub_scc_id[i] = scc_id_undecided;
-    }
+    std::fill(sub_scc_id, sub_scc_id + sub_graph.n, scc_id_undecided);
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     if (sub_graph.n) {
       tarjan(sub_graph.n, sub_graph.fw_head, sub_graph.fw_csr, [&](auto const* beg, auto const* end) {

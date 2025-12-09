@@ -7,7 +7,7 @@
 #include <format>
 #include <print>
 
-template<typename... Args>
+template<FormattableConcept... Args>
 void
 assert_true(auto&& cond, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {

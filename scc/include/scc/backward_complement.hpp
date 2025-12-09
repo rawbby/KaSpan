@@ -37,12 +37,10 @@ backward_complement_graph(
   index_t it = 0;
   DEBUG_ASSERT(n == 0 or fw_head[0] == 0);
   for (vertex_t u = 0; u < n; ++u) {
-    DEBUG_ASSERT_GE(fw_head[u], 0);
-    DEBUG_ASSERT_LE(fw_head[u], fw_head[u + 1]);
+    DEBUG_ASSERT_IN_RANGE(fw_head[u], 0, fw_head[u + 1] + 1);
     auto const end = fw_head[u + 1];
     for (; it < end; ++it) {
-      DEBUG_ASSERT_GE(fw_csr[it], 0);
-      DEBUG_ASSERT_LT(fw_csr[it], n);
+      DEBUG_ASSERT_IN_RANGE(fw_csr[it], 0, n);
       ++bw_head[fw_csr[it] + 1];
     }
   }
@@ -52,8 +50,7 @@ backward_complement_graph(
   // thus bw_head[v + 1] = row_begin(v) for the transposed graph
   index_t acc = 0;
   for (vertex_t u = 0; u < n; ++u) {
-    DEBUG_ASSERT_GE(bw_head[u + 1], 0);
-    DEBUG_ASSERT_LE(bw_head[u + 1], fw_head[n]);
+    DEBUG_ASSERT_IN_RANGE(bw_head[u + 1], 0, fw_head[n] + 1);
     auto const indegree = bw_head[u + 1];
     bw_head[u + 1]      = acc;
     acc += indegree;

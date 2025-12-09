@@ -41,8 +41,7 @@ main(int argc, char** argv)
   tarjan(graph.n, graph.fw_head, graph.fw_csr, [&](auto* beg, auto* end) {
     vertex_t min_u = graph.n;
     for (auto it = beg; it < end; ++it) {
-      ASSERT_GE(*it, 0);
-      ASSERT_LT(*it, graph.n);
+      ASSERT_IN_RANGE(*it, 0, graph.n);
       min_u = std::min(min_u, *it);
     }
     for (auto it = beg; it < end; ++it) {
