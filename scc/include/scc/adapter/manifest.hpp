@@ -217,7 +217,7 @@ load_graph_from_manifest(Manifest const& manifest) -> LocalGraph
 
   auto g = LocalGraph{};
 
-  g.buffer     = Buffer::create(2 * page_ceil<index_t>(n + 1), 2 * page_ceil<vertex_t>(m));
+  g.buffer     = Buffer(2 * page_ceil<index_t>(n + 1), 2 * page_ceil<vertex_t>(m));
   auto* memory = g.buffer.data();
 
   g.n       = static_cast<vertex_t>(n);
@@ -342,7 +342,7 @@ load_graph_part_from_manifest(Part const& part, Manifest const& manifest) -> Loc
   DEBUG_ASSERT_GE(result.local_bw_m, 0);
   DEBUG_ASSERT_LE(result.local_bw_m, result.m);
 
-  result.buffer = Buffer::create(
+  result.buffer = Buffer(
     2 * page_ceil<index_t>(local_n + 1),
     page_ceil<vertex_t>(result.local_fw_m),
     page_ceil<vertex_t>(result.local_bw_m));

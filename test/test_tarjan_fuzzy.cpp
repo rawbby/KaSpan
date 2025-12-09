@@ -5,8 +5,6 @@
 #include <scc/tarjan.hpp>
 #include <util/scope_guard.hpp>
 
-#include <iomanip>
-
 void
 lowest_to_compact_inplace(vertex_t n, vertex_t* scc_id)
 {
@@ -56,7 +54,7 @@ main(int argc, char** argv)
   for (vertex_t n = 32; n < 128; n += 8) {
     auto const seed   = mpi_basic_allreduce_max_time();
     auto const graph  = fuzzy_global_scc_id_and_graph(seed, n);
-    auto       buffer = Buffer::create<vertex_t>(n);
+    auto       buffer = Buffer{ n * sizeof(vertex_t) };
     auto*      scc_id = static_cast<vertex_t*>(buffer.data());
     for (size_t k = 0; k < n; ++k) {
       scc_id[k] = -1;
@@ -74,26 +72,41 @@ main(int argc, char** argv)
     // any_to_lowest_inplace(n, scc_id);
 
     std::stringstream ss;
-    ss << "  index    :";
-    for (vertex_t k = 0; k < n; ++k)
-      ss << ' ' << std::right << std::setw(2) << k;
-    ss << "\n  scc_id   :";
-    for (vertex_t k = 0; k < n; ++k)
-      ss << ' ' << std::right << std::setw(2) << graph.scc_id[k];
-    ss << "\n  scc_id_  :";
-    for (vertex_t k = 0; k < n; ++k)
-      ss << ' ' << std::right << std::setw(2) << scc_id[k];
-    ss << "\n            ";
-    for (vertex_t k = 0; k < n; ++k)
-      ss << (graph.scc_id[k] == scc_id[k] ? "   " : " ^^");
-    ss << std::endl;
+
+    std::print(ss, "  index    :");
+    for (vertex_t k = 0; k < n; ++k) {
+      std::print(ss, " {:2}", k);
+    }
+    std::println(ss);
+
+    std::print(ss, "  scc_id   :");
+    for (vertex_t k = 0; k < n; ++k) {
+      std::print(ss, " {:2}", graph.scc_id[k]);
+    }
+    std::println(ss);
+
+    std::print(ss, "  scc_id_  :");
+    for (vertex_t k = 0; k < n; ++k) {
+      std::print(ss, " {:2}", scc_id[k]);
+    }
+    std::println(ss);
+
+    std::print(ss, "            ");
+    for (vertex_t k = 0; k < n; ++k) {
+      if (graph.scc_id[k] == scc_id[k]) {
+        std::print(ss, "   ");
+      } else {
+        std::print(ss, " ^^");
+      }
+    }
+    std::println(ss);
 
     auto const status_str = ss.str();
 
     MPI_Barrier(MPI_COMM_WORLD);
 
     for (vertex_t k = 0; k < n; ++k) {
-      ASSERT_EQ(graph.scc_id[k], scc_id[k], "k = %d / i = %d\n%s", k, k, status_str.c_str());
+      ASSERT_EQ(graph.scc_id[k], scc_id[k], "k = {} \n{}", k, status_str);
     }
   }
 }

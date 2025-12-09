@@ -9,17 +9,12 @@
 #include <mpi.h>
 
 #include <fstream>
-#include <iostream>
+#include <print>
 
 void
 usage(int /* argc */, char** argv)
 {
-  std::cout
-    << "usage: " << argv[0]
-    << " (--kagen_option_string <kagen_option_string>"
-    << " | --manifest_file <manifest_file>)"
-    << " --output_file <output_file>"
-    << std::endl;
+  std::println("usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file <output_file>", argv[0]);
 }
 
 void

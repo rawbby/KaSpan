@@ -1,12 +1,13 @@
 #pragma once
 
 #include "adapter/edgelist.hpp"
+#include "graph.hpp"
 
-#include <scc/base.hpp>
-#include <scc/part.hpp>
 #include <memory/borrow.hpp>
 #include <memory/buffer.hpp>
 #include <memory/stack_accessor.hpp>
+#include <scc/base.hpp>
+#include <scc/part.hpp>
 
 #include <cstring>
 
@@ -28,13 +29,20 @@ backward_complement_graph(
   index_t*        bw_head,
   vertex_t*       bw_csr)
 {
+  DEBUG_ASSERT_VALID_GRAPH(n, fw_head[n], fw_head, fw_csr);
+
   // === zero bw_head and count indegrees in-place ===
   // after this loop: bw_head[0] == 0 and for every vertex v, bw_head[v + 1] == indegree(v)
   std::memset(bw_head, 0, (n + 1) * sizeof(index_t));
   index_t it = 0;
+  DEBUG_ASSERT(n == 0 or fw_head[0] == 0);
   for (vertex_t u = 0; u < n; ++u) {
+    DEBUG_ASSERT_GE(fw_head[u], 0);
+    DEBUG_ASSERT_LE(fw_head[u], fw_head[u + 1]);
     auto const end = fw_head[u + 1];
     for (; it < end; ++it) {
+      DEBUG_ASSERT_GE(fw_csr[it], 0);
+      DEBUG_ASSERT_LT(fw_csr[it], n);
       ++bw_head[fw_csr[it] + 1];
     }
   }
@@ -42,11 +50,13 @@ backward_complement_graph(
   // === convert indegrees to exclusive prefix sums (row starts) in-place ===
   // after the loop: bw_head[u + 1] == sum_{k < u} indegree(k)
   // thus bw_head[v + 1] = row_begin(v) for the transposed graph
-  index_t prev_indegree = 0;
+  index_t acc = 0;
   for (vertex_t u = 0; u < n; ++u) {
+    DEBUG_ASSERT_GE(bw_head[u + 1], 0);
+    DEBUG_ASSERT_LE(bw_head[u + 1], fw_head[n]);
     auto const indegree = bw_head[u + 1];
-    bw_head[u + 1]      = bw_head[u] + prev_indegree;
-    prev_indegree       = indegree;
+    bw_head[u + 1]      = acc;
+    acc += indegree;
   }
 
   // === fill the transposed CSR using bw_head[v + 1] as a per-row write cursor ===
@@ -59,6 +69,8 @@ backward_complement_graph(
       bw_csr[bw_head[fw_csr[it] + 1]++] = u;
     }
   }
+
+  DEBUG_ASSERT_VALID_GRAPH(n, bw_head[n], bw_head, bw_csr);
 }
 
 /**
@@ -69,7 +81,6 @@ backward_complement_graph(
  * @param[in] local_m the number of forward edges of graph partition (= head[part.local_n()])
  * @param[in] head valid forward head array of graph partition
  * @param[in] csr valid forward csr array of graph partition
- * @param[in] send_stack_memory already allocated memory of size: page_ceil(local_m * sizeof(Edge))
  */
 template<WorldPartConcept Part>
 auto
@@ -77,24 +88,22 @@ backward_complement_graph_part(
   Part const&     part,
   index_t         local_m,
   index_t const*  head,
-  vertex_t const* csr,
-  void*           send_stack_memory = nullptr)
+  vertex_t const* csr)
 {
-  struct Result
+  struct
   {
     Buffer    buffer;
-    index_t   local_m;
-    index_t*  head;
-    vertex_t* csr;
-  };
+    index_t   local_m = 0;
+    index_t*  head    = nullptr;
+    vertex_t* csr     = nullptr;
+  } result;
 
   auto const local_n = part.local_n();
   DEBUG_ASSERT_EQ(local_m, head[local_n]);
 
   if (mpi_world_size == 1) [[unlikely]] {
-    Result result;
     result.local_m = local_m;
-    result.buffer  = Buffer::create(page_ceil<index_t>(local_n + 1), page_ceil<vertex_t>(local_m));
+    result.buffer  = Buffer(page_ceil<index_t>(local_n + 1), page_ceil<vertex_t>(local_m));
     auto* memory   = result.buffer.data();
     result.head    = borrow<index_t>(memory, local_n + 1);
     result.csr     = borrow<vertex_t>(memory, local_m);
@@ -102,11 +111,8 @@ backward_complement_graph_part(
     return result;
   }
 
-  Buffer send_stack_buffer;
-  if (send_stack_memory == nullptr) {
-    send_stack_buffer = Buffer::create<Edge>(local_m);
-    send_stack_memory = send_stack_buffer.data();
-  }
+  Buffer send_stack_buffer{ local_m * sizeof(Edge) };
+  void*  send_stack_memory = send_stack_buffer.data();
 
   StackAccessor<Edge> send_stack{ send_stack_memory };
   auto [sb, send_counts, send_displs] = mpi_basic_counts_and_displs();
@@ -127,9 +133,8 @@ backward_complement_graph_part(
   mpi_basic_allreduce_inplace(&any_edges, 1, MPI_LOR);
 
   if (any_edges == 0) [[unlikely]] {
-    Result result;
     result.local_m = 0;
-    result.buffer  = Buffer::create(page_ceil<index_t>(local_n + 1));
+    result.buffer  = Buffer(page_ceil<index_t>(local_n + 1));
     auto* memory   = result.buffer.data();
     result.head    = borrow_clean<index_t>(memory, local_n + 1);
     result.csr     = nullptr;
@@ -143,13 +148,12 @@ backward_complement_graph_part(
     return part.world_rank_of(e.u);
   });
 
-  auto  recv_buffer = Buffer::create<Edge>(recv_count);
+  auto  recv_buffer = Buffer{ recv_count * sizeof(Edge) };
   auto* recv_access = static_cast<Edge*>(recv_buffer.data());
   mpi_basic_alltoallv(send_stack.data(), send_counts, send_displs, recv_access, recv_counts, recv_displs, mpi_edge_t);
 
-  Result result;
   result.local_m = recv_count;
-  result.buffer  = Buffer::create(page_ceil<index_t>(local_n + 1) + page_ceil<vertex_t>(result.local_m));
+  result.buffer  = Buffer(page_ceil<index_t>(local_n + 1) + page_ceil<vertex_t>(result.local_m));
   auto* mem      = result.buffer.data();
   result.head    = borrow<index_t>(mem, local_n + 1);
   result.csr     = borrow<vertex_t>(mem, result.local_m);

@@ -1,25 +1,23 @@
 #pragma once
 
 #include <cstdio>
+#include <format>
 #include <iosfwd>
 #include <mpi.h>
+#include <print>
 #include <sstream>
 
 inline auto
 decode_system_status(int status) -> int
 {
-  char msg_buffer[512]{};
-
   if (status == -1) {
-    std::fputs(msg_buffer, stderr);
     return 127;
   }
 
   if (WIFEXITED(status)) {
     auto const code = WEXITSTATUS(status);
     if (code != 0) {
-      std::sprintf(msg_buffer, "[SUBPROCESS]\n  normal termination\n  status %d\n  code %d\n", status, code);
-      std::fputs(msg_buffer, stderr);
+      std::println(stderr, "[SUBPROCESS]\n  normal termination\n  status {}\n  code {}\n", status, code);
     }
     return code;
   }
@@ -28,32 +26,28 @@ decode_system_status(int status) -> int
     auto const signal = WTERMSIG(status);
     auto const code   = 128 + signal;
 #if defined(WCOREDUMP)
-    std::sprintf(msg_buffer, "[SUBPROCESS]\n  terminated by signal\n  status %d\n  code %d\n  signal %d%s\n", status, code, signal, WCOREDUMP(status) ? " (core dumped)" : "");
+    std::println(stderr, "[SUBPROCESS]\n  terminated by signal\n  status {}\n  code {}\n  signal {}{}\n", status, code, signal, WCOREDUMP(status) ? " (core dumped)" : "");
 #else
-    std::sprintf(msg_buffer, "[SUBPROCESS]\n  terminated by signal\n  status %d\n  code %d\n  signal %d\n", status, code, signal);
+    std::println(stderr, "[SUBPROCESS]\n  terminated by signal\n  status {}\n  code {}\n  signal {}\n", status, code, signal);
 #endif
-    std::fputs(msg_buffer, stderr);
     return code;
   }
 
   if (WIFSTOPPED(status)) {
     auto const signal = WSTOPSIG(status);
     auto const code   = 128 + signal;
-    std::sprintf(msg_buffer, "[SUBPROCESS]\n  stopped by signal\n  status %d\n  code %d\n  signal %d\n", status, code, signal);
-    std::fputs(msg_buffer, stderr);
+    std::println(stderr, "[SUBPROCESS]\n  stopped by signal\n  status {}\n  code {}\n  signal {}\n", status, code, signal);
     return code;
   }
 
 #ifdef WIFCONTINUED
   if (WIFCONTINUED(status)) {
-    std::sprintf(msg_buffer, "[SUBPROCESS]\n  continued (unexpected)\n  status %d\n  code 1\n", status);
-    std::fputs(msg_buffer, stderr);
+    std::println(stderr, "[SUBPROCESS]\n  continued (unexpected)\n  status {}\n  code 1\n", status);
     return 1;
   }
 #endif
 
-  std::sprintf(msg_buffer, "[SUBPROCESS]\n  unknown status state\n  status %d\n  code 1\n", status);
-  std::fputs(msg_buffer, stderr);
+  std::println(stderr, "[SUBPROCESS]\n  unknown status state\n  status {}\n  code 1\n", status);
   return 1;
 }
 

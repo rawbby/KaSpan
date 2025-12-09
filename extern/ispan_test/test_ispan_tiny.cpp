@@ -21,7 +21,7 @@ main(int argc, char** argv)
   g.n                = n;
   g.m                = m;
 
-  auto  buffer = Buffer::create(2 * page_ceil((n + 1) * sizeof(index_t)) + 2 * page_ceil(m * sizeof(vertex_t)));
+  auto  buffer = Buffer(2 * page_ceil((n + 1) * sizeof(index_t)) + 2 * page_ceil(m * sizeof(vertex_t)));
   auto* memory = buffer.data();
 
   g.fw_head = ::borrow<index_t>(memory, n + 1);
@@ -85,11 +85,11 @@ main(int argc, char** argv)
     &scc_id);
 
   if (mpi_world_rank == 0) {
-    std::cout << "scc_id_orig:  0 1 0 1 1 5 5" << std::endl;
-    std::cout << "scc_id_ispan:";
+    std::println("scc_id_orig:  0 1 0 1 1 5 5");
+    std::print("scc_id_ispan:");
     for (size_t i = 0; i < n; ++i)
-      std::cout << ' ' << scc_id[i];
-    std::cout << std::endl;
+      std::print(" {}", scc_id[i]);
+    std::println();
   }
 
   // SCC's:

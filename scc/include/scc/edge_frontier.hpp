@@ -18,7 +18,7 @@ struct edge_frontier
 
   static auto create() -> edge_frontier
   {
-    auto buffer = Buffer::create(
+    auto buffer = Buffer(
       2 * page_ceil<MPI_Count>(mpi_world_size),
       2 * page_ceil<MPI_Aint>(mpi_world_size));
     auto* memory = buffer.data();

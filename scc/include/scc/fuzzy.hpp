@@ -24,12 +24,12 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_
   };
 
   LocalSccGraph result;
-  result.scc_id_buffer = Buffer::create(page_ceil<vertex_t>(n));
+  result.scc_id_buffer = Buffer(page_ceil<vertex_t>(n));
   result.scc_id        = static_cast<vertex_t*>(result.scc_id_buffer.data());
 
   Buffer temp_buffer;
   if (temp_memory == nullptr) {
-    temp_buffer = Buffer::create(3 * page_ceil<vertex_t>(n));
+    temp_buffer = Buffer(3 * page_ceil<vertex_t>(n));
     temp_memory = temp_buffer.data();
   }
 
@@ -117,7 +117,7 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_
 
   auto const m = edges.size();
 
-  result.buffer      = Buffer::create(2 * page_ceil<index_t>(n + 1) + 2 * page_ceil<vertex_t>(m));
+  result.buffer      = Buffer(2 * page_ceil<index_t>(n + 1) + 2 * page_ceil<vertex_t>(m));
   auto* graph_memory = result.buffer.data();
 
   result.n       = n;
@@ -151,6 +151,8 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_
     }
   }
 
+  DEBUG_ASSERT_VALID_GRAPH(result.n, result.m, result.fw_head, result.fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(result.n, result.m, result.bw_head, result.bw_csr);
   return result;
 }
 
@@ -168,14 +170,18 @@ fuzzy_local_scc_id_and_graph(u64 seed, Part const& part, double degree = -1.0, v
   auto const local_n = part.local_n();
 
   auto g = fuzzy_global_scc_id_and_graph(seed, part.n, degree, memory);
+  DEBUG_ASSERT_VALID_GRAPH(g.n, g.m, g.fw_head, g.fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(g.n, g.m, g.bw_head, g.bw_csr);
 
   LocalSccGraphPart gp;
   static_cast<LocalGraphPart<Part>&>(gp) = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, part);
-  gp.scc_id_part_buffer = Buffer::create<vertex_t>(local_n);
-  gp.scc_id_part        = static_cast<vertex_t*>(gp.scc_id_part_buffer.data());
+  gp.scc_id_part_buffer                  = Buffer{ local_n * sizeof(vertex_t) };
+  gp.scc_id_part                         = static_cast<vertex_t*>(gp.scc_id_part_buffer.data());
   for (vertex_t k = 0; k < local_n; ++k) {
     gp.scc_id_part[k] = g.scc_id[part.to_global(k)];
   }
 
+  DEBUG_ASSERT_VALID_GRAPH_PART(gp.part, gp.fw_head, gp.fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH_PART(gp.part, gp.bw_head, gp.bw_csr);
   return gp;
 }

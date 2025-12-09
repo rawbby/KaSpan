@@ -37,7 +37,7 @@ public:
 
   static auto create(u64 count) noexcept -> std::pair<Buffer, StackAccessor>
   {
-    auto  buffer = Buffer::create<T>(count);
+    auto  buffer = Buffer{ count * sizeof(T) };
     void* memory = buffer.data();
     return { std::move(buffer), StackAccessor{ memory } };
   }
