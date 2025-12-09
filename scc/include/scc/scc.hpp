@@ -30,18 +30,14 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   auto const n       = part.n;
   auto const local_n = part.local_n();
 
+  // fallback to tarjan on single rank
   if (mpi_world_size == 1) {
-    // fallback to tarjan
-    tarjan(part, fw_head, fw_csr, [&](vertex_t const* cbeg, vertex_t const* cend) {
-      vertex_t min_u = n;
-      for (auto it = cbeg; it < cend; ++it) {
-        min_u = std::min(min_u, *it);
-      }
-      for (auto it = cbeg; it < cend; ++it) {
-        scc_id[*it] = min_u;
-      }
+    return tarjan(part, fw_head, fw_csr, [&](auto const* cbeg, auto const* cend) {
+      auto const id = *std::min_element(cbeg, cend);
+      std::for_each(cbeg, cend, [&](auto const k) {
+        scc_id[k] = id;
+      });
     });
-    return;
   }
 
   KASPAN_STATISTIC_PUSH("alloc");
@@ -99,17 +95,14 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     }
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     if (sub_graph.n) {
-      tarjan(sub_graph.n, sub_graph.fw_head, sub_graph.fw_csr, [&](vertex_t* beg, vertex_t* end) {
-        vertex_t min_u = std::numeric_limits<vertex_t>::max();
-        for (auto& sub_u : std::span{ beg, end }) {
-          sub_u = sub_graph.ids_inverse[sub_u];
-          min_u = std::min(min_u, sub_u);
-        }
-        for (auto const& sub_u : std::span{ beg, end }) {
-          if (part.has_local(sub_u)) {
-            scc_id[part.to_local(sub_u)] = min_u;
+      tarjan(sub_graph.n, sub_graph.fw_head, sub_graph.fw_csr, [&](auto const* beg, auto const* end) {
+        auto const min_u = sub_graph.ids_inverse[*std::min_element(beg, end)];
+        std::for_each(beg, end, [&](auto const sub_u) {
+          auto const u = sub_graph.ids_inverse[sub_u];
+          if (part.has_local(u)) {
+            scc_id[part.to_local(u)] = min_u;
           }
-        }
+        });
       });
     }
   }
