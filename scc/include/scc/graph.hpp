@@ -82,6 +82,18 @@ struct GraphPart
   }
 };
 
+inline std::span<vertex_t const>
+csr_range(index_t const* head, vertex_t const* csr, vertex_t k)
+{
+  return { csr + head[k], csr + head[k + 1] };
+}
+
+inline std::span<vertex_t>
+csr_range(index_t const* head, vertex_t* csr, vertex_t k)
+{
+  return { csr + head[k], csr + head[k + 1] };
+}
+
 #define DEBUG_ASSERT_VALID_GRAPH_LIGHT(N, M, HEAD, CSR) \
   DEBUG_ASSERT_NE(HEAD, nullptr);                       \
   DEBUG_ASSERT_NE(CSR, nullptr);                        \
@@ -99,7 +111,7 @@ struct GraphPart
     }                                                              \
     std::remove_cvref_t<decltype(M)> const _m = M;                 \
     for (std::remove_cvref_t<decltype(M)> _i = 1; _i < _m; ++_i) { \
-      DEBUG_ASSERT_IN_RANGE(CSR[_i], 0, N);                                 \
+      DEBUG_ASSERT_IN_RANGE(CSR[_i], 0, N);                        \
     }                                                              \
   });
 
