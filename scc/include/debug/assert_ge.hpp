@@ -5,6 +5,7 @@
 #include <util/pp.hpp>
 
 #include <format>
+#include <cstdio>
 #include <print>
 
 template<typename Lhs, typename Rhs, FormattableConcept... Args>

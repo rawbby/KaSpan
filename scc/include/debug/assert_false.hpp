@@ -6,6 +6,7 @@
 
 #include <format>
 #include <print>
+#include <cstdio>
 
 template<FormattableConcept... Args>
 void

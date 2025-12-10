@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <print>
+#include <cstdio>
 
 int
 main(int argc, char** argv)

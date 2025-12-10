@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <fstream>
 #include <print>
+#include <cstdio>
 #include <string>
 #include <stxxl/mng>
 #include <stxxl/sorter>

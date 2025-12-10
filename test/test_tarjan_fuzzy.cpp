@@ -6,6 +6,7 @@
 #include <util/scope_guard.hpp>
 
 #include <print>
+#include <cstdio>
 
 void
 lowest_to_compact_inplace(vertex_t n, vertex_t* scc_id)
