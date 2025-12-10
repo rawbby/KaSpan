@@ -32,7 +32,7 @@ ecl_scc_init_lable(
 }
 
 template<WorldPartConcept Part>
-void
+auto
 ecl_scc_step(
   Part const&     part,
   index_t const*  fw_head,
@@ -40,10 +40,10 @@ ecl_scc_step(
   index_t const*  bw_head,
   vertex_t const* bw_csr,
   vertex_t*       scc_id,
-  vertex_t*       ecl_fw_lable,
-  vertex_t*       ecl_bw_lable,
+  vertex_t*       ecl_fw_label,
+  vertex_t*       ecl_bw_label,
   BitAccessor     changed,
-  edge_frontier&  frontier)
+  edge_frontier&  frontier) -> vertex_t
 {
   // this function uses the project convention that:
   // k,l always describe local vertex ids
@@ -54,7 +54,7 @@ ecl_scc_step(
   auto const local_n = part.local_n();
 
   auto const saturate_direction = [local_n, scc_id, &changed, &part, &frontier](index_t const* head, vertex_t const* csr, index_t const* opposite_head, vertex_t const* opposite_csr, vertex_t* ecl_lable) {
-    changed.clear(local_n); // clean bit vector
+    changed.fill(local_n); // fill bit vector (everything changed on first iteration)
 
     constexpr auto converged           = static_cast<u8>(0);
     constexpr auto not_converged       = static_cast<u8>(1);
@@ -116,8 +116,8 @@ ecl_scc_step(
 
       changed.clear(local_n); // clear for next step (notice: will also ensure clean bitvector when lambda finishes)
 
-      if (any_communication) {
-        do {
+      if (any_communication) { // avoid allreduce on all ranks if there was no communication
+        while (frontier.has_next()) {
           auto const [u, label] = frontier.next();
           DEBUG_ASSERT(part.has_local(u), "should never receive vertices that are not local");
           auto const k = part.to_local(u);
@@ -128,20 +128,30 @@ ecl_scc_step(
               changed.set(k);
             }
           }
-        } while (frontier.has_next());
+        }
         convergence_state = mpi_basic_allreduce_single(convergence_state, conversion_operator);
       }
     } while (convergence_state == not_converged);
   };
 
-  saturate_direction(fw_head, fw_csr, bw_head, bw_csr, ecl_fw_lable);
-  saturate_direction(bw_head, bw_csr, fw_head, fw_csr, ecl_bw_lable);
+  saturate_direction(fw_head, fw_csr, bw_head, bw_csr, ecl_fw_label);
+  saturate_direction(bw_head, bw_csr, fw_head, fw_csr, ecl_bw_label);
 
+  vertex_t local_component_count = 0;
+  vertex_t local_decided_count   = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
     if (scc_id[k] == scc_id_undecided) {
-      if (ecl_fw_lable[k] == ecl_bw_lable[k]) {
-        scc_id[k] = ecl_fw_lable[k];
+      auto const label = ecl_fw_label[k];
+      if (label == ecl_bw_label[k]) {
+        scc_id[k] = label;
+        ++local_decided_count;
+        if (part.to_global(k) == label) {
+          // this component is counted to this rank
+          ++local_component_count;
+        }
       }
     }
   }
+
+  return local_decided_count;
 }

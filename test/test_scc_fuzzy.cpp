@@ -14,6 +14,8 @@ main(int argc, char** argv)
 
   for (vertex_t n = 16; n < 128; n += 8) {
 
+    DEBUG_ASSERT_EQ(n, mpi_basic_allreduce_single(n, MPI_MAX));
+
     auto const seed = mpi_basic_allreduce_max_time();
     auto const part = BalancedSlicePart{ n };
 
