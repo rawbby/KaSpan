@@ -1,9 +1,10 @@
 #pragma once
 
+#include <mpi.h>
+
 #include <cstdio>
 #include <format>
 #include <iosfwd>
-#include <mpi.h>
 #include <print>
 #include <sstream>
 

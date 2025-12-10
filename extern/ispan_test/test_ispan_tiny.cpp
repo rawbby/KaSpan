@@ -5,6 +5,7 @@
 #include <util/scope_guard.hpp>
 
 #include <iostream>
+#include <print>
 
 int
 main(int argc, char** argv)
