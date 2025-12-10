@@ -20,14 +20,14 @@ template<WorldPartConcept Part>
 void
 ecl_scc_init_lable(
   Part const& part,
-  vertex_t*   ecl_fw_lable,
-  vertex_t*   ecl_bw_lable)
+  vertex_t*   ecl_fw_label,
+  vertex_t*   ecl_bw_label)
 {
   auto const local_n = part.local_n();
   for (vertex_t k = 0; k < local_n; ++k) {
     auto const u    = part.to_global(k);
-    ecl_fw_lable[k] = u;
-    ecl_bw_lable[k] = u;
+    ecl_fw_label[k] = u;
+    ecl_bw_label[k] = u;
   }
 }
 
@@ -54,7 +54,10 @@ ecl_scc_step(
   auto const local_n = part.local_n();
 
   auto const saturate_direction = [local_n, scc_id, &changed, &part, &frontier](index_t const* head, vertex_t const* csr, index_t const* opposite_head, vertex_t const* opposite_csr, vertex_t* ecl_lable) {
-    changed.fill(local_n); // fill bit vector (everything changed on first iteration)
+    for (vertex_t k = 0; k < local_n; ++k) {
+      // fill bit vector (everything changed on first iteration)
+      changed.set(k, scc_id[k] == scc_id_undecided);
+    }
 
     constexpr auto converged           = static_cast<u8>(0);
     constexpr auto not_converged       = static_cast<u8>(1);
@@ -153,5 +156,6 @@ ecl_scc_step(
     }
   }
 
+  DEBUG_ASSERT_GT(mpi_basic_allreduce_single(local_decided_count, MPI_SUM), 0);
   return local_decided_count;
 }

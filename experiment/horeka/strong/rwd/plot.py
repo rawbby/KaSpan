@@ -16,6 +16,7 @@ apps = set()
 graphs = set()
 
 duration_data = {}
+ecl_duration_data = {}
 memory_data = {}
 
 for path in paths:
@@ -38,6 +39,7 @@ for path in paths:
             duration_data.setdefault((app, graph), {})[n] = max(
                 int(output[str(i)]["benchmark"]["scc"]["duration"]) for i in range(n)
             )
+            ecl_duration_data.setdefault((app, graph), {})[n] = max( float(output[str(i)]["benchmark"]["scc"].get("ecl", {"duration": 0})["duration"]) for i in range(n) ) * 100.0 / max( float(output[str(i)]["benchmark"]["scc"]["duration"]) for i in range(n) )
 
             memory = memory_data.setdefault((app, graph), {})
             memory[n] = 0
@@ -148,3 +150,33 @@ for graph in graphs:
     plt.close(fig)
 
     print(cwd / f"{graph}.png")
+
+    fig, (ax2) = plt.subplots(1, 1, figsize=(10, 4))
+
+    data = {
+        app_graph[0]: values
+        for app_graph, values in ecl_duration_data.items()
+        if app_graph[1] == graph
+    }
+
+    # union of all nps across apps
+    nps = sorted({n for values in data.values() for n in values.keys()})
+
+    for app, values in data.items():
+        # build durations aligned with union nps, use NaN for missing
+        memory = [values.get(n, float("nan")) for n in nps]
+        color, marker = app_style[app]
+        ax2.plot(nps, memory, label=app, color=color, marker=marker)
+
+    ax2.set_xlabel("np")
+    ax2.set_ylabel("ecl %")
+    ax2.set_xscale("log", base=2)
+    ax2.grid(True)
+
+    fig.suptitle(f"Strong Scaling '{graph}'")
+    fig.legend()
+    fig.tight_layout()
+    fig.savefig(cwd / f"{graph}_ecl.png", dpi=200)
+    plt.close(fig)
+
+    print(cwd / f"{graph}_ecl.png")
