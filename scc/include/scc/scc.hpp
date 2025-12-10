@@ -12,14 +12,11 @@
 #include <scc/forward_search.hpp>
 #include <scc/normalize_scc_id.hpp>
 #include <scc/pivot_selection.hpp>
-#include <scc/residual_scc.hpp>
 #include <scc/trim_1.hpp>
-#include <util/result.hpp>
 #include <util/scope_guard.hpp>
 
 #include <algorithm>
 #include <cstdio>
-#include <print>
 
 template<WorldPartConcept Part>
 void

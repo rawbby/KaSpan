@@ -3,9 +3,9 @@
 #include <scc/adapter/external_edgelist.hpp>
 #include <scc/adapter/manifest.hpp>
 #include <scc/scc.hpp>
-#include <stack>
-#include <print>
 #include <util/arg_parse.hpp>
+
+#include <print>
 
 [[noreturn]] void
 usage(int /* argc */, char** argv)
