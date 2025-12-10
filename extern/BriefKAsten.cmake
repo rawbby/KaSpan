@@ -88,7 +88,8 @@ find_package(MPI REQUIRED)
 find_package(kassert REQUIRED CONFIG PATHS "${BriefKAsten_INSTALL_DIR}")
 find_package(range-v3 REQUIRED CONFIG PATHS "${BriefKAsten_INSTALL_DIR}")
 
-add_library(BriefKAsten INTERFACE IMPORTED GLOBAL)
+add_library(BriefKAsten INTERFACE IMPORTED GLOBAL
+        ../scc/include/scc/ecl_scc_step.hpp)
 set_target_properties(BriefKAsten PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${BriefKAsten_SOURCE_DIR}/src")
 set_property(TARGET BriefKAsten PROPERTY INTERFACE_COMPILE_FEATURES cxx_std_20)
 set_property(TARGET BriefKAsten APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS BRIEFKASTEN_CXX20)

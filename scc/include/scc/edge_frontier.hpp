@@ -102,4 +102,50 @@ struct edge_frontier
 
     return true;
   }
+
+  template<WorldPartConcept Part>
+  [[nodiscard]] auto icomm(Part const& part) -> MPI_Request
+  {
+    DEBUG_ASSERT_NE(mpi_edge_t, MPI_DATATYPE_NULL);
+
+    auto const send_count = mpi_basic_displs(send_counts, send_displs);
+    DEBUG_ASSERT_EQ(send_count, send_buffer.size());
+
+    auto const total_messages = mpi_basic_allreduce_single(send_count, MPI_SUM);
+    if (total_messages == 0) {
+      return MPI_REQUEST_NULL;
+    }
+
+    mpi_basic_alltoallv_counts(send_counts, recv_counts);
+    auto const recv_count = mpi_basic_displs(recv_counts, recv_displs);
+
+    auto const recv_offset = recv_buffer.size();
+    recv_buffer.resize(recv_offset + recv_count);
+    auto* recv_memory = recv_buffer.data() + recv_offset;
+
+    mpi_basic_inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](Edge const& edge) {
+      return part.world_rank_of(edge.u);
+    });
+
+    return mpi_basic_ialltoallv(
+      send_buffer.data(),
+      send_counts,
+      send_displs,
+      recv_memory,
+      recv_counts,
+      recv_displs,
+      mpi_edge_t);
+  }
+
+  bool isync(MPI_Request request)
+  {
+    if (request == MPI_REQUEST_NULL) {
+      return false;
+    }
+
+    mpi_basic_wait(request);
+    send_buffer.clear();
+    std::memset(send_counts, 0, mpi_world_size * sizeof(MPI_Count));
+    return true;
+  }
 };
