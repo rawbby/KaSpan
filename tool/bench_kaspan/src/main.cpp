@@ -9,6 +9,7 @@
 
 #include <fstream>
 #include <print>
+#include <cstdio>
 
 void
 usage(int /* argc */, char** argv)

@@ -6,6 +6,7 @@
 #include <util/arg_parse.hpp>
 
 #include <print>
+#include <cstdio>
 
 [[noreturn]] void
 usage(int /* argc */, char** argv)

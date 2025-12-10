@@ -7,6 +7,7 @@
 
 #include <format>
 #include <print>
+#include <cstdio>
 
 template<typename Val, typename Beg, typename End, FormattableConcept... Args>
   requires(not FormattableConcept<Val, Beg, End>)
