@@ -8,6 +8,7 @@
 #include <mpi.h>
 
 #include <fstream>
+#include <print>
 
 void
 usage(int /* argc */, char** argv)

@@ -4,6 +4,7 @@
 #include <scc/adapter/manifest.hpp>
 #include <scc/scc.hpp>
 #include <stack>
+#include <print>
 #include <util/arg_parse.hpp>
 
 [[noreturn]] void
