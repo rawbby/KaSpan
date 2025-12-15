@@ -62,8 +62,8 @@ ecl_scc_step(
     DEBUG_ASSERT(not frontier.has_next());
 
     active.fill_cmp(local_n, scc_id, scc_id_undecided);
-    changed.fill_cmp(local_n, scc_id, scc_id_undecided);
-    // std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
+    // changed.fill_cmp(local_n, scc_id, scc_id_undecided);
+    std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
     active.for_each(local_n, [&](auto&& k) {
       active_stack.push(k);
     });
