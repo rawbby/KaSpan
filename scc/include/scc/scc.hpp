@@ -13,7 +13,6 @@
 #include <scc/normalize_scc_id.hpp>
 #include <scc/pivot_selection.hpp>
 #include <scc/trim_1.hpp>
-#include <util/scope_guard.hpp>
 
 #include <algorithm>
 #include <cstdio>
@@ -82,7 +81,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     vertex_t* ecl_bw_label  = borrow<vertex_t>(ecl_memory, local_n);
     auto      active_stack  = StackAccessor<vertex_t>::borrow(ecl_memory, local_n);
     auto      active        = BitAccessor::borrow(ecl_memory, local_n);
-    auto      changed_stack = StackAccessor<vertex_t>::borrow(ecl_memory, local_n);
+    // auto      changed_stack = StackAccessor<vertex_t>::borrow(ecl_memory, local_n);
     auto      changed       = BitAccessor::borrow(ecl_memory, local_n);
     auto      frontier      = edge_frontier::create();
 
@@ -99,7 +98,6 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
         ecl_bw_label,
         active_stack,
         active,
-        // changed_stack,
         changed,
         frontier);
       // maybe: redistribute graph - sort vertices by ecl label and run trim tarjan (as there is now a lot locality)

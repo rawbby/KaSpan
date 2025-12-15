@@ -74,71 +74,16 @@ is_page_aligned(void const* data) -> bool
   return data == page_align_floor(data);
 }
 
-namespace detail {
-
-constexpr u8  free_count  = 4;
-constexpr u8  class_count = 3;
-constexpr u64 class_sizes[]{
-  64 * 1024,       // 64 KiB
-  2 * 1024 * 1024, // 2 MiB
-  32 * 1024 * 1024 // 32 MiB
-};
-
-static void* g_free_buffer[class_count][free_count] = {};
-static u8    g_count_buffer[class_count]{ 0, 0, 0 };
-
 inline auto
-pooled_page_alloc(u64 bytes) -> void*
+page_aligned_alloc(u64 bytes) -> void*
 {
-  if (bytes == 0) {
-    return nullptr;
-  }
-
-  for (u8 i = 0; i < class_count; ++i) {
-    if (bytes <= class_sizes[i]) {
-      if (g_count_buffer[i]) {
-        return g_free_buffer[i][--g_count_buffer[i]];
-      }
-      return std::aligned_alloc(page_size(), page_ceil(class_sizes[i]));
-    }
-  }
-
   return std::aligned_alloc(page_size(), page_ceil(bytes));
 }
 
 inline void
-pooled_page_free(void* ptr, u64 bytes)
+page_aligned_free(void* data, u64 /* bytes */)
 {
-  if (ptr == nullptr) {
-    DEBUG_ASSERT_EQ(bytes, 0);
-    return;
-  }
-
-  for (u8 i = 0; i < class_count; ++i) {
-    if (bytes <= class_sizes[i]) {
-      if (g_count_buffer[i] < free_count) {
-        g_free_buffer[i][g_count_buffer[i]++] = ptr;
-        return;
-      }
-      break;
-    }
-  }
-
-  return std::free(ptr);
-}
-
-} // namespace detail
-
-inline auto
-page_aligned_alloc(u64 bytes) -> void*
-{
-  return detail::pooled_page_alloc(bytes);
-}
-
-inline void
-page_aligned_free(void* data, u64 bytes)
-{
-  return detail::pooled_page_free(data, bytes);
+  std::free(data);
 }
 
 constexpr auto
