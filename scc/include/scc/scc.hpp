@@ -76,15 +76,32 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   // assume huge scc component is resolved for power law graph
   // now switch to grid grap strategy to reduce one scc component per wcc
   if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
-    Buffer    ecl_buffer{ 2 * local_n * sizeof(vertex_t) };
-    void*     ecl_memory   = ecl_buffer.data();
-    vertex_t* ecl_fw_label = borrow<vertex_t>(ecl_memory, local_n);
-    vertex_t* ecl_bw_label = borrow<vertex_t>(ecl_memory, local_n);
-    auto      frontier     = edge_frontier::create();
+    Buffer    ecl_buffer{ 4 * page_ceil<vertex_t>(local_n), 2 * page_ceil<u64>((local_n + 63) >> 6) };
+    void*     ecl_memory    = ecl_buffer.data();
+    vertex_t* ecl_fw_label  = borrow<vertex_t>(ecl_memory, local_n);
+    vertex_t* ecl_bw_label  = borrow<vertex_t>(ecl_memory, local_n);
+    auto      active_stack  = StackAccessor<vertex_t>::borrow(ecl_memory, local_n);
+    auto      active        = BitAccessor::borrow(ecl_memory, local_n);
+    auto      changed_stack = StackAccessor<vertex_t>::borrow(ecl_memory, local_n);
+    auto      changed       = BitAccessor::borrow(ecl_memory, local_n);
+    auto      frontier      = edge_frontier::create();
 
     do {
       ecl_scc_init_lable(part, ecl_fw_label, ecl_bw_label);
-      local_decided += ecl_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, ecl_fw_label, ecl_bw_label, bitvector, frontier);
+      local_decided += ecl_scc_step(
+        part,
+        fw_head,
+        fw_csr,
+        bw_head,
+        bw_csr,
+        scc_id,
+        ecl_fw_label,
+        ecl_bw_label,
+        active_stack,
+        active,
+        // changed_stack,
+        changed,
+        frontier);
       // maybe: redistribute graph - sort vertices by ecl label and run trim tarjan (as there is now a lot locality)
     } while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold);
   }

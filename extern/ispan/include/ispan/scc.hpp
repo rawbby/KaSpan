@@ -74,11 +74,13 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
   auto* sub_bw_csr = new vertex_t[m + 1]{};
   SCOPE_GUARD(delete[] sub_bw_csr);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
   depth_t* fw_sa = nullptr;
   posix_memalign((void**)&fw_sa, getpagesize(), sizeof(*fw_sa) * (virtual_count + 1));
-
   depth_t* bw_sa = nullptr;
   posix_memalign((void**)&bw_sa, getpagesize(), sizeof(*bw_sa) * (virtual_count + 1));
+#pragma GCC diagnostic pop
 
   auto* fq_comm = new vertex_t[virtual_count + 1]{};
   SCOPE_GUARD(delete[] fq_comm);

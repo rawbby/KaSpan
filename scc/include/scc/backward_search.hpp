@@ -43,11 +43,7 @@ backward_search(
       ++decided_count;
 
       // add all neighbours to frontier
-      auto const begin = bw_head[k];
-      auto const end   = bw_head[k + 1];
-      for (auto i = begin; i < end; ++i) {
-        auto const v = bw_csr[i];
-
+      for (vertex_t v : csr_range(bw_head, bw_csr, k)) {
         if (part.has_local(v)) {
           frontier.local_push(v);
         } else {

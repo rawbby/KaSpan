@@ -2,7 +2,6 @@
 #include <memory/buffer.hpp>
 #include <scc/adapter/external_edgelist.hpp>
 #include <scc/adapter/manifest.hpp>
-#include <scc/scc.hpp>
 #include <util/arg_parse.hpp>
 
 #include <print>

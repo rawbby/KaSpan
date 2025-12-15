@@ -2,19 +2,18 @@
 
 #include <memory/buffer.hpp>
 #include <memory/dense_unsigned_accessor.hpp>
+#include <scc/adapter/stxxl_wrapper.hpp>
 #include <scc/base.hpp>
 #include <util/result.hpp>
 
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <print>
-#include <cstdio>
 #include <string>
-#include <stxxl/mng>
-#include <stxxl/sorter>
 
 namespace convert_graph_internal {
 

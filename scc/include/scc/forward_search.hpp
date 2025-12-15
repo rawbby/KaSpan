@@ -44,11 +44,7 @@ forward_search(
       root = std::min(root, u);
 
       // add all neighbours to frontier
-      auto const beg = fw_head[k];
-      auto const end = fw_head[k + 1];
-      for (auto i = beg; i < end; ++i) {
-        auto const v = fw_csr[i];
-
+      for (vertex_t v : csr_range(fw_head, fw_csr, k)) {
         if (part.has_local(v)) {
           frontier.local_push(v);
         } else {
