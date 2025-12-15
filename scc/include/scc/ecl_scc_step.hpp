@@ -62,7 +62,6 @@ ecl_scc_step(
     DEBUG_ASSERT(not frontier.has_next());
 
     active.fill_cmp(local_n, scc_id, scc_id_undecided);
-    // changed.fill_cmp(local_n, scc_id, scc_id_undecided);
     std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
     active.for_each(local_n, [&](auto&& k) {
       active_stack.push(k);
@@ -79,12 +78,12 @@ ecl_scc_step(
         auto const k = active_stack.back();
         active_stack.pop();
 
-        auto const label_k = ecl_lable[k];
+        auto const label = ecl_lable[k];
         for (auto&& v : csr_range(head, csr, k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (label_k < ecl_lable[l]) {
-              ecl_lable[l] = label_k;
+            if (label < ecl_lable[l] and scc_id[k] == scc_id_undecided) {
+              ecl_lable[l] = label;
               changed.set(l);
               if (not active.get(l)) {
                 active.set(l);
@@ -128,13 +127,13 @@ ecl_scc_step(
         DEBUG_ASSERT(part.has_local(u))
         auto const k = part.to_local(u);
 
-        if (label < ecl_lable[k]) {
+        if (label < ecl_lable[k] and scc_id[k] == scc_id_undecided) {
           ecl_lable[k] = label;
           changed.set(k);
-        }
-        if (not active.get(k)) {
-          active.set(k);
-          active_stack.push(k);
+          if (not active.get(k)) {
+            active.set(k);
+            active_stack.push(k);
+          }
         }
       }
     }
