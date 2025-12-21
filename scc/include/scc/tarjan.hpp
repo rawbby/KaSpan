@@ -3,9 +3,9 @@
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
 #include <iostream>
-#include <memory/bit_accessor.hpp>
+#include <memory/accessor/bit_accessor.hpp>
+#include <memory/accessor/stack_accessor.hpp>
 #include <memory/buffer.hpp>
-#include <memory/stack_accessor.hpp>
 #include <scc/graph.hpp>
 
 constexpr auto
@@ -41,10 +41,8 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
 
   Buffer buffer;
   if (memory == nullptr) {
-    buffer = Buffer(
-      3 * page_ceil<vertex_t>(local_n),
-      page_ceil<Frame>(local_n),
-      page_ceil<u64>((local_n + 63) / 64));
+    buffer = make_buffer<vertex_t, vertex_t, vertex_t, Frame, u64>(
+      local_n, local_n, local_n, local_n, (local_n + 63) / 64);
     memory = buffer.data();
   }
 

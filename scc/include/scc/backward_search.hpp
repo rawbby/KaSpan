@@ -1,8 +1,8 @@
 #pragma once
 
+#include <memory/accessor/bit_accessor.hpp>
 #include <debug/assert.hpp>
 #include <debug/statistic.hpp>
-#include <memory/bit_accessor.hpp>
 #include <scc/base.hpp>
 #include <scc/vertex_frontier.hpp>
 

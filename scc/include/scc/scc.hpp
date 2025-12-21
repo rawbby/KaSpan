@@ -2,9 +2,9 @@
 
 #include "trim_tarjan.hpp"
 
+#include <memory/accessor/bit_accessor.hpp>
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
-#include <memory/bit_accessor.hpp>
 #include <scc/allgather_sub_graph.hpp>
 #include <scc/backward_search.hpp>
 #include <scc/base.hpp>
@@ -62,7 +62,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   KASPAN_STATISTIC_PUSH("ecl");
   if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
 
-    Buffer    ecl_buffer{ 4 * page_ceil<vertex_t>(local_n), page_ceil<u64>((local_n + 63) >> 6) };
+    auto    ecl_buffer = make_buffer<vertex_t, vertex_t,vertex_t ,vertex_t, u64>(local_n,local_n,local_n,local_n, (local_n + 63) >> 6);
     void*     ecl_memory   = ecl_buffer.data();
     vertex_t* ecl_fw_label = borrow<vertex_t>(ecl_memory, local_n);
     vertex_t* ecl_bw_label = borrow<vertex_t>(ecl_memory, local_n);

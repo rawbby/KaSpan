@@ -19,9 +19,9 @@ borrow(void*& memory, u64 count) noexcept -> T*
     DEBUG_ASSERT_NE(memory, nullptr);
   }
   DEBUG_ASSERT_EQ(reinterpret_cast<std::uintptr_t>(memory) % alignof(T), 0);
-  DEBUG_ASSERT(is_page_aligned(memory));
+  DEBUG_ASSERT(is_line_aligned(memory));
   auto const result    = static_cast<T*>(memory);
-  auto const byte_size = page_ceil(count * sizeof(T));
+  auto const byte_size = line_align_up(count * sizeof(T));
   memory               = static_cast<void*>(static_cast<std::byte*>(memory) + byte_size);
   return result;
 }

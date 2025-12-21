@@ -4,9 +4,9 @@
 #include <scc/base.hpp>
 #include <util/scope_guard.hpp>
 
+#include <cstdio>
 #include <iostream>
 #include <print>
-#include <cstdio>
 
 int
 main(int argc, char** argv)
@@ -23,8 +23,8 @@ main(int argc, char** argv)
   g.n                = n;
   g.m                = m;
 
-  auto  buffer = Buffer(2 * page_ceil((n + 1) * sizeof(index_t)) + 2 * page_ceil(m * sizeof(vertex_t)));
-  auto* memory = buffer.data();
+  auto const buffer = make_graph_buffer(n, m);
+  auto*      memory = buffer.data();
 
   g.fw_head = ::borrow<index_t>(memory, n + 1);
   g.bw_head = ::borrow<index_t>(memory, n + 1);

@@ -1,16 +1,14 @@
-#include "scc/adapter/manifest.hpp"
-
-#include <scc/allgather_graph.hpp>
-
 #include <ispan/scc.hpp>
 #include <scc/adapter/kagen.hpp>
+#include <scc/adapter/manifest.hpp>
+#include <scc/allgather_graph.hpp>
 #include <util/arg_parse.hpp>
 
 #include <mpi.h>
 
+#include <cstdio>
 #include <fstream>
 #include <print>
-#include <cstdio>
 
 void
 usage(int /* argc */, char** argv)

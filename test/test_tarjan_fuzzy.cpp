@@ -57,7 +57,7 @@ main(int argc, char** argv)
   for (vertex_t n = 32; n < 128; n += 8) {
     auto const seed   = mpi_basic_allreduce_max_time();
     auto const graph  = fuzzy_global_scc_id_and_graph(seed, n);
-    auto       buffer = Buffer{ n * sizeof(vertex_t) };
+    auto       buffer = make_buffer<vertex_t>(n);
     auto*      scc_id = static_cast<vertex_t*>(buffer.data());
     for (size_t k = 0; k < n; ++k) {
       scc_id[k] = -1;

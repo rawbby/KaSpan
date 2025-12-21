@@ -76,10 +76,10 @@ mpi_basic_counts_and_displs(void*& memory)
 inline auto
 mpi_basic_counts_and_displs()
 {
-  Buffer buffer{ page_ceil<MPI_Count>(mpi_world_size), page_ceil<MPI_Aint>(mpi_world_size) };
-  auto*  memory = buffer.data();
-  auto*  counts = borrow<MPI_Count>(memory, mpi_world_size);
-  auto*  displs = borrow<MPI_Aint>(memory, mpi_world_size);
+  auto  buffer = make_buffer<MPI_Count, MPI_Aint>(mpi_world_size, mpi_world_size);
+  auto* memory = buffer.data();
+  auto* counts = borrow<MPI_Count>(memory, mpi_world_size);
+  auto* displs = borrow<MPI_Aint>(memory, mpi_world_size);
   return PACK(buffer, counts, displs);
 }
 
@@ -395,7 +395,7 @@ mpi_basic_allgatherv(T const* send_buffer, MPI_Count send_count)
   mpi_basic_allgatherv_counts(send_count, counts);
 
   result.count  = mpi_basic_displs(counts, displs);
-  result.buffer = Buffer{ result.count * sizeof(T) };
+  result.buffer = make_buffer<T>(result.count);
   result.recv   = static_cast<T*>(result.buffer.data());
 
   mpi_basic_allgatherv<T>(send_buffer, send_count, result.recv, counts, displs);

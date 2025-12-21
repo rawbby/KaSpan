@@ -1,6 +1,6 @@
 #pragma once
 
-#include <memory/dense_unsigned_accessor.hpp>
+#include <memory/accessor/dense_unsigned_accessor.hpp>
 #include <scc/graph.hpp>
 #include <util/result.hpp>
 
@@ -217,7 +217,7 @@ load_graph_from_manifest(Manifest const& manifest) -> LocalGraph
 
   auto g = LocalGraph{};
 
-  g.buffer     = Buffer(2 * page_ceil<index_t>(n + 1), 2 * page_ceil<vertex_t>(m));
+  g.buffer     = make_graph_buffer(n, m);
   auto* memory = g.buffer.data();
 
   g.n       = static_cast<vertex_t>(n);
@@ -336,10 +336,7 @@ load_graph_part_from_manifest(Part const& part, Manifest const& manifest) -> Loc
   DEBUG_ASSERT_GE(result.local_bw_m, 0);
   DEBUG_ASSERT_LE(result.local_bw_m, result.m);
 
-  result.buffer = Buffer(
-    2 * page_ceil<index_t>(local_n + 1),
-    page_ceil<vertex_t>(result.local_fw_m),
-    page_ceil<vertex_t>(result.local_bw_m));
+  result.buffer      = make_graph_buffer(local_n, result.local_fw_m, result.local_bw_m);
   auto* graph_memory = result.buffer.data();
 
   result.fw_head = borrow<index_t>(graph_memory, local_n + 1);

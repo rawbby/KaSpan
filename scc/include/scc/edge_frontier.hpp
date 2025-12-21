@@ -5,6 +5,8 @@
 
 #include <mpi.h>
 
+#include <vector>
+
 struct edge_frontier
 {
   std::vector<Edge> send_buffer;
@@ -18,9 +20,8 @@ struct edge_frontier
 
   static auto create() -> edge_frontier
   {
-    auto buffer = Buffer(
-      2 * page_ceil<MPI_Count>(mpi_world_size),
-      2 * page_ceil<MPI_Aint>(mpi_world_size));
+    auto buffer = make_buffer<MPI_Count, MPI_Count, MPI_Aint, MPI_Aint>(
+      mpi_world_size, mpi_world_size, mpi_world_size, mpi_world_size);
     auto* memory = buffer.data();
 
     edge_frontier frontier;

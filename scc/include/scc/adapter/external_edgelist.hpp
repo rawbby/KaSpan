@@ -1,7 +1,7 @@
 #pragma once
 
+#include <memory/accessor/dense_unsigned_accessor.hpp>
 #include <memory/buffer.hpp>
-#include <memory/dense_unsigned_accessor.hpp>
 #include <scc/adapter/stxxl_wrapper.hpp>
 #include <scc/base.hpp>
 #include <util/result.hpp>

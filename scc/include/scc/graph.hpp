@@ -135,3 +135,21 @@ csr_range(index_t const* head, vertex_t* csr, vertex_t k)
       DEBUG_ASSERT_LT(CSR[_i], PART.n);                                      \
     }                                                                        \
   });
+
+inline auto
+make_graph_buffer(vertex_t n, index_t m) -> Buffer
+{
+  return make_buffer<index_t, vertex_t, index_t, vertex_t>(n + 1, m, n + 1, m);
+}
+
+inline auto
+make_fw_graph_buffer(vertex_t n, index_t m) -> Buffer
+{
+  return make_buffer<index_t, vertex_t>(n + 1, m);
+}
+
+inline auto
+make_graph_buffer(vertex_t n, index_t fw_m, index_t bw_m) -> Buffer
+{
+  return make_buffer<index_t, vertex_t, index_t, vertex_t>(n + 1, fw_m, n + 1, bw_m);
+}

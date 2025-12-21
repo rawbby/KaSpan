@@ -26,7 +26,7 @@ main(int argc, char** argv)
   g.n = 6;
   g.m = 10;
 
-  g.buffer     = Buffer{ 2 * page_ceil<index_t>(g.n), 2 * page_ceil<vertex_t>(g.m) };
+  g.buffer     = make_graph_buffer(g.n, g.m);
   auto* memory = g.buffer.data();
   g.fw_head    = borrow<index_t>(memory, g.m);
   g.fw_csr     = borrow<vertex_t>(memory, g.n + 1);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <memory/stack_accessor.hpp>
+#include <memory/accessor/stack_accessor.hpp>
 
 #include <memory/buffer.hpp>
 #include <scc/base.hpp>
@@ -24,12 +24,12 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_
   };
 
   LocalSccGraph result;
-  result.scc_id_buffer = Buffer(page_ceil<vertex_t>(n));
+  result.scc_id_buffer = make_buffer<vertex_t>(n);
   result.scc_id        = static_cast<vertex_t*>(result.scc_id_buffer.data());
 
   Buffer temp_buffer;
   if (temp_memory == nullptr) {
-    temp_buffer = Buffer(3 * page_ceil<vertex_t>(n));
+    temp_buffer = make_buffer<vertex_t>(n, n, n);
     temp_memory = temp_buffer.data();
   }
 
@@ -117,7 +117,7 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_
 
   auto const m = edges.size();
 
-  result.buffer      = Buffer(2 * page_ceil<index_t>(n + 1) + 2 * page_ceil<vertex_t>(m));
+  result.buffer      = make_graph_buffer(n, m);
   auto* graph_memory = result.buffer.data();
 
   result.n       = n;
@@ -175,7 +175,7 @@ fuzzy_local_scc_id_and_graph(u64 seed, Part const& part, double degree = -1.0, v
 
   LocalSccGraphPart gp;
   static_cast<LocalGraphPart<Part>&>(gp) = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, part);
-  gp.scc_id_part_buffer                  = Buffer{ local_n * sizeof(vertex_t) };
+  gp.scc_id_part_buffer                  = make_buffer<vertex_t>(local_n);
   gp.scc_id_part                         = static_cast<vertex_t*>(gp.scc_id_part_buffer.data());
   for (vertex_t k = 0; k < local_n; ++k) {
     gp.scc_id_part[k] = g.scc_id[part.to_global(k)];

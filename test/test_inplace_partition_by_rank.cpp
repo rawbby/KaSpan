@@ -1,5 +1,5 @@
 #include <debug/sub_process.hpp>
-#include <memory/stack_accessor.hpp>
+#include <memory/accessor/stack_accessor.hpp>
 #include <scc/base.hpp>
 #include <util/mpi_basic.hpp>
 
@@ -26,8 +26,8 @@ check_case(Item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts
     return x.dest;
   });
 
-  auto  buffer = Buffer(2 * page_ceil<MPI_Count>(mpi_world_size));
-  auto* memory = buffer.data();
+  auto const buffer = make_buffer<MPI_Count>(mpi_world_size, mpi_world_size);
+  auto*      memory = buffer.data();
 
   auto* beg = borrow<MPI_Count>(memory, mpi_world_size);
   auto* end = borrow<MPI_Count>(memory, mpi_world_size);

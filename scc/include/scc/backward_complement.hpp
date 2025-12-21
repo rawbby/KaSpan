@@ -3,9 +3,9 @@
 #include "adapter/edgelist.hpp"
 #include "graph.hpp"
 
+#include <memory/accessor/stack_accessor.hpp>
 #include <memory/borrow.hpp>
 #include <memory/buffer.hpp>
-#include <memory/stack_accessor.hpp>
 #include <scc/base.hpp>
 #include <scc/part.hpp>
 
@@ -100,7 +100,7 @@ backward_complement_graph_part(
 
   if (mpi_world_size == 1) [[unlikely]] {
     result.local_m = local_m;
-    result.buffer  = Buffer(page_ceil<index_t>(local_n + 1), page_ceil<vertex_t>(local_m));
+    result.buffer  = make_fw_graph_buffer(local_n, local_m);
     auto* memory   = result.buffer.data();
     result.head    = borrow<index_t>(memory, local_n + 1);
     result.csr     = borrow<vertex_t>(memory, local_m);
@@ -108,8 +108,8 @@ backward_complement_graph_part(
     return result;
   }
 
-  Buffer send_stack_buffer{ local_m * sizeof(Edge) };
-  void*  send_stack_memory = send_stack_buffer.data();
+  auto  send_stack_buffer = make_buffer<Edge>(local_m);
+  void* send_stack_memory = send_stack_buffer.data();
 
   StackAccessor<Edge> send_stack{ send_stack_memory };
   auto [sb, send_counts, send_displs] = mpi_basic_counts_and_displs();
@@ -131,7 +131,7 @@ backward_complement_graph_part(
 
   if (any_edges == 0) [[unlikely]] {
     result.local_m = 0;
-    result.buffer  = Buffer(page_ceil<index_t>(local_n + 1));
+    result.buffer  = make_graph_buffer(local_n, 0);
     auto* memory   = result.buffer.data();
     result.head    = borrow_clean<index_t>(memory, local_n + 1);
     result.csr     = nullptr;
@@ -145,12 +145,12 @@ backward_complement_graph_part(
     return part.world_rank_of(e.u);
   });
 
-  auto  recv_buffer = Buffer{ recv_count * sizeof(Edge) };
+  auto  recv_buffer = make_buffer<Edge>(recv_count);
   auto* recv_access = static_cast<Edge*>(recv_buffer.data());
   mpi_basic_alltoallv(send_stack.data(), send_counts, send_displs, recv_access, recv_counts, recv_displs, mpi_edge_t);
 
   result.local_m = recv_count;
-  result.buffer  = Buffer(page_ceil<index_t>(local_n + 1) + page_ceil<vertex_t>(result.local_m));
+  result.buffer  = make_fw_graph_buffer(local_n, result.local_m);
   auto* mem      = result.buffer.data();
   result.head    = borrow<index_t>(mem, local_n + 1);
   result.csr     = borrow<vertex_t>(mem, result.local_m);

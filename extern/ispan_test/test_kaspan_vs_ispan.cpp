@@ -1,7 +1,7 @@
 #include <debug/statistic.hpp>
 #include <debug/sub_process.hpp>
 #include <ispan/scc.hpp>
-#include <memory/stack_accessor.hpp>
+#include <memory/accessor/stack_accessor.hpp>
 #include <scc/adapter/kagen.hpp>
 #include <scc/adapter/manifest.hpp>
 #include <scc/allgather_graph.hpp>
@@ -24,7 +24,7 @@ main(int argc, char** argv)
   DEBUG_ASSERT_VALID_GRAPH_PART(graph_part.part, graph_part.fw_head, graph_part.fw_csr);
   DEBUG_ASSERT_VALID_GRAPH_PART(graph_part.part, graph_part.bw_head, graph_part.bw_csr);
 
-  auto const graph      = allgather_graph(
+  auto const graph = allgather_graph(
     graph_part.part,
     graph_part.m,
     graph_part.local_fw_m,
@@ -33,9 +33,9 @@ main(int argc, char** argv)
   DEBUG_ASSERT_VALID_GRAPH(graph.n, graph.m, graph.fw_head, graph.fw_csr);
   DEBUG_ASSERT_VALID_GRAPH(graph.n, graph.m, graph.bw_head, graph.bw_csr);
 
-  auto  scc_id_buffer = Buffer{ 2 * page_ceil<vertex_t>(graph_part.part.local_n()) };
-  auto* scc_id_access = scc_id_buffer.data();
-  auto* kaspan_scc_id = borrow_clean<vertex_t>(scc_id_access, graph_part.part.local_n());
+  auto const scc_id_buffer = make_buffer<vertex_t>(graph_part.part.local_n());
+  auto*      scc_id_access = scc_id_buffer.data();
+  auto*      kaspan_scc_id = borrow_clean<vertex_t>(scc_id_access, graph_part.part.local_n());
   scc(
     graph_part.part,
     graph_part.fw_head,

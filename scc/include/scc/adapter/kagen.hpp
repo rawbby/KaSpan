@@ -29,12 +29,8 @@ kagen_forward_graph_part(char const* generator_args)
   auto const local_fw_m = static_cast<index_t>(ka_graph.NumberOfLocalEdges());
   auto const vertex_end = static_cast<vertex_t>(ka_graph.vertex_range.second);
 
-  result.buffer = Buffer{
-    page_ceil<i32>(mpi_world_size),
-    page_ceil<index_t>(local_n + 1),
-    page_ceil<vertex_t>(local_fw_m)
-  };
-  void* memory = result.buffer.data();
+  result.buffer = make_buffer<i32, index_t, vertex_t>(mpi_world_size, local_n + 1, local_fw_m);
+  void* memory  = result.buffer.data();
 
   result.part = ExplicitSortedContinuousWorldPart{ global_n, vertex_end, mpi_world_rank, mpi_world_size, memory };
   DEBUG_ASSERT_EQ(result.part.n, global_n);

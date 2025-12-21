@@ -48,9 +48,7 @@ allgather_graph(Part const& part, index_t m, index_t local_fw_m, index_t const* 
   auto const local_n = part.local_n();
 
   LocalGraph result;
-  result.buffer = Buffer(
-    2 * page_ceil<index_t>(n + 1),
-    2 * page_ceil<vertex_t>(m));
+  result.buffer = make_graph_buffer(n, m);
 
   void* memory   = result.buffer.data();
   result.n       = n;

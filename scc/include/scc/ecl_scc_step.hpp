@@ -1,6 +1,6 @@
 #pragma once
 
-#include <memory/bit_accessor.hpp>
+#include <memory/accessor/bit_accessor.hpp>
 #include <scc/base.hpp>
 #include <scc/edge_frontier.hpp>
 #include <scc/graph.hpp>

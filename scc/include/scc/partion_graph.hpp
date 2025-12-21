@@ -62,11 +62,7 @@ partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t con
   auto const local_bw_m = partition_degree(bw_head, part);
 
   LocalGraphPart<Part> result;
-  result.buffer = Buffer(
-    page_ceil<index_t>(local_n + 1),
-    page_ceil<vertex_t>(local_fw_m),
-    page_ceil<index_t>(local_n + 1),
-    page_ceil<vertex_t>(local_bw_m));
+  result.buffer = make_graph_buffer(local_n, local_fw_m, local_bw_m);
   auto* memory = result.buffer.data();
 
   result.part       = part;
@@ -103,7 +99,7 @@ partition(index_t m, index_t const* head, vertex_t const* csr, Part const& part)
   auto const local_m = partition_degree(head, part);
 
   PartitionResult result;
-  result.buffer = Buffer(page_ceil<index_t>(local_n + 1), page_ceil<vertex_t>(local_m));
+  result.buffer = make_fw_graph_buffer(local_n + 1, local_m);
   auto* memory  = result.buffer.data();
 
   result.part    = part;

@@ -1,11 +1,13 @@
 #pragma once
 
+#include <memory/accessor/stack_accessor.hpp>
 #include <memory/buffer.hpp>
-#include <memory/stack_accessor.hpp>
 #include <scc/base.hpp>
 #include <scc/graph.hpp>
 #include <scc/part.hpp>
 #include <util/return_pack.hpp>
+
+#include <unordered_map>
 
 namespace sub_graph {
 
@@ -28,8 +30,8 @@ allgather_sub_ids(Part const& part, vertex_t local_sub_n, Fn&& in_sub_graph)
   mpi_basic_allgatherv_counts(local_ids_inverse_stack.size(), counts);
   auto const sub_n = static_cast<vertex_t>(mpi_basic_displs(counts, displs));
 
-  Buffer ids_inverse_buffer{ sub_n * sizeof(vertex_t) };
-  auto   ids_inverse = static_cast<vertex_t*>(ids_inverse_buffer.data());
+  auto ids_inverse_buffer = make_buffer<vertex_t>(sub_n);
+  auto ids_inverse        = static_cast<vertex_t*>(ids_inverse_buffer.data());
   mpi_basic_allgatherv<vertex_t>(local_ids_inverse_stack.data(), local_ids_inverse_stack.size(), ids_inverse, counts, displs);
 
   auto* local_ids_inverse = ids_inverse + displs[mpi_world_rank];
@@ -54,12 +56,8 @@ allgather_csr_degrees(
   auto const local_n = part.local_n();
   auto const local_m = head[local_n];
 
-  Buffer buffer{
-    page_ceil<MPI_Count>(mpi_world_size),
-    page_ceil<MPI_Aint>(mpi_world_size),
-    page_ceil<vertex_t>(local_m),
-    page_ceil<index_t>(mpi_world_root + local_sub_n),
-  };
+  auto buffer = make_buffer<MPI_Count, MPI_Aint, vertex_t, index_t>(
+    mpi_world_size, mpi_world_size, local_m, mpi_world_root + local_sub_n);
   void* memory = buffer.data();
 
   auto [counts, displs]  = mpi_basic_counts_and_displs(memory);
@@ -149,7 +147,7 @@ allgather_sub_graph(
       sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_ids);
 
     sub.m        = sub_m;
-    sub.buffer   = Buffer{ 2 * page_ceil<index_t>(sub_n + 1), 2 * page_ceil<vertex_t>(sub_m) };
+    sub.buffer   = make_graph_buffer(sub_n, sub_m);
     void* memory = sub.buffer.data();
     sub.fw_head  = borrow<index_t>(memory, sub_n + 1);
     sub.fw_csr   = borrow<vertex_t>(memory, sub_m);
@@ -233,7 +231,7 @@ allgather_fw_sub_graph(
       sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_ids);
 
     sub.m        = sub_m;
-    sub.buffer   = Buffer{ page_ceil<index_t>(sub_n + 1), page_ceil<vertex_t>(sub_m) };
+    sub.buffer   = make_fw_graph_buffer(sub_n, sub_m);
     void* memory = sub.buffer.data();
     sub.fw_head  = borrow<index_t>(memory, sub_n + 1);
     sub.fw_csr   = borrow<vertex_t>(memory, sub_m);
