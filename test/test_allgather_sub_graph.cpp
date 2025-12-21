@@ -79,8 +79,10 @@ main(int argc, char** argv)
   ASSERT_EQ(gp.part.local_n(), 2);
   ASSERT_EQ(gp.m, 10);
 
+  constexpr auto local_sub_n = 1; // one sub_n on every rank
+
   auto const sub_g = allgather_sub_graph(
-    gp.part, gp.fw_head, gp.fw_csr, gp.bw_head, gp.bw_csr, [&](vertex_t k) {
+    gp.part, local_sub_n, gp.fw_head, gp.fw_csr, gp.bw_head, gp.bw_csr, [&](vertex_t k) {
       auto const u = gp.part.to_global(k);
       return u == 1 or u == 2 or u == 4;
     });

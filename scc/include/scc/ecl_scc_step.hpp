@@ -79,7 +79,7 @@ ecl_scc_step(
         active_stack.pop();
 
         auto const label = ecl_lable[k];
-        for (auto&& v : csr_range(head, csr, k)) {
+        for (auto v : csr_range(head, csr, k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
             if (label < ecl_lable[l] and scc_id[k] == scc_id_undecided) {
@@ -102,7 +102,7 @@ ecl_scc_step(
 
       changed.for_each(local_n, [&](auto&& k) {
         auto const label_k = ecl_lable[k];
-        for (auto&& v : csr_range(head, csr, k)) {
+        for (auto v : csr_range(head, csr, k)) {
           if (label_k < v and not part.has_local(v)) {
             DEBUG_ASSERT_NE(part.world_rank_of(v), mpi_world_rank);
             frontier.push(part.world_rank_of(v), { v, label_k });
@@ -124,7 +124,7 @@ ecl_scc_step(
 
       while (frontier.has_next()) {
         auto const [u, label] = frontier.next();
-        DEBUG_ASSERT(part.has_local(u))
+        DEBUG_ASSERT(part.has_local(u));
         auto const k = part.to_local(u);
 
         if (label < ecl_lable[k] and scc_id[k] == scc_id_undecided) {

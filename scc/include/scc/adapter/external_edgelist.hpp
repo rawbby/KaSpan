@@ -223,8 +223,8 @@ convert_graph(std::string const& input_file,
     sort();
     m          = sort.size();
     n          = m == 0 ? 0 : max_node + 1;
-    head_bytes = needed_bytes(m);
-    csr_bytes  = needed_bytes(max_node);
+    head_bytes = representing_bytes(m);
+    csr_bytes  = representing_bytes(max_node);
 
     std::println("opening files ...");
     auto head_buffer = FileBuffer::create_w<true>(fw_head_path.c_str(), (n + 1) * head_bytes);

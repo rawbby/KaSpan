@@ -67,6 +67,7 @@
 #define ARGS_TAIL(...) CAT(ARGS_TAIL_,ARGS_EMPTY(__VA_ARGS__))(__VA_ARGS__)
 
 // === ARGS_FOREACH ===
+#define ARGS_FOREACH_0(F)
 #define ARGS_FOREACH_1(F,_1) F(_1)
 #define ARGS_FOREACH_2(F,_1,_2) F(_1) F(_2)
 #define ARGS_FOREACH_3(F,_1,_2,_3) F(_1) F(_2) F(_3)
@@ -83,9 +84,10 @@
 #define ARGS_FOREACH_14(F,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14) F(_1) F(_2) F(_3) F(_4) F(_5) F(_6) F(_7) F(_8) F(_9) F(_10) F(_11) F(_12) F(_13) F(_14)
 #define ARGS_FOREACH_15(F,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15) F(_1) F(_2) F(_3) F(_4) F(_5) F(_6) F(_7) F(_8) F(_9) F(_10) F(_11) F(_12) F(_13) F(_14) F(_15)
 #define ARGS_FOREACH_16(F,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16) F(_1) F(_2) F(_3) F(_4) F(_5) F(_6) F(_7) F(_8) F(_9) F(_10) F(_11) F(_12) F(_13) F(_14) F(_15) F(_16)
-#define ARGS_FOREACH(...) CAT(ARGS_FOREACH_,ARGS_SIZE(__VA_ARGS__))(__VA_ARGS__)
+#define ARGS_FOREACH(F,...) CAT(ARGS_FOREACH_,ARGS_SIZE(__VA_ARGS__))(F,__VA_ARGS__)
 
 // === ARGS_MAP ===
+#define ARGS_MAP_0(M)
 #define ARGS_MAP_1(M,_1) M(_1)
 #define ARGS_MAP_2(M,_1,_2) M(_1),M(_2)
 #define ARGS_MAP_3(M,_1,_2,_3) M(_1),M(_2),M(_3)
@@ -105,6 +107,7 @@
 #define ARGS_MAP(M,...) CAT(ARGS_MAP_,ARGS_SIZE(__VA_ARGS__))(M,__VA_ARGS__)
 
 // === ARGS_FOREACH_EXT ===
+#define ARGS_FOREACH_EXT_0(F,EXT)
 #define ARGS_FOREACH_EXT_1(F,EXT,_1) F(EXT,_1)
 #define ARGS_FOREACH_EXT_2(F,EXT,_1,_2) F(EXT,_1) F(EXT,_2)
 #define ARGS_FOREACH_EXT_3(F,EXT,_1,_2,_3) F(EXT,_1) F(EXT,_2) F(EXT,_3)
@@ -121,9 +124,10 @@
 #define ARGS_FOREACH_EXT_14(F,EXT,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14) F(EXT,_1) F(EXT,_2) F(EXT,_3) F(EXT,_4) F(EXT,_5) F(EXT,_6) F(EXT,_7) F(EXT,_8) F(EXT,_9) F(EXT,_10) F(EXT,_11) F(EXT,_12) F(EXT,_13) F(EXT,_14)
 #define ARGS_FOREACH_EXT_15(F,EXT,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15) F(EXT,_1) F(EXT,_2) F(EXT,_3) F(EXT,_4) F(EXT,_5) F(EXT,_6) F(EXT,_7) F(EXT,_8) F(EXT,_9) F(EXT,_10) F(EXT,_11) F(EXT,_12) F(EXT,_13) F(EXT,_14) F(EXT,_15)
 #define ARGS_FOREACH_EXT_16(F,EXT,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16) F(EXT,_1) F(EXT,_2) F(EXT,_3) F(EXT,_4) F(EXT,_5) F(EXT,_6) F(EXT,_7) F(EXT,_8) F(EXT,_9) F(EXT,_10) F(EXT,_11) F(EXT,_12) F(EXT,_13) F(EXT,_14) F(EXT,_15) F(EXT,_16)
-#define ARGS_FOREACH_EXT(...) CAT(ARGS_FOREACH_EXT_,ARGS_SIZE(__VA_ARGS__))(__VA_ARGS__)
+#define ARGS_FOREACH_EXT(F,EXT,...) CAT(ARGS_FOREACH_EXT_,ARGS_SIZE(__VA_ARGS__))(F,EXT,__VA_ARGS__)
 
 // === ARGS_MAP_EXT ===
+#define ARGS_MAP_EXT_0(M,EXT)
 #define ARGS_MAP_EXT_1(M,EXT,_1) M(EXT,_1)
 #define ARGS_MAP_EXT_2(M,EXT,_1,_2) M(EXT,_1),M(EXT,_2)
 #define ARGS_MAP_EXT_3(M,EXT,_1,_2,_3) M(EXT,_1),M(EXT,_2),M(EXT,_3)

@@ -26,6 +26,20 @@ page_size() -> u64
   return ps;
 }
 
+inline auto
+line_size() -> u64
+{
+  static auto const ps = []() -> u64 {
+    auto const sys_ps = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+    if (sys_ps > 0) {
+      return sys_ps;
+    }
+    // reasonable default assumption
+    return 64;
+  }();
+  return ps;
+}
+
 template<typename T = byte>
 auto
 page_ceil(u64 size) -> u64
@@ -87,7 +101,7 @@ page_aligned_free(void* data, u64 /* bytes */)
 }
 
 constexpr auto
-needed_bytes(u64 max_val) -> u8
+representing_bytes(u64 max_val) -> u8
 {
   constexpr auto one = static_cast<u64>(1);
   for (u8 bytes = 1; bytes < 8; ++bytes)

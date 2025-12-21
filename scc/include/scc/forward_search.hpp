@@ -16,18 +16,15 @@ forward_search(
   BitAccessor      fw_reached,
   vertex_t         root) -> vertex_t
 {
-  // KASPAN_STATISTIC_SCOPE("forward_search");
-
   if (part.has_local(root)) {
     frontier.local_push(root);
     ASSERT(not fw_reached.get(part.to_local(root)));
     ASSERT(scc_id[part.to_local(root)] == scc_id_undecided, "root=%d", root);
   }
 
-  for (;;) {
+  do {
     size_t processed_count = 0;
 
-    // KASPAN_STATISTIC_PUSH("processing");
     while (frontier.has_next()) {
       auto const u = frontier.next();
       DEBUG_ASSERT(part.has_local(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
@@ -52,18 +49,7 @@ forward_search(
         }
       }
     }
-    // KASPAN_STATISTIC_ADD("processed_count", processed_count);
-    // KASPAN_STATISTIC_POP();
-
-    // KASPAN_STATISTIC_PUSH("communication");
-    // KASPAN_STATISTIC_ADD("outbox", frontier.send_buffer.size());
-    auto const messages_exchanged = frontier.comm(part);
-    // KASPAN_STATISTIC_ADD("inbox", frontier.recv_buffer.size());
-    // KASPAN_STATISTIC_POP();
-
-    if (not messages_exchanged)
-      break;
-  }
+  } while(frontier.comm(part));
 
   return mpi_basic_allreduce_single(root, MPI_MIN);
 }

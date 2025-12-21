@@ -1,5 +1,7 @@
 #pragma once
 
+#include "return_pack.hpp"
+
 #include <memory/borrow.hpp>
 #include <util/arithmetic.hpp>
 
@@ -56,6 +58,14 @@ inline i32  mpi_world_size = 1;
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_world_size); \
   mpi_world_root = mpi_world_rank == 0;
 
+inline auto
+mpi_basic_counts_and_displs(void*& memory)
+{
+  auto* counts = borrow<MPI_Count>(memory, mpi_world_size);
+  auto* displs = borrow<MPI_Aint>(memory, mpi_world_size);
+  return PACK(counts, displs);
+}
+
 /**
  * @brief Allocate temporary counts and displacements arrays for MPI-4 "_c" collectives.
  *
@@ -66,19 +76,11 @@ inline i32  mpi_world_size = 1;
 inline auto
 mpi_basic_counts_and_displs()
 {
-  struct
-  {
-    Buffer     buffer;
-    MPI_Count* counts;
-    MPI_Aint*  displs;
-  } result;
-
-  result.buffer = Buffer{ page_ceil<MPI_Count>(mpi_world_size), page_ceil<MPI_Aint>(mpi_world_size) };
-  void* memory  = result.buffer.data();
-  result.counts = borrow<MPI_Count>(memory, mpi_world_size);
-  result.displs = borrow<MPI_Aint>(memory, mpi_world_size);
-
-  return result;
+  Buffer buffer{ page_ceil<MPI_Count>(mpi_world_size), page_ceil<MPI_Aint>(mpi_world_size) };
+  auto*  memory = buffer.data();
+  auto*  counts = borrow<MPI_Count>(memory, mpi_world_size);
+  auto*  displs = borrow<MPI_Aint>(memory, mpi_world_size);
+  return PACK(buffer, counts, displs);
 }
 
 /**

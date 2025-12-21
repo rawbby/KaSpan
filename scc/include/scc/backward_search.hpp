@@ -18,16 +18,14 @@ backward_search(
   vertex_t         root,
   vertex_t         id) -> vertex_t
 {
-  // KASPAN_STATISTIC_SCOPE("backward_search");
   vertex_t decided_count = 0;
 
   if (part.has_local(root))
     frontier.local_push(root);
 
-  for (;;) {
+  do {
     size_t processed_count = 0;
 
-    // KASPAN_STATISTIC_PUSH("processing");
     while (frontier.has_next()) {
       auto const u = frontier.next();
       DEBUG_ASSERT(part.has_local(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
@@ -51,19 +49,7 @@ backward_search(
         }
       }
     }
-    // KASPAN_STATISTIC_ADD("processed_count", processed_count);
-    // KASPAN_STATISTIC_POP();
+  } while (frontier.comm(part));
 
-    // KASPAN_STATISTIC_PUSH("communication");
-    // KASPAN_STATISTIC_ADD("outbox", frontier.send_buffer.size());
-    auto const total_messages = frontier.comm(part);
-    // KASPAN_STATISTIC_ADD("inbox", frontier.recv_buffer.size());
-    // KASPAN_STATISTIC_POP();
-
-    if (not total_messages)
-      break;
-  }
-
-  // KASPAN_STATISTIC_ADD("decided_count", decided_count);
   return decided_count;
 }
