@@ -13,8 +13,6 @@ template<typename Derived, typename T>
 class StackMixin
 {
 public:
-  using value_type = T;
-
   [[nodiscard]] auto operator[](size_t index) -> T&
   {
     return derived()->data()[index];

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <util/arithmetic.hpp>
+#include <util/math.hpp>
 
 #include <bit>
 #include <cstring>
@@ -13,9 +14,9 @@ class BitsMixin
 public:
   void clear(u64 count)
   {
-    auto const idx = count >> 6;
+    auto const idx = floordiv<64>(count);
     std::memset(derived()->data(), 0, idx * sizeof(u64));
-    if (auto const rem = count & static_cast<u64>(63)) {
+    if (auto const rem = remainder<64>(count)) {
       auto const msk = static_cast<u64>(1) << rem;
       derived()->data()[idx] &= ~(msk - 1);
     }
@@ -23,9 +24,9 @@ public:
 
   void fill(u64 count)
   {
-    auto const idx = count >> 6;
+    auto const idx = floordiv<64>(count);
     std::memset(derived()->data(), ~0, idx * sizeof(u64));
-    if (auto const rem = count & static_cast<u64>(63)) {
+    if (auto const rem = remainder<64>(count)) {
       auto const msk = static_cast<u64>(1) << rem;
       derived()->data()[idx] |= msk - 1;
     }
@@ -34,8 +35,8 @@ public:
   [[nodiscard]] auto get(u64 bit_index) -> bool
   {
     DEBUG_ASSERT_NE(derived()->data(), nullptr);
-    auto const idx = bit_index >> 6;
-    auto const rem = bit_index & static_cast<u64>(63);
+    auto const idx = floordiv<64>(bit_index);
+    auto const rem = remainder<64>(bit_index);
     auto const msk = static_cast<u64>(1) << rem;
     return (derived()->data()[idx] & msk) != 0;
   }
@@ -44,21 +45,21 @@ public:
   {
     DEBUG_ASSERT_NE(derived()->data(), nullptr);
     auto const val_msk = -static_cast<u64>(bit_value);
-    auto const idx     = bit_index >> 6;
-    auto const rem     = bit_index & static_cast<u64>(63);
+    auto const idx     = floordiv<64>(bit_index);
+    auto const rem     = remainder<64>(bit_index);
     auto const msk     = static_cast<u64>(1) << rem;
 
-    auto field = derived()->data()[idx]; // single load
-    field &= ~msk;                        // unconditional unset
-    field |= val_msk & msk;               // conditional set
-    derived()->data()[idx] = field;       // single store
+    auto field = derived()->data()[idx];
+    field &= ~msk;
+    field |= val_msk & msk;
+    derived()->data()[idx] = field;
   }
 
   void set(u64 bit_index)
   {
     DEBUG_ASSERT_NE(derived()->data(), nullptr);
-    auto const idx = bit_index >> 6;
-    auto const rem = bit_index & static_cast<u64>(63);
+    auto const idx = floordiv<64>(bit_index);
+    auto const rem = remainder<64>(bit_index);
     auto const msk = static_cast<u64>(1) << rem;
     derived()->data()[idx] |= msk;
   }
@@ -66,8 +67,8 @@ public:
   void unset(u64 bit_index)
   {
     DEBUG_ASSERT_NE(derived()->data(), nullptr);
-    auto const idx = bit_index >> 6;
-    auto const rem = bit_index & static_cast<u64>(63);
+    auto const idx = floordiv<64>(bit_index);
+    auto const rem = remainder<64>(bit_index);
     auto const msk = static_cast<u64>(1) << rem;
     derived()->data()[idx] &= ~msk;
   }
@@ -78,8 +79,8 @@ public:
     DEBUG_ASSERT(derived()->data() != nullptr or count == 0);
     DEBUG_ASSERT_IN_RANGE_INCLUSIVE(count, 0, std::numeric_limits<u64>::max());
 
-    auto const c64 = static_cast<u64>(count) >> 6;
-    auto const rem = static_cast<u64>(count) & static_cast<u64>(63);
+    auto const c64 = floordiv<64>(static_cast<u64>(count));
+    auto const rem = remainder<64>(static_cast<u64>(count));
 
     for (u64 i = 0; i < c64; ++i) {
       u64 word = derived()->data()[i];
@@ -89,7 +90,7 @@ public:
       }
     }
     if (rem) {
-      auto word = derived()->data()[c64] & (static_cast<u64>(1) << rem) - 1;
+      auto word = derived()->data()[c64] & ((static_cast<u64>(1) << rem) - 1);
       while (word) {
         fn(static_cast<Index>((c64 << 6) + std::countr_zero(word)));
         word &= word - 1;
@@ -102,7 +103,7 @@ public:
   {
     DEBUG_ASSERT(derived()->data() != nullptr or count == 0);
 
-    auto const c64 = count >> 6;
+    auto const c64 = floordiv<64>(count);
     u64        b64 = 0;
 
     for (u64 i = 0; i < c64; ++i, b64 += 64) {
@@ -113,13 +114,13 @@ public:
       derived()->data()[i] = w;
     }
 
-    if (auto const rem = count & static_cast<u64>(63)) {
+    if (auto const rem = remainder<64>(count)) {
       u64 w = 0;
       for (unsigned bit = 0; bit < rem; ++bit) {
         w |= static_cast<u64>(!!cmp(tx[b64 + bit], t)) << bit;
       }
-      auto const mask = (static_cast<u64>(1) << rem) - 1;
-      derived()->data()[c64]     = derived()->data()[c64] & ~mask | w & mask;
+      auto const mask        = (static_cast<u64>(1) << rem) - 1;
+      derived()->data()[c64] = (derived()->data()[c64] & ~mask) | (w & mask);
     }
   }
 

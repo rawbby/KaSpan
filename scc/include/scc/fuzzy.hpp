@@ -39,11 +39,11 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_
   auto rng       = std::mt19937{ seed };
   auto start_new = std::bernoulli_distribution{ 0.25 };
 
-  auto fw_degree = ::borrow_clean<vertex_t>(temp_memory, n);
-  auto bw_degree = ::borrow_clean<vertex_t>(temp_memory, n);
+  auto fw_degree = ::borrow_array_clean<vertex_t>(&temp_memory, n);
+  auto bw_degree = ::borrow_array_clean<vertex_t>(&temp_memory, n);
 
   auto comps = std::map<u64, std::vector<u64>>{};
-  auto reps  = StackAccessor<vertex_t>::borrow(temp_memory, n);
+  auto reps  = StackAccessor<vertex_t>::borrow(&temp_memory, n);
   for (u64 v = 0; v < n; ++v) {
     if (v == 0 or start_new(rng)) {
 
@@ -122,10 +122,10 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_
 
   result.n       = n;
   result.m       = m;
-  result.fw_head = borrow<index_t>(graph_memory, n + 1);
-  result.bw_head = borrow<index_t>(graph_memory, n + 1);
-  result.fw_csr  = borrow<vertex_t>(graph_memory, m);
-  result.bw_csr  = borrow<vertex_t>(graph_memory, m);
+  result.fw_head = borrow_array<index_t>(&graph_memory, n + 1);
+  result.bw_head = borrow_array<index_t>(&graph_memory, n + 1);
+  result.fw_csr  = borrow_array<vertex_t>(&graph_memory, m);
+  result.bw_csr  = borrow_array<vertex_t>(&graph_memory, m);
 
   {
     u64 pos           = 0;

@@ -35,10 +35,10 @@ public:
   auto operator=(DenseUnsignedAccessor const& rhs) noexcept -> DenseUnsignedAccessor& = default;
   auto operator=(DenseUnsignedAccessor&& rhs) noexcept -> DenseUnsignedAccessor&      = default;
 
-  static auto borrow(void* & memory, u64 count, u8 element_byte_size, std::endian endian = std::endian::native) noexcept
+  static auto borrow(void** memory, u64 count, u8 element_byte_size, std::endian endian = std::endian::native) noexcept
     -> DenseUnsignedAccessor
   {
-    return DenseUnsignedAccessor{ ::borrow(memory, count * element_byte_size), element_byte_size, endian };
+    return DenseUnsignedAccessor{ ::borrow_array(memory, count * element_byte_size), element_byte_size, endian };
   }
 
   static auto view(void*  memory, u8 element_byte_size, std::endian endian = std::endian::native) noexcept

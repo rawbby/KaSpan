@@ -30,8 +30,8 @@ check_case(Item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts
   auto const buffer = make_buffer<MPI_Count>(mpi_world_size, mpi_world_size);
   auto*      memory = buffer.data();
 
-  auto* beg = borrow<MPI_Count>(memory, mpi_world_size);
-  auto* end = borrow<MPI_Count>(memory, mpi_world_size);
+  auto* beg = borrow_array<MPI_Count>(&memory, mpi_world_size);
+  auto* end = borrow_array<MPI_Count>(&memory, mpi_world_size);
 
   for (i32 r = 0; r < mpi_world_size; ++r) {
     beg[r] = static_cast<MPI_Count>(send_displs[r]);

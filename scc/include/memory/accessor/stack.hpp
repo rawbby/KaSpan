@@ -1,10 +1,10 @@
 #pragma once
 
 #include <memory/accessor/stack_mixin.hpp>
+#include <memory/accessor/stack_accessor.hpp>
 #include <memory/buffer.hpp>
 #include <util/arithmetic.hpp>
 
-#include <cstdlib>
 #include <type_traits>
 #include <utility>
 
@@ -12,11 +12,10 @@ template<typename T>
   requires(std::is_trivially_copyable_v<T> and
            std::is_trivially_constructible_v<T> and
            std::is_trivially_destructible_v<T>)
-class Stack final : public Buffer, public StackMixin<Stack<T>, T>
+class Stack final : public Buffer
+  , public StackMixin<Stack<T>, T>
 {
 public:
-  using value_type = T;
-
   Stack() noexcept = default;
   ~Stack()         = default;
 
@@ -42,11 +41,6 @@ public:
     return *this;
   }
 
-  static auto create(u64 count) noexcept(false) -> Stack
-  {
-    return Stack{ count };
-  }
-
   [[nodiscard]] auto data() -> T*
   {
     return static_cast<T*>(Buffer::data());
@@ -67,6 +61,18 @@ public:
     end_ = size;
   }
 
+  [[nodiscard]] operator StackAccessor<T>() const noexcept
+  {
+    return StackAccessor<T>{ data_, end_ };
+  }
+
 private:
   u64 end_ = 0;
 };
+
+template<typename T>
+auto
+make_stack(u64 size) -> Stack<T>
+{
+  return Stack<T>{ size };
+}

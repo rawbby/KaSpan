@@ -27,10 +27,10 @@ main(int argc, char** argv)
 
   g.buffer     = make_graph_buffer(g.n, g.m);
   auto* memory = g.buffer.data();
-  g.fw_head    = borrow<index_t>(memory, g.m);
-  g.fw_csr     = borrow<vertex_t>(memory, g.n + 1);
-  g.bw_head    = borrow<index_t>(memory, g.m);
-  g.bw_csr     = borrow<vertex_t>(memory, g.n + 1);
+  g.fw_head    = borrow_array<index_t>(&memory, g.m);
+  g.fw_csr     = borrow_array<vertex_t>(&memory, g.n + 1);
+  g.bw_head    = borrow_array<index_t>(&memory, g.m);
+  g.bw_csr     = borrow_array<vertex_t>(&memory, g.n + 1);
 
   g.fw_head[0]   = 0; //
   g.fw_head[1]   = 2; // *

@@ -32,14 +32,14 @@ kagen_forward_graph_part(char const* generator_args)
   result.buffer = make_buffer<i32, index_t, vertex_t>(mpi_world_size, local_n + 1, local_fw_m);
   void* memory  = result.buffer.data();
 
-  result.part = ExplicitSortedContinuousWorldPart{ global_n, vertex_end, mpi_world_rank, mpi_world_size, memory };
+  result.part = ExplicitSortedContinuousWorldPart{ global_n, vertex_end, mpi_world_rank, mpi_world_size, &memory };
   DEBUG_ASSERT_EQ(result.part.n, global_n);
   DEBUG_ASSERT_EQ(result.part.local_n(), local_n);
 
   result.m       = global_m;
   result.local_m = local_fw_m;
-  result.head    = borrow<index_t>(memory, local_n + 1);
-  result.csr     = borrow<vertex_t>(memory, local_fw_m);
+  result.head    = borrow_array<index_t>(&memory, local_n + 1);
+  result.csr     = borrow_array<vertex_t>(&memory, local_fw_m);
 
   for (vertex_t k = 0; k <= local_n; ++k) {
     DEBUG_ASSERT_IN_RANGE(ka_graph.xadj[k], 0, local_fw_m + 1, "k={}", k);

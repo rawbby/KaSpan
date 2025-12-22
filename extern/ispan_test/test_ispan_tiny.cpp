@@ -26,10 +26,10 @@ main(int argc, char** argv)
   auto const buffer = make_graph_buffer(n, m);
   auto*      memory = buffer.data();
 
-  g.fw_head = ::borrow<index_t>(memory, n + 1);
-  g.bw_head = ::borrow<index_t>(memory, n + 1);
-  g.fw_csr  = ::borrow<vertex_t>(memory, m);
-  g.bw_csr  = ::borrow<vertex_t>(memory, m);
+  g.fw_head = ::borrow_array<index_t>(&memory, n + 1);
+  g.bw_head = ::borrow_array<index_t>(&memory, n + 1);
+  g.fw_csr  = ::borrow_array<vertex_t>(&memory, m);
+  g.bw_csr  = ::borrow_array<vertex_t>(&memory, m);
 
   g.fw_csr[0]  = 2; // 0 2
   g.fw_csr[1]  = 0; // 1 0

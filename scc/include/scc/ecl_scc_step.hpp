@@ -36,18 +36,18 @@ ecl_scc_init_lable(
 template<WorldPartConcept Part>
 auto
 ecl_scc_step(
-  Part const&             part,
-  index_t const*          fw_head,
-  vertex_t const*         fw_csr,
-  index_t const*          bw_head,
-  vertex_t const*         bw_csr,
-  vertex_t*               scc_id,
-  vertex_t*               ecl_fw_label,
-  vertex_t*               ecl_bw_label,
-  StackAccessor<vertex_t> active_stack,
-  BitsAccessor             active,
-  BitsAccessor             changed,
-  edge_frontier&          frontier) -> vertex_t
+  Part const&     part,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  vertex_t*       scc_id,
+  vertex_t*       ecl_fw_label,
+  vertex_t*       ecl_bw_label,
+  vertex_t*       active_array,
+  BitsAccessor    active,
+  BitsAccessor    changed,
+  edge_frontier&  frontier) -> vertex_t
 {
   // this function uses the project convention that:
   // k,l always describe local vertex ids
@@ -55,7 +55,8 @@ ecl_scc_step(
   // (csr stores global vertex ids)
   // (head is accessed by local vertex ids)
 
-  auto const local_n = part.local_n();
+  auto const local_n      = part.local_n();
+  auto       active_stack = StackAccessor<vertex_t>{ active_array };
 
   auto const saturate_direction = [&](index_t const* head, vertex_t const* csr, vertex_t* ecl_lable) {
     DEBUG_ASSERT(active_stack.empty());
@@ -82,7 +83,7 @@ ecl_scc_step(
         for (auto v : csr_range(head, csr, k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (label < ecl_lable[l] and scc_id[k] == scc_id_undecided) {
+            if (label < ecl_lable[l] and scc_id[l] == scc_id_undecided) {
               ecl_lable[l] = label;
               changed.set(l);
               if (not active.get(l)) {

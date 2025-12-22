@@ -1,10 +1,14 @@
 #pragma once
 
+#include "memory/accessor/bits.hpp"
+
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
 #include <iostream>
 #include <memory/accessor/bits_accessor.hpp>
+#include <memory/accessor/bits.hpp>
 #include <memory/accessor/stack_accessor.hpp>
+#include <memory/accessor/stack.hpp>
 #include <memory/buffer.hpp>
 #include <scc/graph.hpp>
 
@@ -41,18 +45,18 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
 
   Buffer buffer;
   if (memory == nullptr) {
-    buffer = make_buffer<vertex_t, vertex_t, vertex_t, Frame, u64>(
-      local_n, local_n, local_n, local_n, (local_n + 63) / 64);
+    buffer = make_buffer<vertex_t, vertex_t, vertex_t, Frame>(
+      local_n, local_n, local_n, local_n);
     memory = buffer.data();
   }
 
   vertex_t index_count = 0;
 
-  auto index    = borrow_filled<vertex_t>(memory, index_undecided, local_n);
-  auto low      = borrow_clean<vertex_t>(memory, local_n);
-  auto on_stack = BitsAccessor::borrow_clean(memory, local_n);
-  auto st       = StackAccessor<vertex_t>::borrow(memory, local_n);
-  auto dfs      = StackAccessor<Frame>::borrow(memory, local_n);
+  auto index    = borrow_array_filled<vertex_t>(&memory, index_undecided, local_n);
+  auto low      = borrow_array_clean<vertex_t>(&memory, local_n);
+  auto on_stack = make_bits_clean(local_n);
+  auto st       = make_stack<vertex_t>(local_n);
+  auto dfs      = make_stack<Frame>(local_n);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
   for (vertex_t local_root = 0; local_root < local_n; ++local_root) {

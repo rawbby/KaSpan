@@ -15,15 +15,19 @@ template<typename T>
 class StackAccessor final : public StackMixin<StackAccessor<T>, T>
 {
 public:
-  using value_type = T;
+  StackAccessor()  = default;
+  ~StackAccessor() = default;
 
   explicit StackAccessor(void* data)
     : data_(data)
   {
   }
 
-  StackAccessor()  = default;
-  ~StackAccessor() = default;
+  StackAccessor(void* data, u64 end)
+    : data_(data)
+    , end_(end)
+  {
+  }
 
   StackAccessor(StackAccessor const& rhs) noexcept = default;
   StackAccessor(StackAccessor&& rhs) noexcept      = default;
@@ -31,9 +35,9 @@ public:
   auto operator=(StackAccessor const& rhs) noexcept -> StackAccessor& = default;
   auto operator=(StackAccessor&& rhs) noexcept -> StackAccessor&      = default;
 
-  static auto borrow(void*& memory, u64 count) noexcept -> StackAccessor
+  static auto borrow(void** memory, u64 count) noexcept -> StackAccessor
   {
-    return StackAccessor{ ::borrow<T>(memory, count) };
+    return StackAccessor{ ::borrow_array<T>(memory, count) };
   }
 
   auto size() const -> u64
@@ -60,3 +64,10 @@ private:
   void* data_ = nullptr;
   u64   end_  = 0;
 };
+
+template<typename T>
+auto
+borrow_stack(void** memory, u64 size) -> StackAccessor<T>
+{
+  return StackAccessor<T>{ borrow_array<T>(memory, size) };
+}

@@ -21,9 +21,9 @@ main(int argc, char** argv)
 
     auto const graph = fuzzy_local_scc_id_and_graph(seed, part);
 
-    auto  buffer = make_buffer<vertex_t>( part.local_n());
+    auto  buffer = make_buffer<vertex_t>(part.local_n());
     auto* memory = buffer.data();
-    auto* scc_id = borrow<vertex_t>(memory, part.local_n());
+    auto* scc_id = borrow_array<vertex_t>(&memory, part.local_n());
 
     scc(part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
 

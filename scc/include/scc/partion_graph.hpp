@@ -70,12 +70,12 @@ partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t con
   result.local_fw_m = local_fw_m;
   result.local_bw_m = local_bw_m;
 
-  result.fw_head = borrow<index_t>(memory, local_n + 1);
-  result.fw_csr  = borrow<vertex_t>(memory, local_fw_m);
+  result.fw_head = borrow_array<index_t>(&memory, local_n + 1);
+  result.fw_csr  = borrow_array<vertex_t>(&memory, local_fw_m);
   partition_direction(fw_head, fw_csr, result.fw_head, result.fw_csr);
 
-  result.bw_head = borrow<index_t>(memory, local_n + 1);
-  result.bw_csr  = borrow<vertex_t>(memory, local_bw_m);
+  result.bw_head = borrow_array<index_t>(&memory, local_n + 1);
+  result.bw_csr  = borrow_array<vertex_t>(&memory, local_bw_m);
   partition_direction(bw_head, bw_csr, result.bw_head, result.bw_csr);
 
   return result;
@@ -106,8 +106,8 @@ partition(index_t m, index_t const* head, vertex_t const* csr, Part const& part)
   result.m       = m;
   result.local_m = local_m;
 
-  result.head  = borrow<index_t>(memory, local_n + 1);
-  result.csr   = borrow<vertex_t>(memory, local_m);
+  result.head  = borrow_array<index_t>(memory, local_n + 1);
+  result.csr   = borrow_array<vertex_t>(memory, local_m);
   vertex_t pos = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
     auto const u = part.to_global(k);

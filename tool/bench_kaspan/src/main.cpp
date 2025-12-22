@@ -32,7 +32,7 @@ benchmark(auto const& graph, bool use_async, bool use_async_indirect)
   // pre-allocate scc_id buffer
   auto  scc_id_buffer = make_buffer<vertex_t>(graph.part.local_n());
   auto* scc_id_access = scc_id_buffer.data();
-  auto* scc_id        = borrow_clean<vertex_t>(scc_id_access, graph.part.local_n());
+  auto* scc_id        = borrow_array_clean<vertex_t>(&scc_id_access, graph.part.local_n());
 
   MPI_Barrier(MPI_COMM_WORLD);
   if (not use_async) {

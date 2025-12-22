@@ -14,18 +14,18 @@ test_explicit_continuous_world_part()
   auto const part = [&memory] {
     if constexpr (sorted_variant) {
       if (mpi_world_root)
-        return ExplicitSortedContinuousWorldPart{ 10, 3, mpi_world_rank, mpi_world_size, memory };
+        return ExplicitSortedContinuousWorldPart{ 10, 3, mpi_world_rank, mpi_world_size, &memory };
       if (mpi_world_rank == 1)
-        return ExplicitSortedContinuousWorldPart{ 10, 9, mpi_world_rank, mpi_world_size, memory };
+        return ExplicitSortedContinuousWorldPart{ 10, 9, mpi_world_rank, mpi_world_size, &memory };
       ASSERT_EQ(mpi_world_rank, 2);
-      return ExplicitSortedContinuousWorldPart{ 10, 10, mpi_world_rank, mpi_world_size, memory };
+      return ExplicitSortedContinuousWorldPart{ 10, 10, mpi_world_rank, mpi_world_size, &memory };
     } else {
       if (mpi_world_root)
-        return ExplicitContinuousWorldPart{ 10, 0, 3, mpi_world_rank, mpi_world_size, memory };
+        return ExplicitContinuousWorldPart{ 10, 0, 3, mpi_world_rank, mpi_world_size, &memory };
       if (mpi_world_rank == 1)
-        return ExplicitContinuousWorldPart{ 10, 3, 9, mpi_world_rank, mpi_world_size, memory };
+        return ExplicitContinuousWorldPart{ 10, 3, 9, mpi_world_rank, mpi_world_size, &memory };
       ASSERT_EQ(mpi_world_rank, 2);
-      return ExplicitContinuousWorldPart{ 10, 9, 10, mpi_world_rank, mpi_world_size, memory };
+      return ExplicitContinuousWorldPart{ 10, 9, 10, mpi_world_rank, mpi_world_size, &memory };
     }
   }();
 

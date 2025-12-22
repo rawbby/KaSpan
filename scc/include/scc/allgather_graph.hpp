@@ -53,10 +53,10 @@ allgather_graph(Part const& part, index_t m, index_t local_fw_m, index_t const* 
   void* memory   = result.buffer.data();
   result.n       = n;
   result.m       = m;
-  result.fw_head = borrow<index_t>(memory, n + 1);
-  result.fw_csr  = borrow<vertex_t>(memory, m);
-  result.bw_head = borrow<index_t>(memory, n + 1);
-  result.bw_csr  = borrow<vertex_t>(memory, m);
+  result.fw_head = borrow_array<index_t>(&memory, n + 1);
+  result.fw_csr  = borrow_array<vertex_t>(&memory, m);
+  result.bw_head = borrow_array<index_t>(&memory, n + 1);
+  result.bw_csr  = borrow_array<vertex_t>(&memory, m);
 
   // buffer counts and displs for multiple usages (cb guards lifetime)
   auto [cb, counts, displs] = mpi_basic_counts_and_displs();

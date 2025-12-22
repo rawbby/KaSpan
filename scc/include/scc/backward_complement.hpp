@@ -102,8 +102,8 @@ backward_complement_graph_part(
     result.local_m = local_m;
     result.buffer  = make_fw_graph_buffer(local_n, local_m);
     auto* memory   = result.buffer.data();
-    result.head    = borrow<index_t>(memory, local_n + 1);
-    result.csr     = borrow<vertex_t>(memory, local_m);
+    result.head    = borrow_array<index_t>(&memory, local_n + 1);
+    result.csr     = borrow_array<vertex_t>(&memory, local_m);
     backward_complement_graph(local_n, head, csr, result.head, result.csr);
     return result;
   }
@@ -133,7 +133,7 @@ backward_complement_graph_part(
     result.local_m = 0;
     result.buffer  = make_graph_buffer(local_n, 0);
     auto* memory   = result.buffer.data();
-    result.head    = borrow_clean<index_t>(memory, local_n + 1);
+    result.head    = borrow_array_clean<index_t>(&memory, local_n + 1);
     result.csr     = nullptr;
     return result;
   }
@@ -152,8 +152,8 @@ backward_complement_graph_part(
   result.local_m = recv_count;
   result.buffer  = make_fw_graph_buffer(local_n, result.local_m);
   auto* mem      = result.buffer.data();
-  result.head    = borrow<index_t>(mem, local_n + 1);
-  result.csr     = borrow<vertex_t>(mem, result.local_m);
+  result.head    = borrow_array<index_t>(&mem, local_n + 1);
+  result.csr     = borrow_array<vertex_t>(&mem, result.local_m);
 
   edgelist_to_graph_part(part, recv_count, recv_access, result.head, result.csr);
   return result;

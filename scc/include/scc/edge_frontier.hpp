@@ -26,10 +26,10 @@ struct edge_frontier
 
     edge_frontier frontier;
     frontier.buffer      = std::move(buffer);
-    frontier.send_counts = ::borrow_clean<MPI_Count>(memory, mpi_world_size);
-    frontier.send_displs = ::borrow<MPI_Aint>(memory, mpi_world_size);
-    frontier.recv_counts = ::borrow<MPI_Count>(memory, mpi_world_size);
-    frontier.recv_displs = ::borrow<MPI_Aint>(memory, mpi_world_size);
+    frontier.send_counts = ::borrow_array_clean<MPI_Count>(&memory, mpi_world_size);
+    frontier.send_displs = ::borrow_array<MPI_Aint>(&memory, mpi_world_size);
+    frontier.recv_counts = ::borrow_array<MPI_Count>(&memory, mpi_world_size);
+    frontier.recv_displs = ::borrow_array<MPI_Aint>(&memory, mpi_world_size);
     return frontier;
   }
 

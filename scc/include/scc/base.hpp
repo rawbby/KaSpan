@@ -149,8 +149,8 @@ free_mpi_degree_max_op()
 }
 
 #define SCC_ID_UNDECIDED_FILTER(LOCAL_N, SCC_ID) [=](auto&& k) { \
-  DEBUG_ASSERT_IN_RANGE(k, 0, LOCAL_N);                                        \
-  return SCC_ID[k] == scc_id_undecided;                                        \
+  DEBUG_ASSERT_IN_RANGE(k, 0, LOCAL_N);                          \
+  return SCC_ID[k] == scc_id_undecided;                          \
 }
 
 #define KASPAN_DEFAULT_INIT() \

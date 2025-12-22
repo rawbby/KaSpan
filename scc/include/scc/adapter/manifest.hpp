@@ -222,10 +222,10 @@ load_graph_from_manifest(Manifest const& manifest) -> LocalGraph
 
   g.n       = static_cast<vertex_t>(n);
   g.m       = static_cast<index_t>(m);
-  g.fw_head = borrow<index_t>(memory, n + 1);
-  g.fw_csr  = borrow<vertex_t>(memory, m);
-  g.bw_head = borrow<index_t>(memory, n + 1);
-  g.bw_csr  = borrow<vertex_t>(memory, m);
+  g.fw_head = borrow_array<index_t>(&memory, n + 1);
+  g.fw_csr  = borrow_array<vertex_t>(&memory, m);
+  g.bw_head = borrow_array<index_t>(&memory, n + 1);
+  g.bw_csr  = borrow_array<vertex_t>(&memory, m);
 
   for (vertex_t i = 0; i < n + 1; ++i) {
     DEBUG_ASSERT_IN_RANGE(fw_head_access.get(i), 0, m + 1);
@@ -339,10 +339,10 @@ load_graph_part_from_manifest(Part const& part, Manifest const& manifest) -> Loc
   result.buffer      = make_graph_buffer(local_n, result.local_fw_m, result.local_bw_m);
   auto* graph_memory = result.buffer.data();
 
-  result.fw_head = borrow<index_t>(graph_memory, local_n + 1);
-  result.bw_head = borrow<index_t>(graph_memory, local_n + 1);
-  result.fw_csr  = borrow<vertex_t>(graph_memory, result.local_fw_m);
-  result.bw_csr  = borrow<vertex_t>(graph_memory, result.local_bw_m);
+  result.fw_head = borrow_array<index_t>(&graph_memory, local_n + 1);
+  result.bw_head = borrow_array<index_t>(&graph_memory, local_n + 1);
+  result.fw_csr  = borrow_array<vertex_t>(&graph_memory, result.local_fw_m);
+  result.bw_csr  = borrow_array<vertex_t>(&graph_memory, result.local_bw_m);
 
   u64 pos = 0;
   for (u64 k = 0; k < local_n; ++k) {

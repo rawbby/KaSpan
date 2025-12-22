@@ -535,11 +535,11 @@ struct ExplicitContinuousWorldPart final : ExplicitContinuousPart
   ExplicitContinuousWorldPart()  = default;
   ~ExplicitContinuousWorldPart() = default;
 
-  ExplicitContinuousWorldPart(vertex_t n, vertex_t begin, vertex_t end, i32 world_rank, i32 world_size, void*&  memory)
+  ExplicitContinuousWorldPart(vertex_t n, vertex_t begin, vertex_t end, i32 world_rank, i32 world_size, void**  memory)
     : world_rank(world_rank)
     , world_size(world_size)
   {
-    part = ::borrow<vertex_t>(memory, 2 * world_size);
+    part = ::borrow_array<vertex_t>(memory, 2 * world_size);
 
     auto const local_range = std::array{ begin, end };
     MPI_Allgather(&local_range, 2, mpi_vertex_t, part, 2, mpi_vertex_t, MPI_COMM_WORLD);
@@ -590,11 +590,11 @@ struct ExplicitSortedContinuousWorldPart final : ExplicitContinuousPart
   ExplicitSortedContinuousWorldPart()  = default;
   ~ExplicitSortedContinuousWorldPart() = default;
 
-  ExplicitSortedContinuousWorldPart(vertex_t n, vertex_t end, i32 world_rank, i32 world_size, void* & memory)
+  ExplicitSortedContinuousWorldPart(vertex_t n, vertex_t end, i32 world_rank, i32 world_size, void** memory)
     : world_rank(world_rank)
     , world_size(world_size)
   {
-    part = ::borrow<vertex_t>(memory, world_size);
+    part = ::borrow_array<vertex_t>(memory, world_size);
 
     u64 const local_end = end;
     MPI_Allgather(&local_end, 1, mpi_vertex_t, part, 1, mpi_vertex_t, MPI_COMM_WORLD);

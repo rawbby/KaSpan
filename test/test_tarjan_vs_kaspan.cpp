@@ -29,7 +29,7 @@ main(int argc, char** argv)
 
   auto const scc_id_buffer = make_buffer<vertex_t>(graph_part.part.local_n());
   auto* scc_id_access = scc_id_buffer.data();
-  auto* kaspan_scc_id = borrow_clean<vertex_t>(scc_id_access, graph_part.part.local_n());
+  auto* kaspan_scc_id = borrow_array_clean<vertex_t>(&scc_id_access, graph_part.part.local_n());
   scc(
     graph_part.part,
     graph_part.fw_head,

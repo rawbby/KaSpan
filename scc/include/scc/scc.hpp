@@ -53,7 +53,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     auto frontier   = vertex_frontier::create();
     auto first_root = pivot_selection(max);
     DEBUG_ASSERT_NE(first_root, scc_id_undecided);
-    auto [bb, bitvector] = BitsAccessor::create_clean(local_n);
+    auto       bitvector = make_bits_clean(local_n);
     auto const first_id  = forward_search(part, fw_head, fw_csr, frontier, scc_id, bitvector, first_root);
     local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, bitvector, first_root, first_id);
   }
@@ -61,16 +61,14 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
   KASPAN_STATISTIC_PUSH("ecl");
   if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
-
-    auto    ecl_buffer = make_buffer<vertex_t, vertex_t,vertex_t ,vertex_t, u64>(local_n,local_n,local_n,local_n, (local_n + 63) >> 6);
-    void*     ecl_memory   = ecl_buffer.data();
-    vertex_t* ecl_fw_label = borrow<vertex_t>(ecl_memory, local_n);
-    vertex_t* ecl_bw_label = borrow<vertex_t>(ecl_memory, local_n);
-    auto      active_stack = StackAccessor<vertex_t>::borrow(ecl_memory, local_n);
-    auto      active       = BitsAccessor::borrow(ecl_memory, local_n);
-    auto      changed      = BitsAccessor::borrow(ecl_memory, local_n);
-    auto      frontier     = edge_frontier::create();
-
+    auto  ecl_buffer   = make_buffer<vertex_t>(local_n, local_n, local_n, local_n);
+    void* ecl_memory   = ecl_buffer.data();
+    auto* ecl_fw_label = borrow_array<vertex_t>(&ecl_memory, local_n);
+    auto* ecl_bw_label = borrow_array<vertex_t>(&ecl_memory, local_n);
+    auto* active_array = borrow_array<vertex_t>(&ecl_memory, local_n);
+    auto  active       = borrow_bits_clean(&ecl_memory, local_n);
+    auto  changed      = borrow_bits_clean(&ecl_memory, local_n);
+    auto  frontier     = edge_frontier::create();
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
     do {
@@ -84,7 +82,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
         scc_id,
         ecl_fw_label,
         ecl_bw_label,
-        active_stack,
+        active_array,
         active,
         changed,
         frontier);

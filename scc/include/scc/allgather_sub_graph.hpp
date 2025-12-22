@@ -61,9 +61,9 @@ allgather_csr_degrees(
     mpi_world_size, mpi_world_size, local_m, mpi_world_root + local_sub_n);
   void* memory = buffer.data();
 
-  auto [counts, displs]  = mpi_basic_counts_and_displs(memory);
-  auto local_sub_csr     = StackAccessor<vertex_t>::borrow(memory, local_m);
-  auto local_sub_degrees = StackAccessor<index_t>::borrow(memory, local_sub_n + mpi_world_root);
+  auto [counts, displs]  = mpi_basic_counts_and_displs(&memory);
+  auto local_sub_csr     = StackAccessor<vertex_t>::borrow(&memory, local_m);
+  auto local_sub_degrees = StackAccessor<index_t>::borrow(&memory, local_sub_n + mpi_world_root);
   if (mpi_world_root) {
     local_sub_degrees.push(0);
   }
@@ -150,10 +150,10 @@ allgather_sub_graph(
     sub.m        = sub_m;
     sub.buffer   = make_graph_buffer(sub_n, sub_m);
     void* memory = sub.buffer.data();
-    sub.fw_head  = borrow<index_t>(memory, sub_n + 1);
-    sub.fw_csr   = borrow<vertex_t>(memory, sub_m);
-    sub.bw_head  = borrow<index_t>(memory, sub_n + 1);
-    sub.bw_csr   = borrow<vertex_t>(memory, sub_m);
+    sub.fw_head  = borrow_array<index_t>(&memory, sub_n + 1);
+    sub.fw_csr   = borrow_array<vertex_t>(&memory, sub_m);
+    sub.bw_head  = borrow_array<index_t>(&memory, sub_n + 1);
+    sub.bw_csr   = borrow_array<vertex_t>(&memory, sub_m);
 
     mpi_basic_allgatherv<vertex_t>(local_sub_fw_csr.data(), local_sub_fw_csr.size(), sub.fw_csr, counts, displs);
     auto const send_count = local_sub_fw_degrees.size();
@@ -234,8 +234,8 @@ allgather_fw_sub_graph(
     sub.m        = sub_m;
     sub.buffer   = make_fw_graph_buffer(sub_n, sub_m);
     void* memory = sub.buffer.data();
-    sub.fw_head  = borrow<index_t>(memory, sub_n + 1);
-    sub.fw_csr   = borrow<vertex_t>(memory, sub_m);
+    sub.fw_head  = borrow_array<index_t>(&memory, sub_n + 1);
+    sub.fw_csr   = borrow_array<vertex_t>(&memory, sub_m);
 
     mpi_basic_allgatherv<vertex_t>(local_sub_fw_csr.data(), local_sub_fw_csr.size(), sub.fw_csr, counts, displs);
     auto const send_count = local_sub_fw_degrees.size();
