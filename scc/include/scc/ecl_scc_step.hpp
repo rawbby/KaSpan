@@ -1,6 +1,6 @@
 #pragma once
 
-#include <memory/accessor/bit_accessor.hpp>
+#include <memory/accessor/bits_accessor.hpp>
 #include <scc/base.hpp>
 #include <scc/edge_frontier.hpp>
 #include <scc/graph.hpp>
@@ -45,8 +45,8 @@ ecl_scc_step(
   vertex_t*               ecl_fw_label,
   vertex_t*               ecl_bw_label,
   StackAccessor<vertex_t> active_stack,
-  BitAccessor             active,
-  BitAccessor             changed,
+  BitsAccessor             active,
+  BitsAccessor             changed,
   edge_frontier&          frontier) -> vertex_t
 {
   // this function uses the project convention that:

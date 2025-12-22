@@ -1,4 +1,5 @@
 #include <debug/sub_process.hpp>
+#include <memory/accessor/stack.hpp>
 #include <memory/accessor/stack_accessor.hpp>
 #include <scc/base.hpp>
 #include <util/mpi_basic.hpp>
@@ -68,7 +69,7 @@ main(int argc, char** argv)
     i32 const     max_send_count = 2 * (mpi_world_size - 1) + min_send_count;
 
     auto [cb, send_counts, send_displs] = mpi_basic_counts_and_displs();
-    auto [sb, send_stack]               = StackAccessor<Item>::create(max_send_count);
+    auto  send_stack               = Stack<Item>(max_send_count);
 
     for (i32 trial = 0; trial < 1024; ++trial) {
       std::memset(send_counts, 0, mpi_world_size * sizeof(MPI_Count));
@@ -96,7 +97,7 @@ main(int argc, char** argv)
     constexpr auto send_count = 7;
 
     auto [cb, send_counts, send_displs] = mpi_basic_counts_and_displs();
-    auto [sb, send_stack]               = StackAccessor<Item>::create(send_count);
+    auto send_stack               = Stack<Item>(send_count);
 
     std::memset(send_counts, 0, mpi_world_size * sizeof(MPI_Count));
     send_counts[target_rank] = send_count;
@@ -111,7 +112,7 @@ main(int argc, char** argv)
   // zeros everywhere
   {
     auto [cb, send_counts, send_displs] = mpi_basic_counts_and_displs();
-    auto [sb, send_stack]               = StackAccessor<Item>::create(0);
+    auto send_stack                     = Stack<Item>{};
 
     std::memset(send_counts, 0, mpi_world_size * sizeof(MPI_Count));
     check_case(send_stack.data(), 0, send_counts, send_displs);

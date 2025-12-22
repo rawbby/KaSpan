@@ -1,6 +1,7 @@
 #pragma once
 
 #include <debug/assert.hpp>
+#include <memory/accessor/stack_mixin.hpp>
 #include <memory/borrow.hpp>
 #include <util/arithmetic.hpp>
 
@@ -11,7 +12,7 @@ template<typename T>
   requires(std::is_trivially_copyable_v<T> and
            std::is_trivially_constructible_v<T> and
            std::is_trivially_destructible_v<T>)
-class StackAccessor final
+class StackAccessor final : public StackMixin<StackAccessor<T>, T>
 {
 public:
   using value_type = T;
@@ -35,58 +36,14 @@ public:
     return StackAccessor{ ::borrow<T>(memory, count) };
   }
 
-  static auto create(u64 count) noexcept -> std::pair<Buffer, StackAccessor>
-  {
-    auto  buffer = make_buffer<T>(count);
-    void* memory = buffer.data();
-    return { std::move(buffer), StackAccessor{ memory } };
-  }
-
-  [[nodiscard]] auto operator[](size_t index) -> T&
-  {
-    return data()[index];
-  }
-
-  [[nodiscard]] auto operator[](size_t index) const -> T const&
-  {
-    return data()[index];
-  }
-
-  void clear()
-  {
-    end_ = 0;
-  }
-
-  void push(T const& t) noexcept
-  {
-    std::memcpy(&data()[end_++], &t, sizeof(T));
-  }
-
-  void push(T&& t) noexcept
-  {
-    std::memcpy(&data()[end_++], &t, sizeof(T));
-  }
-
-  auto back() -> T&
-  {
-    DEBUG_ASSERT_GT(end_, 0);
-    return data()[end_ - 1];
-  }
-
-  void pop()
-  {
-    DEBUG_ASSERT_GT(end_, 0);
-    --end_;
-  }
-
   auto size() const -> u64
   {
     return end_;
   }
 
-  auto empty() const -> bool
+  void set_size(u64 size)
   {
-    return end_ == static_cast<u64>(0);
+    end_ = size;
   }
 
   auto data() -> T*

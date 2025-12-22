@@ -3,7 +3,7 @@
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
 #include <iostream>
-#include <memory/accessor/bit_accessor.hpp>
+#include <memory/accessor/bits_accessor.hpp>
 #include <memory/accessor/stack_accessor.hpp>
 #include <memory/buffer.hpp>
 #include <scc/graph.hpp>
@@ -50,7 +50,7 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
 
   auto index    = borrow_filled<vertex_t>(memory, index_undecided, local_n);
   auto low      = borrow_clean<vertex_t>(memory, local_n);
-  auto on_stack = BitAccessor::borrow_clean(memory, local_n);
+  auto on_stack = BitsAccessor::borrow_clean(memory, local_n);
   auto st       = StackAccessor<vertex_t>::borrow(memory, local_n);
   auto dfs      = StackAccessor<Frame>::borrow(memory, local_n);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());

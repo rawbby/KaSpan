@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory/accessor/stack.hpp>
 #include <memory/accessor/stack_accessor.hpp>
 #include <memory/buffer.hpp>
 #include <scc/base.hpp>
@@ -17,7 +18,7 @@ allgather_sub_ids(Part const& part, vertex_t local_sub_n, Fn&& in_sub_graph)
 {
   auto const local_n = part.local_n();
 
-  auto [TMP(), local_ids_inverse_stack] = StackAccessor<vertex_t>::create(local_sub_n);
+  auto local_ids_inverse_stack = Stack<vertex_t>(local_sub_n);
   for (vertex_t k = 0; k < local_n; ++k) {
     if (in_sub_graph(k)) {
       local_ids_inverse_stack.push(part.to_global(k));

@@ -1,8 +1,7 @@
-#include "scc/allgather_sub_graph.hpp"
-
 #include <debug/Assert.hpp>
 #include <debug/sub_process.hpp>
 #include <scc/allgather_graph.hpp>
+#include <scc/allgather_sub_graph.hpp>
 #include <scc/fuzzy.hpp>
 #include <scc/partion_graph.hpp>
 #include <util/scope_guard.hpp>

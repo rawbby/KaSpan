@@ -1,8 +1,8 @@
 #pragma once
 
-#include <memory/accessor/bit_accessor.hpp>
 #include <debug/assert.hpp>
 #include <debug/statistic.hpp>
+#include <memory/accessor/bits_accessor.hpp>
 #include <scc/base.hpp>
 #include <scc/vertex_frontier.hpp>
 
@@ -14,7 +14,7 @@ backward_search(
   vertex_t const*  bw_csr,
   vertex_frontier& frontier,
   vertex_t*        scc_id,
-  BitAccessor      fw_reached,
+  BitsAccessor      fw_reached,
   vertex_t         root,
   vertex_t         id) -> vertex_t
 {

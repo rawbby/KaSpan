@@ -1,6 +1,6 @@
-#include <memory/accessor/stack_accessor.hpp>
 #include <debug/statistic.hpp>
 #include <debug/sub_process.hpp>
+#include <memory/accessor/stack_accessor.hpp>
 #include <scc/adapter/kagen.hpp>
 #include <scc/adapter/manifest.hpp>
 #include <scc/allgather_graph.hpp>

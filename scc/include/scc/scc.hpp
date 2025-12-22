@@ -2,9 +2,9 @@
 
 #include "trim_tarjan.hpp"
 
-#include <memory/accessor/bit_accessor.hpp>
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
+#include <memory/accessor/bits_accessor.hpp>
 #include <scc/allgather_sub_graph.hpp>
 #include <scc/backward_search.hpp>
 #include <scc/base.hpp>
@@ -53,7 +53,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     auto frontier   = vertex_frontier::create();
     auto first_root = pivot_selection(max);
     DEBUG_ASSERT_NE(first_root, scc_id_undecided);
-    auto [bb, bitvector] = BitAccessor::create_clean(local_n);
+    auto [bb, bitvector] = BitsAccessor::create_clean(local_n);
     auto const first_id  = forward_search(part, fw_head, fw_csr, frontier, scc_id, bitvector, first_root);
     local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, bitvector, first_root, first_id);
   }
@@ -67,8 +67,8 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     vertex_t* ecl_fw_label = borrow<vertex_t>(ecl_memory, local_n);
     vertex_t* ecl_bw_label = borrow<vertex_t>(ecl_memory, local_n);
     auto      active_stack = StackAccessor<vertex_t>::borrow(ecl_memory, local_n);
-    auto      active       = BitAccessor::borrow(ecl_memory, local_n);
-    auto      changed      = BitAccessor::borrow(ecl_memory, local_n);
+    auto      active       = BitsAccessor::borrow(ecl_memory, local_n);
+    auto      changed      = BitsAccessor::borrow(ecl_memory, local_n);
     auto      frontier     = edge_frontier::create();
 
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());

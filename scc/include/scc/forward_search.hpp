@@ -13,7 +13,7 @@ forward_search(
   vertex_t const*  fw_csr,
   vertex_frontier& frontier,
   vertex_t const*  scc_id,
-  BitAccessor      fw_reached,
+  BitsAccessor      fw_reached,
   vertex_t         root) -> vertex_t
 {
   if (part.has_local(root)) {
