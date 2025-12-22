@@ -4,13 +4,11 @@
 
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
-#include <memory/accessor/bits_accessor.hpp>
 #include <scc/allgather_sub_graph.hpp>
 #include <scc/backward_search.hpp>
 #include <scc/base.hpp>
 #include <scc/ecl_scc_step.hpp>
 #include <scc/forward_search.hpp>
-#include <scc/normalize_scc_id.hpp>
 #include <scc/pivot_selection.hpp>
 #include <scc/trim_1.hpp>
 
@@ -61,31 +59,18 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
   KASPAN_STATISTIC_PUSH("ecl");
   if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
-    auto  ecl_buffer   = make_buffer<vertex_t>(local_n, local_n, local_n, local_n);
-    void* ecl_memory   = ecl_buffer.data();
-    auto* ecl_fw_label = borrow_array<vertex_t>(&ecl_memory, local_n);
-    auto* ecl_bw_label = borrow_array<vertex_t>(&ecl_memory, local_n);
-    auto* active_array = borrow_array<vertex_t>(&ecl_memory, local_n);
-    auto  active       = borrow_bits_clean(&ecl_memory, local_n);
-    auto  changed      = borrow_bits_clean(&ecl_memory, local_n);
-    auto  frontier     = edge_frontier::create();
+    auto fw_label     = make_array<vertex_t>(local_n);
+    auto bw_label     = make_array<vertex_t>(local_n);
+    auto active_array = make_array<vertex_t>(local_n);
+    auto active       = make_bits_clean(local_n);
+    auto changed      = make_bits_clean(local_n);
+    auto frontier     = edge_frontier::create();
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
     do {
-      ecl_scc_init_lable(part, ecl_fw_label, ecl_bw_label);
+      ecl_scc_init_lable(part, fw_label, bw_label);
       local_decided += ecl_scc_step(
-        part,
-        fw_head,
-        fw_csr,
-        bw_head,
-        bw_csr,
-        scc_id,
-        ecl_fw_label,
-        ecl_bw_label,
-        active_array,
-        active,
-        changed,
-        frontier);
+        part, fw_head, fw_csr, bw_head, bw_csr, scc_id, fw_label, bw_label, active_array, active, changed, frontier);
       // maybe: redistribute graph - sort vertices by ecl label and run trim tarjan (as there is now a lot locality)
     } while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold);
   }

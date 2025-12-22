@@ -65,7 +65,7 @@ inline auto
 make_bits_clean(u64 size) noexcept -> Bits
 {
   auto&& bits = Bits{ size };
-  std::memset(bits.data(), 0x00, round_up<64>(size));
+  std::memset(bits.data(), 0x00, ceildiv<64>(size) * sizeof(u64));
 #ifdef KASPAN_DEBUG
   for (u64 i = 0; i < size; ++i)
     ASSERT_EQ(bits.get(i), false);
@@ -77,7 +77,7 @@ inline auto
 make_bits_filled(u64 size) noexcept -> Bits
 {
   auto&& bits = Bits{ size };
-  std::memset(bits.data(), 0xff, round_up<64>(size));
+  std::memset(bits.data(), 0xff, ceildiv<64>(size) * sizeof(u64));
 #ifdef KASPAN_DEBUG
   for (u64 i = 0; i < size; ++i)
     ASSERT_EQ(bits.get(i), true);
