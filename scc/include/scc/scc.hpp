@@ -1,7 +1,5 @@
 #pragma once
 
-#include "trim_tarjan.hpp"
-
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
 #include <scc/allgather_sub_graph.hpp>
@@ -11,6 +9,7 @@
 #include <scc/forward_search.hpp>
 #include <scc/pivot_selection.hpp>
 #include <scc/trim_1.hpp>
+#include <scc/trim_tarjan.hpp>
 
 #include <algorithm>
 #include <cstdio>

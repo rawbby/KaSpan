@@ -1,4 +1,4 @@
-#include <debug/Assert.hpp>
+#include <debug/assert.hpp>
 #include <debug/sub_process.hpp>
 #include <scc/allgather_graph.hpp>
 #include <scc/allgather_sub_graph.hpp>
