@@ -1,190 +1,137 @@
-/*
-//@HEADER
-// *****************************************************************************
-//
-//  HPCGraph: Graph Computation on High Performance Computing Systems
-//              Copyright (2016) Sandia Corporation
-//
-// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
-// the U.S. Government retains certain rights in this software.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions?  Contact  George M. Slota   (gmslota@sandia.gov)
-//                      Siva Rajamanickam (srajama@sandia.gov)
-//                      Kamesh Madduri    (madduri@cse.psu.edu)
-//
-// *****************************************************************************
-//@HEADER
-*/
+#include "kaspan_adapter.hpp"
 
-#include <cstring>
-#include <getopt.h>
+#include <debug/process.hpp>
+#include <debug/statistic.hpp>
+#include <scc/adapter/kagen.hpp>
+#include <scc/adapter/manifest.hpp>
+#include <scc/pivot_selection.hpp>
+#include <util/arg_parse.hpp>
+
+#include "scc.h"
+
 #include <mpi.h>
 #include <omp.h>
-#include <time.h>
 
+#include <cstdio>
+#include <print>
+
+// Global variables required by HPCGraph
 int  procid, nprocs;
-bool verbose, debug, verify, output;
-
-#include "comms.h"
-#include "dist_graph.h"
-#include "harmonic.h"
-#include "io_pp.h"
-#include "kcore.h"
-#include "labelprop.h"
-#include "pagerank.h"
-#include "scc.h"
-#include "wcc.h"
+bool verbose = false;
+bool debug   = false;
+bool verify  = false;
+bool output  = false;
 
 void
-print_usage(char** argv)
+usage(int /* argc */, char** argv)
 {
-  printf("To run: %s [graphfile] [options]\n", argv[0]);
-  printf("\t Use -h for list of options\n\n");
+  std::println(
+    "usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file "
+    "<output_file>",
+    argv[0]);
 }
 
+template<WorldPartConcept Part>
 void
-print_usage_full(char** argv)
+benchmark_impl(GraphPart<Part> const& graph_part)
 {
-  printf("To run: %s [graphfile] [options]\n\n", argv[0]);
-  printf("Options:\n");
-  printf("\t-a\n");
-  printf("\t\tRun all analytics\n");
-  printf("\t-w\n");
-  printf("\t\tRun weakly connected components\n");
-  printf("\t-s\n");
-  printf("\t\tRun strongly connected components\n");
-  printf("\t-l\n");
-  printf("\t\tRun label propagation\n");
-  printf("\t-p\n");
-  printf("\t\tRun PageRank\n");
-  printf("\t-c\n");
-  printf("\t\tRun harmonic centrality\n");
-  printf("\t-k\n");
-  printf("\t\tRun approximate k-core\n");
-  printf("\t-o [outfile]\n");
-  printf("\t\tAdjust output file [default: 'out.algorithm']\n");
-  printf("\t-i [comma separated input vertex id list]\n");
-  printf("\t\tVertex ids to analyze for harmonic centrality [default: none]\n");
-  printf("\t-p [part file]\n");
-  printf("\t\tPartition file to use for mapping vertices to tasks\n");
-  printf("\t-t [#]\n");
-  printf("\t\tAdjust iteration count for label prop, PageRank, k-core [default: 20]\n");
-  printf("\t-f\n");
-  printf("\t\tRun verification routines\n");
-  printf("\t-v\n");
-  printf("\t\tRun verification routines\n");
-  printf("\t-d\n");
-  printf("\t\tRun verification routines\n");
+  KASPAN_STATISTIC_ADD("n", graph_part.part.n);
+  KASPAN_STATISTIC_ADD("local_n", graph_part.part.local_n());
+  KASPAN_STATISTIC_ADD("m", graph_part.m);
+  KASPAN_STATISTIC_ADD("local_fw_m", graph_part.local_fw_m);
+  KASPAN_STATISTIC_ADD("local_bw_m", graph_part.local_bw_m);
+
+  KASPAN_STATISTIC_PUSH("adapter");
+  auto hpc_data = create_hpc_graph_from_graph_part(graph_part);
+  KASPAN_STATISTIC_POP();
+
+  KASPAN_STATISTIC_ADD("memory_after_adapter", get_resident_set_bytes());
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  KASPAN_STATISTIC_PUSH("scc");
+  KASPAN_STATISTIC_PUSH("pivot");
+  Degree max_degree{
+    .degree_product = std::numeric_limits<index_t>::min(),
+    .u              = std::numeric_limits<vertex_t>::min()
+  };
+  for (vertex_t k = 0; k < graph_part.part.local_n(); ++k) {
+    auto const out_degree     = graph_part.fw_head[k + 1] - graph_part.fw_head[k];
+    auto const in_degree      = graph_part.bw_head[k + 1] - graph_part.bw_head[k];
+    auto const degree_product = out_degree * in_degree;
+    if (degree_product > max_degree.degree_product) {
+      max_degree.degree_product = degree_product;
+      max_degree.u              = graph_part.part.to_global(k);
+    }
+  }
+  auto const pivot = pivot_selection(max_degree);
+  KASPAN_STATISTIC_POP();
+  char output_file[] = "hpc_scc_output.txt";
+  scc_dist(&hpc_data.g, &hpc_data.comm, &hpc_data.q, static_cast<uint64_t>(pivot), output_file);
+  KASPAN_STATISTIC_POP();
+
+  KASPAN_STATISTIC_ADD("memory_after_scc", get_resident_set_bytes());
+
+  destroy_hpc_graph_data(&hpc_data);
+}
+
+template<typename T>
+void
+benchmark(T const& graph_part)
+{
+  using Part = std::remove_cvref_t<decltype(graph_part.part)>;
+  // Create a non-owning GraphPart view
+  GraphPart<Part> view;
+  view.part       = graph_part.part;
+  view.m          = graph_part.m;
+  view.local_fw_m = graph_part.local_fw_m;
+  view.local_bw_m = graph_part.local_bw_m;
+  view.fw_head    = graph_part.fw_head;
+  view.bw_head    = graph_part.bw_head;
+  view.fw_csr     = graph_part.fw_csr;
+  view.bw_csr     = graph_part.bw_csr;
+  benchmark_impl(view);
 }
 
 int
 main(int argc, char** argv)
 {
-  srand(time(0));
-  setbuf(stdout, 0);
+  auto const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
+  auto const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
+  auto const output_file = arg_select_str(argc, argv, "--output_file", usage);
 
-  verbose = false;
-  debug   = false;
-  verify  = false;
-  output  = false;
+  if (not(kagen_option_string == nullptr ^ manifest_file == nullptr)) {
+    usage(argc, argv);
+    std::exit(1);
+  }
 
-  MPI_Init(&argc, &argv);
+  KASPAN_DEFAULT_INIT();
+  SCOPE_GUARD(KASPAN_STATISTIC_MPI_WRITE_JSON(output_file));
+
+  // Set OpenMP to single thread only
+  omp_set_num_threads(1);
+
+  // Initialize HPCGraph global variables
   MPI_Comm_rank(MPI_COMM_WORLD, &procid);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-  if (argc < 2) {
-    if (procid == 0)
-      print_usage(argv);
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  }
+  KASPAN_STATISTIC_SCOPE("benchmark");
+  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+  KASPAN_STATISTIC_ADD("world_rank", mpi_world_rank);
+  KASPAN_STATISTIC_ADD("world_size", mpi_world_size);
 
-  char* input_filename = strdup(argv[1]);
-
-  bool run_scc = false;
-
-  uint64_t  num_to_output = 0;
-  char*     output_file   = NULL;
-  char*     temp_out      = NULL;
-  uint64_t* input_list    = NULL;
-  char*     part_list     = NULL;
-
-  graph_gen_data_t ggi;
-  dist_graph_t     g;
-  mpi_data_t       comm;
-  queue_data_t     q;
-
-  init_comm_data(&comm);
-  load_graph_edges_32(input_filename, &ggi);
-
-  if (nprocs > 1) {
-    exchange_out_edges(&ggi, &comm);
-    exchange_in_edges(&ggi, &comm);
-    create_graph(&ggi, &g);
-    relabel_edges(&g);
-    if (part_list != NULL)
-      repart_graph(&g, &comm, part_list);
+  if (kagen_option_string != nullptr) {
+    KASPAN_STATISTIC_PUSH("kagen");
+    auto const kagen_graph = kagen_graph_part(kagen_option_string);
+    KASPAN_STATISTIC_POP();
+    benchmark(kagen_graph);
   } else {
-    create_graph_serial(&ggi, &g);
+    KASPAN_STATISTIC_PUSH("load");
+    auto const manifest = Manifest::load(manifest_file);
+    ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
+    auto const part           = BalancedSlicePart{ static_cast<vertex_t>(manifest.graph_node_count) };
+    auto const manifest_graph = load_graph_part_from_manifest(part, manifest);
+    KASPAN_STATISTIC_POP();
+    benchmark(manifest_graph);
   }
-  get_max_degree_vert(&g);
-  init_queue_data(&g, &q);
-
-  num_to_output = 1;
-  input_list    = (uint64_t*)malloc(1 * sizeof(uint64_t));
-  input_list[0] = g.max_degree_vert;
-
-  if (num_to_output < 0)
-    num_to_output = g.n;
-  if (output_file == NULL)
-    output_file = strdup("out");
-  temp_out = (char*)malloc((strlen(output_file) + 128) * sizeof(char));
-
-  if (run_scc) {
-    temp_out[0] = '\0';
-    strcat(temp_out, output_file);
-    strcat(temp_out, ".scc");
-    scc_dist(&g, &comm, &q, g.max_degree_vert, temp_out);
-  }
-
-  clear_graph(&g);
-  clear_comm_data(&comm);
-  clear_queue_data(&q);
-  free(input_filename);
-  free(temp_out);
-  free(output_file);
-  if (input_list != NULL)
-    free(input_list);
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Finalize();
-
-  return 0;
 }

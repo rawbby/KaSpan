@@ -68,7 +68,7 @@ extern bool verbose, debug, verify, output;
 
 int scc_bfs_fw(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
                uint64_t* scc, uint64_t root)
-{  
+{
   if (debug) { printf("procid %d scc_bfs_fw() start\n", procid); }
   double elt = 0.0;
   if (verbose) {
@@ -81,7 +81,7 @@ int scc_bfs_fw(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
   q->send_size = 0;
 
   uint64_t root_index = get_value(&g->map, root);
-  if (root_index != NULL_KEY && root_index < g->n_local)    
+  if (root_index != NULL_KEY && root_index < g->n_local)
   {
     q->queue[0] = root;
     q->queue_size = 1;
@@ -92,7 +92,7 @@ int scc_bfs_fw(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
 #pragma omp parallel default(shared)
 {
   thread_queue_t tq;
-  init_thread_queue(&tq);  
+  init_thread_queue(&tq);
 
 #pragma omp for
   for (uint64_t i = 0; i < g->n_local; ++i)
@@ -180,7 +180,7 @@ uint64_t scc_bfs_bw(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
   uint64_t num_unassigned = 0;
 
   uint64_t root_index = get_value(&g->map, root);
-  if (root_index != NULL_KEY && root_index < g->n_local)    
+  if (root_index != NULL_KEY && root_index < g->n_local)
   {
     q->queue[0] = root;
     q->queue_size = 1;
@@ -364,7 +364,7 @@ int scc_color(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
 
 #pragma omp for
   for (uint64_t i = 0; i < g->n_total; ++i)
-    if (colors[i] == SCC_MARKED && scc[i] >= g->n)
+    if (colors[i] == SCC_MARKED && scc[i] >= g->n && scc[i] < SCC_MARKED)
       printf("SCC assignment is %lu, out of bounds for n=%lu\n", scc[i], g->n);
 
   empty_queue(&tq, q);
@@ -735,9 +735,9 @@ int scc_output(dist_graph_t* g, uint64_t* scc, char* output_file)
   return 0;
 }
 
-int scc_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q, 
+int scc_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q,
              uint64_t root, char* output_file)
-{  
+{
   if (debug) { printf("Task %d scc_dist() start\n", procid); }
 
   MPI_Barrier(MPI_COMM_WORLD);
@@ -772,4 +772,3 @@ int scc_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q,
   if (debug)  printf("Task %d scc_dist() success\n", procid); 
   return 0;
 }
-
