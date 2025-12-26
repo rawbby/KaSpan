@@ -4,9 +4,9 @@
 #SBATCH --cpus-per-task=76
 #SBATCH --ntasks-per-socket=1
 #SBATCH --ntasks-per-node=1
-#SBATCH -o hpc_graph_2048.out
-#SBATCH -e hpc_graph_2048.err
-#SBATCH -J hpc_graph_2048
+#SBATCH -o hpc_graph_2052.out
+#SBATCH -e hpc_graph_2052.err
+#SBATCH -J hpc_graph_2052
 #SBATCH --partition=cpuonly
 #SBATCH --time=25:00
 #SBATCH --export=ALL
@@ -34,11 +34,11 @@ set +eu
 
 for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
-  output_file="${app_name}_${manifest_name}_np2048.json"
+  output_file="${app_name}_${manifest_name}_np2052.json"
   if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} NP=2048 Graph=${manifest_name}"
+    echo "[SKIPPING] ${app_name} NP=2052 Graph=${manifest_name}"
   else
-    echo "[STARTING] ${app_name} NP=2048 Graph=${manifest_name}"
+    echo "[STARTING] ${app_name} NP=2052 Graph=${manifest_name}"
     srun                   \
       --time=3:00          \
       --oom-kill-step=1    \
@@ -54,9 +54,9 @@ for manifest in "${rwd[@]}"; do
         --manifest_file "$manifest"; ec=$?
     if [[ $ec -ne 0 ]]; then
       [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} NP=2048 Graph=${manifest_name} ec=${ec}"
+      echo "[FAILURE] ${app_name} NP=2052 Graph=${manifest_name} ec=${ec}"
     else
-      echo "[SUCCESS] ${app_name} NP=2048 Graph=${manifest_name}"
+      echo "[SUCCESS] ${app_name} NP=2052 Graph=${manifest_name}"
     fi
   fi
 done

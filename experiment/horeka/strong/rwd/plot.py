@@ -57,7 +57,7 @@ def mark_topology_sections(ax, max_n):
 
 
 cwd = pathlib.Path(os.getcwd())
-pattern = re.compile(r"((?:kaspan)|(?:ispan))_(.*)_np([0-9]+)\.json")
+pattern = re.compile(r"((?:kaspan)|(?:ispan)|(?:hpc_graph))_(.*)_np([0-9]+)\.json")
 
 paths = [p for p in cwd.iterdir() if p.is_file()]
 

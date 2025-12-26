@@ -35,12 +35,12 @@ set +eu
 for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
 
-  output_file="${app_name}_${manifest_name}_np128.json"
-  pid128=
+  output_file="${app_name}_${manifest_name}_np152.json"
+  pid152=
   if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} NP=128 Graph=${manifest_name}"
+    echo "[SKIPPING] ${app_name} NP=152 Graph=${manifest_name}"
   else
-    echo "[STARTING] ${app_name} NP=128 Graph=${manifest_name}"
+    echo "[STARTING] ${app_name} NP=152 Graph=${manifest_name}"
     srun                   \
       --time=3:00          \
       --oom-kill-step=1    \
@@ -48,20 +48,20 @@ for manifest in "${rwd[@]}"; do
       --nodes=2            \
       --exclusive          \
       --ntasks=2           \
-      --cpus-per-task=64   \
+      --cpus-per-task=76   \
       --cpu-bind=cores     \
       "$app"               \
         --output_file "$output_file" \
-        --threads 64       \
-        --manifest_file "$manifest" & pid128=$!
+        --threads 76       \
+        --manifest_file "$manifest" & pid152=$!
   fi
 
-  output_file="${app_name}_${manifest_name}_np256.json"
-  pid256=
+  output_file="${app_name}_${manifest_name}_np304.json"
+  pid304=
   if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} NP=256 Graph=${manifest_name}"
+    echo "[SKIPPING] ${app_name} NP=304 Graph=${manifest_name}"
   else
-    echo "[STARTING] ${app_name} NP=256 Graph=${manifest_name}"
+    echo "[STARTING] ${app_name} NP=304 Graph=${manifest_name}"
     srun                   \
       --time=3:00          \
       --oom-kill-step=1    \
@@ -69,39 +69,39 @@ for manifest in "${rwd[@]}"; do
       --nodes=4            \
       --exclusive          \
       --ntasks=4           \
-      --cpus-per-task=64   \
+      --cpus-per-task=76   \
       --cpu-bind=cores     \
       "$app"               \
         --output_file "$output_file" \
-        --threads 64       \
-        --manifest_file "$manifest" & pid256=$!
+        --threads 76       \
+        --manifest_file "$manifest" & pid304=$!
   fi
 
-  if [[ $pid128 ]]; then
-    wait "$pid128"; ec=$?
+  if [[ $pid152 ]]; then
+    wait "$pid152"; ec=$?
     if [[ $ec -ne 0 ]]; then
       [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} NP=128 Graph=${manifest_name}"
+      echo "[FAILURE] ${app_name} NP=152 Graph=${manifest_name}"
     else
-      echo "[SUCCESS] ${app_name} NP=128 Graph=${manifest_name}"
+      echo "[SUCCESS] ${app_name} NP=152 Graph=${manifest_name}"
     fi
   fi
 
-  if [[ $pid256 ]]; then
-    wait "$pid256"; ec=$?
+  if [[ $pid304 ]]; then
+    wait "$pid304"; ec=$?
     if [[ $ec -ne 0 ]]; then
       [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} NP=256 Graph=${manifest_name}"
+      echo "[FAILURE] ${app_name} NP=304 Graph=${manifest_name}"
     else
-      echo "[SUCCESS] ${app_name} NP=256 Graph=${manifest_name}"
+      echo "[SUCCESS] ${app_name} NP=304 Graph=${manifest_name}"
     fi
   fi
 
-  output_file="${app_name}_${manifest_name}_np512.json"
+  output_file="${app_name}_${manifest_name}_np532.json"
   if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} NP=512 Graph=${manifest_name}"
+    echo "[SKIPPING] ${app_name} NP=532 Graph=${manifest_name}"
   else
-    echo "[STARTING] ${app_name} NP=512 Graph=${manifest_name}"
+    echo "[STARTING] ${app_name} NP=532 Graph=${manifest_name}"
     srun                   \
       --time=3:00          \
       --oom-kill-step=1    \
@@ -109,17 +109,17 @@ for manifest in "${rwd[@]}"; do
       --nodes=7            \
       --exclusive          \
       --ntasks=7           \
-      --cpus-per-task=73   \
+      --cpus-per-task=76   \
       --cpu-bind=cores     \
       "$app"               \
         --output_file "$output_file" \
-        --threads 73       \
+        --threads 76       \
         --manifest_file "$manifest"; ec=$?
     if [[ $ec -ne 0 ]]; then
       [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} NP=512 Graph=${manifest_name} ec=${ec}"
+      echo "[FAILURE] ${app_name} NP=532 Graph=${manifest_name} ec=${ec}"
     else
-      echo "[SUCCESS] ${app_name} NP=512 Graph=${manifest_name}"
+      echo "[SUCCESS] ${app_name} NP=532 Graph=${manifest_name}"
     fi
   fi
 done

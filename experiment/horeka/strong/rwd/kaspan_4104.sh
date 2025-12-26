@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --nodes=27
-#SBATCH --ntasks=2052
+#SBATCH --nodes=54
+#SBATCH --ntasks=4104
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-socket=38
 #SBATCH --ntasks-per-node=76
-#SBATCH -o kaspan_2048.out
-#SBATCH -e kaspan_2048.err
-#SBATCH -J kaspan_2048
+#SBATCH -o kaspan_4104.out
+#SBATCH -e kaspan_4104.err
+#SBATCH -J kaspan_4104
 #SBATCH --partition=cpuonly
 #SBATCH --time=25:00
 #SBATCH --export=ALL
@@ -34,18 +34,18 @@ set +eu
 
 for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
-  output_file="${app_name}_${manifest_name}_np2048.json"
+  output_file="${app_name}_${manifest_name}_np4104.json"
   if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} NP=2048 Graph=${manifest_name}"
+    echo "[SKIPPING] ${app_name} NP=4104 Graph=${manifest_name}"
   else
-    echo "[STARTING] ${app_name} NP=2048 Graph=${manifest_name}"
+    echo "[STARTING] ${app_name} NP=4104 Graph=${manifest_name}"
     srun                   \
       --time=3:00          \
       --oom-kill-step=1    \
       --mpi=pmi2           \
-      --nodes=27           \
+      --nodes=54           \
       --exclusive          \
-      --ntasks=2048        \
+      --ntasks=4104        \
       --cpus-per-task=1    \
       --hint=nomultithread \
       --cpu-bind=cores     \
@@ -54,9 +54,9 @@ for manifest in "${rwd[@]}"; do
         --manifest_file "$manifest"; ec=$?
     if [[ $ec -ne 0 ]]; then
       [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} NP=2048 Graph=${manifest_name} ec=${ec}"
+      echo "[FAILURE] ${app_name} NP=4104 Graph=${manifest_name} ec=${ec}"
     else
-      echo "[SUCCESS] ${app_name} NP=2048 Graph=${manifest_name}"
+      echo "[SUCCESS] ${app_name} NP=4104 Graph=${manifest_name}"
     fi
   fi
 done
