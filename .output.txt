@@ -1,0 +1,1024 @@
+[1/18] Building CXX object CMakeFiles/...ir/extern/hpc_graph/src/fast_map.cpp.o
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/src/fast_map.cpp:52:
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:94:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   94 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:102:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  102 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:113:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  113 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:135:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  135 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:137:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  137 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:138:12: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  138 |     return NULL_KEY;
+      |            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:146:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  146 |   uint64_t max_key = NULL_KEY;
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/fast_map.cpp:87:21: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   87 |     map->arr[i*2] = NULL_KEY;
+      |                     ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/fast_map.cpp:134:40: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  134 |     map->arr[map->unique_indexes[i]] = NULL_KEY;
+      |                                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+10 warnings generated.
+[2/18] Building CXX object CMakeFiles/...h.dir/extern/hpc_graph/src/comms.cpp.o
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/src/comms.cpp:52:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/comms.h:56:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/dist_graph.h:51:
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:94:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   94 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:102:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  102 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:113:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  113 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:135:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  135 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:137:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  137 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:138:12: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  138 |     return NULL_KEY;
+      |            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:146:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  146 |   uint64_t max_key = NULL_KEY;
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+8 warnings generated.
+[3/18] Building CXX object CMakeFiles/...h.dir/extern/hpc_graph/src/io_pp.cpp.o
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/src/io_pp.cpp:52:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/io_pp.h:49:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/dist_graph.h:51:
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:94:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   94 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:102:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  102 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:113:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  113 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:135:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  135 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:137:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  137 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:138:12: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  138 |     return NULL_KEY;
+      |            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:146:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  146 |   uint64_t max_key = NULL_KEY;
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+8 warnings generated.
+[4/18] Building CXX object CMakeFiles/.../extern/hpc_graph/src/dist_graph.cpp.o
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/src/dist_graph.cpp:54:
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:94:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   94 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:102:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  102 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:113:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  113 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:135:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  135 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:137:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  137 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:138:12: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  138 |     return NULL_KEY;
+      |            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:146:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  146 |   uint64_t max_key = NULL_KEY;
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/dist_graph.cpp:297:16: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  297 |     if (val == NULL_KEY)
+      |                ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/dist_graph.cpp:309:16: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  309 |     if (val == NULL_KEY)
+      |                ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/dist_graph.cpp:376:16: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  376 |     if (val == NULL_KEY)
+      |                ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/dist_graph.cpp:388:16: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  388 |     if (val == NULL_KEY)
+      |                ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/dist_graph.cpp:843:1: warning: non-void function does not return a value [-Wreturn-type]
+  843 | }
+      | ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/dist_graph.cpp:889:16: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  889 |     max_vert = NULL_KEY;
+      |                ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+14 warnings generated.
+[5/18] Building CXX object CMakeFiles/...ir/extern/hpc_graph/src/harmonic.cpp.o
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:54:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/dist_graph.h:51:
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:94:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   94 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:102:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  102 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:113:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  113 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:135:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  135 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:137:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  137 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:138:12: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  138 |     return NULL_KEY;
+      |            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:146:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  146 |   uint64_t max_key = NULL_KEY;
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:81:21: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   81 |   if (root_index != NULL_KEY && root_index < g->n_local)
+      |                     ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:96:20: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   96 |     distances[i] = HC_NOT_VISITED;
+      |                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:59:24: note: expanded from macro 'HC_NOT_VISITED'
+   59 | #define HC_NOT_VISITED 18446744073709551615
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:102:17: warning: format specifies type 'unsigned int' but the argument has type 'uint64_t' (aka 'unsigned long') [-Wformat]
+  101 |       printf("Task %d Distance %u run_harmonic() GQ: %li, TQ: %u\n",
+      |                                ~~
+      |                                %lu
+  102 |         procid, distance, comm->global_queue_size, q->queue_size);
+      |                 ^~~~~~~~
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:102:52: warning: format specifies type 'unsigned int' but the argument has type 'uint64_t' (aka 'unsigned long') [-Wformat]
+  101 |       printf("Task %d Distance %u run_harmonic() GQ: %li, TQ: %u\n",
+      |                                                               ~~
+      |                                                               %lu
+  102 |         procid, distance, comm->global_queue_size, q->queue_size);
+      |                                                    ^~~~~~~~~~~~~
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:110:36: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  110 |       if (distances[vert_index] != HC_NOT_VISITED &&
+      |                                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:59:24: note: expanded from macro 'HC_NOT_VISITED'
+   59 | #define HC_NOT_VISITED 18446744073709551615
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:111:36: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  111 |           distances[vert_index] != HC_VISITED)
+      |                                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:60:20: note: expanded from macro 'HC_VISITED'
+   60 | #define HC_VISITED 18446744073709551614
+      |                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:120:36: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  120 |         if (distances[in_index] == HC_NOT_VISITED)
+      |                                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:59:24: note: expanded from macro 'HC_NOT_VISITED'
+   59 | #define HC_NOT_VISITED 18446744073709551615
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:122:33: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  122 |           distances[in_index] = HC_VISITED;
+      |                                 ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:60:20: note: expanded from macro 'HC_VISITED'
+   60 | #define HC_VISITED 18446744073709551614
+      |                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:185:25: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  185 |         distances[i] != HC_VISITED && distances[i] != HC_NOT_VISITED)
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:60:20: note: expanded from macro 'HC_VISITED'
+   60 | #define HC_VISITED 18446744073709551614
+      |                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:185:55: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  185 |         distances[i] != HC_VISITED && distances[i] != HC_NOT_VISITED)
+      |                                                       ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/harmonic.cpp:59:24: note: expanded from macro 'HC_NOT_VISITED'
+   59 | #define HC_NOT_VISITED 18446744073709551615
+      |                        ^
+18 warnings generated.
+[6/18] Building CXX object CMakeFiles/...h.dir/extern/hpc_graph/src/kcore.cpp.o
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/src/kcore.cpp:53:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/dist_graph.h:51:
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:94:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   94 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:102:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  102 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:113:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  113 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:135:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  135 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:137:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  137 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:138:12: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  138 |     return NULL_KEY;
+      |            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:146:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  146 |   uint64_t max_key = NULL_KEY;
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/kcore.cpp:140:67: warning: format specifies type 'unsigned long' but the argument has type 'uint32_t' (aka 'unsigned int') [-Wformat]
+  140 |       printf("Task %d iter %lu changes %u run_kcore()\n", procid, iter, global_changes);
+      |                            ~~~                                    ^~~~
+      |                            %u
+/home/user/workspace/KaSpan/extern/hpc_graph/src/kcore.cpp:140:73: warning: format specifies type 'unsigned int' but the argument has type 'uint64_t' (aka 'unsigned long') [-Wformat]
+  140 |       printf("Task %d iter %lu changes %u run_kcore()\n", procid, iter, global_changes);
+      |                                        ~~                               ^~~~~~~~~~~~~~
+      |                                        %lu
+/home/user/workspace/KaSpan/extern/hpc_graph/src/kcore.cpp:234:24: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  234 |     global_kcores[i] = KCORE_NOT_ASSIGNED;
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/kcore.cpp:61:28: note: expanded from macro 'KCORE_NOT_ASSIGNED'
+   61 | #define KCORE_NOT_ASSIGNED 18446744073709551615
+      |                            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/kcore.cpp:252:33: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  252 |         if (global_kcores[i] == KCORE_NOT_ASSIGNED)
+      |                                 ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/kcore.cpp:61:28: note: expanded from macro 'KCORE_NOT_ASSIGNED'
+   61 | #define KCORE_NOT_ASSIGNED 18446744073709551615
+      |                            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/kcore.cpp:283:24: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  283 |     global_kcores[i] = KCORE_NOT_ASSIGNED;
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/kcore.cpp:61:28: note: expanded from macro 'KCORE_NOT_ASSIGNED'
+   61 | #define KCORE_NOT_ASSIGNED 18446744073709551615
+      |                            ^
+13 warnings generated.
+[7/18] Building CXX object CMakeFiles/...r/extern/hpc_graph/src/labelprop.cpp.o
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/src/labelprop.cpp:56:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/dist_graph.h:51:
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:94:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   94 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:102:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  102 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:113:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  113 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:135:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  135 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:137:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  137 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:138:12: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  138 |     return NULL_KEY;
+      |            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:146:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  146 |   uint64_t max_key = NULL_KEY;
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/labelprop.cpp:191:20: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  191 |         if (val == NULL_KEY)
+      |                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/labelprop.cpp:220:20: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  220 |         if (val == NULL_KEY)
+      |                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/labelprop.cpp:228:38: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  228 |       if (labels_next[vert_index] == NULL_KEY)
+      |                                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/labelprop.cpp:278:24: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  278 |     global_labels[i] = LABEL_NOT_ASSIGNED;
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/labelprop.cpp:61:28: note: expanded from macro 'LABEL_NOT_ASSIGNED'
+   61 | #define LABEL_NOT_ASSIGNED 18446744073709551615
+      |                            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/labelprop.cpp:296:33: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  296 |         if (global_labels[i] == LABEL_NOT_ASSIGNED)
+      |                                 ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/labelprop.cpp:61:28: note: expanded from macro 'LABEL_NOT_ASSIGNED'
+   61 | #define LABEL_NOT_ASSIGNED 18446744073709551615
+      |                            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/labelprop.cpp:327:24: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  327 |     global_labels[i] = LABEL_NOT_ASSIGNED;
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/labelprop.cpp:61:28: note: expanded from macro 'LABEL_NOT_ASSIGNED'
+   61 | #define LABEL_NOT_ASSIGNED 18446744073709551615
+      |                            ^
+14 warnings generated.
+[9/18] Building CXX object CMakeFiles/...ir/extern/hpc_graph/src/pagerank.cpp.o
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/src/pagerank.cpp:54:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/dist_graph.h:51:
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:94:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   94 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:102:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  102 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:113:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  113 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:135:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  135 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:137:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  137 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:138:12: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  138 |     return NULL_KEY;
+      |            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:146:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  146 |   uint64_t max_key = NULL_KEY;
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+8 warnings generated.
+[10/18] Building CXX object CMakeFiles...aph.dir/extern/hpc_graph/src/wcc.cpp.o
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:54:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/dist_graph.h:51:
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:94:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   94 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:102:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  102 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:113:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  113 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:135:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  135 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:137:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  137 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:138:12: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  138 |     return NULL_KEY;
+      |            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:146:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  146 |   uint64_t max_key = NULL_KEY;
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:80:21: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   80 |   if (root_index != NULL_KEY && root_index < g->n_local)
+      |                     ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:98:16: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   98 |       wcc[i] = WCC_NOT_VISITED;
+      |                ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:58:25: note: expanded from macro 'WCC_NOT_VISITED'
+   58 | #define WCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:101:16: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  101 |       wcc[i] = WCC_NOT_VISITED;
+      |                ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:58:25: note: expanded from macro 'WCC_NOT_VISITED'
+   58 | #define WCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:124:31: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  124 |         if (wcc[out_index] == WCC_NOT_VISITED)
+      |                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:58:25: note: expanded from macro 'WCC_NOT_VISITED'
+   58 | #define WCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:126:28: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  126 |           wcc[out_index] = WCC_VISITED;
+      |                            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:59:21: note: expanded from macro 'WCC_VISITED'
+   59 | #define WCC_VISITED 18446744073709551614
+      |                     ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:140:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  140 |         if (wcc[in_index] == WCC_NOT_VISITED)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:58:25: note: expanded from macro 'WCC_NOT_VISITED'
+   58 | #define WCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:142:27: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  142 |           wcc[in_index] = WCC_VISITED;
+      |                           ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:59:21: note: expanded from macro 'WCC_VISITED'
+   59 | #define WCC_VISITED 18446744073709551614
+      |                     ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:205:19: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  205 |     if (wcc[i] == WCC_NOT_VISITED)
+      |                   ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:58:25: note: expanded from macro 'WCC_NOT_VISITED'
+   58 | #define WCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:214:19: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  214 |     if (wcc[i] == WCC_NOT_VISITED)
+      |                   ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:58:25: note: expanded from macro 'WCC_NOT_VISITED'
+   58 | #define WCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:352:19: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  352 |     if (wcc[i] != WCC_NOT_VISITED)
+      |                   ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:58:25: note: expanded from macro 'WCC_NOT_VISITED'
+   58 | #define WCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:388:21: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  388 |     global_wcc[i] = WCC_NOT_VISITED;
+      |                     ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:58:25: note: expanded from macro 'WCC_NOT_VISITED'
+   58 | #define WCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:405:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  405 |         if (global_wcc[i] == WCC_NOT_VISITED)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/wcc.cpp:58:25: note: expanded from macro 'WCC_NOT_VISITED'
+   58 | #define WCC_NOT_VISITED 18446744073709551615
+      |                         ^
+20 warnings generated.
+[11/18] Building CXX object CMakeFiles...aph.dir/extern/hpc_graph/src/scc.cpp.o
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:56:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/dist_graph.h:51:
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:94:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   94 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:102:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  102 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:113:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  113 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:135:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  135 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:137:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  137 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:138:12: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  138 |     return NULL_KEY;
+      |            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:146:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  146 |   uint64_t max_key = NULL_KEY;
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:86:21: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   86 |   if (root_index != NULL_KEY && root_index < g->n_local)
+      |                     ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:104:16: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  104 |       scc[i] = SCC_NOT_VISITED;
+      |                ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:107:16: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  107 |       scc[i] = SCC_NOT_VISITED;
+      |                ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |       if (scc[vert_index] != SCC_NOT_VISITED &&
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:122:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  122 |           scc[vert_index] != SCC_VISITED_FW)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:61:24: note: expanded from macro 'SCC_VISITED_FW'
+   61 | #define SCC_VISITED_FW 18446744073709551614
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:124:25: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  124 |       scc[vert_index] = SCC_EXPLORED_FW;
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:62:25: note: expanded from macro 'SCC_EXPLORED_FW'
+   62 | #define SCC_EXPLORED_FW 18446744073709551613
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:131:31: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  131 |         if (scc[out_index] == SCC_NOT_VISITED)
+      |                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:133:28: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  133 |           scc[out_index] = SCC_VISITED_FW;
+      |                            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:61:24: note: expanded from macro 'SCC_VISITED_FW'
+   61 | #define SCC_VISITED_FW 18446744073709551614
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:185:21: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  185 |   if (root_index != NULL_KEY && root_index < g->n_local)
+      |                     ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:212:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  212 |       if (scc[vert_index] != SCC_VISITED_BW &&
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:63:24: note: expanded from macro 'SCC_VISITED_BW'
+   63 | #define SCC_VISITED_BW 18446744073709551612
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:213:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  213 |           scc[vert_index] != SCC_EXPLORED_FW)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:62:25: note: expanded from macro 'SCC_EXPLORED_FW'
+   62 | #define SCC_EXPLORED_FW 18446744073709551613
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:215:25: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  215 |       scc[vert_index] = SCC_EXPLORED_BW;
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:64:25: note: expanded from macro 'SCC_EXPLORED_BW'
+   64 | #define SCC_EXPLORED_BW 18446744073709551611
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:222:56: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  222 |         if ((in_index < g->n_local && scc[in_index] == SCC_EXPLORED_FW) ||
+      |                                                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:62:25: note: expanded from macro 'SCC_EXPLORED_FW'
+   62 | #define SCC_EXPLORED_FW 18446744073709551613
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:223:57: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  223 |             (in_index >= g->n_local && scc[in_index] != SCC_VISITED_BW))
+      |                                                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:63:24: note: expanded from macro 'SCC_VISITED_BW'
+   63 | #define SCC_VISITED_BW 18446744073709551612
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:225:27: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  225 |           scc[in_index] = SCC_VISITED_BW;
+      |                           ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:63:24: note: expanded from macro 'SCC_VISITED_BW'
+   63 | #define SCC_VISITED_BW 18446744073709551612
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:248:19: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  248 |     if (scc[i] == SCC_EXPLORED_BW)
+      |                   ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:64:25: note: expanded from macro 'SCC_EXPLORED_BW'
+   64 | #define SCC_EXPLORED_BW 18446744073709551611
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:250:24: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  250 |     else if (scc[i] == SCC_EXPLORED_FW)
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:62:25: note: expanded from macro 'SCC_EXPLORED_FW'
+   62 | #define SCC_EXPLORED_FW 18446744073709551613
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:252:16: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  252 |       scc[i] = SCC_NOT_VISITED;
+      |                ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:255:24: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  255 |     else if (scc[i] == SCC_NOT_VISITED)
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:351:19: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  351 |     if (scc[i] == SCC_NOT_VISITED)
+      |                   ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:357:19: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  357 |       colors[i] = SCC_MARKED;
+      |                   ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:65:20: note: expanded from macro 'SCC_MARKED'
+   65 | #define SCC_MARKED 18446744073709551610
+      |                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:362:19: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  362 |     if (scc[i] == SCC_NOT_VISITED)
+      |                   ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:365:19: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  365 |       colors[i] = SCC_MARKED;
+      |                   ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:65:20: note: expanded from macro 'SCC_MARKED'
+   65 | #define SCC_MARKED 18446744073709551610
+      |                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:369:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  369 |     if (colors[i] == SCC_MARKED && scc[i] >= g->n && scc[i] < SCC_MARKED)
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:65:20: note: expanded from macro 'SCC_MARKED'
+   65 | #define SCC_MARKED 18446744073709551610
+      |                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:369:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  369 |     if (colors[i] == SCC_MARKED && scc[i] >= g->n && scc[i] < SCC_MARKED)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:65:20: note: expanded from macro 'SCC_MARKED'
+   65 | #define SCC_MARKED 18446744073709551610
+      |                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:403:33: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  403 |         if (colors[in_index] != SCC_MARKED &&
+      |                                 ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:65:20: note: expanded from macro 'SCC_MARKED'
+   65 | #define SCC_MARKED 18446744073709551610
+      |                    ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:541:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  541 |       if (scc[vert_index] != SCC_NOT_VISITED &&
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:542:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  542 |           scc[vert_index] != SCC_VISITED_FW)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:61:24: note: expanded from macro 'SCC_VISITED_FW'
+   61 | #define SCC_VISITED_FW 18446744073709551614
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:551:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  551 |         if (scc[in_index] == SCC_NOT_VISITED &&
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:554:27: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  554 |           scc[in_index] = SCC_VISITED_FW;
+      |                           ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:61:24: note: expanded from macro 'SCC_VISITED_FW'
+   61 | #define SCC_VISITED_FW 18446744073709551614
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:577:19: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  577 |     if (scc[i] == SCC_EXPLORED_FW)
+      |                   ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:62:25: note: expanded from macro 'SCC_EXPLORED_FW'
+   62 | #define SCC_EXPLORED_FW 18446744073709551613
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:579:16: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  579 |       scc[i] = SCC_NOT_VISITED;
+      |                ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:582:24: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  582 |     else if (scc[i] == SCC_NOT_VISITED)
+      |                        ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:701:21: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  701 |     global_scc[i] = SCC_NOT_VISITED;
+      |                     ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:718:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  718 |         if (global_scc[i] == SCC_NOT_VISITED)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/src/scc.cpp:60:25: note: expanded from macro 'SCC_NOT_VISITED'
+   60 | #define SCC_NOT_VISITED 18446744073709551615
+      |                         ^
+43 warnings generated.
+[14/18] Building CXX object CMakeFiles...ir/tool/bench_hpc_graph/src/main.cpp.o
+In file included from /home/user/workspace/KaSpan/tool/bench_hpc_graph/src/main.cpp:1:
+In file included from /home/user/workspace/KaSpan/tool/bench_hpc_graph/src/kaspan_adapter.hpp:9:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/comms.h:56:
+In file included from /home/user/workspace/KaSpan/extern/hpc_graph/include/dist_graph.h:51:
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:94:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+   94 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:102:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  102 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:113:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  113 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:121:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  121 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:135:63: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  135 |   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+      |                                                               ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:137:30: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  137 |   if (map->arr[cur_index] == NULL_KEY)
+      |                              ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:138:12: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  138 |     return NULL_KEY;
+      |            ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:146:22: warning: integer literal is too large to be represented in a signed integer type, interpreting as unsigned [-Wimplicitly-unsigned-literal]
+  146 |   uint64_t max_key = NULL_KEY;
+      |                      ^
+/home/user/workspace/KaSpan/extern/hpc_graph/include/fast_map.h:58:18: note: expanded from macro 'NULL_KEY'
+   58 | #define NULL_KEY 18446744073709551615
+      |                  ^
+8 warnings generated.
+[18/18] Linking CXX executable bin/bench_kaspan

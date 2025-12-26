@@ -29,8 +29,6 @@ fw_span(
   vertex_t*       fq_comm,
   unsigned int*   sa_compress)
 {
-  KASPAN_STATISTIC_SCOPE("forward_search");
-
   depth_t level                = 0;
   fw_sa[root]                  = level;
   bool       is_top_down       = true;
@@ -263,7 +261,6 @@ bw_span(
   vertex_t*     fq_comm,
   unsigned int* sa_compress)
 {
-  KASPAN_STATISTIC_SCOPE("backward_search");
   size_t decided_count = 0;
 
   bw_sa[root]               = 0;

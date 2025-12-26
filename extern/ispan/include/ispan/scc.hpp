@@ -110,8 +110,8 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
 
   trim_1_first(scc_id, fw_head, bw_head, local_beg, local_end, step);
 
+  KASPAN_STATISTIC_PUSH("forward_backward_search");
   auto const root = pivot_selection(scc_id, fw_head, bw_head, n);
-  KASPAN_STATISTIC_ADD("root", root);
   fw_span(
     scc_id,
     fw_head,
@@ -149,6 +149,7 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
     step,
     fq_comm,
     sa_compress);
+  KASPAN_STATISTIC_POP();
 
   trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
   trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
@@ -183,13 +184,15 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
     for (index_t i = 0; i < sub_n; ++i)
       sub_wcc_id[i] = i;
 
-    KASPAN_STATISTIC_PUSH("residual_wcc");
+    KASPAN_STATISTIC_PUSH("wcc");
     wcc(sub_wcc_id, sub_fw_head, sub_fw_csr, sub_bw_head, sub_bw_csr, sub_n);
     vertex_t sub_wcc_fq_size = 0;
     process_wcc(sub_n, sub_wcc_fq, sub_wcc_id, sub_wcc_fq_size);
     KASPAN_STATISTIC_POP();
 
+    KASPAN_STATISTIC_PUSH("scc");
     residual_scc(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
+    KASPAN_STATISTIC_POP();
 
     KASPAN_STATISTIC_SCOPE("post_processing");
     MPI_Allreduce(MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t, MPI_MIN, MPI_COMM_WORLD);
@@ -197,6 +200,7 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
       if (sub_scc_id[sub_u] != scc_id_undecided)
         scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
     }
+    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   }
   KASPAN_STATISTIC_POP();
 

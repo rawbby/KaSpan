@@ -5,8 +5,6 @@
 inline index_t
 pivot_selection(vertex_t const* scc_id, index_t const* fw_head, index_t const* bw_head, vertex_t n)
 {
-  KASPAN_STATISTIC_SCOPE("pivot_selection");
-
   index_t  max_degree_product = 0;
   vertex_t pivot              = 0;
 

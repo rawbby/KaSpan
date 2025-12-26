@@ -51,6 +51,12 @@
 #include <stdint.h>
 #include <fstream>
 
+#include <debug/assert.hpp>
+#include <debug/debug.hpp>
+#include <debug/process.hpp>
+#include <debug/statistic.hpp>
+#include <util/scope_guard.hpp>
+
 #include "dist_graph.h"
 #include "comms.h"
 #include "util.h"
@@ -738,37 +744,46 @@ int scc_output(dist_graph_t* g, uint64_t* scc, char* output_file)
 int scc_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q,
              uint64_t root, char* output_file)
 {
-  if (debug) { printf("Task %d scc_dist() start\n", procid); }
+  KASPAN_STATISTIC_SCOPE("scc");
+  if (debug) printf("Task %d scc_dist() start\n", procid);
 
   MPI_Barrier(MPI_COMM_WORLD);
   double elt = omp_get_wtime();
 
   uint64_t* scc = (uint64_t*)malloc(g->n_total*sizeof(uint64_t));
   uint64_t* colors = (uint64_t*)malloc(g->n_total*sizeof(uint64_t));
-  uint64_t num_unassigned = 0;
+
+  uint64_t  num_unassigned = g->n;
+  uint64_t  prev_unassigned = g->n;
+
+  KASPAN_STATISTIC_PUSH("forward_backward_search");
   scc_bfs_fw(g, comm, q, scc, root);
   num_unassigned = scc_bfs_bw(g, comm, q, scc, root);
-  
-  while (num_unassigned)
-  {
+  KASPAN_STATISTIC_ADD("decided_count", prev_unassigned - num_unassigned);
+  prev_unassigned = num_unassigned;
+  KASPAN_STATISTIC_POP();
+
+  KASPAN_STATISTIC_PUSH("color");
+  while (num_unassigned) {
     scc_color(g, comm, q, scc, colors);
     num_unassigned = scc_find_sccs(g, comm, q, scc, colors);
   }
+  KASPAN_STATISTIC_ADD("decided_count", prev_unassigned - num_unassigned);
+  KASPAN_STATISTIC_POP();
+
+  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
   MPI_Barrier(MPI_COMM_WORLD);
   elt = omp_get_wtime() - elt;
   if (procid == 0) printf("SCC time %9.6f (s)\n", elt);
 
-  if (output) {
-    scc_output(g, scc, output_file);
-  }
-
-  if (verify) { 
-    scc_verify(g, scc);
-  }
+  if (output) scc_output(g, scc, output_file);
+  if (verify) scc_verify(g, scc);
 
   free(scc);
+  free(colors);
 
   if (debug)  printf("Task %d scc_dist() success\n", procid); 
+
   return 0;
 }
