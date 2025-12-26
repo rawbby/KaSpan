@@ -744,7 +744,6 @@ int scc_output(dist_graph_t* g, uint64_t* scc, char* output_file)
 int scc_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q,
              uint64_t root, char* output_file)
 {
-  KASPAN_STATISTIC_SCOPE("scc");
   if (debug) printf("Task %d scc_dist() start\n", procid);
 
   MPI_Barrier(MPI_COMM_WORLD);

@@ -29,12 +29,9 @@ def get_hpc_graph_duration(data):
 
 
 def get_kaspan_progress(data):
-    # we take the max duration per scope and the decided count
     n = len(data)
     res = [(0, 0)]
-    scc = data["0"]["benchmark"]["scc"]
 
-    # helper to get max duration of a scope across all ranks
     def get_max_dur(path):
         durs = []
         for i in range(n):
@@ -47,9 +44,8 @@ def get_kaspan_progress(data):
             durs.append(int(curr["duration"]))
         return max(durs) * 1e-9
 
-    # helper to get decided_count (should be same on all ranks as we use allreduce)
     def get_decided(path):
-        curr = scc
+        curr = data["0"]["benchmark"]["scc"]
         for p in path:
             if p in curr:
                 curr = curr[p]
@@ -59,37 +55,18 @@ def get_kaspan_progress(data):
             return int(curr["decided_count"])
         return None
 
-    # trim_1
-    decided = get_decided([])  # at scc level
-    if decided is not None:
-        res.append((0, decided))  # trim_1 is "instant" in this model or we don't have its scope
-
-    # forward_backward_search
-    dur = get_max_dur(["forward_backward_search"])
-    decided = get_decided(["forward_backward_search"])
-    if dur is not None and decided is not None:
-        res.append((res[-1][0] + dur, decided))
-
-    # ecl
-    dur = get_max_dur(["ecl"])
-    decided = get_decided(["ecl"])
-    if dur is not None and decided is not None:
-        res.append((res[-1][0] + dur, decided))
-
-    # residual
-    dur = get_max_dur(["residual"])
-    decided = get_decided(["residual"])
-    if dur is not None and decided is not None:
-        res.append((res[-1][0] + dur, decided))
+    for stage in [["trim_1"], ["forward_backward_search"], ["ecl"], ["residual"]]:
+        dur = get_max_dur(stage)
+        decided = get_decided(stage)
+        if dur is not None and decided is not None:
+            res.append((res[-1][0] + dur, res[-1][1] + decided))
 
     return res
 
 
 def get_ispan_progress(data):
-    # ISpan has forward_backward_search and residual
     n = len(data)
     res = [(0, 0)]
-    scc = data["0"]["benchmark"]["scc"]
 
     def get_max_dur(path):
         durs = []
@@ -103,41 +80,22 @@ def get_ispan_progress(data):
             durs.append(int(curr["duration"]))
         return max(durs) * 1e-9
 
-    def get_decided(path):
-        curr = scc
-        for p in path:
-            if p in curr:
-                curr = curr[p]
-            else:
-                return None
-        if "decided_count" in curr: return int(curr["decided_count"])
-        return None
-
-    # forward_backward_search
-    dur = get_max_dur(["forward_backward_search"])
-    if dur is not None:
-        # we don't have decided count for FB in ISpan yet, but we know it's > 0
-        res.append((dur, 1))  # dummy value for now to show progress
-
-    # residual
-    dur = get_max_dur(["residual"])
-    decided = get_decided(["residual"])
-    if dur is not None and decided is not None:
-        res.append((res[-1][0] + dur, decided))
+    for stage in [["alloc"], ["forward_backward_search"], ["residual", "wcc"], ["residual", "scc"], ["residual", "post_processing"]]:
+        dur = get_max_dur(stage)
+        if dur is not None:
+            res.append((res[-1][0] + dur, res[-1][1] + 1))
 
     return res
 
 
 def get_hpc_graph_progress(data):
-    # HPC Graph has forward_backward_search and color_propagation
     n = len(data)
     res = [(0, 0)]
-    scc = data["0"]["benchmark"]["scc"]
 
     def get_max_dur(path):
         durs = []
         for i in range(n):
-            curr = data[str(i)]["benchmark"]["scc"]
+            curr = data[str(i)]["benchmark"]
             for p in path:
                 if p in curr:
                     curr = curr[p]
@@ -147,26 +105,26 @@ def get_hpc_graph_progress(data):
         return max(durs) * 1e-9
 
     def get_decided(path):
-        curr = scc
+        curr = data["0"]["benchmark"]
         for p in path:
             if p in curr:
                 curr = curr[p]
             else:
                 return None
-        if "decided_count" in curr: return int(curr["decided_count"])
+        if "decided_count" in curr:
+            return int(curr["decided_count"])
         return None
 
-    # forward_backward_search
-    dur = get_max_dur(["forward_backward_search"])
-    decided = get_decided(["forward_backward_search"])
-    if dur is not None and decided is not None:
-        res.append((dur, decided))
+    dur = get_max_dur(["adapter"])
+    if dur is not None: res.append((res[-1][0] + dur, 0))
+    dur = get_max_dur(["scc", "pivot"])
+    if dur is not None: res.append((res[-1][0] + dur, 0))
 
-    # color_propagation
-    dur = get_max_dur(["color_propagation"])
-    decided = get_decided(["color_propagation"])
-    if dur is not None and decided is not None:
-        res.append((res[-1][0] + dur, decided))
+    for stage in [["scc", "scc", "forward_backward_search"], ["scc", "scc", "color"]]:
+        dur = get_max_dur(stage)
+        decided = get_decided(stage)
+        if dur is not None and decided is not None:
+            res.append((res[-1][0] + dur, res[-1][1] + decided))
 
     return res
 
@@ -178,12 +136,14 @@ def get_kaspan_memory(data):
         node = data[str(i)]["benchmark"]
         base = int(node["memory"])
         scc = node["scc"]
-        if n == 1:
-            mem_sum += int(scc["tarjan"]["memory"]) - base
-        elif "residual" in scc:
-            mem_sum += int(scc["residual"]["memory"]) - base
-        else:
-            mem_sum += int(scc["alloc"]["memory"]) - base
+        m = base
+        if "forward_backward_search" in scc and "memory" in scc["forward_backward_search"]:
+            m = max(m, int(scc["forward_backward_search"]["memory"]))
+        if "ecl" in scc and "memory" in scc["ecl"]:
+            m = max(m, int(scc["ecl"]["memory"]))
+        if "residual" in scc and "memory" in scc["residual"]:
+            m = max(m, int(scc["residual"]["memory"]))
+        mem_sum += m - base
     return mem_sum / n
 
 
@@ -193,7 +153,13 @@ def get_ispan_memory(data):
     for i in range(n):
         node = data[str(i)]["benchmark"]
         base = int(node["memory"])
-        mem_sum += int(node["scc"]["alloc"]["memory"]) - base
+        scc = node["scc"]
+        m = base
+        if "alloc" in scc and "memory" in scc["alloc"]:
+            m = max(m, int(scc["alloc"]["memory"]))
+        if "residual" in scc and "post_processing" in scc["residual"] and "memory" in scc["residual"]["post_processing"]:
+            m = max(m, int(scc["residual"]["post_processing"]["memory"]))
+        mem_sum += m - base
     return mem_sum / n
 
 
@@ -203,13 +169,14 @@ def get_hpc_graph_memory(data):
     for i in range(n):
         node = data[str(i)]["benchmark"]
         base = int(node["memory"])
-        scc = node["scc"]
-        if n == 1:
-            mem_sum += int(scc["tarjan"]["memory"]) - base
-        elif "residual" in scc:
-            mem_sum += int(scc["residual"]["memory"]) - base
-        else:
-            mem_sum += int(scc["alloc"]["memory"]) - base
+        m = base
+        if "memory_after_adapter" in node:
+            m = max(m, int(node["memory_after_adapter"]))
+        if "scc" in node and "scc" in node["scc"] and "memory" in node["scc"]["scc"]:
+            m = max(m, int(node["scc"]["scc"]["memory"]))
+        if "memory_after_scc" in node:
+            m = max(m, int(node["memory_after_scc"]))
+        mem_sum += m - base
     return mem_sum / n
 
 
