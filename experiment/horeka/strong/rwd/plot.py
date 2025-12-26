@@ -30,7 +30,6 @@ def get_hpc_graph_duration(data):
 
 def get_kaspan_progress(data):
     n = len(data)
-    res = [(0, 0)]
 
     def get_max_dur(path):
         durs = []
@@ -55,18 +54,18 @@ def get_kaspan_progress(data):
             return int(curr["decided_count"])
         return None
 
-    for stage in [["trim_1"], ["forward_backward_search"], ["ecl"], ["residual"]]:
-        dur = get_max_dur(stage)
-        decided = get_decided(stage)
+    res = []
+    for stage_path in [["trim_1"], ["forward_backward_search"], ["ecl"], ["residual"]]:
+        dur = get_max_dur(stage_path)
+        decided = get_decided(stage_path)
         if dur is not None and decided is not None:
-            res.append((res[-1][0] + dur, res[-1][1] + decided))
+            res.append({"name": stage_path[-1], "duration": dur, "decided_count": decided})
 
     return res
 
 
 def get_ispan_progress(data):
     n = len(data)
-    res = [(0, 0)]
 
     def get_max_dur(path):
         durs = []
@@ -80,17 +79,30 @@ def get_ispan_progress(data):
             durs.append(int(curr["duration"]))
         return max(durs) * 1e-9
 
-    for stage in [["alloc"], ["forward_backward_search"], ["residual", "wcc"], ["residual", "scc"], ["residual", "post_processing"]]:
-        dur = get_max_dur(stage)
-        if dur is not None:
-            res.append((res[-1][0] + dur, res[-1][1] + 1))
+    def get_decided(path):
+        curr = data["0"]["benchmark"]["scc"]
+        for p in path:
+            if p in curr:
+                curr = curr[p]
+            else:
+                return None
+        if "decided_count" in curr:
+            return int(curr["decided_count"])
+        return None
+
+    res = []
+    for stage_path in [["trim_1_first"], ["forward_backward_search"], ["trim_1_normal"],
+                       ["residual", "scc", "residual_scc"]]:
+        dur = get_max_dur(stage_path)
+        decided = get_decided(stage_path)
+        if dur is not None and decided is not None:
+            res.append({"name": stage_path[-1], "duration": dur, "decided_count": decided})
 
     return res
 
 
 def get_hpc_graph_progress(data):
     n = len(data)
-    res = [(0, 0)]
 
     def get_max_dur(path):
         durs = []
@@ -115,16 +127,12 @@ def get_hpc_graph_progress(data):
             return int(curr["decided_count"])
         return None
 
-    dur = get_max_dur(["adapter"])
-    if dur is not None: res.append((res[-1][0] + dur, 0))
-    dur = get_max_dur(["scc", "pivot"])
-    if dur is not None: res.append((res[-1][0] + dur, 0))
-
-    for stage in [["scc", "scc", "forward_backward_search"], ["scc", "scc", "color"]]:
-        dur = get_max_dur(stage)
-        decided = get_decided(stage)
+    res = []
+    for stage_path in [["scc", "forward_backward_search"], ["scc", "color"]]:
+        dur = get_max_dur(stage_path)
+        decided = get_decided(stage_path)
         if dur is not None and decided is not None:
-            res.append((res[-1][0] + dur, res[-1][1] + decided))
+            res.append({"name": stage_path[-1], "duration": dur, "decided_count": decided})
 
     return res
 
@@ -157,7 +165,8 @@ def get_ispan_memory(data):
         m = base
         if "alloc" in scc and "memory" in scc["alloc"]:
             m = max(m, int(scc["alloc"]["memory"]))
-        if "residual" in scc and "post_processing" in scc["residual"] and "memory" in scc["residual"]["post_processing"]:
+        if "residual" in scc and "post_processing" in scc["residual"] and "memory" in scc["residual"][
+            "post_processing"]:
             m = max(m, int(scc["residual"]["post_processing"]["memory"]))
         mem_sum += m - base
     return mem_sum / n
@@ -259,6 +268,42 @@ for graph in graphs:
     graph_data = raw_data[graph]
     all_nps = sorted(list(set(n for a in graph_data for n in graph_data[a])))
 
+    # plot progress per app
+    for app in apps:
+        if app not in graph_data: continue
+        fig, ax = plt.subplots(figsize=(8, 6), layout="constrained")
+        setup_ax(ax, f"Progress: {graph} ({app})", "Decisions per second", all_nps, log_y=True)
+
+        # Find all stages for this app
+        stages = set()
+        for np_val in graph_data[app]:
+            for stage in graph_data[app][np_val][2]:
+                stages.add(stage["name"])
+        stages = sorted(list(stages))
+
+        for i, stage_name in enumerate(stages):
+            y = []
+            for np_val in all_nps:
+                if np_val in graph_data[app]:
+                    progress = graph_data[app][np_val][2]
+                    stage_data = next((s for s in progress if s["name"] == stage_name), None)
+                    if stage_data and stage_data["duration"] > 0:
+                        y.append(stage_data["decided_count"] / stage_data["duration"])
+                    else:
+                        y.append(np.nan)
+                else:
+                    y.append(np.nan)
+
+            c = colors[i % len(colors)]
+            m = markers[i % len(markers)]
+            ax.plot(all_nps, y, label=stage_name, color=c, marker=m)
+
+        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=len(stages))
+        out_path = cwd / f"{graph}_{app}_progress.png"
+        print(f"Saving plot to {out_path}")
+        fig.savefig(out_path, dpi=DPI, bbox_inches="tight")
+        plt.close(fig)
+
     max_dur = 0
     max_mem = 0
     for app in apps:
@@ -277,31 +322,7 @@ for graph in graphs:
     candidates = [graph_data[app][min_np][0] for app in graph_data if min_np in graph_data[app]]
     baseline_dur = min(candidates) if candidates else None
 
-    for plot_type in ["duration", "speedup", "memory", "progress"]:
-        if plot_type == "progress":
-            # progress plot is per graph and per np
-            for np_val in all_nps:
-                fig, ax = plt.subplots(figsize=(8, 6), layout="constrained")
-                ax.set_title(f"Progress: {graph} (np={np_val})")
-                ax.set_ylabel("Decided Vertices")
-                ax.set_xlabel("Time [s]")
-                ax.grid(True, which="both", linestyle="--", alpha=0.5)
-
-                for app in apps:
-                    if app not in graph_data or np_val not in graph_data[app]: continue
-                    c, m = app_style[app]
-                    progress = graph_data[app][np_val][2]
-                    times = [p[0] for p in progress]
-                    counts = [p[1] for p in progress]
-                    ax.step(times, counts, where="post", label=app, color=c, marker=m)
-
-                ax.legend(loc="upper left")
-                out_path = cwd / f"{graph}_progress_np{np_val}.png"
-                print(f"Saving plot to {out_path}")
-                fig.savefig(out_path, dpi=DPI, bbox_inches="tight")
-                plt.close(fig)
-            continue
-
+    for plot_type in ["duration", "speedup", "memory"]:
         fig, ax = plt.subplots(figsize=(8, 6), layout="constrained")
         if plot_type == "duration":
             setup_ax(ax, f"Duration: {graph}", f"Time [{t_unit}]", all_nps)
