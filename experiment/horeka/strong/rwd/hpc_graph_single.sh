@@ -46,13 +46,13 @@ for manifest in "${rwd[@]}"; do
       --mpi=pmi2                     \
       --nodes=1                      \
       --exclusive                    \
-      --ntasks=64                    \
-      --ntasks-per-socket=38         \
-      --cpus-per-task=1              \
-      --hint=nomultithread           \
+      --ntasks=1                     \
+      --ntasks-per-socket=1          \
+      --cpus-per-task=64             \
       --cpu-bind=cores               \
       "$app"                         \
         --output_file "$output_file" \
+        --threads 64                 \
         --manifest_file "$manifest"; ec=$?
     if [[ $ec -ne 0 ]]; then
       [[ $ec -eq 137 ]] && ec="${ec} (oom)"
@@ -78,13 +78,13 @@ for manifest in "${rwd[@]}"; do
         --mpi=pmi2                     \
         --nodes=1                      \
         --exclusive                    \
-        "--ntasks=$np"                 \
-        "--ntasks-per-socket=$np"      \
-        --cpus-per-task=1              \
-        --hint=nomultithread           \
+        "--ntasks=1"                   \
+        "--ntasks-per-socket=1"        \
+        "--cpus-per-task=$np"          \
         --cpu-bind=cores               \
         "$app"                         \
           --output_file "$output_file" \
+          --threads "$np"              \
           --manifest_file "$manifest"; ec=$?
       if [[ $ec -ne 0 ]]; then
         [[ $ec -eq 137 ]] && ec="${ec} (oom)"

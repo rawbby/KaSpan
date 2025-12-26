@@ -27,7 +27,7 @@ usage(int /* argc */, char** argv)
 {
   std::println(
     "usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file "
-    "<output_file>",
+    "<output_file> [--threads <threads>]",
     argv[0]);
 }
 
@@ -98,7 +98,8 @@ main(int argc, char** argv)
 {
   auto const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
   auto const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
-  auto const output_file = arg_select_str(argc, argv, "--output_file", usage);
+  auto const output_file         = arg_select_str(argc, argv, "--output_file", usage);
+  auto const threads             = arg_select_default_int(argc, argv, "--threads", 1);
 
   if (not(kagen_option_string == nullptr ^ manifest_file == nullptr)) {
     usage(argc, argv);
@@ -109,7 +110,7 @@ main(int argc, char** argv)
   SCOPE_GUARD(KASPAN_STATISTIC_MPI_WRITE_JSON(output_file));
 
   // Set OpenMP to single thread only
-  omp_set_num_threads(1);
+  omp_set_num_threads(threads);
 
   // Initialize HPCGraph global variables
   MPI_Comm_rank(MPI_COMM_WORLD, &procid);
