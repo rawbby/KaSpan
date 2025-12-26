@@ -33,7 +33,7 @@ export I_MPI_JOB_TIMEOUT=5
 set +eu
 
 for manifest in "${rwd[@]}"; do
-  for np in 76 64 32 16 8 4 2 1; do
+  for np in 76 38 16 8 4 2 1; do
     manifest_name="$(basename "${manifest%.manifest}")"
     output_file="${app_name}_${manifest_name}_np${np}.json"
 
