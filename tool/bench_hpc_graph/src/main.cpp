@@ -40,6 +40,7 @@ benchmark_impl(GraphPart<Part> const& graph_part)
   KASPAN_STATISTIC_ADD("m", graph_part.m);
   KASPAN_STATISTIC_ADD("local_fw_m", graph_part.local_fw_m);
   KASPAN_STATISTIC_ADD("local_bw_m", graph_part.local_bw_m);
+  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
   KASPAN_STATISTIC_PUSH("adapter");
   auto hpc_data = create_hpc_graph_from_graph_part(graph_part);
@@ -117,7 +118,6 @@ main(int argc, char** argv)
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
   KASPAN_STATISTIC_SCOPE("benchmark");
-  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_ADD("world_rank", mpi_world_rank);
   KASPAN_STATISTIC_ADD("world_size", mpi_world_size);
 
