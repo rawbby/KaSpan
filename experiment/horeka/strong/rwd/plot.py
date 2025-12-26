@@ -69,6 +69,23 @@ def get_time_info(max_s):
     if max_s >= 1e-6: return 1e6, "us"
     return 1e9, "ns"
 
+def get_memory_info(max_b):
+    if max_b >= 1e9: return 1e-9, "GB"
+    if max_b >= 1e6: return 1e-6, "MB"
+    if max_b >= 1e3: return 1e-3, "KB"
+    return 1, "B"
+
+def setup_ax(ax, title, ylabel, nps, log_y=True):
+    ax.set_title(title)
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel("Processes (np)")
+    ax.set_xscale("log", base=2)
+    if log_y: ax.set_yscale("log")
+    ax.set_xticks(nps)
+    ax.set_xticklabels([str(n) for n in nps], rotation=45)
+    ax.grid(True, which="both", linestyle="--", alpha=0.5)
+    if nps: mark_topology(ax, max(nps))
+
 def mark_topology(ax, max_n):
     borders = [(1.5, "single threaded", "multithreaded"),
                (CORES_PER_SOCKET + 0.5, "single socket", "multi socket"),
@@ -100,10 +117,15 @@ for p in files:
             duration = globals()[f"get_{app}_duration"](j)
             memory = globals()[f"get_{app}_memory"](j)
             if duration <= TIME_LIMIT_S:
+                print(f"Loading {p.name}: duration={duration:.2f}s, memory={memory/1e6:.2f}MB")
                 raw_data.setdefault(graph, {}).setdefault(app, {})[np_val] = (duration, memory)
                 graphs.add(graph)
                 apps.add(app)
-    except: continue
+            else:
+                print(f"Skipping {p.name}: duration {duration:.2f}s > {TIME_LIMIT_S}s")
+    except Exception as e:
+        print(f"Error loading {p.name}: {e}")
+        continue
 
 apps = sorted(list(apps))
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
@@ -111,62 +133,54 @@ markers = ["o", "s", "D", "^", "v", "P", "X", "d"]
 app_style = {app: (colors[i % len(colors)], markers[i % len(markers)]) for i, app in enumerate(apps)}
 
 for graph in graphs:
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    print(f"Plotting graph: {graph}")
     graph_data = raw_data[graph]
     all_nps = sorted(list(set(n for a in graph_data for n in graph_data[a])))
     
     max_dur = 0
+    max_mem = 0
     for app in apps:
         if app not in graph_data: continue
-        durs = [graph_data[app].get(n, (None, None))[0] for n in all_nps]
-        valid_durs = [d for d in durs if d is not None]
-        if valid_durs: max_dur = max(max_dur, max(valid_durs))
-    
-    scale, unit = get_time_info(max_dur)
-    
-    baseline_dur = None
-    if PLOT_SPEEDUP:
-        min_np = min(all_nps)
-        candidates = []
-        for app in graph_data:
-            if min_np in graph_data[app]:
-                candidates.append(graph_data[app][min_np][0])
-        if candidates:
-            baseline_dur = min(candidates)
-
-    for app in apps:
-        if app not in graph_data: continue
-        c, m = app_style[app]
         durs = [graph_data[app].get(n, (None, None))[0] for n in all_nps]
         mems = [graph_data[app].get(n, (None, None))[1] for n in all_nps]
-        
-        if PLOT_SPEEDUP and baseline_dur:
-            y1 = [baseline_dur / d if d is not None else np.nan for d in durs]
-            ax1.set_ylabel("Speedup")
+        valid_durs = [d for d in durs if d is not None]
+        valid_mems = [m for m in mems if m is not None]
+        if valid_durs: max_dur = max(max_dur, max(valid_durs))
+        if valid_mems: max_mem = max(max_mem, max(valid_mems))
+    
+    t_scale, t_unit = get_time_info(max_dur)
+    m_scale, m_unit = get_memory_info(max_mem)
+    
+    min_np = min(all_nps)
+    candidates = [graph_data[app][min_np][0] for app in graph_data if min_np in graph_data[app]]
+    baseline_dur = min(candidates) if candidates else None
+
+    for plot_type in ["duration", "speedup", "memory"]:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        if plot_type == "duration":
+            setup_ax(ax, f"Duration: {graph}", f"Time [{t_unit}]", all_nps)
+        elif plot_type == "speedup":
+            setup_ax(ax, f"Speedup: {graph}", "Speedup", all_nps, log_y=False)
         else:
-            y1 = [d * scale if d is not None else np.nan for d in durs]
-            ax1.set_ylabel(f"Time [{unit}]")
-            ax1.set_yscale("log")
+            setup_ax(ax, f"Memory: {graph}", f"Memory [{m_unit}/np]", all_nps)
 
-        ax1.plot(all_nps, y1, label=app, color=c, marker=m)
-        ax2.plot(all_nps, mems, label=app, color=c, marker=m)
+        for app in apps:
+            if app not in graph_data: continue
+            c, m = app_style[app]
+            durs = [graph_data[app].get(n, (None, None))[0] for n in all_nps]
+            mems = [graph_data[app].get(n, (None, None))[1] for n in all_nps]
+            
+            if plot_type == "duration":
+                y = [d * t_scale if d is not None else np.nan for d in durs]
+            elif plot_type == "speedup":
+                y = [baseline_dur / d if (d is not None and baseline_dur) else np.nan for d in durs]
+            else:
+                y = [m * m_scale if m is not None else np.nan for m in mems]
+            ax.plot(all_nps, y, label=app, color=c, marker=m)
 
-    for ax in [ax1, ax2]:
-        ax.set_xscale("log", base=2)
-        ax.set_xticks(all_nps)
-        ax.set_xticklabels([str(n) for n in all_nps], rotation=45)
-        ax.grid(True, which="both", linestyle="--", alpha=0.5)
-        ax.set_xlabel("Processes (np)")
-        if all_nps: mark_topology(ax, max(all_nps))
-
-    ax2.set_ylabel("Memory [bytes/np]")
-    fig.suptitle(f"Strong Scaling: {graph}")
-    
-    handles, labels = ax1.get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    fig.legend(by_label.values(), by_label.keys(), loc="upper center", bbox_to_anchor=(0.5, 0.95), ncol=len(apps))
-    
-    fig.tight_layout(rect=[0, 0, 1, 0.9])
-    suffix = "_speedup" if PLOT_SPEEDUP else ""
-    fig.savefig(cwd / f"{graph}{suffix}.png", dpi=DPI)
-    plt.close(fig)
+        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=len(apps))
+        fig.tight_layout()
+        out_path = cwd / f"{graph}_{plot_type}.png"
+        print(f"Saving plot to {out_path}")
+        fig.savefig(out_path, dpi=DPI, bbox_inches="tight")
+        plt.close(fig)
