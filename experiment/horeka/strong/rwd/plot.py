@@ -296,17 +296,18 @@ for graph in graphs:
         stages = sorted(list(stages))
 
         for stage_name in stages:
-            y = []
+            x_vals = []
+            y_vals = []
             for np_val in app_nps:
                 progress = graph_data[app][np_val][2]
                 stage_data = next((s for s in progress if s["name"] == stage_name), None)
-                if stage_data and stage_data["duration"] > 0:
-                    y.append(stage_data["decided_count"] / stage_data["duration"])
-                else:
-                    y.append(np.nan)
+                if stage_data and stage_data["duration"] > 0 and stage_data["decided_count"] > 0:
+                    x_vals.append(np_val)
+                    y_vals.append(stage_data["decided_count"] / stage_data["duration"])
 
-            c, m = stage_style[stage_name]
-            ax.plot(app_nps, y, label=stage_name, color=c, marker=m)
+            if x_vals:
+                c, m = stage_style[stage_name]
+                ax.plot(x_vals, y_vals, label=stage_name, color=c, marker=m)
 
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=len(stages))
         out_path = cwd / f"{graph}_{app}_progress.png"
@@ -347,13 +348,26 @@ for graph in graphs:
             durs = [graph_data[app].get(n, (None, None))[0] for n in all_nps]
             mems = [graph_data[app].get(n, (None, None))[1] for n in all_nps]
 
+            x_vals = []
+            y_vals = []
             if plot_type == "duration":
-                y = [d * t_scale if d is not None else np.nan for d in durs]
+                for n, d in zip(all_nps, durs):
+                    if d is not None and d > 0:
+                        x_vals.append(n)
+                        y_vals.append(d * t_scale)
             elif plot_type == "speedup":
-                y = [baseline_dur / d if (d is not None and baseline_dur) else np.nan for d in durs]
+                for n, d in zip(all_nps, durs):
+                    if d is not None and d > 0 and baseline_dur:
+                        x_vals.append(n)
+                        y_vals.append(baseline_dur / d)
             else:
-                y = [m * m_scale if m is not None else np.nan for m in mems]
-            ax.plot(all_nps, y, label=app, color=c, marker=m)
+                for n, m_val in zip(all_nps, mems):
+                    if m_val is not None and m_val > 0:
+                        x_vals.append(n)
+                        y_vals.append(m_val * m_scale)
+
+            if x_vals:
+                ax.plot(x_vals, y_vals, label=app, color=c, marker=m)
 
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=len(apps))
         out_path = cwd / f"{graph}_{plot_type}.png"
