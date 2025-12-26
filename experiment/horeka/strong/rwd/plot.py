@@ -24,6 +24,138 @@ def get_hpc_graph_duration(data):
     n = len(data)
     return max(int(data[str(i)]["benchmark"]["scc"]["duration"]) for i in range(n)) * 1e-9
 
+def get_kaspan_progress(data):
+    # we take the max duration per scope and the decided count
+    n = len(data)
+    res = [(0, 0)]
+    scc = data["0"]["benchmark"]["scc"]
+    
+    # helper to get max duration of a scope across all ranks
+    def get_max_dur(path):
+        durs = []
+        for i in range(n):
+            curr = data[str(i)]["benchmark"]["scc"]
+            for p in path:
+                if p in curr:
+                    curr = curr[p]
+                else:
+                    return None
+            durs.append(int(curr["duration"]))
+        return max(durs) * 1e-9
+
+    # helper to get decided_count (should be same on all ranks as we use allreduce)
+    def get_decided(path):
+        curr = scc
+        for p in path:
+            if p in curr:
+                curr = curr[p]
+            else:
+                return None
+        if "decided_count" in curr:
+            return int(curr["decided_count"])
+        return None
+
+    # trim_1
+    decided = get_decided([]) # at scc level
+    if decided is not None:
+        res.append((0, decided)) # trim_1 is "instant" in this model or we don't have its scope
+
+    # forward_backward_search
+    dur = get_max_dur(["forward_backward_search"])
+    decided = get_decided(["forward_backward_search"])
+    if dur is not None and decided is not None:
+        res.append((res[-1][0] + dur, decided))
+    
+    # ecl
+    dur = get_max_dur(["ecl"])
+    decided = get_decided(["ecl"])
+    if dur is not None and decided is not None:
+        res.append((res[-1][0] + dur, decided))
+
+    # residual
+    dur = get_max_dur(["residual"])
+    decided = get_decided(["residual"])
+    if dur is not None and decided is not None:
+        res.append((res[-1][0] + dur, decided))
+    
+    return res
+
+def get_ispan_progress(data):
+    # ISpan has forward_backward_search and residual
+    n = len(data)
+    res = [(0, 0)]
+    scc = data["0"]["benchmark"]["scc"]
+
+    def get_max_dur(path):
+        durs = []
+        for i in range(n):
+            curr = data[str(i)]["benchmark"]["scc"]
+            for p in path:
+                if p in curr: curr = curr[p]
+                else: return None
+            durs.append(int(curr["duration"]))
+        return max(durs) * 1e-9
+
+    def get_decided(path):
+        curr = scc
+        for p in path:
+            if p in curr: curr = curr[p]
+            else: return None
+        if "decided_count" in curr: return int(curr["decided_count"])
+        return None
+
+    # forward_backward_search
+    dur = get_max_dur(["forward_backward_search"])
+    if dur is not None:
+        # we don't have decided count for FB in ISpan yet, but we know it's > 0
+        res.append((dur, 1)) # dummy value for now to show progress
+    
+    # residual
+    dur = get_max_dur(["residual"])
+    decided = get_decided(["residual"])
+    if dur is not None and decided is not None:
+        res.append((res[-1][0] + dur, decided))
+
+    return res
+
+def get_hpc_graph_progress(data):
+    # HPC Graph has forward_backward_search and color_propagation
+    n = len(data)
+    res = [(0, 0)]
+    scc = data["0"]["benchmark"]["scc"]
+
+    def get_max_dur(path):
+        durs = []
+        for i in range(n):
+            curr = data[str(i)]["benchmark"]["scc"]
+            for p in path:
+                if p in curr: curr = curr[p]
+                else: return None
+            durs.append(int(curr["duration"]))
+        return max(durs) * 1e-9
+
+    def get_decided(path):
+        curr = scc
+        for p in path:
+            if p in curr: curr = curr[p]
+            else: return None
+        if "decided_count" in curr: return int(curr["decided_count"])
+        return None
+
+    # forward_backward_search
+    dur = get_max_dur(["forward_backward_search"])
+    decided = get_decided(["forward_backward_search"])
+    if dur is not None and decided is not None:
+        res.append((dur, decided))
+    
+    # color_propagation
+    dur = get_max_dur(["color_propagation"])
+    decided = get_decided(["color_propagation"])
+    if dur is not None and decided is not None:
+        res.append((res[-1][0] + dur, decided))
+
+    return res
+
 def get_kaspan_memory(data):
     n = len(data)
     mem_sum = 0
@@ -114,9 +246,10 @@ for p in files:
             j = json.load(f)
             duration = globals()[f"get_{app}_duration"](j)
             memory = globals()[f"get_{app}_memory"](j)
+            progress = globals()[f"get_{app}_progress"](j)
             if duration <= TIME_LIMIT_S:
                 print(f"Loading {p.name}: duration={duration:.2f}s, memory={memory/1e6:.2f}MB")
-                raw_data.setdefault(graph, {}).setdefault(app, {})[np_val] = (duration, memory)
+                raw_data.setdefault(graph, {}).setdefault(app, {})[np_val] = (duration, memory, progress)
                 graphs.add(graph)
                 apps.add(app)
             else:
@@ -153,7 +286,31 @@ for graph in graphs:
     candidates = [graph_data[app][min_np][0] for app in graph_data if min_np in graph_data[app]]
     baseline_dur = min(candidates) if candidates else None
 
-    for plot_type in ["duration", "speedup", "memory"]:
+    for plot_type in ["duration", "speedup", "memory", "progress"]:
+        if plot_type == "progress":
+            # progress plot is per graph and per np
+            for np_val in all_nps:
+                fig, ax = plt.subplots(figsize=(8, 6), layout="constrained")
+                ax.set_title(f"Progress: {graph} (np={np_val})")
+                ax.set_ylabel("Decided Vertices")
+                ax.set_xlabel("Time [s]")
+                ax.grid(True, which="both", linestyle="--", alpha=0.5)
+                
+                for app in apps:
+                    if app not in graph_data or np_val not in graph_data[app]: continue
+                    c, m = app_style[app]
+                    progress = graph_data[app][np_val][2]
+                    times = [p[0] for p in progress]
+                    counts = [p[1] for p in progress]
+                    ax.step(times, counts, where="post", label=app, color=c, marker=m)
+                
+                ax.legend(loc="upper left")
+                out_path = cwd / f"{graph}_progress_np{np_val}.png"
+                print(f"Saving plot to {out_path}")
+                fig.savefig(out_path, dpi=DPI, bbox_inches="tight")
+                plt.close(fig)
+            continue
+
         fig, ax = plt.subplots(figsize=(8, 6), layout="constrained")
         if plot_type == "duration":
             setup_ax(ax, f"Duration: {graph}", f"Time [{t_unit}]", all_nps)
