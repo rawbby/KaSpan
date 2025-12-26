@@ -1,10 +1,10 @@
 import itertools
 import json
+import matplotlib.pyplot as plt
+import numpy as np
 import os
 import pathlib
 import re
-import matplotlib.pyplot as plt
-import numpy as np
 
 CORES_PER_SOCKET = 38
 CORES_PER_NODE = 76
@@ -12,24 +12,28 @@ TIME_LIMIT_S = 600
 PLOT_SPEEDUP = False
 DPI = 200
 
+
 def get_kaspan_duration(data):
     n = len(data)
     return max(int(data[str(i)]["benchmark"]["scc"]["duration"]) for i in range(n)) * 1e-9
+
 
 def get_ispan_duration(data):
     n = len(data)
     return max(int(data[str(i)]["benchmark"]["scc"]["duration"]) for i in range(n)) * 1e-9
 
+
 def get_hpc_graph_duration(data):
     n = len(data)
     return max(int(data[str(i)]["benchmark"]["scc"]["duration"]) for i in range(n)) * 1e-9
+
 
 def get_kaspan_progress(data):
     # we take the max duration per scope and the decided count
     n = len(data)
     res = [(0, 0)]
     scc = data["0"]["benchmark"]["scc"]
-    
+
     # helper to get max duration of a scope across all ranks
     def get_max_dur(path):
         durs = []
@@ -56,16 +60,16 @@ def get_kaspan_progress(data):
         return None
 
     # trim_1
-    decided = get_decided([]) # at scc level
+    decided = get_decided([])  # at scc level
     if decided is not None:
-        res.append((0, decided)) # trim_1 is "instant" in this model or we don't have its scope
+        res.append((0, decided))  # trim_1 is "instant" in this model or we don't have its scope
 
     # forward_backward_search
     dur = get_max_dur(["forward_backward_search"])
     decided = get_decided(["forward_backward_search"])
     if dur is not None and decided is not None:
         res.append((res[-1][0] + dur, decided))
-    
+
     # ecl
     dur = get_max_dur(["ecl"])
     decided = get_decided(["ecl"])
@@ -77,8 +81,9 @@ def get_kaspan_progress(data):
     decided = get_decided(["residual"])
     if dur is not None and decided is not None:
         res.append((res[-1][0] + dur, decided))
-    
+
     return res
+
 
 def get_ispan_progress(data):
     # ISpan has forward_backward_search and residual
@@ -91,16 +96,20 @@ def get_ispan_progress(data):
         for i in range(n):
             curr = data[str(i)]["benchmark"]["scc"]
             for p in path:
-                if p in curr: curr = curr[p]
-                else: return None
+                if p in curr:
+                    curr = curr[p]
+                else:
+                    return None
             durs.append(int(curr["duration"]))
         return max(durs) * 1e-9
 
     def get_decided(path):
         curr = scc
         for p in path:
-            if p in curr: curr = curr[p]
-            else: return None
+            if p in curr:
+                curr = curr[p]
+            else:
+                return None
         if "decided_count" in curr: return int(curr["decided_count"])
         return None
 
@@ -108,8 +117,8 @@ def get_ispan_progress(data):
     dur = get_max_dur(["forward_backward_search"])
     if dur is not None:
         # we don't have decided count for FB in ISpan yet, but we know it's > 0
-        res.append((dur, 1)) # dummy value for now to show progress
-    
+        res.append((dur, 1))  # dummy value for now to show progress
+
     # residual
     dur = get_max_dur(["residual"])
     decided = get_decided(["residual"])
@@ -117,6 +126,7 @@ def get_ispan_progress(data):
         res.append((res[-1][0] + dur, decided))
 
     return res
+
 
 def get_hpc_graph_progress(data):
     # HPC Graph has forward_backward_search and color_propagation
@@ -129,16 +139,20 @@ def get_hpc_graph_progress(data):
         for i in range(n):
             curr = data[str(i)]["benchmark"]["scc"]
             for p in path:
-                if p in curr: curr = curr[p]
-                else: return None
+                if p in curr:
+                    curr = curr[p]
+                else:
+                    return None
             durs.append(int(curr["duration"]))
         return max(durs) * 1e-9
 
     def get_decided(path):
         curr = scc
         for p in path:
-            if p in curr: curr = curr[p]
-            else: return None
+            if p in curr:
+                curr = curr[p]
+            else:
+                return None
         if "decided_count" in curr: return int(curr["decided_count"])
         return None
 
@@ -147,7 +161,7 @@ def get_hpc_graph_progress(data):
     decided = get_decided(["forward_backward_search"])
     if dur is not None and decided is not None:
         res.append((dur, decided))
-    
+
     # color_propagation
     dur = get_max_dur(["color_propagation"])
     decided = get_decided(["color_propagation"])
@@ -155,6 +169,7 @@ def get_hpc_graph_progress(data):
         res.append((res[-1][0] + dur, decided))
 
     return res
+
 
 def get_kaspan_memory(data):
     n = len(data)
@@ -171,6 +186,7 @@ def get_kaspan_memory(data):
             mem_sum += int(scc["alloc"]["memory"]) - base
     return mem_sum / n
 
+
 def get_ispan_memory(data):
     n = len(data)
     mem_sum = 0
@@ -179,6 +195,7 @@ def get_ispan_memory(data):
         base = int(node["memory"])
         mem_sum += int(node["scc"]["alloc"]["memory"]) - base
     return mem_sum / n
+
 
 def get_hpc_graph_memory(data):
     n = len(data)
@@ -195,17 +212,20 @@ def get_hpc_graph_memory(data):
             mem_sum += int(scc["alloc"]["memory"]) - base
     return mem_sum / n
 
+
 def get_time_info(max_s):
     if max_s >= 10: return 1, "s"
     if max_s >= 1e-3: return 1e3, "ms"
     if max_s >= 1e-6: return 1e6, "us"
     return 1e9, "ns"
 
+
 def get_memory_info(max_b):
     if max_b >= 1e9: return 1e-9, "GB"
     if max_b >= 1e6: return 1e-6, "MB"
     if max_b >= 1e3: return 1e-3, "KB"
     return 1, "B"
+
 
 def setup_ax(ax, title, ylabel, nps, log_y=True):
     ax.set_title(title)
@@ -218,6 +238,7 @@ def setup_ax(ax, title, ylabel, nps, log_y=True):
     ax.grid(True, which="both", linestyle="--", alpha=0.5)
     if nps: mark_topology(ax, max(nps))
 
+
 def mark_topology(ax, max_n):
     borders = [(1.5, "single threaded", "multithreaded"),
                (CORES_PER_SOCKET + 0.5, "single socket", "multi socket"),
@@ -225,8 +246,11 @@ def mark_topology(ax, max_n):
     for x, left_lab, right_lab in borders:
         if x < max_n:
             ax.axvline(x, color="black", linestyle="--", alpha=0.5)
-            ax.text(x, 0.5, left_lab, rotation=90, verticalalignment="center", horizontalalignment="right", fontsize=8, transform=ax.get_xaxis_transform())
-            ax.text(x, 0.5, right_lab, rotation=90, verticalalignment="center", horizontalalignment="left", fontsize=8, transform=ax.get_xaxis_transform())
+            ax.text(x, 0.5, left_lab, rotation=90, verticalalignment="center", horizontalalignment="right", fontsize=8,
+                    transform=ax.get_xaxis_transform())
+            ax.text(x, 0.5, right_lab, rotation=90, verticalalignment="center", horizontalalignment="left", fontsize=8,
+                    transform=ax.get_xaxis_transform())
+
 
 cwd = pathlib.Path(os.getcwd())
 pattern = re.compile(r"(kaspan|ispan|hpc_graph)_(.*)_np([0-9]+)\.json")
@@ -248,7 +272,7 @@ for p in files:
             memory = globals()[f"get_{app}_memory"](j)
             progress = globals()[f"get_{app}_progress"](j)
             if duration <= TIME_LIMIT_S:
-                print(f"Loading {p.name}: duration={duration:.2f}s, memory={memory/1e6:.2f}MB")
+                print(f"Loading {p.name}: duration={duration:.2f}s, memory={memory / 1e6:.2f}MB")
                 raw_data.setdefault(graph, {}).setdefault(app, {})[np_val] = (duration, memory, progress)
                 graphs.add(graph)
                 apps.add(app)
@@ -267,7 +291,7 @@ for graph in graphs:
     print(f"Plotting graph: {graph}")
     graph_data = raw_data[graph]
     all_nps = sorted(list(set(n for a in graph_data for n in graph_data[a])))
-    
+
     max_dur = 0
     max_mem = 0
     for app in apps:
@@ -278,10 +302,10 @@ for graph in graphs:
         valid_mems = [m for m in mems if m is not None]
         if valid_durs: max_dur = max(max_dur, max(valid_durs))
         if valid_mems: max_mem = max(max_mem, max(valid_mems))
-    
+
     t_scale, t_unit = get_time_info(max_dur)
     m_scale, m_unit = get_memory_info(max_mem)
-    
+
     min_np = min(all_nps)
     candidates = [graph_data[app][min_np][0] for app in graph_data if min_np in graph_data[app]]
     baseline_dur = min(candidates) if candidates else None
@@ -295,7 +319,7 @@ for graph in graphs:
                 ax.set_ylabel("Decided Vertices")
                 ax.set_xlabel("Time [s]")
                 ax.grid(True, which="both", linestyle="--", alpha=0.5)
-                
+
                 for app in apps:
                     if app not in graph_data or np_val not in graph_data[app]: continue
                     c, m = app_style[app]
@@ -303,7 +327,7 @@ for graph in graphs:
                     times = [p[0] for p in progress]
                     counts = [p[1] for p in progress]
                     ax.step(times, counts, where="post", label=app, color=c, marker=m)
-                
+
                 ax.legend(loc="upper left")
                 out_path = cwd / f"{graph}_progress_np{np_val}.png"
                 print(f"Saving plot to {out_path}")
@@ -324,7 +348,7 @@ for graph in graphs:
             c, m = app_style[app]
             durs = [graph_data[app].get(n, (None, None))[0] for n in all_nps]
             mems = [graph_data[app].get(n, (None, None))[1] for n in all_nps]
-            
+
             if plot_type == "duration":
                 y = [d * t_scale if d is not None else np.nan for d in durs]
             elif plot_type == "speedup":
