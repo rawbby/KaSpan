@@ -93,10 +93,8 @@ def mark_topology(ax, max_n):
     for x, left_lab, right_lab in borders:
         if x < max_n:
             ax.axvline(x, color="black", linestyle="--", alpha=0.5)
-            y_min, y_max = ax.get_ylim()
-            y_pos = (y_min * y_max)**0.5 if ax.get_yscale() == "log" else (y_min + y_max) / 2
-            ax.text(x, y_pos, left_lab, rotation=90, verticalalignment="center", horizontalalignment="right", fontsize=8)
-            ax.text(x, y_pos, right_lab, rotation=90, verticalalignment="center", horizontalalignment="left", fontsize=8)
+            ax.text(x, 0.5, left_lab, rotation=90, verticalalignment="center", horizontalalignment="right", fontsize=8, transform=ax.get_xaxis_transform())
+            ax.text(x, 0.5, right_lab, rotation=90, verticalalignment="center", horizontalalignment="left", fontsize=8, transform=ax.get_xaxis_transform())
 
 cwd = pathlib.Path(os.getcwd())
 pattern = re.compile(r"(kaspan|ispan|hpc_graph)_(.*)_np([0-9]+)\.json")
@@ -156,7 +154,7 @@ for graph in graphs:
     baseline_dur = min(candidates) if candidates else None
 
     for plot_type in ["duration", "speedup", "memory"]:
-        fig, ax = plt.subplots(figsize=(8, 6))
+        fig, ax = plt.subplots(figsize=(8, 6), layout="constrained")
         if plot_type == "duration":
             setup_ax(ax, f"Duration: {graph}", f"Time [{t_unit}]", all_nps)
         elif plot_type == "speedup":
@@ -179,7 +177,6 @@ for graph in graphs:
             ax.plot(all_nps, y, label=app, color=c, marker=m)
 
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=len(apps))
-        fig.tight_layout()
         out_path = cwd / f"{graph}_{plot_type}.png"
         print(f"Saving plot to {out_path}")
         fig.savefig(out_path, dpi=DPI, bbox_inches="tight")
