@@ -52,10 +52,12 @@ def get_kaspan_progress(data):
                 return None
         if "decided_count" in curr:
             return int(curr["decided_count"])
+        if path == ["tarjan"]:
+            return int(data["0"]["benchmark"]["n"])
         return None
 
     res = []
-    for stage_path in [["trim_1"], ["forward_backward_search"], ["ecl"], ["residual"]]:
+    for stage_path in [["trim_1"], ["forward_backward_search"], ["ecl"], ["residual"], ["tarjan"]]:
         dur = get_max_dur(stage_path)
         decided = get_decided(stage_path)
         if dur is not None and decided is not None:
@@ -212,15 +214,17 @@ def setup_ax(ax, title, ylabel, nps, log_y=True):
     ax.set_xticks(nps)
     ax.set_xticklabels([str(n) for n in nps], rotation=45)
     ax.grid(True, which="both", linestyle="--", alpha=0.5)
-    if nps: mark_topology(ax, max(nps))
+    if nps:
+        ax.set_xlim(min(nps), max(nps))
+        mark_topology(ax, min(nps), max(nps))
 
 
-def mark_topology(ax, max_n):
+def mark_topology(ax, min_n, max_n):
     borders = [(1.5, "single threaded", "multithreaded"),
                (CORES_PER_SOCKET + 0.5, "single socket", "multi socket"),
                (CORES_PER_NODE + 0.5, "single node", "multi node")]
     for x, left_lab, right_lab in borders:
-        if x < max_n:
+        if min_n < x < max_n:
             ax.axvline(x, color="black", linestyle="--", alpha=0.5)
             ax.text(x, 0.5, left_lab, rotation=90, verticalalignment="center", horizontalalignment="right", fontsize=8,
                     transform=ax.get_xaxis_transform())
@@ -258,9 +262,18 @@ for p in files:
         print(f"Error loading {p.name}: {e}")
         continue
 
+markers = ["o", "s", "D", "^", "v", "P", "X", "d"]
+all_stages = set()
+for graph in raw_data:
+    for app in raw_data[graph]:
+        for np_val in raw_data[graph][app]:
+            for stage in raw_data[graph][app][np_val][2]:
+                all_stages.add(stage["name"])
+all_stages = sorted(list(all_stages))
+stage_style = {stage: (plt.get_cmap("tab20")(i % 20), markers[i % len(markers)]) for i, stage in enumerate(all_stages)}
+
 apps = sorted(list(apps))
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-markers = ["o", "s", "D", "^", "v", "P", "X", "d"]
 app_style = {app: (colors[i % len(colors)], markers[i % len(markers)]) for i, app in enumerate(apps)}
 
 for graph in graphs:
@@ -272,7 +285,8 @@ for graph in graphs:
     for app in apps:
         if app not in graph_data: continue
         fig, ax = plt.subplots(figsize=(8, 6), layout="constrained")
-        setup_ax(ax, f"Progress: {graph} ({app})", "Decisions per second", all_nps, log_y=True)
+        app_nps = sorted(list(graph_data[app].keys()))
+        setup_ax(ax, f"Progress: {graph} ({app})", "Decisions per second", app_nps, log_y=True)
 
         # Find all stages for this app
         stages = set()
@@ -281,22 +295,18 @@ for graph in graphs:
                 stages.add(stage["name"])
         stages = sorted(list(stages))
 
-        for i, stage_name in enumerate(stages):
+        for stage_name in stages:
             y = []
-            for np_val in all_nps:
-                if np_val in graph_data[app]:
-                    progress = graph_data[app][np_val][2]
-                    stage_data = next((s for s in progress if s["name"] == stage_name), None)
-                    if stage_data and stage_data["duration"] > 0:
-                        y.append(stage_data["decided_count"] / stage_data["duration"])
-                    else:
-                        y.append(np.nan)
+            for np_val in app_nps:
+                progress = graph_data[app][np_val][2]
+                stage_data = next((s for s in progress if s["name"] == stage_name), None)
+                if stage_data and stage_data["duration"] > 0:
+                    y.append(stage_data["decided_count"] / stage_data["duration"])
                 else:
                     y.append(np.nan)
 
-            c = colors[i % len(colors)]
-            m = markers[i % len(markers)]
-            ax.plot(all_nps, y, label=stage_name, color=c, marker=m)
+            c, m = stage_style[stage_name]
+            ax.plot(app_nps, y, label=stage_name, color=c, marker=m)
 
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=len(stages))
         out_path = cwd / f"{graph}_{app}_progress.png"
