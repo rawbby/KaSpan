@@ -76,7 +76,7 @@ source {SCRIPT_DIR}/run_generic.sh"""
                     else:
                         body = f"\nnp={cfg['ntasks']}\nfor local_n in 150000 300000 600000; do\nfor d in 90 100 200 400; do\nn=$(( np * local_n ))\n"
                         m_line, kg = "m=$(( n * d / 100 ))", kagen
-                        if is_hpc and s_name == '1064' and g_name == 'gnm-directed': m_line, kg = "m=$(( local_n * d / 100 ))", "gnm-directed;n=${local_n};m=${local_m};seed=13"
+                        if is_hpc and s_name == '1064' and g_name == 'gnm-directed': m_line, kg = "m=$(( local_n * d / 100 ))", "gnm-directed;n=${n};m=${m};seed=13"
                         body += f"{m_line}\nkagen_string=\"{kg}\"\noutput_file=\"${{app_name}}_{g_name}_np${{np}}_n${{local_n}}_d${{d}}.json\"\n"
                         run_args = f'--nodes={cfg["nodes"]} --ntasks={cfg["ntasks"] if not is_hpc else cfg["nodes"]} --cpus-per-task={1 if not is_hpc else 76}{" --hint=nomultithread" if not is_hpc else ""}'
                         body += f'run_generic "$app" "$output_file" "$kagen_string" "$app_name" "$np" "$local_n" "$d" "{g_name}" "{run_args}"{" --threads 76" if is_hpc else ""}\ndone\ndone\n'
