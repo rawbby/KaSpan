@@ -230,15 +230,16 @@ def mark_topology(ax, min_n, max_n):
 
 
 cwd = pathlib.Path(os.getcwd())
-pattern = re.compile(r"(kaspan|ispan|hpc_graph)_(.*)_np([0-9]+)\.json")
-files = [p for p in cwd.iterdir() if p.is_file()]
+pattern = re.compile(r"(weak|strong)_(kaspan|ispan|hpc_graph)_np([0-9]+)_(.*)\.json")
+files = [p for p in cwd.rglob("*.json") if p.is_file()]
 raw_data = {}
 graphs = set()
 apps = set()
 for p in files:
     m = pattern.fullmatch(p.name)
     if not m: continue
-    app, graph, np_val = m.groups()
+    scaling, app, np_val, graph = m.groups()
+    if scaling != "strong": continue
     np_val = int(np_val)
     try:
         with p.open("r") as f:
