@@ -16,6 +16,7 @@ source ~/workspace/KaSpan/experiment/horeka/run_generic.sh
 app_name=ispan
 app=~/workspace/KaSpan/cmake-build-release/bin/bench_ispan
 set +eu
+np=2052
 for n in 1000000000 100000000 10000000; do
 for d in 90 100 200 400; do
 m=$(( n * d / 100 ))

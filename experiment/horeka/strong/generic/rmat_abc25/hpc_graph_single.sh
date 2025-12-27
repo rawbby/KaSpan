@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --nodes=1
-#SBATCH --ntasks=76
-#SBATCH --cpus-per-task=1
-#SBATCH --ntasks-per-socket=38
-#SBATCH --ntasks-per-node=76
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=76
+#SBATCH --ntasks-per-socket=1
+#SBATCH --ntasks-per-node=1
 #SBATCH -o hpc_graph_single.out
 #SBATCH -e hpc_graph_single.err
 #SBATCH -J hpc_graph_single
@@ -16,6 +16,7 @@ source ~/workspace/KaSpan/experiment/horeka/run_generic.sh
 app_name=hpc_graph
 app=~/workspace/KaSpan/cmake-build-release/bin/bench_hpc_graph
 set +eu
+for np in 76 38 16 8 4 2 1; do
 for n in 1000000000 100000000 10000000; do
 for d in 90 100 200 400; do
 m=$(( n * d / 100 ))

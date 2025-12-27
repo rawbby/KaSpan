@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --nodes=1
-#SBATCH --ntasks=76
-#SBATCH --cpus-per-task=1
-#SBATCH --ntasks-per-socket=38
-#SBATCH --ntasks-per-node=76
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=76
+#SBATCH --ntasks-per-socket=1
+#SBATCH --ntasks-per-node=1
 #SBATCH -o hpc_graph_single.out
 #SBATCH -e hpc_graph_single.err
 #SBATCH -J hpc_graph_single

@@ -16,6 +16,7 @@ source ~/workspace/KaSpan/experiment/horeka/run_generic.sh
 app_name=hpc_graph
 app=~/workspace/KaSpan/cmake-build-release/bin/bench_hpc_graph
 set +eu
+np=1064
 for n in 1000000000 100000000 10000000; do
 for d in 90 100 200 400; do
 m=$(( n * d / 100 ))

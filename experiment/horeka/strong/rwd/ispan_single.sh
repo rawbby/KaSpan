@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-socket=38
 #SBATCH --ntasks-per-node=76
-#SBATCH -o isapn_single.out
-#SBATCH -e isapn_single.err
+#SBATCH -o ispan_single.out
+#SBATCH -e ispan_single.err
 #SBATCH -J ispan_single
 #SBATCH --partition=cpuonly
 #SBATCH --time=30:00

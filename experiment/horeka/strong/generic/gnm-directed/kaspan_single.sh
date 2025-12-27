@@ -16,11 +16,13 @@ source ~/workspace/KaSpan/experiment/horeka/run_generic.sh
 app_name=kaspan
 app=~/workspace/KaSpan/cmake-build-release/bin/bench_kaspan
 set +eu
+for np in 76 38 16 8 4 2 1; do
 for n in 1000000000 100000000 10000000; do
 for d in 90 100 200 400; do
 m=$(( n * d / 100 ))
 kagen_string="gnm-directed;n=${n};m=${m};seed=13"
 output_file="${app_name}_gnm-directed_np${np}_n${n}_d${d}.json"
 run_generic "$app" "$output_file" "$kagen_string" "$app_name" "$np" "$n" "$d" "gnm-directed" "--nodes=1 --ntasks=$np --cpus-per-task=1 --hint=nomultithread"
+done
 done
 done

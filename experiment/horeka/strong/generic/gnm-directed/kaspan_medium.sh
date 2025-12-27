@@ -27,11 +27,10 @@ wait_all
 done
 done
 # np=532
-for local_n in 150000 300000 600000; do
+for n in 1000000000 100000000 10000000; do
 for d in 90 100 200 400; do
-n=$(( 532 * local_n ))
 m=$(( n * d / 100 ))
 kagen_string="gnm-directed;n=${n};m=${m};seed=13"
-run_generic "$app" "${app_name}_gnm-directed_np532_n${local_n}_d${d}.json" "$kagen_string" "$app_name" 532 "$local_n" "$d" "gnm-directed" "--nodes=7 --ntasks=532 --cpus-per-task=1 --hint=nomultithread"
+run_generic "$app" "${app_name}_gnm-directed_np532_n${n}_d${d}.json" "$kagen_string" "$app_name" 532 "$n" "$d" "gnm-directed" "--nodes=7 --ntasks=532 --cpus-per-task=1 --hint=nomultithread"
 done
 done
