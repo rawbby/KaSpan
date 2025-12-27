@@ -58,8 +58,8 @@
 extern int procid, nprocs;
 extern bool verbose, debug, verify;
 
-#define KCORE_NOT_ASSIGNED 18446744073709551615
-#define MAX_ITER 10000
+#define KCORE_NOT_ASSIGNED 18446744073709551615ull
+#define MAX_ITER 10000u
 
 int run_kcore(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
               uint64_t* kcores, uint32_t num_iter, bool run_approx)
@@ -137,7 +137,7 @@ int run_kcore(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
   while (global_changes && iter < num_iter)
   {
     if (debug && tc.tid == 0) {
-      printf("Task %d iter %lu changes %u run_kcore()\n", procid, iter, global_changes); 
+      printf("Task %d iter %u changes %lu run_kcore()\n", procid, iter, global_changes);
     }
 
 #pragma omp barrier
@@ -354,4 +354,3 @@ int kcore_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q,
   if (debug)  printf("Task %d kcore_dist() success\n", procid); 
   return 0;
 }
-

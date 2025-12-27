@@ -55,7 +55,7 @@
 extern int procid, nprocs;
 extern bool verbose, debug, verify, output;
 
-#define NULL_KEY 18446744073709551615
+#define NULL_KEY 18446744073709551615ull
 
 struct fast_map {
   uint64_t* arr;

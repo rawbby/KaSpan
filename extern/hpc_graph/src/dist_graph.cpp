@@ -489,7 +489,7 @@ int repart_graph(dist_graph_t *g, mpi_data_t* comm, char* part_file)
 }
 
 
-int repart_graph(dist_graph_t *g, mpi_data_t* comm, int32_t* local_parts)
+void repart_graph(dist_graph_t *g, mpi_data_t* comm, int32_t* local_parts)
 {
    for (int i = 0; i < nprocs; ++i)
   {

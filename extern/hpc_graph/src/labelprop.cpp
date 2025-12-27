@@ -58,7 +58,7 @@
 #include "util.h"
 #include "labelprop.h"
 
-#define LABEL_NOT_ASSIGNED 18446744073709551615
+#define LABEL_NOT_ASSIGNED 18446744073709551615ull
 
 extern int procid, nprocs;
 extern bool verbose, debug, verify;
@@ -388,4 +388,3 @@ int labelprop_dist(dist_graph_t* g, mpi_data_t* comm,
   if (debug)  printf("Task %d labelprop_dist() success\n", procid); 
   return 0;
 }
-

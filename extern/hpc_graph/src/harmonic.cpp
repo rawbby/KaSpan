@@ -56,8 +56,8 @@
 #include "util.h"
 #include "harmonic.h"
 
-#define HC_NOT_VISITED 18446744073709551615
-#define HC_VISITED 18446744073709551614
+#define HC_NOT_VISITED 18446744073709551615ull
+#define HC_VISITED 18446744073709551614ull
 
 extern int procid, nprocs;
 extern bool verbose, debug, verify;
@@ -98,7 +98,7 @@ int run_harmonic(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
   while (comm->global_queue_size)
   {
     if (debug && tq.tid == 0) { 
-      printf("Task %d Distance %u run_harmonic() GQ: %li, TQ: %u\n", 
+      printf("Task %d Distance %lu run_harmonic() GQ: %li, TQ: %lu\n",
         procid, distance, comm->global_queue_size, q->queue_size); 
     }
 
@@ -229,4 +229,3 @@ int harmonic_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q,
   if (debug)  printf("Task %d harmonic_dist() success\n", procid); 
   return 0;
 }
-

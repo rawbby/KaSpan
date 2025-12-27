@@ -55,8 +55,8 @@
 #include "comms.h"
 #include "util.h"
 
-#define WCC_NOT_VISITED 18446744073709551615
-#define WCC_VISITED 18446744073709551614
+#define WCC_NOT_VISITED 18446744073709551615ull
+#define WCC_VISITED 18446744073709551614ull
 
 extern int procid, nprocs;
 extern bool verbose, debug, verify, output;
@@ -453,4 +453,3 @@ int wcc_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q,
   if (debug)  printf("Task %d wcc_dist() success\n", procid); 
   return 0;
 }
-
