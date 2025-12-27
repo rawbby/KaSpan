@@ -30,18 +30,28 @@ export I_MPI_JOB_TIMEOUT=3
 
 set +eu
 
-# NP=152
+# np=152
 np=152
 kagen_string="gnm-directed;n=PLACEHOLDER_N;m=PLACEHOLDER_M;seed=13"
 kagen_string="${kagen_string/PLACEHOLDER_N/$((np * 150000))}"
 kagen_string="${kagen_string/PLACEHOLDER_M/$((np * 1500000))}"
 output_file="${app_name}_gnm-directed_np152.json"
 pid152=
-if [[ -s "$output_file" ]]; then
-  echo "[SKIPPING] ${app_name} NP=152 Graph=gnm-directed"
-else
-  echo "[STARTING] ${app_name} NP=152 Graph=gnm-directed"
-  srun                   \
+np=152
+for n in 150000 300000 600000; do
+  for d in 90 100 200 400; do
+    total_n=$(( np * n ))
+    total_m=$(( total_n * d / 100 ))
+    if [[ $total_m -gt 4000000000 ]]; then
+      continue
+    fi
+    kagen_string="gnm-directed;n=${total_n};m=${total_m};seed=13"
+    output_file="${app_name}_gnm-directed_np152_n${n}_d${d}.json"
+    if [[ -s "$output_file" ]]; then
+      echo "[SKIPPING] ${app_name} np=152 n=${n} d=${d} graph=gnm-directed"
+    else
+      echo "[STARTING] ${app_name} np=152 n=${n} d=${d} graph=gnm-directed"
+      srun                   \
     --time=3:00          \
     --oom-kill-step=1    \
     --mpi=pmi2           \
@@ -53,21 +63,33 @@ else
     --cpu-bind=cores     \
     "$app"               \
       --output_file "$output_file" \
-      --kagen_option_string "$kagen_string" & pid152=$!
-fi
+      --kagen_option_string "$kagen_string"
+    fi
+  done
+done & pid152=$!
 
-# NP=304
+# np=304
 np=304
 kagen_string="gnm-directed;n=PLACEHOLDER_N;m=PLACEHOLDER_M;seed=13"
 kagen_string="${kagen_string/PLACEHOLDER_N/$((np * 150000))}"
 kagen_string="${kagen_string/PLACEHOLDER_M/$((np * 1500000))}"
 output_file="${app_name}_gnm-directed_np304.json"
 pid304=
-if [[ -s "$output_file" ]]; then
-  echo "[SKIPPING] ${app_name} NP=304 Graph=gnm-directed"
-else
-  echo "[STARTING] ${app_name} NP=304 Graph=gnm-directed"
-  srun                   \
+np=304
+for n in 150000 300000 600000; do
+  for d in 90 100 200 400; do
+    total_n=$(( np * n ))
+    total_m=$(( total_n * d / 100 ))
+    if [[ $total_m -gt 4000000000 ]]; then
+      continue
+    fi
+    kagen_string="gnm-directed;n=${total_n};m=${total_m};seed=13"
+    output_file="${app_name}_gnm-directed_np304_n${n}_d${d}.json"
+    if [[ -s "$output_file" ]]; then
+      echo "[SKIPPING] ${app_name} np=304 n=${n} d=${d} graph=gnm-directed"
+    else
+      echo "[STARTING] ${app_name} np=304 n=${n} d=${d} graph=gnm-directed"
+      srun                   \
     --time=3:00          \
     --oom-kill-step=1    \
     --mpi=pmi2           \
@@ -79,16 +101,18 @@ else
     --cpu-bind=cores     \
     "$app"               \
       --output_file "$output_file" \
-      --kagen_option_string "$kagen_string" & pid304=$!
-fi
+      --kagen_option_string "$kagen_string"
+    fi
+  done
+done & pid304=$!
 
 if [[ $pid152 ]]; then
   wait "$pid152"; ec=$?
   if [[ $ec -ne 0 ]]; then
     [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-    echo "[FAILURE] ${app_name} NP=152 Graph=gnm-directed"
+    echo "[FAILURE] ${app_name} np=152 graph=gnm-directed"
   else
-    echo "[SUCCESS] ${app_name} NP=152 Graph=gnm-directed"
+    echo "[SUCCESS] ${app_name} np=152 graph=gnm-directed"
   fi
 fi
 
@@ -96,22 +120,22 @@ if [[ $pid304 ]]; then
   wait "$pid304"; ec=$?
   if [[ $ec -ne 0 ]]; then
     [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-    echo "[FAILURE] ${app_name} NP=304 Graph=gnm-directed"
+    echo "[FAILURE] ${app_name} np=304 graph=gnm-directed"
   else
-    echo "[SUCCESS] ${app_name} NP=304 Graph=gnm-directed"
+    echo "[SUCCESS] ${app_name} np=304 graph=gnm-directed"
   fi
 fi
 
-# NP=532
+# np=532
 np=532
 kagen_string="gnm-directed;n=PLACEHOLDER_N;m=PLACEHOLDER_M;seed=13"
 kagen_string="${kagen_string/PLACEHOLDER_N/$((np * 150000))}"
 kagen_string="${kagen_string/PLACEHOLDER_M/$((np * 1500000))}"
 output_file="${app_name}_gnm-directed_np532.json"
 if [[ -s "$output_file" ]]; then
-  echo "[SKIPPING] ${app_name} NP=532 Graph=gnm-directed"
+  echo "[SKIPPING] ${app_name} np=532 graph=gnm-directed"
 else
-  echo "[STARTING] ${app_name} NP=532 Graph=gnm-directed"
+  echo "[STARTING] ${app_name} np=532 graph=gnm-directed"
   srun                   \
     --time=3:00          \
     --oom-kill-step=1    \
@@ -127,8 +151,8 @@ else
       --kagen_option_string "$kagen_string"; ec=$?
   if [[ $ec -ne 0 ]]; then
     [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-    echo "[FAILURE] ${app_name} NP=532 Graph=gnm-directed ec=${ec}"
+    echo "[FAILURE] ${app_name} np=532 graph=gnm-directed ec=${ec}"
   else
-    echo "[SUCCESS] ${app_name} NP=532 Graph=gnm-directed"
+    echo "[SUCCESS] ${app_name} np=532 graph=gnm-directed"
   fi
 fi

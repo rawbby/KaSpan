@@ -38,9 +38,9 @@ for manifest in "${rwd[@]}"; do
   output_file="${app_name}_${manifest_name}_np152.json"
   pid152=
   if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} NP=152 Graph=${manifest_name}"
+    echo "[SKIPPING] ${app_name} np=152 graph=${manifest_name}"
   else
-    echo "[STARTING] ${app_name} NP=152 Graph=${manifest_name}"
+    echo "[STARTING] ${app_name} np=152 graph=${manifest_name}"
     srun                   \
       --time=3:00          \
       --oom-kill-step=1    \
@@ -59,9 +59,9 @@ for manifest in "${rwd[@]}"; do
   output_file="${app_name}_${manifest_name}_np304.json"
   pid304=
   if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} NP=304 Graph=${manifest_name}"
+    echo "[SKIPPING] ${app_name} np=304 graph=${manifest_name}"
   else
-    echo "[STARTING] ${app_name} NP=304 Graph=${manifest_name}"
+    echo "[STARTING] ${app_name} np=304 graph=${manifest_name}"
     srun                   \
       --time=3:00          \
       --oom-kill-step=1    \
@@ -81,9 +81,9 @@ for manifest in "${rwd[@]}"; do
     wait "$pid152"; ec=$?
     if [[ $ec -ne 0 ]]; then
       [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} NP=152 Graph=${manifest_name}"
+      echo "[FAILURE] ${app_name} np=152 graph=${manifest_name}"
     else
-      echo "[SUCCESS] ${app_name} NP=152 Graph=${manifest_name}"
+      echo "[SUCCESS] ${app_name} np=152 graph=${manifest_name}"
     fi
   fi
 
@@ -91,17 +91,17 @@ for manifest in "${rwd[@]}"; do
     wait "$pid304"; ec=$?
     if [[ $ec -ne 0 ]]; then
       [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} NP=304 Graph=${manifest_name}"
+      echo "[FAILURE] ${app_name} np=304 graph=${manifest_name}"
     else
-      echo "[SUCCESS] ${app_name} NP=304 Graph=${manifest_name}"
+      echo "[SUCCESS] ${app_name} np=304 graph=${manifest_name}"
     fi
   fi
 
   output_file="${app_name}_${manifest_name}_np532.json"
   if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} NP=532 Graph=${manifest_name}"
+    echo "[SKIPPING] ${app_name} np=532 graph=${manifest_name}"
   else
-    echo "[STARTING] ${app_name} NP=532 Graph=${manifest_name}"
+    echo "[STARTING] ${app_name} np=532 graph=${manifest_name}"
     srun                   \
       --time=3:00          \
       --oom-kill-step=1    \
@@ -117,9 +117,9 @@ for manifest in "${rwd[@]}"; do
         --manifest_file "$manifest"; ec=$?
     if [[ $ec -ne 0 ]]; then
       [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} NP=532 Graph=${manifest_name} ec=${ec}"
+      echo "[FAILURE] ${app_name} np=532 graph=${manifest_name} ec=${ec}"
     else
-      echo "[SUCCESS] ${app_name} NP=532 Graph=${manifest_name}"
+      echo "[SUCCESS] ${app_name} np=532 graph=${manifest_name}"
     fi
   fi
 done

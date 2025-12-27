@@ -31,18 +31,15 @@ export I_MPI_JOB_TIMEOUT=5
 
 set +eu
 
-sizes=( "small" "medium" "huge" )
-  kagen_strings=( "gnm-directed;n=2000000;m=20000000;seed=13" "gnm-directed;n=20000000;m=200000000;seed=13" "gnm-directed;n=100000000;m=1000000000;seed=13" )
-  for i in "${!kagen_strings[@]}"; do
-    manifest_name="${sizes[$i]}"
-    kagen_string="${kagen_strings[$i]}"
-  for np in 76 38 16 8 4 2 1; do
-    output_file="${app_name}_${manifest_name}_np${np}.json"
-
+for n in 1000000000 100000000 10000000; do
+  for d in 90 100 200 400; do
+    total_m=$(( n * d / 100 ))
+    kagen_string="gnm-directed;n=${n};m=${total_m};seed=13"
+    output_file="${app_name}_gnm-directed_np${np}_n${n}_d${d}.json"
     if [[ -s "$output_file" ]]; then
-      echo "[SKIPPING] ${app_name} NP=${np} Graph=${manifest_name}"
+      echo "[SKIPPING] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed"
     else
-      echo "[STARTING] ${app_name} NP=${np} Graph=${manifest_name}"
+      echo "[STARTING] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed"
       srun                             \
         --time=5:00                    \
         --oom-kill-step=1              \
@@ -56,13 +53,14 @@ sizes=( "small" "medium" "huge" )
         "$app"                         \
           --output_file "$output_file" \
           --threads "$np"              \
-          --kagen_option_string "$kagen_string"; ec=$?
+          --kagen_option_string "$kagen_string"; ec=$; ec=$?
       if [[ $ec -ne 0 ]]; then
         [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-        echo "[FAILURE] ${app_name} NP=${np} Graph=${manifest_name} ec=${ec}"
+        echo "[FAILURE] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed ec=${ec}"
       else
-        echo "[SUCCESS] ${app_name} NP=${np} Graph=${manifest_name}"
+        echo "[SUCCESS] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed"
       fi
     fi
   done
+done
 done

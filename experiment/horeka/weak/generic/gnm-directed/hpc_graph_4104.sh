@@ -31,15 +31,20 @@ export I_MPI_JOB_TIMEOUT=3
 set +eu
 
 np=4104
-kagen_string="gnm-directed;n=PLACEHOLDER_N;m=PLACEHOLDER_M;seed=13"
-kagen_string="${kagen_string/PLACEHOLDER_N/$((np * 150000))}"
-kagen_string="${kagen_string/PLACEHOLDER_M/$((np * 1500000))}"
-output_file="${app_name}_gnm-directed_np4104.json"
-if [[ -s "$output_file" ]]; then
-  echo "[SKIPPING] ${app_name} NP=4104 Graph=gnm-directed"
-else
-  echo "[STARTING] ${app_name} NP=4104 Graph=gnm-directed"
-  srun                   \
+for n in 150000 300000 600000; do
+  for d in 90 100 200 400; do
+    total_n=$(( np * n ))
+    total_m=$(( total_n * d / 100 ))
+    if [[ $total_m -gt 4000000000 ]]; then
+      continue
+    fi
+    kagen_string="gnm-directed;n=${total_n};m=${total_m};seed=13"
+    output_file="${app_name}_gnm-directed_np${np}_n${n}_d${d}.json"
+    if [[ -s "$output_file" ]]; then
+      echo "[SKIPPING] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed"
+    else
+      echo "[STARTING] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed"
+      srun                   \
     --time=3:00          \
     --oom-kill-step=1    \
     --mpi=pmi2           \
@@ -51,11 +56,14 @@ else
     "$app"               \
       --output_file "$output_file" \
       --threads 76       \
-      --kagen_option_string "$kagen_string"; ec=$?
-  if [[ $ec -ne 0 ]]; then
-    [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-    echo "[FAILURE] ${app_name} NP=4104 Graph=gnm-directed ec=${ec}"
-  else
-    echo "[SUCCESS] ${app_name} NP=4104 Graph=gnm-directed"
-  fi
+      --kagen_option_string "$kagen_string"; ec=$
+      if [[ $ec -ne 0 ]]; then
+        [[ $ec -eq 137 ]] && ec="${ec} (oom)"
+        echo "[FAILURE] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed ec=${ec}"
+      else
+        echo "[SUCCESS] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed"
+      fi
+    fi
+  done
+done
 fi

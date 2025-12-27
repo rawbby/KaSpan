@@ -36,9 +36,9 @@ for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
   output_file="${app_name}_${manifest_name}_np1064.json"
   if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} NP=1064 Graph=${manifest_name}"
+    echo "[SKIPPING] ${app_name} np=1064 graph=${manifest_name}"
   else
-    echo "[STARTING] ${app_name} NP=1064 Graph=${manifest_name}"
+    echo "[STARTING] ${app_name} np=1064 graph=${manifest_name}"
     srun                   \
       --time=3:00          \
       --oom-kill-step=1    \
@@ -54,9 +54,9 @@ for manifest in "${rwd[@]}"; do
         --manifest_file "$manifest"; ec=$?
     if [[ $ec -ne 0 ]]; then
       [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} NP=1064 Graph=${manifest_name} ec=${ec}"
+      echo "[FAILURE] ${app_name} np=1064 graph=${manifest_name} ec=${ec}"
     else
-      echo "[SUCCESS] ${app_name} NP=1064 Graph=${manifest_name}"
+      echo "[SUCCESS] ${app_name} np=1064 graph=${manifest_name}"
     fi
   fi
 done

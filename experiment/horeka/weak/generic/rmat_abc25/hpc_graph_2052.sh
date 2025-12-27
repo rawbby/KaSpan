@@ -31,15 +31,20 @@ export I_MPI_JOB_TIMEOUT=3
 set +eu
 
 np=2052
-kagen_string="rmat;directed;n=PLACEHOLDER_N;m=PLACEHOLDER_M;a=0.25;b=0.25;c=0.25;seed=13"
-kagen_string="${kagen_string/PLACEHOLDER_N/$((np * 150000))}"
-kagen_string="${kagen_string/PLACEHOLDER_M/$((np * 1500000))}"
-output_file="${app_name}_rmat_abc25_np2052.json"
-if [[ -s "$output_file" ]]; then
-  echo "[SKIPPING] ${app_name} NP=2052 Graph=rmat_abc25"
-else
-  echo "[STARTING] ${app_name} NP=2052 Graph=rmat_abc25"
-  srun                   \
+for n in 150000 300000 600000; do
+  for d in 90 100 200 400; do
+    total_n=$(( np * n ))
+    total_m=$(( total_n * d / 100 ))
+    if [[ $total_m -gt 4000000000 ]]; then
+      continue
+    fi
+    kagen_string="rmat;directed;n=${total_n};m=${total_m};a=0.25;b=0.25;c=0.25;seed=13"
+    output_file="${app_name}_rmat_abc25_np${np}_n${n}_d${d}.json"
+    if [[ -s "$output_file" ]]; then
+      echo "[SKIPPING] ${app_name} np=${np} n=${n} d=${d} graph=rmat_abc25"
+    else
+      echo "[STARTING] ${app_name} np=${np} n=${n} d=${d} graph=rmat_abc25"
+      srun                   \
     --time=3:00          \
     --oom-kill-step=1    \
     --mpi=pmi2           \
@@ -51,11 +56,14 @@ else
     "$app"               \
       --output_file "$output_file" \
       --threads 76       \
-      --kagen_option_string "$kagen_string"; ec=$?
-  if [[ $ec -ne 0 ]]; then
-    [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-    echo "[FAILURE] ${app_name} NP=2052 Graph=rmat_abc25 ec=${ec}"
-  else
-    echo "[SUCCESS] ${app_name} NP=2052 Graph=rmat_abc25"
-  fi
+      --kagen_option_string "$kagen_string"; ec=$
+      if [[ $ec -ne 0 ]]; then
+        [[ $ec -eq 137 ]] && ec="${ec} (oom)"
+        echo "[FAILURE] ${app_name} np=${np} n=${n} d=${d} graph=rmat_abc25 ec=${ec}"
+      else
+        echo "[SUCCESS] ${app_name} np=${np} n=${n} d=${d} graph=rmat_abc25"
+      fi
+    fi
+  done
+done
 fi
