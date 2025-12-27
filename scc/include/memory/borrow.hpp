@@ -1,6 +1,7 @@
 #pragma once
 
 #include <debug/assert.hpp>
+#include <debug/valgrind.hpp>
 #include <memory/buffer.hpp>
 #include <memory/line.hpp>
 #include <util/arithmetic.hpp>
@@ -228,7 +229,10 @@ borrow_array(void** memory, u64 count) noexcept -> T*
 
   auto const result    = static_cast<T*>(*memory);
   auto const byte_size = line_align_up(count * sizeof(T));
-  *memory              = static_cast<void*>(static_cast<std::byte*>(*memory) + byte_size);
+
+  KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(result, count * sizeof(T));
+
+  *memory = static_cast<void*>(static_cast<std::byte*>(*memory) + byte_size);
   return result;
 }
 

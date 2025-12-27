@@ -1,4 +1,5 @@
 #include <ispan/scc.hpp>
+#include <debug/valgrind.hpp>
 #include <scc/adapter/kagen.hpp>
 #include <scc/adapter/manifest.hpp>
 #include <scc/allgather_graph.hpp>
@@ -63,6 +64,7 @@ main(int argc, char** argv)
 
   KASPAN_STATISTIC_ADD("world_rank", mpi_world_rank);
   KASPAN_STATISTIC_ADD("world_size", mpi_world_size);
+  KASPAN_STATISTIC_ADD("valgrind", KASPAN_VALGRIND_RUNNING_ON_VALGRIND);
   KASPAN_STATISTIC_ADD("alpha", alpha);
 
   if (kagen_option_string != nullptr) {

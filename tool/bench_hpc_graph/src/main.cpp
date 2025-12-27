@@ -2,6 +2,7 @@
 
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
+#include <debug/valgrind.hpp>
 #include <scc/adapter/kagen.hpp>
 #include <scc/adapter/manifest.hpp>
 #include <scc/pivot_selection.hpp>
@@ -120,6 +121,7 @@ main(int argc, char** argv)
   KASPAN_STATISTIC_SCOPE("benchmark");
   KASPAN_STATISTIC_ADD("world_rank", mpi_world_rank);
   KASPAN_STATISTIC_ADD("world_size", mpi_world_size);
+  KASPAN_STATISTIC_ADD("valgrind", KASPAN_VALGRIND_RUNNING_ON_VALGRIND);
 
   if (kagen_option_string != nullptr) {
     KASPAN_STATISTIC_PUSH("kagen");

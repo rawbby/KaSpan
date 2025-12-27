@@ -1,5 +1,6 @@
 #pragma once
 
+#include <debug/valgrind.hpp>
 #include <memory/file_buffer.hpp>
 #include <memory/line.hpp>
 #include <memory/page.hpp>
@@ -22,6 +23,7 @@ public:
   ~Buffer()
   {
     if (data_ != nullptr) {
+      KASPAN_VALGRIND_FREELIKE_BLOCK(data_, 0);
       line_free(data_);
       data_ = nullptr;
     }
@@ -31,6 +33,8 @@ public:
   {
     if (size) {
       data_ = line_alloc(size);
+      KASPAN_VALGRIND_MALLOCLIKE_BLOCK(data_, size, 0, 0);
+      KASPAN_VALGRIND_MAKE_MEM_NOACCESS(data_, size);
     }
   }
 
