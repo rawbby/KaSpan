@@ -27,6 +27,13 @@
    obj:*/libiomp5.so*
 }
 {
+   llvm_openmp
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   obj:*/libomp.so*
+}
+{
    intel_mpi_init
    Memcheck:Leak
    match-leak-kinds: all

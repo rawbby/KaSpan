@@ -23,7 +23,7 @@ public:
   ~Buffer()
   {
     if (data_ != nullptr) {
-      KASPAN_VALGRIND_FREELIKE_BLOCK(data_, 0);
+      DEBUG_ASSERT(is_line_aligned(data_));
       line_free(data_);
       data_ = nullptr;
     }
@@ -33,7 +33,7 @@ public:
   {
     if (size) {
       data_ = line_alloc(size);
-      KASPAN_VALGRIND_MALLOCLIKE_BLOCK(data_, size, 0, 0);
+      DEBUG_ASSERT(is_line_aligned(data_));
       KASPAN_VALGRIND_MAKE_MEM_NOACCESS(data_, size);
     }
   }
@@ -50,6 +50,7 @@ public:
   {
     if (this != &rhs) {
       if (data_ != nullptr) {
+        DEBUG_ASSERT(is_line_aligned(data_));
         KASPAN_VALGRIND_FREELIKE_BLOCK(data_, 0);
         line_free(data_);
       }

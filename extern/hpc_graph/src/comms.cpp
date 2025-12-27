@@ -117,8 +117,10 @@ void clear_comm_data(mpi_data_t* comm)
   free(comm->recvcounts_temp);
   free(comm->sdispls);
   free(comm->rdispls);
+  free(comm->rdispls_temp);
   free(comm->sdispls_cpy);
   free(comm->sdispls_temp);
+  free(comm->sdispls_cpy_temp);
   if (debug) { printf("Task %d clear_comm_data() success\n", procid); }
 }
 
@@ -126,10 +128,15 @@ void clear_thread_queue_comm_data(mpi_data_t* comm)
 {
   if (debug) { printf("Task %d clear_thread_queue_comm_data() start\n", procid); }
   free(comm->sendcounts);
+  free(comm->sendcounts_temp);
   free(comm->recvcounts);
+  free(comm->recvcounts_temp);
   free(comm->sdispls);
   free(comm->rdispls);
+  free(comm->rdispls_temp);
   free(comm->sdispls_cpy);
+  free(comm->sdispls_temp);
+  free(comm->sdispls_cpy_temp);
   if (debug) { printf("Task %d clear_thread_queue_comm_data() success\n", procid); }
 }
 

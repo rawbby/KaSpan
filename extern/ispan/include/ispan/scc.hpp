@@ -77,9 +77,11 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-result"
   depth_t* fw_sa = nullptr;
-  posix_memalign((void**)&fw_sa, getpagesize(), sizeof(*fw_sa) * (virtual_count + 1));
+  ASSERT(posix_memalign((void**)&fw_sa, getpagesize(), sizeof(*fw_sa) * (virtual_count + 1)) == 0);
+  SCOPE_GUARD(free(fw_sa));
   depth_t* bw_sa = nullptr;
-  posix_memalign((void**)&bw_sa, getpagesize(), sizeof(*bw_sa) * (virtual_count + 1));
+  ASSERT(posix_memalign((void**)&bw_sa, getpagesize(), sizeof(*bw_sa) * (virtual_count + 1)) == 0);
+  SCOPE_GUARD(free(bw_sa));
 #pragma GCC diagnostic pop
 
   auto* fq_comm = new vertex_t[virtual_count + 1]{};
