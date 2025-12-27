@@ -8,7 +8,7 @@
 #SBATCH -e hpc_graph_1064.err
 #SBATCH -J hpc_graph_1064
 #SBATCH --partition=cpuonly
-#SBATCH --time=25:00
+#SBATCH --time=30:00
 #SBATCH --export=ALL
 set -euo pipefail
 source ~/workspace/KaSpan/experiment/horeka/env.sh

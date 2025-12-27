@@ -8,7 +8,7 @@
 #SBATCH -e kaspan_medium.err
 #SBATCH -J kaspan_medium
 #SBATCH --partition=cpuonly
-#SBATCH --time=35:00
+#SBATCH --time=30:00
 #SBATCH --export=ALL
 set -euo pipefail
 source ~/workspace/KaSpan/experiment/horeka/env.sh

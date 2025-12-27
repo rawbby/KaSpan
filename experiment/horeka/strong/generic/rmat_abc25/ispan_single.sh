@@ -8,7 +8,7 @@
 #SBATCH -e isapn_single.err
 #SBATCH -J ispan_single
 #SBATCH --partition=cpuonly
-#SBATCH --time=45:00
+#SBATCH --time=30:00
 #SBATCH --export=ALL
 set -euo pipefail
 source ~/workspace/KaSpan/experiment/horeka/env.sh
