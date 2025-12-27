@@ -1,16 +1,13 @@
 #!/bin/bash
 
-# Source Intel OneAPI environment
-source /opt/intel/oneapi/setvars.sh
+export SETVARS_ARGS="--force" && source /opt/intel/oneapi/setvars.sh >/dev/null 2>&1 || true
 
-# Configuration
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BIN_DIR="${PROJECT_ROOT}/cmake-build-valgrind/bin"
 RWD_DIR="${PROJECT_ROOT}/experiment/rwd"
 
 VALGRIND="valgrind --leak-check=full --show-leak-kinds=definite,possible --track-origins=yes --error-exitcode=1 --quiet --suppressions=${PROJECT_ROOT}/experiment/local/valgrind.supp"
 
-# Generated Graphs
 GRAPHS=(
     "gnm-directed;n=23456;m=65432;seed=13"
     "rmat;directed;n=23456;m=65432;a=0.59;b=0.19;c=0.19;seed=13"
@@ -20,7 +17,6 @@ GRAPHS=(
     "rmat;directed;n=65432;m=23456;a=0.25;b=0.25;c=0.25;seed=13"
 )
 
-# Real-world data manifests
 MANIFESTS=($(ls "${RWD_DIR}"/*.manifest | xargs -n 1 basename))
 
 NP_LIST=(1 2 3 4)
@@ -48,6 +44,7 @@ function run_benchmark() {
 
             if [[ $? -ne 0 ]]; then
                 echo "FAILED: $app_name np=$np graph=$graph"
+                exit 1
             else
                 echo "SUCCESS: $app_name np=$np graph=$graph"
                 if [[ -s "$output_file" ]]; then
@@ -72,9 +69,9 @@ function run_benchmark() {
         for np in "${NP_LIST[@]}"; do
             if [[ $np -gt 4 ]]; then continue; fi
 
-            output_file=$(mktemp ./tmp_rwd_XXXXXX.json)
+            output_file=$(mktemp -p /tmp XXXXXXXX.json)
             trap "rm -f $output_file" EXIT
-            
+
             echo "--------------------------------------------------------"
             echo "Running $app_name with $np processes on RWD: $manifest"
             echo "--------------------------------------------------------"
@@ -83,6 +80,7 @@ function run_benchmark() {
             
             if [[ $? -ne 0 ]]; then
                 echo "FAILED: $app_name np=$np manifest=$manifest"
+                exit 1
             else
                 echo "SUCCESS: $app_name np=$np manifest=$manifest"
                 if [[ -s "$output_file" ]]; then
