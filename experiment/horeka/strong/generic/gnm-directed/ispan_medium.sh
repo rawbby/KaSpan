@@ -13,77 +13,34 @@
 
 set -euo pipefail
 
-module purge
-module load compiler/gnu/14
-module load mpi/impi/2021.11
-module load devel/cmake/3.30
+source ~/workspace/KaSpan/experiment/horeka/env.sh
+source ~/workspace/KaSpan/experiment/horeka/run_generic.sh
+source ~/workspace/KaSpan/experiment/horeka/run_parallel.sh
+
 
 app_name=ispan
 app=~/workspace/KaSpan/cmake-build-release/bin/bench_ispan
-
-
-export I_MPI_HYDRA_BOOTSTRAP=slurm
-export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi2.so
-export I_MPI_PIN=1
-export I_MPI_PIN_DOMAIN=core
-export I_MPI_PIN_ORDER=compact
-export I_MPI_JOB_TIMEOUT=3
 
 set +eu
 
 for n in 1000000000 100000000 10000000; do
   for d in 90 100 200 400; do
-    total_m=$(( n * d / 100 ))
-    kagen_string="gnm-directed;n=${n};m=${total_m};seed=13"
-    output_file="${app_name}_gnm-directed_np${np}_n${n}_d${d}.json"
-    if [[ -s "$output_file" ]]; then
-      echo "[SKIPPING] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed"
-    else
-      echo "[STARTING] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed"
-      srun                   \
-      --time=3:00          \
-      --oom-kill-step=1    \
-      --mpi=pmi2           \
-      --nodes=2            \
-      --exclusive          \
-      --ntasks=152         \
-      --cpus-per-task=1    \
-      --hint=nomultithread \
-      --cpu-bind=cores     \
-      "$app"               \
-        --output_file "$output_file" \
-        --kagen_option_string "$kagen_string" & pid152=$!
-  fi
+    m=$(( n * d / 100 ))
+    kagen_string="gnm-directed;n=${n};m=${m};seed=13"
+    run_async run_generic "$app" "${app_name}_gnm-directed_np152_n${n}_d${d}.json" "$kagen_string" "$app_name" 152 "$n" "$d" "gnm-directed" "--nodes=2 --ntasks=152 --cpus-per-task=1 --hint=nomultithread" 
+    run_async run_generic "$app" "${app_name}_gnm-directed_np304_n${n}_d${d}.json" "$kagen_string" "$app_name" 304 "$n" "$d" "gnm-directed" "--nodes=4 --ntasks=304 --cpus-per-task=1 --hint=nomultithread"
+    wait_all
+  done
+done
 
-  output_file="${app_name}_${manifest_name}_np304.json"
-  pid304=
-  if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} np=304 graph=${manifest_name}"
-  else
-    echo "[STARTING] ${app_name} np=304 graph=${manifest_name}"
-    srun                   \
-      --time=3:00          \
-      --oom-kill-step=1    \
-      --mpi=pmi2           \
-      --nodes=4            \
-      --exclusive          \
-      --ntasks=304         \
-      --cpus-per-task=1    \
-      --hint=nomultithread \
-      --cpu-bind=cores     \
-      "$app"               \
-        --output_file "$output_file" \
-        --kagen_option_string "$kagen_string" & pid304=$!
-  fi
-
-  if [[ $pid152 ]]; then
-    wait "$pid152"; ec=$; ec=$?
-      if [[ $ec -ne 0 ]]; then
-        [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-        echo "[FAILURE] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed ec=${ec}"
-      else
-        echo "[SUCCESS] ${app_name} np=${np} n=${n} d=${d} graph=gnm-directed"
-      fi
-    fi
+# np=532
+for local_n in 150000 300000 600000; do
+  for d in 90 100 200 400; do
+    n=$(( 532 * local_n ))
+    m=$(( n * d / 100 ))
+    [[ $m -le 4000000000 ]] && {
+      kagen_string="gnm-directed;n=${n};m=${m};seed=13"
+      run_generic "$app" "${app_name}_gnm-directed_np532_n${local_n}_d${d}.json" "$kagen_string" "$app_name" 532 "$local_n" "$d" "gnm-directed" "--nodes=7 --ntasks=532 --cpus-per-task=1 --hint=nomultithread" 
+    }
   done
 done

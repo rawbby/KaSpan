@@ -13,146 +13,42 @@
 
 set -euo pipefail
 
-module purge
-module load compiler/gnu/14
-module load mpi/impi/2021.11
-module load devel/cmake/3.30
+source ~/workspace/KaSpan/experiment/horeka/env.sh
+source ~/workspace/KaSpan/experiment/horeka/run_generic.sh
+source ~/workspace/KaSpan/experiment/horeka/run_parallel.sh
+
 
 app_name=kaspan
 app=~/workspace/KaSpan/cmake-build-release/bin/bench_kaspan
 
-export I_MPI_HYDRA_BOOTSTRAP=slurm
-export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi2.so
-export I_MPI_PIN=1
-export I_MPI_PIN_DOMAIN=core
-export I_MPI_PIN_ORDER=compact
-export I_MPI_JOB_TIMEOUT=3
-
 set +eu
 
-# np=152
-np=152
-kagen_string="rmat;directed;n=PLACEHOLDER_N;m=PLACEHOLDER_M;a=0.59;b=0.19;c=0.19;seed=13"
-kagen_string="${kagen_string/PLACEHOLDER_N/$((np * 150000))}"
-kagen_string="${kagen_string/PLACEHOLDER_M/$((np * 1500000))}"
-output_file="${app_name}_rmat_a59_bc19_np152.json"
-pid152=
-np=152
-for n in 150000 300000 600000; do
+for local_n in 150000 300000 600000; do
   for d in 90 100 200 400; do
-    total_n=$(( np * n ))
-    total_m=$(( total_n * d / 100 ))
-    if [[ $total_m -gt 4000000000 ]]; then
-      continue
-    fi
-    kagen_string="rmat;directed;n=${total_n};m=${total_m};a=0.59;b=0.19;c=0.19;seed=13"
-    output_file="${app_name}_rmat_a59_bc19_np152_n${n}_d${d}.json"
-    if [[ -s "$output_file" ]]; then
-      echo "[SKIPPING] ${app_name} np=152 n=${n} d=${d} graph=rmat_a59_bc19"
-    else
-      echo "[STARTING] ${app_name} np=152 n=${n} d=${d} graph=rmat_a59_bc19"
-      srun                   \
-    --time=3:00          \
-    --oom-kill-step=1    \
-    --mpi=pmi2           \
-    --nodes=2            \
-    --exclusive          \
-    --ntasks=152         \
-    --cpus-per-task=1    \
-    --hint=nomultithread \
-    --cpu-bind=cores     \
-    "$app"               \
-      --output_file "$output_file" \
-      --kagen_option_string "$kagen_string"
-    fi
+    n=$(( 152 * local_n ))
+    m=$(( n * d / 100 ))
+    [[ $m -le 4000000000 ]] && {
+      kagen_string="rmat;directed;n=${n};m=${m};a=0.59;b=0.19;c=0.19;seed=13"
+      run_async run_generic "$app" "${app_name}_rmat_a59_bc19_np152_n${local_n}_d${d}.json" "$kagen_string" "$app_name" 152 "$local_n" "$d" "rmat_a59_bc19" "--nodes=2 --ntasks=152 --cpus-per-task=1 --hint=nomultithread" 
+    }
+    n=$(( 304 * local_n ))
+    m=$(( n * d / 100 ))
+    [[ $m -le 4000000000 ]] && {
+      kagen_string="rmat;directed;n=${n};m=${m};a=0.59;b=0.19;c=0.19;seed=13"
+      run_async run_generic "$app" "${app_name}_rmat_a59_bc19_np304_n${local_n}_d${d}.json" "$kagen_string" "$app_name" 304 "$local_n" "$d" "rmat_a59_bc19" "--nodes=4 --ntasks=304 --cpus-per-task=1 --hint=nomultithread" 
+    }
+    wait_all
   done
-done & pid152=$!
-
-# np=304
-np=304
-kagen_string="rmat;directed;n=PLACEHOLDER_N;m=PLACEHOLDER_M;a=0.59;b=0.19;c=0.19;seed=13"
-kagen_string="${kagen_string/PLACEHOLDER_N/$((np * 150000))}"
-kagen_string="${kagen_string/PLACEHOLDER_M/$((np * 1500000))}"
-output_file="${app_name}_rmat_a59_bc19_np304.json"
-pid304=
-np=304
-for n in 150000 300000 600000; do
-  for d in 90 100 200 400; do
-    total_n=$(( np * n ))
-    total_m=$(( total_n * d / 100 ))
-    if [[ $total_m -gt 4000000000 ]]; then
-      continue
-    fi
-    kagen_string="rmat;directed;n=${total_n};m=${total_m};a=0.59;b=0.19;c=0.19;seed=13"
-    output_file="${app_name}_rmat_a59_bc19_np304_n${n}_d${d}.json"
-    if [[ -s "$output_file" ]]; then
-      echo "[SKIPPING] ${app_name} np=304 n=${n} d=${d} graph=rmat_a59_bc19"
-    else
-      echo "[STARTING] ${app_name} np=304 n=${n} d=${d} graph=rmat_a59_bc19"
-      srun                   \
-    --time=3:00          \
-    --oom-kill-step=1    \
-    --mpi=pmi2           \
-    --nodes=4            \
-    --exclusive          \
-    --ntasks=304         \
-    --cpus-per-task=1    \
-    --hint=nomultithread \
-    --cpu-bind=cores     \
-    "$app"               \
-      --output_file "$output_file" \
-      --kagen_option_string "$kagen_string"
-    fi
-  done
-done & pid304=$!
-
-if [[ $pid152 ]]; then
-  wait "$pid152"; ec=$?
-  if [[ $ec -ne 0 ]]; then
-    [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-    echo "[FAILURE] ${app_name} np=152 graph=rmat_a59_bc19"
-  else
-    echo "[SUCCESS] ${app_name} np=152 graph=rmat_a59_bc19"
-  fi
-fi
-
-if [[ $pid304 ]]; then
-  wait "$pid304"; ec=$?
-  if [[ $ec -ne 0 ]]; then
-    [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-    echo "[FAILURE] ${app_name} np=304 graph=rmat_a59_bc19"
-  else
-    echo "[SUCCESS] ${app_name} np=304 graph=rmat_a59_bc19"
-  fi
-fi
+done
 
 # np=532
-np=532
-kagen_string="rmat;directed;n=PLACEHOLDER_N;m=PLACEHOLDER_M;a=0.59;b=0.19;c=0.19;seed=13"
-kagen_string="${kagen_string/PLACEHOLDER_N/$((np * 150000))}"
-kagen_string="${kagen_string/PLACEHOLDER_M/$((np * 1500000))}"
-output_file="${app_name}_rmat_a59_bc19_np532.json"
-if [[ -s "$output_file" ]]; then
-  echo "[SKIPPING] ${app_name} np=532 graph=rmat_a59_bc19"
-else
-  echo "[STARTING] ${app_name} np=532 graph=rmat_a59_bc19"
-  srun                   \
-    --time=3:00          \
-    --oom-kill-step=1    \
-    --mpi=pmi2           \
-    --nodes=7            \
-    --exclusive          \
-    --ntasks=532         \
-    --cpus-per-task=1    \
-    --hint=nomultithread \
-    --cpu-bind=cores     \
-    "$app"               \
-      --output_file "$output_file" \
-      --kagen_option_string "$kagen_string"; ec=$?
-  if [[ $ec -ne 0 ]]; then
-    [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-    echo "[FAILURE] ${app_name} np=532 graph=rmat_a59_bc19 ec=${ec}"
-  else
-    echo "[SUCCESS] ${app_name} np=532 graph=rmat_a59_bc19"
-  fi
-fi
+for local_n in 150000 300000 600000; do
+  for d in 90 100 200 400; do
+    n=$(( 532 * local_n ))
+    m=$(( n * d / 100 ))
+    [[ $m -le 4000000000 ]] && {
+      kagen_string="rmat;directed;n=${n};m=${m};a=0.59;b=0.19;c=0.19;seed=13"
+      run_generic "$app" "${app_name}_rmat_a59_bc19_np532_n${local_n}_d${d}.json" "$kagen_string" "$app_name" 532 "$local_n" "$d" "rmat_a59_bc19" "--nodes=7 --ntasks=532 --cpus-per-task=1 --hint=nomultithread" 
+    }
+  done
+done

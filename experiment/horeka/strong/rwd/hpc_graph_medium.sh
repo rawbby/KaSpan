@@ -13,113 +13,28 @@
 
 set -euo pipefail
 
-module purge
-module load compiler/gnu/14
-module load mpi/impi/2021.11
-module load devel/cmake/3.30
+source ~/workspace/KaSpan/experiment/horeka/env.sh
+source ~/workspace/KaSpan/experiment/horeka/run_rwd.sh
+source ~/workspace/KaSpan/experiment/horeka/run_parallel.sh
+
 
 app_name=hpc_graph
 app=~/workspace/KaSpan/cmake-build-release/bin/bench_hpc_graph
 
+
 rwd=( ~/workspace/KaSpan/experiment/rwd/*.manifest )
 
-export I_MPI_HYDRA_BOOTSTRAP=slurm
-export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi2.so
-export I_MPI_PIN=1
-export I_MPI_PIN_DOMAIN=core
-export I_MPI_PIN_ORDER=compact
-export I_MPI_JOB_TIMEOUT=3
 
 set +eu
 
 for manifest in "${rwd[@]}"; do
   manifest_name="$(basename "${manifest%.manifest}")"
+  run_async run_rwd "$app" "${app_name}_${manifest_name}_np152.json" "$manifest" "$app_name" 152 "$manifest_name" "--nodes=2 --ntasks=2 --cpus-per-task=76" --threads 76
+  run_async run_rwd "$app" "${app_name}_${manifest_name}_np304.json" "$manifest" "$app_name" 304 "$manifest_name" "--nodes=4 --ntasks=4 --cpus-per-task=76" --threads 76
+  wait_all
+done
 
-  output_file="${app_name}_${manifest_name}_np152.json"
-  pid152=
-  if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} np=152 graph=${manifest_name}"
-  else
-    echo "[STARTING] ${app_name} np=152 graph=${manifest_name}"
-    srun                   \
-      --time=3:00          \
-      --oom-kill-step=1    \
-      --mpi=pmi2           \
-      --nodes=2            \
-      --exclusive          \
-      --ntasks=2           \
-      --cpus-per-task=76   \
-      --cpu-bind=cores     \
-      "$app"               \
-        --output_file "$output_file" \
-        --threads 76       \
-        --manifest_file "$manifest" & pid152=$!
-  fi
-
-  output_file="${app_name}_${manifest_name}_np304.json"
-  pid304=
-  if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} np=304 graph=${manifest_name}"
-  else
-    echo "[STARTING] ${app_name} np=304 graph=${manifest_name}"
-    srun                   \
-      --time=3:00          \
-      --oom-kill-step=1    \
-      --mpi=pmi2           \
-      --nodes=4            \
-      --exclusive          \
-      --ntasks=4           \
-      --cpus-per-task=76   \
-      --cpu-bind=cores     \
-      "$app"               \
-        --output_file "$output_file" \
-        --threads 76       \
-        --manifest_file "$manifest" & pid304=$!
-  fi
-
-  if [[ $pid152 ]]; then
-    wait "$pid152"; ec=$?
-    if [[ $ec -ne 0 ]]; then
-      [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} np=152 graph=${manifest_name}"
-    else
-      echo "[SUCCESS] ${app_name} np=152 graph=${manifest_name}"
-    fi
-  fi
-
-  if [[ $pid304 ]]; then
-    wait "$pid304"; ec=$?
-    if [[ $ec -ne 0 ]]; then
-      [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} np=304 graph=${manifest_name}"
-    else
-      echo "[SUCCESS] ${app_name} np=304 graph=${manifest_name}"
-    fi
-  fi
-
-  output_file="${app_name}_${manifest_name}_np532.json"
-  if [[ -s "$output_file" ]]; then
-    echo "[SKIPPING] ${app_name} np=532 graph=${manifest_name}"
-  else
-    echo "[STARTING] ${app_name} np=532 graph=${manifest_name}"
-    srun                   \
-      --time=3:00          \
-      --oom-kill-step=1    \
-      --mpi=pmi2           \
-      --nodes=7            \
-      --exclusive          \
-      --ntasks=7           \
-      --cpus-per-task=76   \
-      --cpu-bind=cores     \
-      "$app"               \
-        --output_file "$output_file" \
-        --threads 76       \
-        --manifest_file "$manifest"; ec=$?
-    if [[ $ec -ne 0 ]]; then
-      [[ $ec -eq 137 ]] && ec="${ec} (oom)"
-      echo "[FAILURE] ${app_name} np=532 graph=${manifest_name} ec=${ec}"
-    else
-      echo "[SUCCESS] ${app_name} np=532 graph=${manifest_name}"
-    fi
-  fi
+for manifest in "${rwd[@]}"; do
+  manifest_name="$(basename "${manifest%.manifest}")"
+  run_rwd "$app" "${app_name}_${manifest_name}_np532.json" "$manifest" "$app_name" 532 "$manifest_name" "--nodes=7 --ntasks=7 --cpus-per-task=76" --threads 76
 done
