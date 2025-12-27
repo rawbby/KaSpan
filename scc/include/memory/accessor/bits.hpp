@@ -64,8 +64,10 @@ make_bits(u64 size) noexcept -> Bits
 inline auto
 make_bits_clean(u64 size) noexcept -> Bits
 {
-  auto&& bits = Bits{ size };
-  std::memset(bits.data(), 0x00, ceildiv<64>(size) * sizeof(u64));
+  auto&& bits      = Bits{ size };
+  auto   byte_size = ceildiv<64>(size) * sizeof(u64);
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(bits.data(), byte_size);
+  std::memset(bits.data(), 0x00, byte_size);
 #ifdef KASPAN_DEBUG
   for (u64 i = 0; i < size; ++i)
     ASSERT_EQ(bits.get(i), false);
@@ -76,8 +78,10 @@ make_bits_clean(u64 size) noexcept -> Bits
 inline auto
 make_bits_filled(u64 size) noexcept -> Bits
 {
-  auto&& bits = Bits{ size };
-  std::memset(bits.data(), 0xff, ceildiv<64>(size) * sizeof(u64));
+  auto&& bits      = Bits{ size };
+  auto   byte_size = ceildiv<64>(size) * sizeof(u64);
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(bits.data(), byte_size);
+  std::memset(bits.data(), 0xff, byte_size);
 #ifdef KASPAN_DEBUG
   for (u64 i = 0; i < size; ++i)
     ASSERT_EQ(bits.get(i), true);

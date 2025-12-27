@@ -104,8 +104,8 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
 
         while (true) {
           auto const local_v = st.back();
-          st.pop();
           on_stack.unset(local_v);
+          st.pop();
           if (local_v == local_u)
             break;
         }

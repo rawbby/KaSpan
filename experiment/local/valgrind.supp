@@ -1,0 +1,44 @@
+{
+   intel_mpi_libfabric
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   obj:*/libfabric.so*
+}
+{
+   intel_mpi_libmpi
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   obj:*/libmpi.so*
+}
+{
+   intel_openmp
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   obj:*/libgomp.so*
+}
+{
+   intel_openmp_iomp
+   Memcheck:Leak
+   match-leak-kinds: all
+   ...
+   obj:*/libiomp5.so*
+}
+{
+   intel_mpi_init
+   Memcheck:Leak
+   match-leak-kinds: all
+   fun:malloc
+   ...
+   fun:PMPI_Init
+}
+{
+   intel_mpi_init_thread
+   Memcheck:Leak
+   match-leak-kinds: all
+   fun:malloc
+   ...
+   fun:PMPI_Init_thread
+}

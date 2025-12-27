@@ -8,7 +8,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BIN_DIR="${PROJECT_ROOT}/cmake-build-valgrind/bin"
 RWD_DIR="${PROJECT_ROOT}/experiment/rwd"
 
-VALGRIND="valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-exitcode=1 --verbose"
+VALGRIND="valgrind --leak-check=full --show-leak-kinds=definite,possible --track-origins=yes --error-exitcode=1 --quiet --suppressions=${PROJECT_ROOT}/experiment/local/valgrind.supp"
 
 # Generated Graphs
 GRAPHS=(

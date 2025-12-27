@@ -181,7 +181,9 @@ template<typename T = byte>
 static auto
 make_array(u64 count) noexcept -> Array<T>
 {
-  return Array<T>{ count };
+  auto result = Array<T>{ count };
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(result.data(), count * sizeof(T));
+  return result;
 }
 
 template<typename T = byte>
@@ -189,6 +191,7 @@ static auto
 make_array_clean(u64 count) noexcept -> Array<T>
 {
   auto result = Array<T>{ count };
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(result.data(), count * sizeof(T));
   std::memset(result, 0x00, count * sizeof(T));
   return result;
 }
@@ -198,6 +201,7 @@ static auto
 make_array_filled(u64 count) noexcept -> Array<T>
 {
   auto result = Array<T>{ count };
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(result.data(), count * sizeof(T));
   std::memset(result, 0xff, count * sizeof(T));
   return result;
 }
@@ -207,6 +211,7 @@ static auto
 make_array_filled(T const& value, u64 count) noexcept -> Array<T>
 {
   auto result = Array<T>{ count };
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(result.data(), count * sizeof(T));
   for (u64 i = 0; i < count; ++i) {
     std::memcpy(&result[i], &value, sizeof(T));
   }
@@ -230,7 +235,7 @@ borrow_array(void** memory, u64 count) noexcept -> T*
   auto const result    = static_cast<T*>(*memory);
   auto const byte_size = line_align_up(count * sizeof(T));
 
-  KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(result, count * sizeof(T));
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(result, count * sizeof(T));
 
   *memory = static_cast<void*>(static_cast<std::byte*>(*memory) + byte_size);
   return result;

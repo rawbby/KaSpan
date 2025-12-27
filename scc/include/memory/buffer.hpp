@@ -50,6 +50,7 @@ public:
   {
     if (this != &rhs) {
       if (data_ != nullptr) {
+        KASPAN_VALGRIND_FREELIKE_BLOCK(data_, 0);
         line_free(data_);
       }
       data_     = rhs.data_;

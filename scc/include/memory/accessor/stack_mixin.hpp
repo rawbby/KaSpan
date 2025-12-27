@@ -1,6 +1,7 @@
 #pragma once
 
 #include <debug/assert.hpp>
+#include <debug/valgrind.hpp>
 #include <util/arithmetic.hpp>
 
 #include <cstring>
@@ -31,6 +32,7 @@ public:
   void push(T const& t) noexcept
   {
     auto size = derived()->size();
+    KASPAN_VALGRIND_MAKE_MEM_DEFINED(&derived()->data()[size], sizeof(T));
     std::memcpy(&derived()->data()[size], &t, sizeof(T));
     derived()->set_size(size + 1);
   }
@@ -38,6 +40,7 @@ public:
   void push(T&& t) noexcept
   {
     auto size = derived()->size();
+    KASPAN_VALGRIND_MAKE_MEM_DEFINED(&derived()->data()[size], sizeof(T));
     std::memcpy(&derived()->data()[size], &t, sizeof(T));
     derived()->set_size(size + 1);
   }

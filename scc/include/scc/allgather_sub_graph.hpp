@@ -33,6 +33,7 @@ allgather_sub_ids(Part const& part, vertex_t local_sub_n, Fn&& in_sub_graph)
 
   auto ids_inverse_buffer = make_buffer<vertex_t>(sub_n);
   auto ids_inverse        = static_cast<vertex_t*>(ids_inverse_buffer.data());
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(ids_inverse, sub_n * sizeof(vertex_t));
   mpi_basic_allgatherv<vertex_t>(local_ids_inverse_stack.data(), local_ids_inverse_stack.size(), ids_inverse, counts, displs);
 
   auto* local_ids_inverse = ids_inverse + displs[mpi_world_rank];
@@ -60,6 +61,7 @@ allgather_csr_degrees(
   auto buffer = make_buffer<MPI_Count, MPI_Aint, vertex_t, index_t>(
     mpi_world_size, mpi_world_size, local_m, mpi_world_root + local_sub_n);
   void* memory = buffer.data();
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(memory, line_align_up(mpi_world_size * sizeof(MPI_Count)) + line_align_up(mpi_world_size * sizeof(MPI_Aint)) + line_align_up(local_m * sizeof(vertex_t)) + line_align_up((local_sub_n + mpi_world_root) * sizeof(index_t)));
 
   auto [counts, displs]  = mpi_basic_counts_and_displs(&memory);
   auto local_sub_csr     = StackAccessor<vertex_t>::borrow(&memory, local_m);

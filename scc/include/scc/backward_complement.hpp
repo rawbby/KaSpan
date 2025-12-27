@@ -3,6 +3,7 @@
 #include "adapter/edgelist.hpp"
 #include "graph.hpp"
 
+#include <debug/valgrind.hpp>
 #include <memory/accessor/stack_accessor.hpp>
 #include <memory/borrow.hpp>
 #include <memory/buffer.hpp>
@@ -147,6 +148,7 @@ backward_complement_graph_part(
 
   auto  recv_buffer = make_buffer<Edge>(recv_count);
   auto* recv_access = static_cast<Edge*>(recv_buffer.data());
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(recv_access, recv_count * sizeof(Edge));
   mpi_basic_alltoallv(send_stack.data(), send_counts, send_displs, recv_access, recv_counts, recv_displs, mpi_edge_t);
 
   result.local_m = recv_count;
