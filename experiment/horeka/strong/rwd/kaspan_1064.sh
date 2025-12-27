@@ -10,24 +10,15 @@
 #SBATCH --partition=cpuonly
 #SBATCH --time=25:00
 #SBATCH --export=ALL
-
 set -euo pipefail
-
 source ~/workspace/KaSpan/experiment/horeka/env.sh
 source ~/workspace/KaSpan/experiment/horeka/run_rwd.sh
-
-
-
 app_name=kaspan
 app=~/workspace/KaSpan/cmake-build-release/bin/bench_kaspan
-
-
 rwd=( ~/workspace/KaSpan/experiment/rwd/*.manifest )
-
 set +eu
-
 for manifest in "${rwd[@]}"; do
-  manifest_name="$(basename "${manifest%.manifest}")"
-  output_file="${app_name}_${manifest_name}_np1064.json"
-  run_rwd "$app" "$output_file" "$manifest" "$app_name" 1064 "$manifest_name" "--nodes=14 --ntasks=1064 --cpus-per-task=1 --hint=nomultithread"
+manifest_name="$(basename "${manifest%.manifest}")"
+output_file="${app_name}_${manifest_name}_np1064.json"
+run_rwd "$app" "$output_file" "$manifest" "$app_name" 1064 "$manifest_name" "--nodes=14 --ntasks=1064 --cpus-per-task=1 --hint=nomultithread"
 done

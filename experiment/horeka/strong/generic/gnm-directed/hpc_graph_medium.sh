@@ -10,37 +10,28 @@
 #SBATCH --partition=cpuonly
 #SBATCH --time=35:00
 #SBATCH --export=ALL
-
 set -euo pipefail
-
 source ~/workspace/KaSpan/experiment/horeka/env.sh
 source ~/workspace/KaSpan/experiment/horeka/run_generic.sh
 source ~/workspace/KaSpan/experiment/horeka/run_parallel.sh
-
-
 app_name=hpc_graph
 app=~/workspace/KaSpan/cmake-build-release/bin/bench_hpc_graph
-
 set +eu
-
 for n in 1000000000 100000000 10000000; do
-  for d in 90 100 200 400; do
-    m=$(( n * d / 100 ))
-    kagen_string="gnm-directed;n=${n};m=${m};seed=13"
-    run_async run_generic "$app" "${app_name}_gnm-directed_np152_n${n}_d${d}.json" "$kagen_string" "$app_name" 152 "$n" "$d" "gnm-directed" "--nodes=2 --ntasks=2 --cpus-per-task=76" --threads 76
-    run_async run_generic "$app" "${app_name}_gnm-directed_np304_n${n}_d${d}.json" "$kagen_string" "$app_name" 304 "$n" "$d" "gnm-directed" "--nodes=4 --ntasks=4 --cpus-per-task=76" --threads 76
-    wait_all
-  done
+for d in 90 100 200 400; do
+m=$(( n * d / 100 ))
+kagen_string="gnm-directed;n=${n};m=${m};seed=13"
+run_async run_generic "$app" "${app_name}_gnm-directed_np152_n${n}_d${d}.json" "$kagen_string" "$app_name" 152 "$n" "$d" "gnm-directed" "--nodes=2 --ntasks=2 --cpus-per-task=76" --threads 76
+run_async run_generic "$app" "${app_name}_gnm-directed_np304_n${n}_d${d}.json" "$kagen_string" "$app_name" 304 "$n" "$d" "gnm-directed" "--nodes=4 --ntasks=4 --cpus-per-task=76" --threads 76
+wait_all
 done
-
+done
 # np=532
 for local_n in 150000 300000 600000; do
-  for d in 90 100 200 400; do
-    n=$(( 532 * local_n ))
-    m=$(( n * d / 100 ))
-    [[ $m -le 4000000000 ]] && {
-      kagen_string="gnm-directed;n=${n};m=${m};seed=13"
-      run_generic "$app" "${app_name}_gnm-directed_np532_n${local_n}_d${d}.json" "$kagen_string" "$app_name" 532 "$local_n" "$d" "gnm-directed" "--nodes=7 --ntasks=7 --cpus-per-task=76" --threads 76
-    }
-  done
+for d in 90 100 200 400; do
+n=$(( 532 * local_n ))
+m=$(( n * d / 100 ))
+kagen_string="gnm-directed;n=${n};m=${m};seed=13"
+run_generic "$app" "${app_name}_gnm-directed_np532_n${local_n}_d${d}.json" "$kagen_string" "$app_name" 532 "$local_n" "$d" "gnm-directed" "--nodes=7 --ntasks=7 --cpus-per-task=76" --threads 76
+done
 done

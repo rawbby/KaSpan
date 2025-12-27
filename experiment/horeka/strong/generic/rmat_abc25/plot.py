@@ -62,7 +62,6 @@ def get_kaspan_progress(data):
         decided = get_decided(stage_path)
         if dur is not None and decided is not None:
             res.append({"name": stage_path[-1], "duration": dur, "decided_count": decided})
-
     return res
 
 
@@ -99,7 +98,6 @@ def get_ispan_progress(data):
         decided = get_decided(stage_path)
         if dur is not None and decided is not None:
             res.append({"name": stage_path[-1], "duration": dur, "decided_count": decided})
-
     return res
 
 
@@ -135,7 +133,6 @@ def get_hpc_graph_progress(data):
         decided = get_decided(stage_path)
         if dur is not None and decided is not None:
             res.append({"name": stage_path[-1], "duration": dur, "decided_count": decided})
-
     return res
 
 
@@ -235,11 +232,9 @@ def mark_topology(ax, min_n, max_n):
 cwd = pathlib.Path(os.getcwd())
 pattern = re.compile(r"(kaspan|ispan|hpc_graph)_(.*)_np([0-9]+)\.json")
 files = [p for p in cwd.iterdir() if p.is_file()]
-
 raw_data = {}
 graphs = set()
 apps = set()
-
 for p in files:
     m = pattern.fullmatch(p.name)
     if not m: continue
@@ -261,7 +256,6 @@ for p in files:
     except Exception as e:
         print(f"Error loading {p.name}: {e}")
         continue
-
 markers = ["o", "s", "D", "^", "v", "P", "X", "d"]
 all_stages = set()
 for graph in raw_data:
@@ -271,30 +265,25 @@ for graph in raw_data:
                 all_stages.add(stage["name"])
 all_stages = sorted(list(all_stages))
 stage_style = {stage: (plt.get_cmap("tab20")(i % 20), markers[i % len(markers)]) for i, stage in enumerate(all_stages)}
-
 apps = sorted(list(apps))
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 app_style = {app: (colors[i % len(colors)], markers[i % len(markers)]) for i, app in enumerate(apps)}
-
 for graph in graphs:
     print(f"Plotting graph: {graph}")
     graph_data = raw_data[graph]
     all_nps = sorted(list(set(n for a in graph_data for n in graph_data[a])))
-
     # plot progress per app
     for app in apps:
         if app not in graph_data: continue
         fig, ax = plt.subplots(figsize=(8, 6), layout="constrained")
         app_nps = sorted(list(graph_data[app].keys()))
         setup_ax(ax, f"Progress: {graph} ({app})", "Decisions per second", app_nps, log_y=True)
-
         # Find all stages for this app
         stages = set()
         for np_val in graph_data[app]:
             for stage in graph_data[app][np_val][2]:
                 stages.add(stage["name"])
         stages = sorted(list(stages))
-
         for stage_name in stages:
             x_vals = []
             y_vals = []
@@ -304,17 +293,14 @@ for graph in graphs:
                 if stage_data and stage_data["duration"] > 0 and stage_data["decided_count"] > 0:
                     x_vals.append(np_val)
                     y_vals.append(stage_data["decided_count"] / stage_data["duration"])
-
             if x_vals:
                 c, m = stage_style[stage_name]
                 ax.plot(x_vals, y_vals, label=stage_name, color=c, marker=m)
-
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=len(stages))
         out_path = cwd / f"{graph}_{app}_progress.png"
         print(f"Saving plot to {out_path}")
         fig.savefig(out_path, dpi=DPI, bbox_inches="tight")
         plt.close(fig)
-
     max_dur = 0
     max_mem = 0
     for app in apps:
@@ -325,14 +311,11 @@ for graph in graphs:
         valid_mems = [m for m in mems if m is not None]
         if valid_durs: max_dur = max(max_dur, max(valid_durs))
         if valid_mems: max_mem = max(max_mem, max(valid_mems))
-
     t_scale, t_unit = get_time_info(max_dur)
     m_scale, m_unit = get_memory_info(max_mem)
-
     min_np = min(all_nps)
     candidates = [graph_data[app][min_np][0] for app in graph_data if min_np in graph_data[app]]
     baseline_dur = min(candidates) if candidates else None
-
     for plot_type in ["duration", "speedup", "memory"]:
         fig, ax = plt.subplots(figsize=(8, 6), layout="constrained")
         if plot_type == "duration":
@@ -341,13 +324,11 @@ for graph in graphs:
             setup_ax(ax, f"Speedup: {graph}", "Speedup", all_nps, log_y=False)
         else:
             setup_ax(ax, f"Memory: {graph}", f"Memory [{m_unit}/np]", all_nps)
-
         for app in apps:
             if app not in graph_data: continue
             c, m = app_style[app]
             durs = [graph_data[app].get(n, (None, None))[0] for n in all_nps]
             mems = [graph_data[app].get(n, (None, None))[1] for n in all_nps]
-
             x_vals = []
             y_vals = []
             if plot_type == "duration":
@@ -365,10 +346,8 @@ for graph in graphs:
                     if m_val is not None and m_val > 0:
                         x_vals.append(n)
                         y_vals.append(m_val * m_scale)
-
             if x_vals:
                 ax.plot(x_vals, y_vals, label=app, color=c, marker=m)
-
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=len(apps))
         out_path = cwd / f"{graph}_{plot_type}.png"
         print(f"Saving plot to {out_path}")
