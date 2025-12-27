@@ -1,22 +1,34 @@
 import os
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
 def write(path, content):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w') as f: f.write(content)
+    abs_path = os.path.join(SCRIPT_DIR, path)
+    os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+    with open(abs_path, 'w') as f: f.write(content)
+
 
 apps = {'kaspan': 'bench_kaspan', 'ispan': 'bench_ispan', 'hpc_graph': 'bench_hpc_graph'}
 configs = {
-    'single': {'nodes': 1, 'ntasks': 76, 'cpus': 1, 'socket': 38, 'node_tasks': 76, 'is_hpc': {'ntasks': 1, 'socket': 1, 'node_tasks': 1, 'cpus': 76}},
-    'medium': {'nodes': 7, 'ntasks': 532, 'cpus': 1, 'socket': 38, 'node_tasks': 76, 'is_hpc': {'ntasks': 7, 'socket': 1, 'node_tasks': 1, 'cpus': 76}},
-    '1064': {'nodes': 14, 'ntasks': 1064, 'cpus': 1, 'socket': 38, 'node_tasks': 76, 'is_hpc': {'ntasks': 14, 'socket': 1, 'node_tasks': 1, 'cpus': 76}},
-    '2052': {'nodes': 27, 'ntasks': 2052, 'cpus': 1, 'socket': 38, 'node_tasks': 76, 'is_hpc': {'ntasks': 27, 'socket': 1, 'node_tasks': 1, 'cpus': 76}},
-    '4104': {'nodes': 54, 'ntasks': 4104, 'cpus': 1, 'socket': 38, 'node_tasks': 76, 'is_hpc': {'ntasks': 54, 'socket': 1, 'node_tasks': 1, 'cpus': 76}},
+    'single': {'nodes': 1, 'ntasks': 76, 'cpus': 1, 'socket': 38, 'node_tasks': 76,
+               'is_hpc': {'ntasks': 1, 'socket': 1, 'node_tasks': 1, 'cpus': 76}},
+    'medium': {'nodes': 7, 'ntasks': 532, 'cpus': 1, 'socket': 38, 'node_tasks': 76,
+               'is_hpc': {'ntasks': 7, 'socket': 1, 'node_tasks': 1, 'cpus': 76}},
+    '1064': {'nodes': 14, 'ntasks': 1064, 'cpus': 1, 'socket': 38, 'node_tasks': 76,
+             'is_hpc': {'ntasks': 14, 'socket': 1, 'node_tasks': 1, 'cpus': 76}},
+    '2052': {'nodes': 27, 'ntasks': 2052, 'cpus': 1, 'socket': 38, 'node_tasks': 76,
+             'is_hpc': {'ntasks': 27, 'socket': 1, 'node_tasks': 1, 'cpus': 76}},
+    '4104': {'nodes': 54, 'ntasks': 4104, 'cpus': 1, 'socket': 38, 'node_tasks': 76,
+             'is_hpc': {'ntasks': 54, 'socket': 1, 'node_tasks': 1, 'cpus': 76}},
 }
 generics = {
     'gnm-directed': 'gnm-directed;n=${n};m=${m};seed=13',
     'rmat_a59_bc19': 'rmat;directed;n=${n};m=${m};a=0.59;b=0.19;c=0.19;seed=13',
     'rmat_abc25': 'rmat;directed;n=${n};m=${m};a=0.25;b=0.25;c=0.25;seed=13'
 }
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 
 for scaling in ['weak', 'strong']:
     for g_name, kagen in generics.items():
@@ -27,7 +39,7 @@ for scaling in ['weak', 'strong']:
                 sbatch_name = 'kaspan' if comp == 'ispan' and scaling == 'weak' else comp
                 out_err_name = f"{sbatch_name}_{s_name}"
                 if comp == 'ispan' and scaling == 'strong' and s_name == 'single': out_err_name = "isapn_single"
-                
+
                 header = f"""#!/bin/bash
 #SBATCH --nodes={cfg['nodes']}
 #SBATCH --ntasks={c['ntasks']}
@@ -41,11 +53,11 @@ for scaling in ['weak', 'strong']:
 #SBATCH --time=30:00
 #SBATCH --export=ALL
 set -euo pipefail
-source ~/workspace/KaSpan/experiment/horeka/env.sh
-source ~/workspace/KaSpan/experiment/horeka/run_generic.sh"""
-                if s_name == 'medium': header += "\nsource ~/workspace/KaSpan/experiment/horeka/run_parallel.sh"
-                header += f"\napp_name={comp}\napp=~/workspace/KaSpan/cmake-build-release/bin/{app_bin}\nset +eu"
-                
+source {SCRIPT_DIR}/env.sh
+source {SCRIPT_DIR}/run_generic.sh"""
+                if s_name == 'medium': header += f"\nsource {SCRIPT_DIR}/run_parallel.sh"
+                header += f"\napp_name={comp}\napp={PROJECT_ROOT}/cmake-build-release/bin/{app_bin}\nset +eu"
+
                 body = ""
                 if scaling == 'weak':
                     if s_name == 'single':
@@ -68,7 +80,7 @@ source ~/workspace/KaSpan/experiment/horeka/run_generic.sh"""
                         body += f"{m_line}\nkagen_string=\"{kg}\"\noutput_file=\"${{app_name}}_{g_name}_np${{np}}_n${{local_n}}_d${{d}}.json\"\n"
                         run_args = f'--nodes={cfg["nodes"]} --ntasks={cfg["ntasks"] if not is_hpc else cfg["nodes"]} --cpus-per-task={1 if not is_hpc else 76}{" --hint=nomultithread" if not is_hpc else ""}'
                         body += f'run_generic "$app" "$output_file" "$kagen_string" "$app_name" "$np" "$local_n" "$d" "{g_name}" "{run_args}"{" --threads 76" if is_hpc else ""}\ndone\ndone\n'
-                else: # strong
+                else:  # strong
                     if s_name == 'single':
                         body = "\nfor np in 76 38 16 8 4 2 1; do\nfor n in 1000000000 100000000 10000000; do\nfor d in 90 100 200 400; do\nm=$(( n * d / 100 ))\nkagen_string=\"" + kagen + "\"\noutput_file=\"${app_name}_" + g_name + "_np${np}_n${n}_d${d}.json\"\n"
                         run_args = "--nodes=1 --ntasks=$np --cpus-per-task=1 --hint=nomultithread" if not is_hpc else "--nodes=1 --ntasks=1 --ntasks-per-socket=1 --cpus-per-task=$np"
@@ -81,12 +93,12 @@ source ~/workspace/KaSpan/experiment/horeka/run_generic.sh"""
                         body += "wait_all\ndone\ndone\n# np=532\nfor n in 1000000000 100000000 10000000; do\nfor d in 90 100 200 400; do\nm=$(( n * d / 100 ))\nkagen_string=\"" + kagen + "\"\n"
                         run_args = f'--nodes=7 --ntasks={532 if not is_hpc else 7} --cpus-per-task={1 if not is_hpc else 76}{" --hint=nomultithread" if not is_hpc else ""}'
                         body += f'run_generic "$app" "${{app_name}}_{g_name}_np532_n${{n}}_d${{d}}.json" "$kagen_string" "$app_name" 532 "$n" "$d" "{g_name}" "{run_args}"{" --threads 76" if is_hpc else ""}\ndone\ndone\n'
-                    else: # 1064, 2052, 4104
+                    else:  # 1064, 2052, 4104
                         body = f"\nnp={cfg['ntasks']}\nfor n in 1000000000 100000000 10000000; do\nfor d in 90 100 200 400; do\nm=$(( n * d / 100 ))\nkagen_string=\"" + kagen + "\"\noutput_file=\"${app_name}_" + g_name + "_np${np}_n${n}_d${d}.json\"\n"
                         n_run = cfg['ntasks'] if not is_hpc else cfg['nodes']
                         run_args = f'--nodes={cfg["nodes"]} --ntasks={n_run} --cpus-per-task={1 if not is_hpc else 76}{" --hint=nomultithread" if not is_hpc else ""}'
                         body += f'run_generic "$app" "$output_file" "$kagen_string" "$app_name" "$np" "$n" "$d" "{g_name}" "{run_args}"{" --threads 76" if is_hpc else ""}\ndone\ndone\n'
-                write(f"experiment/horeka/{scaling}/generic/{g_name}/{comp}_{s_name}.sh", header + body)
+                write(f"{scaling}/generic/{g_name}/{comp}_{s_name}.sh", header + body)
 
 for comp, app_bin in apps.items():
     for s_name, cfg in configs.items():
@@ -106,10 +118,10 @@ for comp, app_bin in apps.items():
 #SBATCH --time=30:00
 #SBATCH --export=ALL
 set -euo pipefail
-source ~/workspace/KaSpan/experiment/horeka/env.sh
-source ~/workspace/KaSpan/experiment/horeka/run_rwd.sh"""
-        if s_name == 'medium': header += "\nsource ~/workspace/KaSpan/experiment/horeka/run_parallel.sh"
-        header += f"\napp_name={comp}\napp=~/workspace/KaSpan/cmake-build-release/bin/{app_bin}\nrwd=( ~/workspace/KaSpan/experiment/rwd/*.manifest )\nset +eu\n"
+source {SCRIPT_DIR}/env.sh
+source {SCRIPT_DIR}/run_rwd.sh"""
+        if s_name == 'medium': header += f"\nsource {SCRIPT_DIR}/run_parallel.sh"
+        header += f"\napp_name={comp}\napp={PROJECT_ROOT}/cmake-build-release/bin/{app_bin}\nrwd=( {SCRIPT_DIR}/rwd/*.manifest )\nset +eu\n"
         body = 'for manifest in "${rwd[@]}"; do\n'
         if s_name == 'single':
             body += "for np in 76 38 16 8 4 2 1; do\nmanifest_name=\"$(basename \"${manifest%.manifest}\")\"\noutput_file=\"${app_name}_${manifest_name}_np${np}.json\"\n"
@@ -123,8 +135,11 @@ source ~/workspace/KaSpan/experiment/horeka/run_rwd.sh"""
             body += "wait_all\ndone\nfor manifest in \"${rwd[@]}\"; do\nmanifest_name=\"$(basename \"${manifest%.manifest}\")\"\n"
             run_args = f'--nodes=7 --ntasks={532 if not is_hpc else 7} --cpus-per-task={1 if not is_hpc else 76}{" --hint=nomultithread" if not is_hpc else ""}'
             body += f'run_rwd "$app" "${{app_name}}_${{manifest_name}}_np532.json" "$manifest" "$app_name" 532 "$manifest_name" "{run_args}"{" --threads 76" if is_hpc else ""}\ndone\n'
-        else: # 1064
+        else:  # 1064
             body += "manifest_name=\"$(basename \"${manifest%.manifest}\")\"\noutput_file=\"${app_name}_${manifest_name}_np1064.json\"\n"
             run_args = f'--nodes=14 --ntasks={1064 if not is_hpc else 14} --cpus-per-task={1 if not is_hpc else 76}{" --hint=nomultithread" if not is_hpc else ""}'
             body += f'run_rwd "$app" "$output_file" "$manifest" "$app_name" 1064 "$manifest_name" "{run_args}"{" --threads 76" if is_hpc else ""}\ndone\n'
-        write(f"experiment/horeka/strong/rwd/{comp}_{s_name}.sh", header + body)
+        write(f"strong/rwd/{comp}_{s_name}.sh", header + body)
+
+if __name__ == '__main__':
+    ...

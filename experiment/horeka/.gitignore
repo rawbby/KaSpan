@@ -1,0 +1,7 @@
+./strong/generic/gnm-directed/*.sh
+./strong/generic/rmat_a59_bc19/*.sh
+./strong/generic/rmat_abc25/*.sh
+./strong/rwd/*.sh
+./weak/generic/gnm-directed/*.sh
+./weak/generic/rmat_a59_bc19/*.sh
+./weak/generic/rmat_abc25/*.sh
