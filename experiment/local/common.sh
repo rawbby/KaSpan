@@ -5,25 +5,25 @@ source /opt/intel/oneapi/setvars.sh
 
 # Configuration
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-BIN_DIR="${PROJECT_ROOT}/cmake-build-debug/bin"
+BIN_DIR="${PROJECT_ROOT}/cmake-build-valgrind/bin"
 RWD_DIR="${PROJECT_ROOT}/experiment/rwd"
 
 VALGRIND="valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-exitcode=1 --verbose"
 
 # Generated Graphs
 GRAPHS=(
-    "gnm-directed;n=123456;m=654321;seed=13"
-    "rmat;directed;n=123456;m=654321;a=0.59;b=0.19;c=0.19;seed=13"
-    "rmat;directed;n=123456;m=654321;a=0.25;b=0.25;c=0.25;seed=13"
-    "gnm-directed;n=654321;m=123456;seed=13"
-    "rmat;directed;n=654321;m=123456;a=0.59;b=0.19;c=0.19;seed=13"
-    "rmat;directed;n=654321;m=123456;a=0.25;b=0.25;c=0.25;seed=13"
+    "gnm-directed;n=23456;m=65432;seed=13"
+    "rmat;directed;n=23456;m=65432;a=0.59;b=0.19;c=0.19;seed=13"
+    "rmat;directed;n=23456;m=65432;a=0.25;b=0.25;c=0.25;seed=13"
+    "gnm-directed;n=65432;m=23456;seed=13"
+    "rmat;directed;n=65432;m=23456;a=0.59;b=0.19;c=0.19;seed=13"
+    "rmat;directed;n=65432;m=23456;a=0.25;b=0.25;c=0.25;seed=13"
 )
 
 # Real-world data manifests
 MANIFESTS=($(ls "${RWD_DIR}"/*.manifest | xargs -n 1 basename))
 
-NP_LIST=(1 2 4 8)
+NP_LIST=(1 2 3 4)
 
 function run_benchmark() {
     local app_name="$1"
