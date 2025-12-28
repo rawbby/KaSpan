@@ -16,7 +16,6 @@
 
 # TODO
 
-- [ ] Try do the trim1 operation before tarjan
 - [ ] Try redistributing the graph after ecl step (problem: map (fw_label, bw_label) => rank, redistribute small enough
   components, and map results back)
 - [ ] Try asynchronous communication in ecl step (and reimplement async communication in forward backward search)
