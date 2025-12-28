@@ -1,0 +1,191 @@
+#pragma once
+
+#include <debug/assert.hpp>
+#include <memory/accessor/bits_accessor.hpp>
+#include <memory/accessor/stack_accessor.hpp>
+#include <scc/base.hpp>
+#include <scc/graph.hpp>
+
+#include <briefkasten/buffered_queue.hpp>
+
+#include <functional>
+#include <queue>
+
+/* Async ECL label propagation with Briefkasten communication.
+ * The ECL label propagation partitions the graph into components that are guaranteed to be supersets of strongly connected components.
+ * Further per weakly connected component the ECL label propagation identifies one strongly connected component per weakly connected component.
+ *
+ * Idea of the algorithm: extremely parallel forward backward search via fw and bw label pair.
+ * min label is propagated along fw and bw graph, resulting in one scc found per wcc with root as min vertex in wcc.
+ * The result can be used for further iteration as each label pair identifies a superset of scc components.
+ * (scc subset ecl-component subset wcc subset graph)
+ * if fw_label and bw_label are equal, ecl-component is scc component.
+ */
+
+namespace async {
+
+template<WorldPartConcept Part>
+void
+ecl_scc_init_label(
+  Part const& part,
+  vertex_t*   ecl_fw_label,
+  vertex_t*   ecl_bw_label)
+{
+  auto const local_n = part.local_n();
+  for (vertex_t k = 0; k < local_n; ++k) {
+    auto const u    = part.to_global(k);
+    ecl_fw_label[k] = u;
+    ecl_bw_label[k] = u;
+  }
+}
+
+template<WorldPartConcept Part, typename BriefQueue>
+auto
+ecl_scc_step(
+  Part const&     part,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  BriefQueue&     mq,
+  vertex_t*       scc_id,
+  vertex_t*       ecl_fw_label,
+  vertex_t*       ecl_bw_label,
+  vertex_t*       active_array,
+  BitsAccessor    active,
+  BitsAccessor    changed,
+  vertex_t        decided_count = 0) -> vertex_t
+{
+  // this function uses the project convention that:
+  // k,l always describe local vertex ids
+  // u,v always describe global vertex ids
+  // (csr stores global vertex ids)
+  // (head is accessed by local vertex ids)
+
+  auto const local_n = part.local_n();
+
+#if KASPAN_DEBUG
+  // Validate decided_count is consistent with scc_id
+  vertex_t actual_decided_count = 0;
+  for (vertex_t k = 0; k < local_n; ++k) {
+    if (scc_id[k] != scc_id_undecided) {
+      ++actual_decided_count;
+    }
+  }
+  DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
+#endif
+
+  auto active_stack = StackAccessor<vertex_t>{ active_array };
+
+  auto const saturate_direction = [&](index_t const* head, vertex_t const* csr, vertex_t* ecl_label) {
+    DEBUG_ASSERT(active_stack.empty());
+
+    // Message queue for edge (vertex, label) pairs
+    std::queue<Edge> local_q;
+
+    auto on_message = [&](auto env) {
+      for (auto&& edge : env.message) {
+        local_q.push(edge);
+      }
+    };
+
+    active.fill_cmp(local_n, scc_id, scc_id_undecided);
+    std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
+    active.for_each(local_n, [&](auto&& k) {
+      active_stack.push(k);
+    });
+
+    while (true) {
+
+      // === LOCAL SATURATION ===
+
+      // this step iterates local until saturation
+      // to reduce communication overhead.
+
+      while (not active_stack.empty()) {
+        auto const k = active_stack.back();
+        active_stack.pop();
+
+        auto const label = ecl_label[k];
+        for (auto v : csr_range(head, csr, k)) {
+          if (part.has_local(v)) {
+            auto const l = part.to_local(v);
+            if (label < ecl_label[l] and scc_id[l] == scc_id_undecided) {
+              ecl_label[l] = label;
+              changed.set(l);
+              if (not active.get(l)) {
+                active.set(l);
+                active_stack.push(l);
+              }
+            }
+          }
+        }
+
+        active.unset(k);
+      }
+
+      DEBUG_ASSERT(active_stack.empty());
+
+      // === COMMUNICATE (CHANGED) LABELS ===
+
+      changed.for_each(local_n, [&](auto&& k) {
+        auto const label_k = ecl_label[k];
+        for (auto v : csr_range(head, csr, k)) {
+          if (label_k < v and not part.has_local(v)) {
+            DEBUG_ASSERT_NE(part.world_rank_of(v), mpi_world_rank);
+            mq.post_message_blocking(Edge{ v, label_k }, part.world_rank_of(v), on_message);
+          }
+        }
+        mq.poll_throttled(on_message);
+      });
+      changed.clear(local_n);
+
+      // === CHECK CONVERGENCE ===
+
+      // if no messages to exchange (globally)
+      // the labels converged.
+
+      if (not mq.terminate(on_message)) {
+        break;
+      }
+
+      // === CHECK INCOMING PROPAGATIONS ===
+
+      while (!local_q.empty()) {
+        auto const [u, label] = local_q.front();
+        local_q.pop();
+
+        DEBUG_ASSERT(part.has_local(u));
+        auto const k = part.to_local(u);
+
+        if (label < ecl_label[k] and scc_id[k] == scc_id_undecided) {
+          ecl_label[k] = label;
+          changed.set(k);
+          if (not active.get(k)) {
+            active.set(k);
+            active_stack.push(k);
+          }
+        }
+      }
+    }
+  };
+
+  saturate_direction(fw_head, fw_csr, ecl_fw_label);
+  saturate_direction(bw_head, bw_csr, ecl_bw_label);
+
+  vertex_t local_decided_count = 0;
+  for (vertex_t k = 0; k < local_n; ++k) {
+    if (scc_id[k] == scc_id_undecided) {
+      auto const label = ecl_fw_label[k];
+      if (label == ecl_bw_label[k]) {
+        scc_id[k] = label;
+        ++local_decided_count;
+      }
+    }
+  }
+
+  DEBUG_ASSERT_GT(mpi_basic_allreduce_single(local_decided_count, MPI_SUM), 0);
+  return local_decided_count;
+}
+
+} // namespace async

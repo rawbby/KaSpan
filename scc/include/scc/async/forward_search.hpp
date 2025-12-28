@@ -2,8 +2,7 @@
 
 #include <debug/assert.hpp>
 #include <debug/statistic.hpp>
-#include <util/pp.hpp>
-
+#include <memory/accessor/bits_accessor.hpp>
 #include <scc/base.hpp>
 #include <scc/graph.hpp>
 
@@ -14,16 +13,16 @@
 namespace async {
 
 template<WorldPartConcept Part, typename BriefQueue>
-void
+auto
 forward_search(
-  GraphPart<Part> const& graph,
-  BriefQueue&            mq,
-  vertex_t*              scc_id,
-  BitAccessor            fw_reached,
-  IF(KASPAN_NORMALIZE, vertex_t&, vertex_t) root)
+  Part const&      part,
+  index_t const*   fw_head,
+  vertex_t const*  fw_csr,
+  BriefQueue&      mq,
+  vertex_t const*  scc_id,
+  BitsAccessor     fw_reached,
+  vertex_t         root) -> vertex_t
 {
-  KASPAN_STATISTIC_SCOPE("forward_search");
-
   std::queue<vertex_t> local_q;
 
   auto on_message = [&](auto env) {
@@ -31,32 +30,34 @@ forward_search(
       local_q.push(v);
   };
 
-  if (graph.part.has_local(root))
+  if (part.has_local(root)) {
     local_q.push(root);
+    ASSERT(not fw_reached.get(part.to_local(root)));
+    ASSERT(scc_id[part.to_local(root)] == scc_id_undecided, "root=%d", root);
+  }
 
   do {
     while (!local_q.empty()) {
       auto const u = local_q.front();
       local_q.pop();
 
-      DEBUG_ASSERT(graph.part.has_local(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
-      auto const k = graph.part.to_local(u);
+      DEBUG_ASSERT(part.has_local(u), "It should be impossible to receive a vertex that is not contained in the ranks partition");
+      auto const k = part.to_local(u);
 
-      if (fw_reached.get(k) || scc_id[k] != scc_id_undecided)
+      // skip if reached or decided
+      if (fw_reached.get(k) or scc_id[k] != scc_id_undecided)
         continue;
 
+      // now it is reached
       fw_reached.set(k);
-      IF(KASPAN_NORMALIZE, root = std::min(root, u);)
+      root = std::min(root, u);
 
       // push all forward neighbors
-      auto const beg = graph.fw_head[k];
-      auto const end = graph.fw_head[k + 1];
-      for (auto it = beg; it < end; ++it) {
-        auto const v = graph.fw_csr.get(it);
-        if (graph.part.has_local(v)) {
+      for (vertex_t v : csr_range(fw_head, fw_csr, k)) {
+        if (part.has_local(v)) {
           local_q.push(v);
         } else {
-          mq.post_message_blocking(v, graph.part.world_rank_of(v), on_message);
+          mq.post_message_blocking(v, part.world_rank_of(v), on_message);
         }
       }
       mq.poll_throttled(on_message);
@@ -64,9 +65,7 @@ forward_search(
 
   } while (mq.terminate(on_message));
 
-#if KASPAN_NORMALIZE
-  MPI_Allreduce(MPI_IN_PLACE, &root, 1, mpi_vertex_t, MPI_MIN, MPI_COMM_WORLD);
-#endif
+  return mpi_basic_allreduce_single(root, MPI_MIN);
 }
 
 } // namespace async

@@ -1,20 +1,17 @@
 #pragma once
 
-#include "memory/bit_accessor.hpp"
-
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
-#include <scc/allgather_graph.hpp>
+#include <memory/accessor/bits.hpp>
+#include <memory/array.hpp>
+#include <scc/allgather_sub_graph.hpp>
 #include <scc/async/backward_search.hpp>
+#include <scc/async/ecl_scc_step.hpp>
 #include <scc/async/forward_search.hpp>
 #include <scc/base.hpp>
-#include <scc/graph.hpp>
-#include <scc/normalize_scc_id.hpp>
 #include <scc/pivot_selection.hpp>
-#include <scc/residual_scc.hpp>
+#include <scc/tarjan.hpp>
 #include <scc/trim_1.hpp>
-#include <scc/wcc.hpp>
-#include <util/result.hpp>
 
 #include <briefkasten/aggregators.hpp>
 #include <briefkasten/buffered_queue.hpp>
@@ -30,7 +27,7 @@ namespace async {
 
 template<typename IndirectionScheme>
 auto
-make_briefkasten()
+make_briefkasten_vertex()
 {
   if constexpr (std::same_as<IndirectionScheme, briefkasten::NoopIndirectionScheme>) {
     return briefkasten::BufferedMessageQueueBuilder<vertex_t>().build();
@@ -45,69 +42,119 @@ make_briefkasten()
   }
 }
 
-template<typename IndirectionScheme, WorldPartConcept Part>
-VoidResult
-scc(auto const& graph, vertex_t* scc_id)
+template<typename IndirectionScheme>
+auto
+make_briefkasten_edge()
 {
+  if constexpr (std::same_as<IndirectionScheme, briefkasten::NoopIndirectionScheme>) {
+    return briefkasten::BufferedMessageQueueBuilder<Edge>().build();
+  } else {
+    return briefkasten::IndirectionAdapter{
+      briefkasten::BufferedMessageQueueBuilder<Edge>()
+        .with_merger(briefkasten::aggregation::EnvelopeSerializationMerger{})
+        .with_splitter(briefkasten::aggregation::EnvelopeSerializationSplitter<Edge>{})
+        .build(),
+      IndirectionScheme{ MPI_COMM_WORLD }
+    };
+  }
+}
+
+template<typename IndirectionScheme, WorldPartConcept Part>
+void
+scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id)
+{
+  DEBUG_ASSERT_VALID_GRAPH_PART(part, fw_head, fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH_PART(part, bw_head, bw_csr);
   KASPAN_STATISTIC_SCOPE("scc");
-  KASPAN_STATISTIC_PUSH("alloc");
-  std::ranges::fill(scc_id.range(), scc_id_undecided);
-  auto brief_queue = make_briefkasten<IndirectionScheme>();
-  auto fw_reached, BitAccessor::create(graph.part.local_n());
-  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+
+  auto const n       = part.n;
+  auto const local_n = part.local_n();
+
+  vertex_t local_decided = 0;
+
+  KASPAN_STATISTIC_PUSH("trim_1");
+  // notice: trim_1_first has a side effect by initializing scc_id with scc_id undecided
+  // if trim_1_first is removed one has to initialize scc_id with scc_id_undecided manually!
+  auto const [trim_1_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
+  KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(trim_1_decided, MPI_SUM));
+  local_decided += trim_1_decided;
   KASPAN_STATISTIC_POP();
 
-  auto [local_decided, max] = trim_1_first(graph, scc_id);
-
-  {
-    std::memset(fw_reached.data(), 0, fw_reached.bytes());
-    auto root = pivot_selection(comm, max);
-    async::forward_search(comm, graph, brief_queue, scc_id, fw_reached, root);
-    local_decided += async::backward_search(graph, brief_queue, scc_id, fw_reached, root);
+  // fallback to tarjan on single rank
+  if (mpi_world_size == 1) {
+    tarjan(part, fw_head, fw_csr, [=](auto const* cbeg, auto const* cend) {
+      auto const id = *std::min_element(cbeg, cend);
+      std::for_each(cbeg, cend, [=](auto const k) {
+        scc_id[k] = id;
+      });
+    },
+           SCC_ID_UNDECIDED_FILTER(local_n, scc_id),
+           local_decided);
+    return;
   }
 
-  auto const decided_threshold = graph.n / mpi_world_size;
-  while (.allreduce_single(::send_buf(local_decided), MPI_SUM) < decided_threshold) {
-    std::memset(fw_reached.data(), 0, fw_reached.bytes());
-    auto root = pivot_selection(graph, scc_id);
-    async::forward_search(graph, brief_queue, scc_id, fw_reached, root);
-    local_decided += async::backward_search(graph, brief_queue, scc_id, fw_reached, root);
+  auto const decided_threshold = n - (2 * n / mpi_world_size); // as we only gather fw graph we can only reduce to 2 * local_n
+  DEBUG_ASSERT_GE(decided_threshold, 0);
+
+  if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
+    KASPAN_STATISTIC_SCOPE("forward_backward_search");
+
+    auto vertex_queue = make_briefkasten_vertex<IndirectionScheme>();
+    auto first_root   = pivot_selection(max);
+    DEBUG_ASSERT_NE(first_root, scc_id_undecided);
+    auto       bitvector  = make_bits_clean(local_n);
+    auto const first_id   = async::forward_search(part, fw_head, fw_csr, vertex_queue, scc_id, bitvector, first_root);
+    auto const fb_decided = async::backward_search(part, bw_head, bw_csr, vertex_queue, scc_id, bitvector, first_root, first_id);
+    local_decided += fb_decided;
+
+    KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(fb_decided, MPI_SUM));
+    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+  }
+
+  if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
+    KASPAN_STATISTIC_SCOPE("ecl");
+
+    auto edge_queue   = make_briefkasten_edge<IndirectionScheme>();
+    auto fw_label     = make_array<vertex_t>(local_n);
+    auto bw_label     = make_array<vertex_t>(local_n);
+    auto active_array = make_array<vertex_t>(local_n - local_decided);
+    auto active       = make_bits_clean(local_n);
+    auto changed      = make_bits_clean(local_n);
+
+    do {
+      async::ecl_scc_init_label(part, fw_label, bw_label);
+      local_decided += async::ecl_scc_step(
+        part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, fw_label, bw_label, active_array, active, changed, local_decided);
+    } while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold);
+
+    KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(local_n - local_decided, MPI_SUM));
+    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   }
 
   {
     KASPAN_STATISTIC_SCOPE("residual");
-    RESULT_TRY(auto sub_graph_ids_inverse_and_ids, AllGatherSubGraph(graph, [&scc_id](vertex_t k) {
-                 return scc_id[k] == scc_id_undecided;
-               }));
-    auto [sub_graph, sub_ids_inverse, sub_ids] = std::move(sub_graph_ids_inverse_and_ids);
-    KASPAN_STATISTIC_ADD("n", sub_graph.n);
-    KASPAN_STATISTIC_ADD("m", sub_graph.m);
-    RESULT_TRY(auto wcc_id, U64Buffer::create(sub_graph.n));
-    RESULT_TRY(auto sub_scc_id, U64Buffer::create(sub_graph.n));
-    for (u64 i = 0; i < sub_graph.n; ++i) {
-      wcc_id[i]     = i;
-      sub_scc_id[i] = scc_id_undecided;
-    }
-    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
-    if (sub_graph.n) {
-      auto const wcc_count = wcc(sub_graph, wcc_id);
-      residual_scc(comm, wcc_id, wcc_count, sub_scc_id, sub_graph, sub_ids_inverse);
-      // todo replace with all to all v?
-      KASPAN_STATISTIC_SCOPE("post_processing");
-      MPI_Allreduce(MPI_IN_PLACE, sub_scc_id.data(), sub_graph.n, mpi_scc_id_t, MPI_MIN, MPI_COMM_WORLD);
-      for (u64 sub_v = 0; sub_v < sub_graph.n; ++sub_v) {
-        auto const v = sub_ids_inverse[sub_v];
-        if (graph.part.has_local(v)) {
-          auto const k = graph.part.to_local(v);
-          scc_id[k]    = sub_scc_id[sub_v];
+
+    auto [TMP(), sub_ids_inverse, TMP(), sub_n, sub_m, sub_head, sub_csr] =
+      allgather_fw_sub_graph(part, local_n - local_decided, fw_head, fw_csr, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
+    DEBUG_ASSERT_VALID_GRAPH(sub_n, sub_m, sub_head, sub_csr);
+
+    if (sub_n) {
+      tarjan(sub_n, sub_head, sub_csr, [&](auto const* beg, auto const* end) {
+        auto const min_u = sub_ids_inverse[*std::min_element(beg, end)];
+        for (auto sub_u : std::span{ beg, end }) {
+          auto const u = sub_ids_inverse[sub_u];
+          if (part.has_local(u)) {
+            scc_id[part.to_local(u)] = min_u;
+          }
         }
-      }
+      });
     }
+
+    KASPAN_STATISTIC_ADD("n", sub_n);
+    KASPAN_STATISTIC_ADD("m", sub_m);
+    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+    KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(local_n - local_decided, MPI_SUM));
   }
-
-  KASPAN_STATISTIC_SCOPE("post_processing");
-  normalize_scc_id(scc_id, graph.part);
-  return VoidResult::success();
 }
 
-}
+} // namespace async
