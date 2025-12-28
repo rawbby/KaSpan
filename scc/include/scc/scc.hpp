@@ -25,6 +25,16 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   auto const n       = part.n;
   auto const local_n = part.local_n();
 
+  vertex_t local_decided = 0;
+
+  KASPAN_STATISTIC_PUSH("trim_1");
+  // notice: trim_1_first has a side effect by initializing scc_id with scc_id undecided
+  // if trim_1_first is removed one has to initialize scc_id with scc_id_undecided manually!
+  auto const [trim_1_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
+  KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(trim_1_decided, MPI_SUM));
+  local_decided += trim_1_decided;
+  KASPAN_STATISTIC_POP();
+
   // fallback to tarjan on single rank
   if (mpi_world_size == 1) {
     tarjan(part, fw_head, fw_csr, [=](auto const* cbeg, auto const* cend) {
@@ -32,21 +42,14 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
       std::for_each(cbeg, cend, [=](auto const k) {
         scc_id[k] = id;
       });
-    });
+    },
+           SCC_ID_UNDECIDED_FILTER(local_n, scc_id),
+           local_decided);
     return;
   }
 
-  std::fill(scc_id, scc_id + local_n, scc_id_undecided);
-
-  vertex_t   local_decided     = 0;
   auto const decided_threshold = n - (2 * n / mpi_world_size); // as we only gather fw graph we can only reduce to 2 * local_n
   DEBUG_ASSERT_GE(decided_threshold, 0);
-
-  KASPAN_STATISTIC_PUSH("trim_1");
-  auto const [trim_1_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
-  KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(trim_1_decided, MPI_SUM));
-  local_decided += trim_1_decided;
-  KASPAN_STATISTIC_POP();
 
   if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
     KASPAN_STATISTIC_SCOPE("forward_backward_search");
