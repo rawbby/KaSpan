@@ -146,18 +146,18 @@ allgather_sub_graph(
 
   // communicate forward graph
   {
-  auto [TMP(), sub_m, counts, displs, local_sub_fw_csr, local_sub_fw_degrees] =
-    sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_ids);
+    auto [TMP(), sub_m, counts, displs, local_sub_fw_csr, local_sub_fw_degrees] =
+      sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_ids);
 
-  DEBUG_ASSERT_GE(sub_m, 0);
-  sub.m        = sub_m;
-  sub.buffer   = make_graph_buffer(sub_n, sub_m);
-  void* memory = sub.buffer.data();
-  DEBUG_ASSERT_NE(memory, nullptr);
-  sub.fw_head  = borrow_array<index_t>(&memory, sub_n + 1);
-  sub.fw_csr   = borrow_array<vertex_t>(&memory, sub_m);
-  sub.bw_head  = borrow_array<index_t>(&memory, sub_n + 1);
-  sub.bw_csr   = borrow_array<vertex_t>(&memory, sub_m);
+    DEBUG_ASSERT_GE(sub_m, 0);
+    sub.m        = sub_m;
+    sub.buffer   = make_graph_buffer(sub_n, sub_m);
+    void* memory = sub.buffer.data();
+    DEBUG_ASSERT_NE(memory, nullptr);
+    sub.fw_head = borrow_array<index_t>(&memory, sub_n + 1);
+    sub.fw_csr  = borrow_array<vertex_t>(&memory, sub_m);
+    sub.bw_head = borrow_array<index_t>(&memory, sub_n + 1);
+    sub.bw_csr  = borrow_array<vertex_t>(&memory, sub_m);
 
     mpi_basic_allgatherv<vertex_t>(local_sub_fw_csr.data(), local_sub_fw_csr.size(), sub.fw_csr, counts, displs);
     auto const send_count = local_sub_fw_degrees.size();

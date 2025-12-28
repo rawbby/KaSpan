@@ -1,7 +1,7 @@
 #pragma once
 
-#include <scc/base.hpp>
 #include <memory/borrow.hpp>
+#include <scc/base.hpp>
 #include <util/arithmetic.hpp>
 
 #include <concepts>
@@ -406,7 +406,7 @@ struct TrivialSlicePart final : ExplicitContinuousPart
 
     auto const base  = n / world_size;
     auto const start = static_cast<vertex_t>(world_rank) * base;
-    begin                = start;
+    begin            = start;
     if (world_rank + 1 == world_size) {
       end = n;
     } else {
@@ -535,7 +535,7 @@ struct ExplicitContinuousWorldPart final : ExplicitContinuousPart
   ExplicitContinuousWorldPart()  = default;
   ~ExplicitContinuousWorldPart() = default;
 
-  ExplicitContinuousWorldPart(vertex_t n, vertex_t begin, vertex_t end, i32 world_rank, i32 world_size, void**  memory)
+  ExplicitContinuousWorldPart(vertex_t n, vertex_t begin, vertex_t end, i32 world_rank, i32 world_size, void** memory)
     : world_rank(world_rank)
     , world_size(world_size)
   {

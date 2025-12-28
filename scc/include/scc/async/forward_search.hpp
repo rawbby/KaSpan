@@ -4,8 +4,8 @@
 #include <debug/statistic.hpp>
 #include <util/pp.hpp>
 
-#include <scc/graph.hpp>
 #include <scc/base.hpp>
+#include <scc/graph.hpp>
 
 #include <briefkasten/queue_builder.hpp>
 

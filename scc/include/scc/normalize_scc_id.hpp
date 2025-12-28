@@ -1,10 +1,9 @@
 #pragma once
 
 #include <debug/statistic.hpp>
-#include <scc/base.hpp>
-#include <scc/part.hpp>
 #include <memory/buffer.hpp>
 #include <scc/base.hpp>
+#include <scc/part.hpp>
 
 template<WorldPartConcept Part>
 void

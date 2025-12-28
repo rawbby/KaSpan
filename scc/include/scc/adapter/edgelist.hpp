@@ -9,11 +9,11 @@
 
 inline void
 sorted_edgelist_to_graph(
-  vertex_t n,
-  vertex_t m,
-  Edge const*  edgelist,
-  index_t*  head,
-  vertex_t*  csr)
+  vertex_t    n,
+  vertex_t    m,
+  Edge const* edgelist,
+  index_t*    head,
+  vertex_t*   csr)
 {
   DEBUG_ASSERT(std::is_sorted(edgelist, edgelist + m, edge_less));
   head[0]     = 0;
@@ -30,11 +30,11 @@ sorted_edgelist_to_graph(
 
 inline void
 edgelist_to_graph(
-  vertex_t n,
-  vertex_t m,
-  Edge*  edgelist,
+  vertex_t  n,
+  vertex_t  m,
+  Edge*     edgelist,
   index_t*  head,
-  vertex_t*  csr)
+  vertex_t* csr)
 {
   std::sort(edgelist, edgelist + m, edge_less);
   sorted_edgelist_to_graph(n, m, edgelist, head, csr);
@@ -45,9 +45,9 @@ void
 sorted_edgelist_to_graph_part(
   Part const& part,
   vertex_t    local_m,
-  Edge const*  edgelist,
-  index_t*  head,
-  vertex_t*  csr)
+  Edge const* edgelist,
+  index_t*    head,
+  vertex_t*   csr)
 {
   DEBUG_ASSERT(std::is_sorted(edgelist, edgelist + local_m, edge_less));
   auto const local_n = part.local_n();
@@ -69,9 +69,9 @@ void
 edgelist_to_graph_part(
   Part const& part,
   vertex_t    local_m,
-  Edge*  edgelist,
-  index_t*  head,
-  vertex_t*  csr)
+  Edge*       edgelist,
+  index_t*    head,
+  vertex_t*   csr)
 {
   std::sort(edgelist, edgelist + local_m, edge_less);
   sorted_edgelist_to_graph_part(part, local_m, edgelist, head, csr);

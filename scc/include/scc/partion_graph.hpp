@@ -63,7 +63,7 @@ partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t con
 
   LocalGraphPart<Part> result;
   result.buffer = make_graph_buffer(local_n, local_fw_m, local_bw_m);
-  auto* memory = result.buffer.data();
+  auto* memory  = result.buffer.data();
 
   result.part       = part;
   result.m          = m;

@@ -4,10 +4,6 @@
 
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
-#include <iostream>
-#include <memory/accessor/bits_accessor.hpp>
-#include <memory/accessor/bits.hpp>
-#include <memory/accessor/stack_accessor.hpp>
 #include <memory/accessor/stack.hpp>
 #include <memory/buffer.hpp>
 #include <scc/graph.hpp>
@@ -23,15 +19,12 @@ no_filter(vertex_t /* k */) -> bool
  * @param[in] head head buffer of size local_n+1 pointing into csr entries
  * @param[in] csr compressed sparse row of the local partition of the graph
  * @param[out] scc_id map vertex to strongly connected component id
- * @param[in] memory temp memory of:
- *   - 3 * page_ceil(local_n * sizeof(vertex_t))                 // index, low, st
- *   - page_ceil(local_n * sizeof(vertex_t) + sizeof(index_t)) // dfs stack
- *   - page_ceil(ceil(local_n/64) * sizeof(u64))                 // on_stack bitset
+ * @param[in] decided_count number of vertices filtered out (must match filter)
  * @return number of strongly connected components
  */
 template<WorldPartConcept Part, typename Callback, typename Filter = decltype(no_filter)>
 void
-tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback callback, Filter filter = no_filter, void* memory = nullptr) noexcept
+tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback callback, Filter filter = no_filter, vertex_t decided_count = 0) noexcept
 {
   KASPAN_STATISTIC_SCOPE("tarjan");
   constexpr auto index_undecided = scc_id_undecided;
@@ -43,20 +36,30 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
 
   auto const local_n = part.local_n();
 
-  Buffer buffer;
-  if (memory == nullptr) {
-    buffer = make_buffer<vertex_t, vertex_t, vertex_t, Frame>(
-      local_n, local_n, local_n, local_n);
-    memory = buffer.data();
+#if KASPAN_DEBUG
+  // Validate decided_count is consistent with filter
+  vertex_t filtered_out_count = 0;
+  for (vertex_t k = 0; k < local_n; ++k) {
+    if (not filter(k)) {
+      ++filtered_out_count;
+    }
   }
+  DEBUG_ASSERT_EQ(filtered_out_count, decided_count);
+#endif
+
+  auto const undecided_count = local_n - decided_count;
 
   vertex_t index_count = 0;
+
+  auto buffer = make_buffer<vertex_t, vertex_t, vertex_t, Frame>(
+    local_n, local_n, undecided_count, undecided_count);
+  void* memory = buffer.data();
 
   auto index    = borrow_array_filled<vertex_t>(&memory, index_undecided, local_n);
   auto low      = borrow_array_clean<vertex_t>(&memory, local_n);
   auto on_stack = make_bits_clean(local_n);
-  auto st       = make_stack<vertex_t>(local_n);
-  auto dfs      = make_stack<Frame>(local_n);
+  auto st       = make_stack<vertex_t>(undecided_count);
+  auto dfs      = make_stack<Frame>(undecided_count);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
   for (vertex_t local_root = 0; local_root < local_n; ++local_root) {
@@ -128,15 +131,12 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
  * @param[in] head head buffer of size n+1 pointing into csr entries
  * @param[in] csr compressed sparse row of the graph
  * @param[out] scc_id map vertex to strongly connected component id
- * @param[in] memory temp memory of:
- *   - 3 * page_ceil(n * sizeof(vertex_t))                 // index, low, st
- *   - page_ceil(n * (sizeof(vertex_t) + sizeof(index_t))) // dfs stack
- *   - page_ceil(ceil(n/64) * sizeof(u64))                 // on_stack bitset
+ * @param[in] decided_count number of vertices filtered out (must match filter)
  * @return number of strongly connected components
  */
 template<typename Callback, typename Filter = decltype(no_filter)>
 void
-tarjan(vertex_t const n, index_t const* head, vertex_t const* csr, Callback callback, Filter filter = no_filter, void* memory = nullptr) noexcept
+tarjan(vertex_t const n, index_t const* head, vertex_t const* csr, Callback callback, Filter filter = no_filter, vertex_t decided_count = 0) noexcept
 {
-  tarjan(SingleWorldPart{ n }, head, csr, callback, filter, memory);
+  tarjan(SingleWorldPart{ n }, head, csr, callback, filter, decided_count);
 }

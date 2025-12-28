@@ -47,7 +47,8 @@ ecl_scc_step(
   vertex_t*       active_array,
   BitsAccessor    active,
   BitsAccessor    changed,
-  edge_frontier&  frontier) -> vertex_t
+  edge_frontier&  frontier,
+  vertex_t        decided_count = 0) -> vertex_t
 {
   // this function uses the project convention that:
   // k,l always describe local vertex ids
@@ -55,8 +56,20 @@ ecl_scc_step(
   // (csr stores global vertex ids)
   // (head is accessed by local vertex ids)
 
-  auto const local_n      = part.local_n();
-  auto       active_stack = StackAccessor<vertex_t>{ active_array };
+  auto const local_n = part.local_n();
+
+#if KASPAN_DEBUG
+  // Validate decided_count is consistent with scc_id
+  vertex_t actual_decided_count = 0;
+  for (vertex_t k = 0; k < local_n; ++k) {
+    if (scc_id[k] != scc_id_undecided) {
+      ++actual_decided_count;
+    }
+  }
+  DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
+#endif
+
+  auto active_stack = StackAccessor<vertex_t>{ active_array };
 
   auto const saturate_direction = [&](index_t const* head, vertex_t const* csr, vertex_t* ecl_lable) {
     DEBUG_ASSERT(active_stack.empty());

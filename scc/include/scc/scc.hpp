@@ -68,7 +68,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
     auto fw_label     = make_array<vertex_t>(local_n);
     auto bw_label     = make_array<vertex_t>(local_n);
-    auto active_array = make_array<vertex_t>(local_n);
+    auto active_array = make_array<vertex_t>(local_n - local_decided);
     auto active       = make_bits_clean(local_n);
     auto changed      = make_bits_clean(local_n);
     auto frontier     = edge_frontier::create();
@@ -76,7 +76,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     do {
       ecl_scc_init_lable(part, fw_label, bw_label);
       local_decided += ecl_scc_step(
-        part, fw_head, fw_csr, bw_head, bw_csr, scc_id, fw_label, bw_label, active_array, active, changed, frontier);
+        part, fw_head, fw_csr, bw_head, bw_csr, scc_id, fw_label, bw_label, active_array, active, changed, frontier, local_decided);
       // maybe: redistribute graph - sort vertices by ecl label and run trim tarjan (as there is now a lot locality)
     } while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold);
 

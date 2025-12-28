@@ -2,8 +2,8 @@
 
 #include <debug/assert.hpp>
 #include <debug/statistic.hpp>
-#include <scc/graph.hpp>
 #include <scc/base.hpp>
+#include <scc/graph.hpp>
 #include <util/pp.hpp>
 
 #include <briefkasten/buffered_queue.hpp>

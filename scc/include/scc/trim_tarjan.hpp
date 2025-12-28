@@ -47,7 +47,7 @@ choose_contains_fn(std::span<vertex_t> span)
 
 template<WorldPartConcept Part, typename Filter = decltype(no_filter)>
 vertex_t
-trim_tarjan(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id, Filter filter = no_filter)
+trim_tarjan(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id, Filter filter = no_filter, vertex_t decided_count = 0)
 {
   using namespace internal::trim_tarjan;
   KASPAN_STATISTIC_SCOPE("trim_tarjan");
@@ -123,7 +123,8 @@ trim_tarjan(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, in
 
     decided += clen;
   },
-         filter);
+         filter,
+         decided_count);
 
   KASPAN_STATISTIC_ADD("decision_count", decided);
   return decided;

@@ -14,7 +14,7 @@ backward_search(
   vertex_t const*  bw_csr,
   vertex_frontier& frontier,
   vertex_t*        scc_id,
-  BitsAccessor      fw_reached,
+  BitsAccessor     fw_reached,
   vertex_t         root,
   vertex_t         id) -> vertex_t
 {
