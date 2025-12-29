@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory/accessor/bits_mixin.hpp>
+#include <memory/borrow.hpp>
 #include <util/arithmetic.hpp>
 #include <util/math.hpp>
 

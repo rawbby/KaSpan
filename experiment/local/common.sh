@@ -20,6 +20,7 @@ NP_LIST=(4 1)
 
 function run_benchmark() {
     local app_name="$1"
+    local extra_flags="$2"
     local app="${BIN_DIR}/${app_name}"
 
     if [[ ! -x "$app" ]]; then
@@ -34,10 +35,10 @@ function run_benchmark() {
             trap "rm -f $output_file" EXIT
 
             echo "--------------------------------------------------------"
-            echo "Running $app_name with $np processes on graph: $graph"
+            echo "Running $app_name with $np processes on graph: $graph${extra_flags:+ [flags: $extra_flags]}"
             echo "--------------------------------------------------------"
 
-            mpirun -np $np $VALGRIND "$app" --kagen_option_string "$graph" --output_file "$output_file"
+            mpirun -np $np $VALGRIND "$app" --kagen_option_string "$graph" --output_file "$output_file" $extra_flags
 
             if [[ $? -ne 0 ]]; then
                 echo "FAILED: $app_name np=$np graph=$graph"
@@ -70,10 +71,10 @@ function run_benchmark() {
             trap "rm -f $output_file" EXIT
 
             echo "--------------------------------------------------------"
-            echo "Running $app_name with $np processes on RWD: $manifest"
+            echo "Running $app_name with $np processes on RWD: $manifest${extra_flags:+ [flags: $extra_flags]}"
             echo "--------------------------------------------------------"
-            
-            mpirun -np $np $VALGRIND "$app" --manifest_file "$manifest_path" --output_file "$output_file"
+
+            mpirun -np $np $VALGRIND "$app" --manifest_file "$manifest_path" --output_file "$output_file" $extra_flags
             
             if [[ $? -ne 0 ]]; then
                 echo "FAILED: $app_name np=$np manifest=$manifest"

@@ -2,9 +2,13 @@
 #include <debug/valgrind.hpp>
 #include <scc/adapter/kagen.hpp>
 #include <scc/adapter/manifest.hpp>
+#include <scc/async/scc.hpp>
 #include <scc/backward_complement.hpp>
 #include <scc/scc.hpp>
 #include <util/arg_parse.hpp>
+
+#include <briefkasten/grid_indirection.hpp>
+#include <briefkasten/noop_indirection.hpp>
 
 #include <mpi.h>
 
@@ -38,13 +42,11 @@ benchmark(auto const& graph, bool use_async, bool use_async_indirect)
   MPI_Barrier(MPI_COMM_WORLD);
   if (not use_async) {
     scc(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+  } else if (use_async_indirect) {
+    async::scc<briefkasten::GridIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+  } else {
+    async::scc<briefkasten::NoopIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
   }
-
-  // else if (use_async_indirect) {
-  //   async::scc<briefkasten::GridIndirectionScheme>(kagen_graph, scc_id);
-  // } else {
-  //   async::scc<briefkasten::NoopIndirectionScheme>(kagen_graph, scc_id);
-  // }
 
 #if KASPAN_STATISTIC
   vertex_t local_component_count = 0;

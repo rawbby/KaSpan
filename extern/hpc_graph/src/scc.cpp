@@ -748,8 +748,8 @@ int scc_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q,
 {
   if (debug) printf("Task %d scc_dist() start\n", procid);
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  double elt = omp_get_wtime();
+  // MPI_Barrier(MPI_COMM_WORLD);
+  // double elt = omp_get_wtime();
 
   uint64_t* scc = (uint64_t*)malloc(g->n_total*sizeof(uint64_t));
   uint64_t* colors = (uint64_t*)malloc(g->n_total*sizeof(uint64_t));
@@ -774,9 +774,9 @@ int scc_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q,
 
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  elt = omp_get_wtime() - elt;
-  if (procid == 0) printf("SCC time %9.6f (s)\n", elt);
+  // MPI_Barrier(MPI_COMM_WORLD);
+  // elt = omp_get_wtime() - elt;
+  // if (procid == 0) printf("SCC time %9.6f (s)\n", elt);
 
   if (output) scc_output(g, scc, output_file);
   if (verify) scc_verify(g, scc);

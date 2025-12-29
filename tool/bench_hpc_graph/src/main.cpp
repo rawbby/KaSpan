@@ -16,7 +16,6 @@
 #include <cstdio>
 #include <print>
 
-// Global variables required by HPCGraph
 int  procid, nprocs;
 bool verbose = false;
 bool debug   = false;
@@ -32,10 +31,11 @@ usage(int /* argc */, char** argv)
     argv[0]);
 }
 
-template<WorldPartConcept Part>
 void
-benchmark_impl(GraphPart<Part> const& graph_part)
+benchmark(auto&& graph_part)
 {
+  using Part = std::remove_cvref_t<decltype(graph_part.part)>;
+
   KASPAN_STATISTIC_ADD("n", graph_part.part.n);
   KASPAN_STATISTIC_ADD("local_n", graph_part.part.local_n());
   KASPAN_STATISTIC_ADD("m", graph_part.m);
@@ -43,27 +43,61 @@ benchmark_impl(GraphPart<Part> const& graph_part)
   KASPAN_STATISTIC_ADD("local_bw_m", graph_part.local_bw_m);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
-  KASPAN_STATISTIC_PUSH("adapter");
-  auto hpc_data = create_hpc_graph_from_graph_part(graph_part);
-  KASPAN_STATISTIC_POP();
+  // Create HPCGraph data structure from kaspan graph
+  HPCGraphData hpc_data;
+  Part         part_copy;
+  index_t      local_fw_m_copy;
+  index_t      local_bw_m_copy;
+  {
+    KASPAN_STATISTIC_PUSH("adapter");
+    hpc_data = create_hpc_graph_from_graph_part(
+      graph_part.part,
+      graph_part.m,
+      graph_part.local_fw_m,
+      graph_part.local_bw_m,
+      graph_part.fw_head,
+      graph_part.fw_csr,
+      graph_part.bw_head,
+      graph_part.bw_csr);
+    KASPAN_STATISTIC_POP();
+
+    // Save partitioning info (lightweight) before releasing kaspan memory
+    part_copy       = graph_part.part;
+    local_fw_m_copy = graph_part.local_fw_m;
+    local_bw_m_copy = graph_part.local_bw_m;
+  }
 
   KASPAN_STATISTIC_ADD("memory_after_adapter", get_resident_set_bytes());
+
+  // Release kaspan memory before SCC benchmark to ensure fair memory measurement
+  // This prevents double allocation and allows accurate memory footprint measurement
+  graph_part = std::remove_cvref_t<decltype(graph_part)>{}; // Explicitly release the kaspan graph memory
+
+  KASPAN_STATISTIC_ADD("memory_after_release", get_resident_set_bytes());
 
   MPI_Barrier(MPI_COMM_WORLD);
 
   KASPAN_STATISTIC_PUSH("scc");
+
+  // Initialize ghost cells as part of SCC benchmark
+  // Ghost cells are an accelerator structure specific to HPCGraph
+  KASPAN_STATISTIC_PUSH("ghost_init");
+  initialize_ghost_cells(hpc_data, part_copy, local_fw_m_copy, local_bw_m_copy);
+  KASPAN_STATISTIC_POP();
+
   KASPAN_STATISTIC_PUSH("pivot");
   Degree max_degree{
     .degree_product = std::numeric_limits<index_t>::min(),
     .u              = std::numeric_limits<vertex_t>::min()
   };
-  for (vertex_t k = 0; k < graph_part.part.local_n(); ++k) {
-    auto const out_degree     = graph_part.fw_head[k + 1] - graph_part.fw_head[k];
-    auto const in_degree      = graph_part.bw_head[k + 1] - graph_part.bw_head[k];
+  // Pivot selection using HPCGraph data (kaspan memory has been released)
+  for (uint64_t k = 0; k < hpc_data.g.n_local; ++k) {
+    auto const out_degree     = hpc_data.g.out_degree_list[k + 1] - hpc_data.g.out_degree_list[k];
+    auto const in_degree      = hpc_data.g.in_degree_list[k + 1] - hpc_data.g.in_degree_list[k];
     auto const degree_product = out_degree * in_degree;
-    if (degree_product > max_degree.degree_product) {
-      max_degree.degree_product = degree_product;
-      max_degree.u              = graph_part.part.to_global(k);
+    if (static_cast<index_t>(degree_product) > max_degree.degree_product) {
+      max_degree.degree_product = static_cast<index_t>(degree_product);
+      max_degree.u              = static_cast<vertex_t>(hpc_data.g.local_unmap[k]);
     }
   }
   auto const pivot = pivot_selection(max_degree);
@@ -71,28 +105,8 @@ benchmark_impl(GraphPart<Part> const& graph_part)
   char output_file[] = "hpc_scc_output.txt";
   scc_dist(&hpc_data.g, &hpc_data.comm, &hpc_data.q, static_cast<uint64_t>(pivot), output_file);
   KASPAN_STATISTIC_POP();
-
   KASPAN_STATISTIC_ADD("memory_after_scc", get_resident_set_bytes());
-
   destroy_hpc_graph_data(&hpc_data);
-}
-
-template<typename T>
-void
-benchmark(T const& graph_part)
-{
-  using Part = std::remove_cvref_t<decltype(graph_part.part)>;
-  // Create a non-owning GraphPart view
-  GraphPart<Part> view;
-  view.part       = graph_part.part;
-  view.m          = graph_part.m;
-  view.local_fw_m = graph_part.local_fw_m;
-  view.local_bw_m = graph_part.local_bw_m;
-  view.fw_head    = graph_part.fw_head;
-  view.bw_head    = graph_part.bw_head;
-  view.fw_csr     = graph_part.fw_csr;
-  view.bw_csr     = graph_part.bw_csr;
-  benchmark_impl(view);
 }
 
 int
@@ -125,16 +139,16 @@ main(int argc, char** argv)
 
   if (kagen_option_string != nullptr) {
     KASPAN_STATISTIC_PUSH("kagen");
-    auto const kagen_graph = kagen_graph_part(kagen_option_string);
+    auto kagen_graph = kagen_graph_part(kagen_option_string);
     KASPAN_STATISTIC_POP();
-    benchmark(kagen_graph);
+    benchmark(std::move(kagen_graph));
   } else {
     KASPAN_STATISTIC_PUSH("load");
     auto const manifest = Manifest::load(manifest_file);
     ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
     auto const part           = BalancedSlicePart{ static_cast<vertex_t>(manifest.graph_node_count) };
-    auto const manifest_graph = load_graph_part_from_manifest(part, manifest);
+    auto       manifest_graph = load_graph_part_from_manifest(part, manifest);
     KASPAN_STATISTIC_POP();
-    benchmark(manifest_graph);
+    benchmark(std::move(manifest_graph));
   }
 }

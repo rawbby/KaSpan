@@ -7,7 +7,7 @@ SCRIPT_REL = "~/workspace/KaSpan/experiment/horeka"
 APPS = {'kaspan': 'bench_kaspan', 'ispan': 'bench_ispan', 'hpc_graph': 'bench_hpc_graph'}
 
 WEAK_LOCAL_N = [150000, 300000, 600000]
-WEAK_D = [90, 100, 200, 400]
+WEAK_D = [90, 100, 200, 400, 1600]
 STRONG_N = [1000000000, 100000000, 10000000]
 
 CONFIGS = {

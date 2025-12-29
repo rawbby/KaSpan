@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 
 find_package(Git)
 
-set(BriefKAsten_TAG main)
+set(BriefKAsten_TAG v0.2.2)
 set(BriefKAsten_SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps/BriefKAsten-src")
 set(BriefKAsten_BUILD_DIR "${CMAKE_BINARY_DIR}/_deps/BriefKAsten-build")
 set(BriefKAsten_INSTALL_DIR "${CMAKE_BINARY_DIR}/_deps/BriefKAsten")
@@ -45,10 +45,10 @@ if (NOT BriefKAsten_VALID)
             -G "${CMAKE_GENERATOR}"
             -DCMAKE_INSTALL_PREFIX="${BriefKAsten_INSTALL_DIR}"
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -DCMAKE_BUILD_PARALLEL_LEVEL="${DCMAKE_BUILD_PARALLEL_LEVEL}"
+            -DCMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL}"
             -DBRIEFKASTEN_BUILD_EXAMPLES=OFF
             -DBRIEFKASTEN_BUILD_TESTS=OFF
-            -DBRIEFKASTEN_USE_CXX23=OFF
+            -DBRIEFKASTEN_USE_CXX23=ON
             RESULT_VARIABLE CONFIGURE_RESULT
             OUTPUT_QUIET ERROR_QUIET)
 
@@ -86,11 +86,9 @@ endif ()
 list(PREPEND CMAKE_PREFIX_PATH "${BriefKAsten_INSTALL_DIR}")
 find_package(MPI REQUIRED)
 find_package(kassert REQUIRED CONFIG PATHS "${BriefKAsten_INSTALL_DIR}")
-find_package(range-v3 REQUIRED CONFIG PATHS "${BriefKAsten_INSTALL_DIR}")
 
 add_library(BriefKAsten INTERFACE IMPORTED GLOBAL)
-set_target_properties(BriefKAsten PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${BriefKAsten_SOURCE_DIR}/src")
-set_property(TARGET BriefKAsten PROPERTY INTERFACE_COMPILE_FEATURES cxx_std_20)
-set_property(TARGET BriefKAsten APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS BRIEFKASTEN_CXX20)
-target_link_libraries(BriefKAsten INTERFACE MPI::MPI_CXX kassert::kassert range-v3::range-v3)
+set_target_properties(BriefKAsten PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+    "${BriefKAsten_SOURCE_DIR}/src;${BriefKAsten_BUILD_DIR}/_deps/kamping-src/include")
+target_link_libraries(BriefKAsten INTERFACE MPI::MPI_CXX kassert::kassert)
 add_library(BriefKAsten::BriefKAsten ALIAS BriefKAsten)
