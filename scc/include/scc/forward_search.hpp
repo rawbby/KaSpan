@@ -16,6 +16,9 @@ forward_search(
   BitsAccessor     fw_reached,
   vertex_t         root) -> vertex_t
 {
+  vertex_t local_min = part.n; // Initialize to max possible value
+  bool processed_any = false;
+  
   if (part.has_local(root)) {
     frontier.local_push(root);
     ASSERT(not fw_reached.get(part.to_local(root)));
@@ -35,10 +38,15 @@ forward_search(
         continue;
 
       ++processed_count;
+      processed_any = true;
 
-      // now it is reached
+      // now it is reached - update minimum ONLY for undecided vertices
       fw_reached.set(k);
-      root = std::min(root, u);
+      local_min = std::min(local_min, u);
+      
+      DEBUG_ASSERT_EQ(scc_id[k], scc_id_undecided, 
+        "BUG: Processing vertex that is already decided! k={}, u={}, scc_id[k]={}", 
+        k, u, scc_id[k]);
 
       // add all neighbours to frontier
       for (vertex_t v : csr_range(fw_head, fw_csr, k)) {
@@ -51,5 +59,12 @@ forward_search(
     }
   } while (frontier.comm(part));
 
-  return mpi_basic_allreduce_single(root, MPI_MIN);
+  auto const global_min = mpi_basic_allreduce_single(local_min, MPI_MIN);
+  
+  DEBUG_ASSERT_LT(global_min, part.n, 
+    "BUG in forward_search: global_min={} should be < n={}. "
+    "This means no rank processed any vertices, which should be impossible if root is valid.",
+    global_min, part.n);
+  
+  return global_min;
 }

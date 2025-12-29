@@ -1,10 +1,26 @@
 #pragma once
 
 #include <memory/accessor/bits_accessor.hpp>
+#include <memory/accessor/stack_accessor.hpp>
 #include <scc/base.hpp>
 #include <scc/graph.hpp>
 
 namespace async {
+
+template<WorldPartConcept Part>
+void
+ecl_scc_init_label(
+  Part const& part,
+  vertex_t*   ecl_fw_label,
+  vertex_t*   ecl_bw_label)
+{
+  auto const local_n = part.local_n();
+  for (vertex_t k = 0; k < local_n; ++k) {
+    auto const u    = part.to_global(k);
+    ecl_fw_label[k] = u;
+    ecl_bw_label[k] = u;
+  }
+}
 
 template<WorldPartConcept Part, typename BriefQueue>
 auto
@@ -23,6 +39,96 @@ ecl_scc_step(
   BitsAccessor    changed,
   vertex_t        decided_count = 0) -> vertex_t
 {
+  auto const local_n = part.local_n();
+
+  auto propagate = [&](index_t const* head, vertex_t const* csr, vertex_t* labels) {
+    auto active_stack = StackAccessor<vertex_t>{ active_array };
+
+    auto on_message = [&](auto env) {
+      for (auto edge : env.message) {
+        auto const u     = edge.u;
+        auto const label = edge.v;
+        DEBUG_ASSERT(part.has_local(u));
+        auto const k = part.to_local(u);
+        if (label < labels[k] and scc_id[k] == scc_id_undecided) {
+          labels[k] = label;
+          changed.set(k);
+          if (!active.get(k)) {
+            active.set(k);
+            active_stack.push(k);
+          }
+        }
+      }
+    };
+
+    active.fill_cmp(local_n, scc_id, scc_id_undecided);
+    active.for_each(local_n, [&](auto k) {
+      changed.set(k);
+      active_stack.push(k);
+    });
+
+    int iter = 0;
+    while (true) {
+      ++iter;
+      if (iter % 100 == 0) {
+        printf("Rank %d: iter %d, active_stack size %zu\n", mpi_world_rank, iter, active_stack.size());
+        fflush(stdout);
+      }
+      while (!active_stack.empty()) {
+        auto const k = active_stack.back();
+        active_stack.pop();
+        active.unset(k);
+
+        auto const label_k = labels[k];
+        for (auto v : csr_range(head, csr, k)) {
+          if (part.has_local(v)) {
+            auto const l = part.to_local(v);
+            if (label_k < labels[l] and scc_id[l] == scc_id_undecided) {
+              labels[l] = label_k;
+              changed.set(l);
+              if (!active.get(l)) {
+                active.set(l);
+                active_stack.push(l);
+              }
+            }
+          }
+        }
+      }
+
+      changed.for_each(local_n, [&](auto k) {
+        auto const label_k = labels[k];
+        for (auto v : csr_range(head, csr, k)) {
+          if (not part.has_local(v) and label_k < v) {
+            mq.post_message_blocking(Edge{ v, label_k }, part.world_rank_of(v), on_message);
+          }
+        }
+      });
+      changed.clear(local_n);
+
+      mq.poll(on_message);
+      if (active_stack.empty() and mq.terminate(on_message)) {
+        break;
+      }
+    }
+  };
+
+  propagate(fw_head, fw_csr, ecl_fw_label);
+  MPI_Barrier(MPI_COMM_WORLD);
+  mq.reactivate();
+  propagate(bw_head, bw_csr, ecl_bw_label);
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  vertex_t local_decided_count = 0;
+  for (vertex_t k = 0; k < local_n; ++k) {
+    if (scc_id[k] == scc_id_undecided) {
+      if (ecl_fw_label[k] == ecl_bw_label[k]) {
+        scc_id[k] = ecl_fw_label[k];
+        ++local_decided_count;
+      }
+    }
+  }
+
+  return local_decided_count;
 }
 
 } // namespace async

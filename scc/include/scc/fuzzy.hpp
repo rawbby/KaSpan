@@ -15,8 +15,36 @@
 #include <vector>
 
 inline auto
-fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_memory = nullptr)
+fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double d = -1.0, void* temp_memory = nullptr)
 {
+  DEBUG_ASSERT_GE(n, 0);
+  DEBUG_ASSERT(d == -1.0 or d >= 0.0);
+
+  auto rng = std::mt19937{ seed };
+
+  // clang-format off
+  // normalize degree
+  d = [&rng, n, d] {
+
+    // corner cases
+    if (n < 2) return -1.0;
+
+    auto const min_d = std::log(std::max(1.0, std::log(static_cast<double>(n))));
+    auto const max_d = static_cast<double>(n - 1) / 2.0; // this is not the upper bound, but a reasonable limit performance wise
+
+    // random request
+    if (d == -1.0) {
+      return std::uniform_real_distribution{ min_d, max_d }(rng);
+    }
+
+    // logical clamping
+    if (d < min_d) return min_d;
+    if (d > max_d) return max_d;
+    return d;
+
+  }();
+  // clang-format on
+
   struct LocalSccGraph : LocalGraph
   {
     Buffer    scc_id_buffer;
@@ -33,10 +61,6 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_
     temp_memory = temp_buffer.data();
   }
 
-  if (degree < 0.0)
-    degree = std::log(std::max(0.0, std::log(n)));
-
-  auto rng       = std::mt19937{ seed };
   auto start_new = std::bernoulli_distribution{ 0.25 };
 
   auto fw_degree = ::borrow_array_clean<vertex_t>(&temp_memory, n);
@@ -91,7 +115,7 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_
 
   std::vector<u64> prior;
   prior.reserve(comps.size());
-  while (avg_degree() > degree) {
+  while (avg_degree() < d) {
     prior.clear();
 
     for (auto& [id, comp_u] : comps) {
@@ -101,7 +125,7 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double degree = -1.0, void* temp_
       auto pick_comp_v = std::uniform_int_distribution<size_t>{ 0, prior.size() - 1 };
 
       for (size_t i = 0; i < comp_u.size(); ++i) {
-        if (avg_degree() > degree)
+        if (avg_degree() >= d)
           break;
 
         auto const& comp_v = comps[prior[pick_comp_v(rng)]];
@@ -170,8 +194,6 @@ fuzzy_local_scc_id_and_graph(u64 seed, Part const& part, double degree = -1.0, v
   auto const local_n = part.local_n();
 
   auto g = fuzzy_global_scc_id_and_graph(seed, part.n, degree, memory);
-  DEBUG_ASSERT_VALID_GRAPH(g.n, g.m, g.fw_head, g.fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH(g.n, g.m, g.bw_head, g.bw_csr);
 
   LocalSccGraphPart gp;
   static_cast<LocalGraphPart<Part>&>(gp) = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, part);

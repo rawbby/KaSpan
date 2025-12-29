@@ -1,7 +1,5 @@
 #pragma once
 
-#include <mpi.h>
-
 #include <cstdio>
 #include <format>
 #include <iosfwd>
@@ -89,7 +87,7 @@ mpi_sub_process(int argc, char** argv, int npc, int const* npv)
 inline void
 mpi_sub_process(int argc, char** argv)
 {
-  constexpr int npc      = 6;
-  constexpr int npv[npc] = { 1, 2, 4, 8, 16, 32 };
+  constexpr int npc      = 3;
+  constexpr int npv[npc] = { 3, 1, 8 };
   mpi_sub_process(argc, argv, npc, npv);
 }

@@ -17,6 +17,7 @@ forward_search(
   BitsAccessor    fw_reached,
   vertex_t        root) -> vertex_t
 {
+  return 0;
 }
 
 } // namespace async

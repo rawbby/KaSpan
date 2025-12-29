@@ -20,9 +20,6 @@
 #include <briefkasten/queue_builder.hpp>
 #include <kamping/mpi_datatype.hpp>
 
-#include <algorithm>
-#include <cstdio>
-
 // Register Edge type with KaMPIng's type system for BriefKAsten compatibility
 namespace kamping {
 template<>
@@ -35,6 +32,9 @@ struct mpi_type_traits<Edge>
   }
 };
 } // namespace kamping
+
+#include <algorithm>
+#include <cstdio>
 
 namespace async {
 
@@ -90,36 +90,21 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   local_decided += trim_1_decided;
   KASPAN_STATISTIC_POP();
 
-  // // fallback to tarjan on single rank
-  // if (mpi_world_size == 1) {
-  //   tarjan(part, fw_head, fw_csr, [=](auto const* cbeg, auto const* cend) {
-  //     auto const id = *std::min_element(cbeg, cend);
-  //     std::for_each(cbeg, cend, [=](auto const k) {
-  //       scc_id[k] = id;
-  //     });
-  //   },
-  //          SCC_ID_UNDECIDED_FILTER(local_n, scc_id),
-  //          local_decided);
-  //   return;
-  // }
+  // fallback to tarjan on single rank
+  if (mpi_world_size == 1) {
+    tarjan(part, fw_head, fw_csr, [=](auto const* cbeg, auto const* cend) {
+      auto const id = *std::min_element(cbeg, cend);
+      std::for_each(cbeg, cend, [=](auto const k) {
+        scc_id[k] = id;
+      });
+    },
+           SCC_ID_UNDECIDED_FILTER(local_n, scc_id),
+           local_decided);
+    return;
+  }
 
   auto const decided_threshold = n - (2 * n / mpi_world_size); // as we only gather fw graph we can only reduce to 2 * local_n
   DEBUG_ASSERT_GE(decided_threshold, 0);
-
-  //  if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
-  //    KASPAN_STATISTIC_SCOPE("forward_backward_search");
-  //
-  //    auto frontier   = vertex_frontier::create();
-  //    auto first_root = pivot_selection(max);
-  //    DEBUG_ASSERT_NE(first_root, scc_id_undecided);
-  //    auto       bitvector  = make_bits_clean(local_n);
-  //    auto const first_id   = forward_search(part, fw_head, fw_csr, frontier, scc_id, bitvector, first_root);
-  //    auto const fb_decided = backward_search(part, bw_head, bw_csr, frontier, scc_id, bitvector, first_root, first_id);
-  //    local_decided += fb_decided;
-  //
-  //    KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(fb_decided, MPI_SUM));
-  //    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
-  //  }
 
   if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
     KASPAN_STATISTIC_SCOPE("ecl");

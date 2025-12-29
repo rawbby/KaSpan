@@ -18,6 +18,7 @@ backward_search(
   vertex_t        root,
   vertex_t        id) -> vertex_t
 {
+  return 0;
 }
 
 } // namespace async
