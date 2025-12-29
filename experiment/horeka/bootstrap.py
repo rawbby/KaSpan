@@ -1,10 +1,8 @@
 import os
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
-USER_HOME = os.path.expanduser("~")
-SCRIPT_REL = os.path.relpath(SCRIPT_DIR, USER_HOME)
-PROJECT_REL = os.path.relpath(PROJECT_ROOT, USER_HOME)
+PROJECT_ROOT = "~/workspace/KaSpan"
+SCRIPT_REL = "~/workspace/KaSpan/experiment/horeka"
 
 APPS = {'kaspan': 'bench_kaspan', 'ispan': 'bench_ispan', 'hpc_graph': 'bench_hpc_graph'}
 
@@ -70,14 +68,14 @@ def get_header(comp, s_name, scaling, rel_path, is_rwd=False):
 #SBATCH --time=30:00
 #SBATCH --export=ALL
 set -euo pipefail
-source ~/{SCRIPT_REL}/env.sh
-source ~/{SCRIPT_REL}/{run_script}"""
+source {SCRIPT_REL}/env.sh
+source {SCRIPT_REL}/{run_script}"""
     if s_name == 'medium':
-        header += f"\nsource ~/{SCRIPT_REL}/run_parallel.sh"
-    header += f"\napp_name={comp}\napp=~/{PROJECT_REL}/cmake-build-release/bin/{app_bin}"
+        header += f"\nsource {SCRIPT_REL}/run_parallel.sh"
+    header += f"\napp_name={comp}\napp={PROJECT_ROOT}/cmake-build-release/bin/{app_bin}"
     header += f"\nscaling={scaling}"
     if is_rwd:
-        header += f"\nshopt -s nullglob\nrwd=( ~/{SCRIPT_REL}/rwd/*.manifest )\nshopt -u nullglob"
+        header += f"\nshopt -s nullglob\nrwd=( {SCRIPT_REL}/rwd/*.manifest )\nshopt -u nullglob"
     header += "\nset +eu"
     return header
 
