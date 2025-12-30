@@ -4,7 +4,9 @@
 #include <util/arithmetic.hpp>
 #include <util/mpi_basic.hpp>
 
+#include <cstdio>
 #include <limits>
+#include <print>
 
 #ifdef KASPAN_INDEX64
 using index_t = i64;
@@ -71,8 +73,8 @@ free_mpi_edge_t()
   mpi_edge_t = MPI_DATATYPE_NULL;
 }
 
-constexpr auto scc_id_undecided   = std::numeric_limits<vertex_t>::max();
-constexpr auto scc_id_singular    = scc_id_undecided - 1;
+constexpr auto scc_id_undecided = std::numeric_limits<vertex_t>::max();
+constexpr auto scc_id_singular  = scc_id_undecided - 1;
 
 struct Degree
 {
@@ -154,8 +156,19 @@ free_mpi_degree_max_op()
   return SCC_ID[k] == scc_id_undecided;                          \
 }
 
-#define KASPAN_DEFAULT_INIT() \
-  MPI_DEFAULT_INIT();         \
-  init_mpi_edge_t();          \
-  init_mpi_degree_t();        \
-  init_mpi_degree_max_op();
+#define KASPAN_DEFAULT_INIT()                                \
+  MPI_DEFAULT_INIT();                                        \
+  init_mpi_edge_t();                                         \
+  init_mpi_degree_t();                                       \
+  init_mpi_degree_max_op();                                  \
+  std::set_terminate([] {                                    \
+    if (auto exception_pointer = std::current_exception()) { \
+      try {                                                  \
+        std::rethrow_exception(exception_pointer);           \
+      } catch (const std::exception& e) {                    \
+        std::println(stderr, "{}", e.what());                \
+      } catch (...) {                                        \
+      }                                                      \
+    }                                                        \
+    std::abort();                                            \
+  });

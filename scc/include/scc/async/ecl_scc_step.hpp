@@ -67,13 +67,7 @@ ecl_scc_step(
       active_stack.push(k);
     });
 
-    int iter = 0;
     while (true) {
-      ++iter;
-      if (iter % 100 == 0) {
-        printf("Rank %d: iter %d, active_stack size %zu\n", mpi_world_rank, iter, active_stack.size());
-        fflush(stdout);
-      }
       while (!active_stack.empty()) {
         auto const k = active_stack.back();
         active_stack.pop();

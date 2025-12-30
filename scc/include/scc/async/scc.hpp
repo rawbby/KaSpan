@@ -116,7 +116,15 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     auto changed      = make_bits_clean(local_n);
     auto edge_queue   = make_briefkasten_edge<IndirectionScheme>();
 
+    bool first_iter = true;
     do {
+      if (!first_iter) {
+        // Reactivate queue for next iteration - requires barrier to prevent race condition
+        MPI_Barrier(MPI_COMM_WORLD);
+        edge_queue.reactivate();
+      }
+      first_iter = false;
+
       ecl_scc_init_label(part, fw_label, bw_label);
       local_decided += async::ecl_scc_step(
         part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, fw_label, bw_label, active_array, active, changed, local_decided);

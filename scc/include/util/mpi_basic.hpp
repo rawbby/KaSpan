@@ -488,3 +488,9 @@ mpi_basic_allreduce_max_time() -> u64
   auto const timestamp_ns = duration_cast<nanoseconds>(timestamp);
   return mpi_basic_allreduce_single(static_cast<u64>(timestamp_ns.count()), MPI_MAX);
 }
+
+inline void
+mpi_basic_barrier()
+{
+  MPI_Barrier(MPI_COMM_WORLD);
+}
