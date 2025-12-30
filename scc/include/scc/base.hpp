@@ -1,5 +1,6 @@
 #pragma once
 
+#include <debug/assert.hpp>
 #include <util/arithmetic.hpp>
 #include <util/mpi_basic.hpp>
 
@@ -70,8 +71,8 @@ free_mpi_edge_t()
   mpi_edge_t = MPI_DATATYPE_NULL;
 }
 
-constexpr auto scc_id_undecided = std::numeric_limits<vertex_t>::max();
-constexpr auto scc_id_singular  = scc_id_undecided - 1;
+constexpr auto scc_id_undecided   = std::numeric_limits<vertex_t>::max();
+constexpr auto scc_id_singular    = scc_id_undecided - 1;
 
 struct Degree
 {

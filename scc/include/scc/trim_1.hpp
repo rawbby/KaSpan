@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory/buffer.hpp>
 #include <scc/base.hpp>
 #include <scc/part.hpp>
 
@@ -14,7 +13,6 @@ trim_1_first(Part const& part, index_t const* fw_head, index_t const* bw_head, v
     Degree   max{};
   };
 
-  KASPAN_STATISTIC_SCOPE("trim_1_first");
   auto const local_n = part.local_n();
 
   vertex_t decided_count = 0;
@@ -41,6 +39,36 @@ trim_1_first(Part const& part, index_t const* fw_head, index_t const* bw_head, v
     }
   }
 
-  KASPAN_STATISTIC_ADD("decision_count", decided_count);
   return Return{ decided_count, max };
+}
+
+template<WorldPartConcept Part>
+auto
+trim_1(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id) -> vertex_t
+{
+  auto const has_degree = [=](vertex_t k, index_t const* head, vertex_t const* csr) -> bool {
+    for (auto u : csr_range(head, csr, k)) {
+      if (not part.has_local(u)) {
+        return true;
+      }
+      if (scc_id[k] == scc_id_undecided) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  auto const local_n       = part.local_n();
+  vertex_t   decided_count = 0;
+  for (vertex_t k = 0; k < local_n; ++k) {
+    if (not has_degree(k, fw_head, fw_csr)) {
+      scc_id[k] = part.to_global(k);
+      ++decided_count;
+    }
+    if (not has_degree(k, bw_head, bw_csr)) {
+      scc_id[k] = part.to_global(k);
+      ++decided_count;
+    }
+  }
+  return decided_count;
 }
