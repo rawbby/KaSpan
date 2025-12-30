@@ -51,7 +51,7 @@ trim_1(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t
       if (not part.has_local(u)) {
         return true;
       }
-      if (scc_id[k] == scc_id_undecided) {
+      if (scc_id[part.to_local(u)] == scc_id_undecided) {
         return true;
       }
     }
@@ -61,13 +61,11 @@ trim_1(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t
   auto const local_n       = part.local_n();
   vertex_t   decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (not has_degree(k, fw_head, fw_csr)) {
-      scc_id[k] = part.to_global(k);
-      ++decided_count;
-    }
-    if (not has_degree(k, bw_head, bw_csr)) {
-      scc_id[k] = part.to_global(k);
-      ++decided_count;
+    if (scc_id[k] == scc_id_undecided) {
+      if (not has_degree(k, fw_head, fw_csr) or not has_degree(k, bw_head, bw_csr)) {
+        scc_id[k] = part.to_global(k);
+        ++decided_count;
+      }
     }
   }
   return decided_count;

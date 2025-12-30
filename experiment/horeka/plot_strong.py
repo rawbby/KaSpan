@@ -57,7 +57,7 @@ def get_kaspan_progress(data):
         return None
 
     res = []
-    for stage_path in [["trim_1"], ["forward_backward_search"], ["ecl"], ["residual"], ["tarjan"]]:
+    for stage_path in [["trim_1_first"], ["forward_backward_search"], ["trim_1_fw_bw"], ["ecl"], ["trim_1_ecl"], ["residual"], ["tarjan"]]:
         dur = get_max_dur(stage_path)
         decided = get_decided(stage_path)
         if dur is not None and decided is not None:

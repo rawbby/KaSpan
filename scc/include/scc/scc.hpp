@@ -27,14 +27,16 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   vertex_t local_decided  = 0;
   vertex_t global_decided = 0;
 
-  KASPAN_STATISTIC_PUSH("trim_1");
   // notice: trim_1_first has a side effect by initializing scc_id with scc_id undecided
   // if trim_1_first is removed one has to initialize scc_id with scc_id_undecided manually!
-  auto const [trim_1_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
-  local_decided += trim_1_decided;
-  global_decided = mpi_basic_allreduce_single(local_decided, MPI_SUM);
-  KASPAN_STATISTIC_ADD("decided_count", global_decided);
-  KASPAN_STATISTIC_POP();
+  auto const max = [&] {
+    KASPAN_STATISTIC_SCOPE("trim_1_first");
+    auto const [trim_1_decided, trim_1_max] = trim_1_first(part, fw_head, bw_head, scc_id);
+    local_decided += trim_1_decided;
+    global_decided = mpi_basic_allreduce_single(local_decided, MPI_SUM);
+    KASPAN_STATISTIC_ADD("decided_count", global_decided);
+    return trim_1_max;
+  }();
 
   // fallback to tarjan on single rank
   if (mpi_world_size == 1) {
@@ -54,47 +56,65 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   DEBUG_ASSERT_GE(decided_threshold, 0);
 
   if (global_decided < decided_threshold) {
-    KASPAN_STATISTIC_SCOPE("forward_backward_search");
+    {
+      KASPAN_STATISTIC_SCOPE("forward_backward_search");
 
-    auto frontier = vertex_frontier::create();
-    auto pivot    = pivot_selection(max);
+      auto frontier = vertex_frontier::create();
+      auto pivot    = pivot_selection(max);
 
-    auto bitvector = make_bits_clean(local_n);
-    forward_search(part, fw_head, fw_csr, frontier, scc_id, bitvector, pivot);
-    local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, bitvector, pivot);
+      auto bitvector = make_bits_clean(local_n);
+      forward_search(part, fw_head, fw_csr, frontier, scc_id, bitvector, pivot);
+      local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, bitvector, pivot);
 
-    auto const prev_global_decided = global_decided;
+      auto const prev_global_decided = global_decided;
 
-    global_decided = mpi_basic_allreduce_single(local_decided, MPI_SUM);
-    KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
-    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+      global_decided = mpi_basic_allreduce_single(local_decided, MPI_SUM);
+      KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
+      KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+    }
+    {
+      KASPAN_STATISTIC_SCOPE("trim_1_fw_bw");
+      auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
+      local_decided += trim_1_decided;
+      auto const prev_global_decided = global_decided;
+      global_decided                 = mpi_basic_allreduce_single(local_decided, MPI_SUM);
+      KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
+    }
   }
 
   if (global_decided < decided_threshold) {
-    KASPAN_STATISTIC_SCOPE("ecl");
+    {
+      KASPAN_STATISTIC_SCOPE("ecl");
 
-    auto fw_label     = make_array<vertex_t>(local_n);
-    auto bw_label     = make_array<vertex_t>(local_n);
-    auto active_array = make_array<vertex_t>(local_n - local_decided);
-    auto active       = make_bits_clean(local_n);
-    auto changed      = make_bits_clean(local_n);
-    auto frontier     = edge_frontier::create();
+      auto fw_label     = make_array<vertex_t>(local_n);
+      auto bw_label     = make_array<vertex_t>(local_n);
+      auto active_array = make_array<vertex_t>(local_n - local_decided);
+      auto active       = make_bits_clean(local_n);
+      auto changed      = make_bits_clean(local_n);
+      auto frontier     = edge_frontier::create();
 
-    auto const prev_global_decided = global_decided;
+      auto const prev_global_decided = global_decided;
 
-    do {
-      ecl_scc_init_lable(part, fw_label, bw_label);
-      local_decided += ecl_scc_step(
-        part, fw_head, fw_csr, bw_head, bw_csr, scc_id, fw_label, bw_label, active_array, active, changed, frontier, local_decided);
-      global_decided = mpi_basic_allreduce_single(local_decided, MPI_SUM);
-      // maybe: redistribute graph - sort vertices by ecl label and run trim tarjan (as there is now a lot locality)
-    } while (global_decided < decided_threshold);
+      do {
+        ecl_scc_init_lable(part, fw_label, bw_label);
+        local_decided += ecl_scc_step(
+          part, fw_head, fw_csr, bw_head, bw_csr, scc_id, fw_label, bw_label, active_array, active, changed, frontier, local_decided);
+        global_decided = mpi_basic_allreduce_single(local_decided, MPI_SUM);
+        // maybe: redistribute graph - sort vertices by ecl label and run trim tarjan (as there is now a lot locality)
+      } while (global_decided < decided_threshold);
 
-    KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
-    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+      KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
+      KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+    }
+    {
+      KASPAN_STATISTIC_SCOPE("trim_1_ecl");
+      auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
+      local_decided += trim_1_decided;
+      auto const prev_global_decided = global_decided;
+      global_decided                 = mpi_basic_allreduce_single(local_decided, MPI_SUM);
+      KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
+    }
   }
-
-  // local_decided += trim_tarjan(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
 
   {
     KASPAN_STATISTIC_SCOPE("residual");
