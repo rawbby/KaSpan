@@ -101,7 +101,7 @@ test_reactivation()
     }
     await_messages(mq, on_message);
     ASSERT_EQ(received.size(), static_cast<size_t>(mpi_world_size - 1));
-    MPI_Barrier(MPI_COMM_WORLD);
+    mpi_basic_barrier();
     mq.reactivate();
     received.clear();
   }
