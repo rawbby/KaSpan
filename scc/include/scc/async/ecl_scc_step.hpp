@@ -46,6 +46,7 @@ ecl_scc_step(
 
     auto on_message = [&](auto env) {
       for (auto edge : env.message) {
+
         auto const u     = edge.u;
         auto const label = edge.v;
         DEBUG_ASSERT(part.has_local(u));
@@ -62,8 +63,8 @@ ecl_scc_step(
     };
 
     active.fill_cmp(local_n, scc_id, scc_id_undecided);
+    std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
     active.for_each(local_n, [&](auto k) {
-      changed.set(k);
       active_stack.push(k);
     });
 
@@ -90,6 +91,7 @@ ecl_scc_step(
       }
 
       changed.for_each(local_n, [&](auto k) {
+        changed.unset(k);
         auto const label_k = labels[k];
         for (auto v : csr_range(head, csr, k)) {
           if (not part.has_local(v) and label_k < v) {
@@ -97,20 +99,29 @@ ecl_scc_step(
           }
         }
       });
-      changed.clear(local_n);
 
-      mq.poll(on_message);
+      mq.poll_throttled(on_message);
       if (active_stack.empty() and mq.terminate(on_message)) {
         break;
       }
     }
   };
 
-  propagate(fw_head, fw_csr, ecl_fw_label);
-  MPI_Barrier(MPI_COMM_WORLD);
+  mpi_basic_barrier();
   mq.reactivate();
+  mpi_basic_barrier();
+
+  propagate(fw_head, fw_csr, ecl_fw_label);
+
+  mpi_basic_barrier();
+  mq.reactivate();
+  mpi_basic_barrier();
+
   propagate(bw_head, bw_csr, ecl_bw_label);
-  MPI_Barrier(MPI_COMM_WORLD);
+
+  mpi_basic_barrier();
+  mq.reactivate();
+  mpi_basic_barrier();
 
   vertex_t local_decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -122,6 +133,7 @@ ecl_scc_step(
     }
   }
 
+  ASSERT_GE(local_decided_count, 0);
   return local_decided_count;
 }
 

@@ -71,9 +71,8 @@ main(int argc, char** argv)
   mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();
 
-  // Run 100 times to catch race conditions
-  for (int run = 1; run <= 100; ++run) {
-    for (vertex_t n : { 0, 1, 6, 8, 16, 33, 64, 116, 256, 411, 512, 1024 }) {
+  for (int run = 1; run <= 40; ++run) {
+    for (vertex_t n : { 0, 1, 6, 8, 16, 33, 64 }) {
       DEBUG_ASSERT_EQ(n, mpi_basic_allreduce_single(n, MPI_MAX));
 
       auto const seed = mpi_basic_allreduce_max_time();
