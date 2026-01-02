@@ -109,12 +109,15 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
     KASPAN_STATISTIC_SCOPE("ecl");
 
-    auto fw_label     = make_array<vertex_t>(local_n);
-    auto bw_label     = make_array<vertex_t>(local_n);
-    auto active_array = make_array<vertex_t>(local_n - local_decided);
-    auto active       = make_bits_clean(local_n);
-    auto changed      = make_bits_clean(local_n);
-    auto edge_queue   = make_briefkasten_edge<IndirectionScheme>();
+    auto fw_label        = make_array<vertex_t>(local_n);
+    auto bw_label        = make_array<vertex_t>(local_n);
+    auto fw_active_array = make_array<vertex_t>(local_n - local_decided);
+    auto bw_active_array = make_array<vertex_t>(local_n - local_decided);
+    auto fw_active       = make_bits_clean(local_n);
+    auto bw_active       = make_bits_clean(local_n);
+    auto fw_changed      = make_bits_clean(local_n);
+    auto bw_changed      = make_bits_clean(local_n);
+    auto edge_queue      = make_briefkasten_edge<IndirectionScheme>();
 
     bool first_iter = true;
     do {
@@ -127,7 +130,22 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
       ecl_scc_init_label(part, fw_label, bw_label);
       local_decided += async::ecl_scc_step(
-        part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, fw_label, bw_label, active_array, active, changed, local_decided);
+        part,
+        fw_head,
+        fw_csr,
+        bw_head,
+        bw_csr,
+        edge_queue,
+        scc_id,
+        fw_label,
+        bw_label,
+        fw_active_array,
+        bw_active_array,
+        fw_active,
+        bw_active,
+        fw_changed,
+        bw_changed,
+        local_decided);
     } while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold);
 
     KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(local_n - local_decided, MPI_SUM));
