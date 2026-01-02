@@ -1,4 +1,4 @@
-#include <debug/assert.hpp>
+#include "debug/assert_true.hpp"
 #include <util/scope_guard.hpp>
 
 #include <stdexcept>
@@ -11,9 +11,7 @@ test_basic()
 {
   bool called = false;
   {
-    auto const guard = ScopeGuard([&] {
-      called = true;
-    });
+    auto const guard = ScopeGuard([&] { called = true; });
     ASSERT(not called);
   }
   ASSERT(called);
@@ -24,9 +22,7 @@ test_exception()
 {
   bool called = false;
   try {
-    auto const guard = ScopeGuard([&] {
-      called = true;
-    });
+    auto const guard = ScopeGuard([&] { called = true; });
     throw std::runtime_error("force unwind");
   } catch (...) { // NOLINT(*-empty-catch)
     // destructor must have run

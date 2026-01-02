@@ -1,8 +1,8 @@
 #pragma once
 
+#include <mpi_basic/mpi_basic.hpp>
 #include <scc/base.hpp>
 #include <sys/stat.h>
-#include <mpi_basic/mpi_basic.hpp>
 
 using depth_t = i16;
 
@@ -15,8 +15,8 @@ constexpr inline vertex_t scc_id_largest = scc_id_undecided - 2;
 inline off_t
 fsize(char const* filename)
 {
-  struct stat st{};
-  if (stat(filename, &st) == 0)
-    return st.st_size;
+  struct stat st
+  {};
+  if (stat(filename, &st) == 0) return st.st_size;
   return -1;
 }

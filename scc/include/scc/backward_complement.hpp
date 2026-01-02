@@ -23,12 +23,7 @@
  * @param[out] bw_csr (maybe uninitialized) pre-allocated csr array of size m
  */
 inline void
-backward_complement_graph(
-  vertex_t        n,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t*        bw_head,
-  vertex_t*       bw_csr)
+backward_complement_graph(vertex_t n, index_t const* fw_head, vertex_t const* fw_csr, index_t* bw_head, vertex_t* bw_csr)
 {
   DEBUG_ASSERT_VALID_GRAPH(n, fw_head[n], fw_head, fw_csr);
 
@@ -63,9 +58,7 @@ backward_complement_graph(
   it = 0;
   for (vertex_t u = 0; u < n; ++u) {
     auto const end = fw_head[u + 1];
-    for (; it < end; ++it) {
-      bw_csr[bw_head[fw_csr[it] + 1]++] = u;
-    }
+    for (; it < end; ++it) { bw_csr[bw_head[fw_csr[it] + 1]++] = u; }
   }
 
   DEBUG_ASSERT_VALID_GRAPH(n, bw_head[n], bw_head, bw_csr);
@@ -82,15 +75,11 @@ backward_complement_graph(
  */
 template<WorldPartConcept Part>
 auto
-backward_complement_graph_part(
-  Part const&     part,
-  index_t         local_m,
-  index_t const*  head,
-  vertex_t const* csr)
+backward_complement_graph_part(Part const& part, index_t local_m, index_t const* head, vertex_t const* csr)
 {
   struct
   {
-    Buffer    buffer;
+    buffer    buffer;
     index_t   local_m = 0;
     index_t*  head    = nullptr;
     vertex_t* csr     = nullptr;
@@ -109,10 +98,10 @@ backward_complement_graph_part(
     return result;
   }
 
-  auto  send_stack_buffer = make_buffer<Edge>(local_m);
+  auto  send_stack_buffer = make_buffer<edge>(local_m);
   void* send_stack_memory = send_stack_buffer.data();
 
-  StackAccessor<Edge> send_stack{ send_stack_memory };
+  stack_accessor<edge> send_stack{ send_stack_memory };
   auto [sb, send_counts, send_displs] = mpi_basic::counts_and_displs();
   std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
 
@@ -142,12 +131,10 @@ backward_complement_graph_part(
   auto [rb, recv_counts, recv_displs] = mpi_basic::counts_and_displs();
   mpi_basic::alltoallv_counts(send_counts, recv_counts);
   auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
-  mpi_basic::inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&part](Edge const& e) {
-    return part.world_rank_of(e.u);
-  });
+  mpi_basic::inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&part](edge const& e) { return part.world_rank_of(e.u); });
 
-  auto  recv_buffer = make_buffer<Edge>(recv_count);
-  auto* recv_access = static_cast<Edge*>(recv_buffer.data());
+  auto  recv_buffer = make_buffer<edge>(recv_count);
+  auto* recv_access = static_cast<edge*>(recv_buffer.data());
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(recv_access, recv_count * sizeof(Edge));
   mpi_basic::alltoallv(send_stack.data(), send_counts, send_displs, recv_access, recv_counts, recv_displs, mpi_edge_t);
 

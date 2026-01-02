@@ -38,12 +38,10 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
   SCOPE_GUARD(delete[] work_comm);
 
   vertex_t s = n / 32;
-  if (n % 32 != 0)
-    s += 1;
+  if (n % 32 != 0) s += 1;
 
   vertex_t t = s / mpi_basic::world_size;
-  if (s % mpi_basic::world_size != 0)
-    t += 1;
+  if (s % mpi_basic::world_size != 0) t += 1;
 
   vertex_t const step          = t * 32;
   vertex_t const virtual_count = t * mpi_basic::world_size * 32;
@@ -114,43 +112,9 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
 
   KASPAN_STATISTIC_PUSH("forward_backward_search");
   auto const root = pivot_selection(scc_id, fw_head, bw_head, n);
-  fw_span(
-    scc_id,
-    fw_head,
-    bw_head,
-    fw_csr,
-    bw_csr,
-    local_beg,
-    local_end,
-    fw_sa,
-    front_comm,
-    root,
-    alpha,
-    n,
-    m,
-    step,
-    fq_comm,
-    sa_compress);
+  fw_span(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end, fw_sa, front_comm, root, alpha, n, m, step, fq_comm, sa_compress);
   memset(sa_compress, 0, s * sizeof(*sa_compress));
-  bw_span(
-    scc_id,
-    fw_head,
-    bw_head,
-    fw_csr,
-    bw_csr,
-    local_beg,
-    local_end,
-    fw_sa,
-    bw_sa,
-    front_comm,
-    work_comm,
-    root,
-    alpha,
-    n,
-    m,
-    step,
-    fq_comm,
-    sa_compress);
+  bw_span(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end, fw_sa, bw_sa, front_comm, work_comm, root, alpha, n, m, step, fq_comm, sa_compress);
   KASPAN_STATISTIC_POP();
 
   trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
@@ -183,8 +147,7 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
   KASPAN_STATISTIC_ADD("m", sub_fw_head[sub_n]);
 
   if (sub_n > 0) {
-    for (index_t i = 0; i < sub_n; ++i)
-      sub_wcc_id[i] = i;
+    for (index_t i = 0; i < sub_n; ++i) sub_wcc_id[i] = i;
 
     KASPAN_STATISTIC_PUSH("wcc");
     wcc(sub_wcc_id, sub_fw_head, sub_fw_csr, sub_bw_head, sub_bw_csr, sub_n);
@@ -199,8 +162,7 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
     KASPAN_STATISTIC_SCOPE("post_processing");
     MPI_Allreduce(MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t, MPI_MIN, MPI_COMM_WORLD);
     for (index_t sub_u = 0; sub_u < sub_n; ++sub_u) {
-      if (sub_scc_id[sub_u] != scc_id_undecided)
-        scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
+      if (sub_scc_id[sub_u] != scc_id_undecided) scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
     }
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   }

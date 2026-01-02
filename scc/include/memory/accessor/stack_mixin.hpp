@@ -8,26 +8,15 @@
 #include <type_traits>
 
 template<typename Derived, typename T>
-  requires(std::is_trivially_copyable_v<T> and
-           std::is_trivially_constructible_v<T> and
-           std::is_trivially_destructible_v<T>)
-class StackMixin
+  requires(std::is_trivially_copyable_v<T> and std::is_trivially_constructible_v<T> and std::is_trivially_destructible_v<T>)
+class stack_mixin
 {
 public:
-  [[nodiscard]] auto operator[](size_t index) -> T&
-  {
-    return derived()->data()[index];
-  }
+  [[nodiscard]] auto operator[](size_t index) -> T& { return derived()->data()[index]; }
 
-  [[nodiscard]] auto operator[](size_t index) const -> T const&
-  {
-    return derived()->data()[index];
-  }
+  [[nodiscard]] auto operator[](size_t index) const -> T const& { return derived()->data()[index]; }
 
-  void clear()
-  {
-    derived()->set_size(0);
-  }
+  void clear() { derived()->set_size(0); }
 
   void push(T const& t) noexcept
   {
@@ -57,22 +46,13 @@ public:
     derived()->set_size(derived()->size() - 1);
   }
 
-  auto empty() const -> bool
-  {
-    return derived()->size() == static_cast<u64>(0);
-  }
+  [[nodiscard]] auto empty() const -> bool { return derived()->size() == static_cast<u64>(0); }
 
 protected:
-  ~StackMixin() = default;
+  ~stack_mixin() = default;
 
 private:
-  auto derived() -> Derived*
-  {
-    return static_cast<Derived*>(this);
-  }
+  auto derived() -> Derived* { return static_cast<Derived*>(this); }
 
-  auto derived() const -> Derived const*
-  {
-    return static_cast<Derived const*>(this);
-  }
+  [[nodiscard]] auto derived() const -> Derived const* { return static_cast<Derived const*>(this); }
 };

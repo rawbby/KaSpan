@@ -8,14 +8,12 @@
 #include <span>
 
 template<typename Derived, UnsignedConcept T = u64>
-class DenseUnsignedMixin
+class dense_unsigned_mixin
 {
 public:
   void fill(T value, u64 n)
   {
-    for (u64 i = 0; i < n; ++i) {
-      set(i, value);
-    }
+    for (u64 i = 0; i < n; ++i) { set(i, value); }
   }
 
   [[nodiscard]] auto get(u64 index) const -> T
@@ -71,16 +69,10 @@ public:
   }
 
 protected:
-  ~DenseUnsignedMixin() = default;
+  ~dense_unsigned_mixin() = default;
 
 private:
-  auto derived() -> Derived*
-  {
-    return static_cast<Derived*>(this);
-  }
+  auto derived() -> Derived* { return static_cast<Derived*>(this); }
 
-  auto derived() const -> Derived const*
-  {
-    return static_cast<Derived const*>(this);
-  }
+  [[nodiscard]] auto derived() const -> Derived const* { return static_cast<Derived const*>(this); }
 };

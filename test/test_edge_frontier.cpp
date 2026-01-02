@@ -1,9 +1,15 @@
-#include <debug/assert.hpp>
+#include "mpi_basic/world.hpp"
+#include "debug/assert_eq.hpp"
+#include "debug/assert_false.hpp"
+#include "scc/base.hpp"
+#include "util/arithmetic.hpp"
+#include "debug/assert_true.hpp"
+#include "mpi_basic/allgather.hpp"
+#include "debug/assert_ne.hpp"
+#include "debug/assert_lt.hpp"
 #include <debug/sub_process.hpp>
-#include <memory/buffer.hpp>
 #include <scc/edge_frontier.hpp>
 #include <scc/part.hpp>
-#include <util/scope_guard.hpp>
 
 void
 test_trivial_hard_coded()
@@ -27,9 +33,7 @@ test_trivial_hard_coded()
     front.push(r, { u, 0 });
   }
 
-  for (i32 r = 0; r < mpi_basic::world_size; ++r) {
-    ASSERT_EQ(front.send_counts[r], 1);
-  }
+  for (i32 r = 0; r < mpi_basic::world_size; ++r) { ASSERT_EQ(front.send_counts[r], 1); }
 
   ASSERT_EQ(front.recv_buffer.size(), 0);
   ASSERT_EQ(front.send_buffer.size(), mpi_basic::world_size);

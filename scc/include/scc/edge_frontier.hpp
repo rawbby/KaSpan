@@ -20,12 +20,11 @@ struct edge_frontier
 
   static auto create(u64 capacity = 0) -> edge_frontier
   {
-    auto buffer = make_buffer<MPI_Count, MPI_Count, MPI_Aint, MPI_Aint>(
-      mpi_basic::world_size, mpi_basic::world_size, mpi_basic::world_size, mpi_basic::world_size);
+    auto  buffer = make_buffer<MPI_Count, MPI_Count, MPI_Aint, MPI_Aint>(mpi_basic::world_size, mpi_basic::world_size, mpi_basic::world_size, mpi_basic::world_size);
     auto* memory = buffer.data();
 
     edge_frontier frontier;
-    if (capacity) {
+    if (capacity != 0u) {
       frontier.send_buffer.reserve(capacity);
       frontier.recv_buffer.reserve(capacity);
     }
@@ -37,10 +36,7 @@ struct edge_frontier
     return frontier;
   }
 
-  void local_push(Edge const& edge)
-  {
-    recv_buffer.emplace_back(edge);
-  }
+  void local_push(Edge const& edge) { recv_buffer.emplace_back(edge); }
 
   void push(i32 rank, Edge const& edge)
   {
@@ -57,10 +53,7 @@ struct edge_frontier
     }
   }
 
-  auto has_next() -> bool
-  {
-    return not recv_buffer.empty();
-  }
+  auto has_next() const -> bool { return not recv_buffer.empty(); }
 
   auto next() -> Edge
   {
@@ -78,9 +71,7 @@ struct edge_frontier
     DEBUG_ASSERT_EQ(send_count, send_buffer.size());
 
     auto const total_messages = mpi_basic::allreduce_single(send_count, mpi_basic::sum);
-    if (total_messages == 0) {
-      return false;
-    }
+    if (total_messages == 0) { return false; }
 
     mpi_basic::alltoallv_counts(send_counts, recv_counts);
     auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
@@ -89,18 +80,9 @@ struct edge_frontier
     recv_buffer.resize(recv_offset + recv_count);
     auto* recv_memory = recv_buffer.data() + recv_offset;
 
-    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](Edge const& edge) {
-      return part.world_rank_of(edge.u);
-    });
+    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](Edge const& edge) { return part.world_rank_of(edge.u); });
 
-    mpi_basic::alltoallv(
-      send_buffer.data(),
-      send_counts,
-      send_displs,
-      recv_memory,
-      recv_counts,
-      recv_displs,
-      mpi_edge_t);
+    mpi_basic::alltoallv(send_buffer.data(), send_counts, send_displs, recv_memory, recv_counts, recv_displs, mpi_edge_t);
 
     send_buffer.clear();
     std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
@@ -117,9 +99,7 @@ struct edge_frontier
     DEBUG_ASSERT_EQ(send_count, send_buffer.size());
 
     auto const total_messages = mpi_basic::allreduce_single(send_count, mpi_basic::sum);
-    if (total_messages == 0) {
-      return mpi_basic::request_null;
-    }
+    if (total_messages == 0) { return mpi_basic::request_null; }
 
     mpi_basic::alltoallv_counts(send_counts, recv_counts);
     auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
@@ -128,25 +108,14 @@ struct edge_frontier
     recv_buffer.resize(recv_offset + recv_count);
     auto* recv_memory = recv_buffer.data() + recv_offset;
 
-    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](Edge const& edge) {
-      return part.world_rank_of(edge.u);
-    });
+    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](Edge const& edge) { return part.world_rank_of(edge.u); });
 
-    return mpi_basic::ialltoallv(
-      send_buffer.data(),
-      send_counts,
-      send_displs,
-      recv_memory,
-      recv_counts,
-      recv_displs,
-      mpi_edge_t);
+    return mpi_basic::ialltoallv(send_buffer.data(), send_counts, send_displs, recv_memory, recv_counts, recv_displs, mpi_edge_t);
   }
 
   bool isync(mpi_basic::Request request)
   {
-    if (request == mpi_basic::request_null) {
-      return false;
-    }
+    if (request == mpi_basic::request_null) { return false; }
 
     mpi_basic::wait(request);
     send_buffer.clear();

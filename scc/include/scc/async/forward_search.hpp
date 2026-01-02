@@ -9,15 +9,14 @@ namespace async {
 
 template<WorldPartConcept Part, typename BriefQueue>
 auto
-forward_search(
-  Part const&     part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  BriefQueue&     mq,
-  vertex_t const* scc_id,
-  BitsAccessor    fw_reached,
-  vertex_t*       active_array,
-  vertex_t        root) -> vertex_t
+forward_search(Part const&     part,
+               index_t const*  fw_head,
+               vertex_t const* fw_csr,
+               BriefQueue&     mq,
+               vertex_t const* scc_id,
+               BitsAccessor    fw_reached,
+               vertex_t*       active_array,
+               vertex_t        root) -> vertex_t
 {
   auto const local_n      = part.local_n();
   auto       active_stack = StackAccessor<vertex_t>{ active_array };
@@ -64,9 +63,7 @@ forward_search(
     }
 
     mq.poll_throttled(on_message);
-    if (active_stack.empty() and mq.terminate(on_message)) {
-      break;
-    }
+    if (active_stack.empty() and mq.terminate(on_message)) { break; }
   }
 
   return 0;

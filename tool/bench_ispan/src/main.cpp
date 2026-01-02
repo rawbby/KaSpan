@@ -1,3 +1,10 @@
+#include "util/arithmetic.hpp"
+#include "scc/base.hpp"
+#include "debug/statistic.hpp"
+#include <cstdlib>
+#include "util/scope_guard.hpp"
+#include "debug/process.hpp"
+#include "mpi_basic/world.hpp"
 #include <debug/valgrind.hpp>
 #include <ispan/scc.hpp>
 #include <scc/adapter/kagen.hpp>
@@ -8,8 +15,8 @@
 #include <mpi.h>
 
 #include <cstdio>
-#include <fstream>
 #include <print>
+#include <vector>
 
 void
 usage(int /* argc */, char** argv)
@@ -22,21 +29,11 @@ benchmark(auto const& graph, i32 alpha)
 {
   std::vector<vertex_t> scc_id;
 
-  scc(
-    graph.n,
-    graph.m,
-    graph.fw_head,
-    graph.fw_csr,
-    graph.bw_head,
-    graph.bw_csr,
-    alpha,
-    &scc_id);
+  scc(graph.n, graph.m, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, alpha, &scc_id);
 
   IF_KASPAN_STATISTIC(size_t global_component_count = 0;)
   for (vertex_t u = 0; u < graph.n; ++u) {
-    if (scc_id[u] == u) {
-      IF_KASPAN_STATISTIC(++global_component_count;)
-    }
+    if (scc_id[u] == u) { IF_KASPAN_STATISTIC(++global_component_count;) }
   }
   KASPAN_STATISTIC_ADD("scc_count", global_component_count);
 }
@@ -44,14 +41,14 @@ benchmark(auto const& graph, i32 alpha)
 int
 main(int argc, char** argv)
 {
-  auto const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
-  auto const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
-  if (not(kagen_option_string == nullptr ^ manifest_file == nullptr)) {
+  const auto *const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
+  const auto *const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
+  if ((kagen_option_string == nullptr ^ manifest_file == nullptr) == 0) {
     usage(argc, argv);
     std::exit(1);
   }
 
-  auto const output_file = arg_select_str(argc, argv, "--output_file", usage);
+  const auto *const output_file = arg_select_str(argc, argv, "--output_file", usage);
   auto const alpha       = arg_select_default_int<i32>(argc, argv, "--alpha", 14);
 
   KASPAN_DEFAULT_INIT();
@@ -72,12 +69,7 @@ main(int argc, char** argv)
     auto const graph_part = kagen_graph_part(kagen_option_string);
     KASPAN_STATISTIC_POP();
     KASPAN_STATISTIC_PUSH("preprocessing");
-    auto const graph = allgather_graph(
-      graph_part.part,
-      graph_part.m,
-      graph_part.local_fw_m,
-      graph_part.fw_head,
-      graph_part.fw_csr);
+    auto const graph = allgather_graph(graph_part.part, graph_part.m, graph_part.local_fw_m, graph_part.fw_head, graph_part.fw_csr);
     KASPAN_STATISTIC_POP();
     benchmark(graph, alpha);
   } else {

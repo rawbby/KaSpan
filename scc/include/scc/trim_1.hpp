@@ -16,10 +16,7 @@ trim_1_first(Part const& part, index_t const* fw_head, index_t const* bw_head, v
   auto const local_n = part.local_n();
 
   vertex_t decided_count = 0;
-  Degree   max{
-      .degree_product = std::numeric_limits<index_t>::min(),
-      .u              = scc_id_undecided
-  };
+  Degree   max{ .degree_product = std::numeric_limits<index_t>::min(), .u = scc_id_undecided };
 
   for (vertex_t k = 0; k < local_n; ++k) {
     auto const out_degree = fw_head[k + 1] - fw_head[k];
@@ -34,9 +31,7 @@ trim_1_first(Part const& part, index_t const* fw_head, index_t const* bw_head, v
     scc_id[k] = scc_id_undecided;
 
     auto const degree_product = out_degree * in_degree;
-    if (degree_product >= max.degree_product) {
-      max = { degree_product, part.to_global(k) };
-    }
+    if (degree_product >= max.degree_product) { max = { degree_product, part.to_global(k) }; }
   }
 
   return Return{ decided_count, max };
@@ -48,12 +43,8 @@ trim_1(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t
 {
   auto const has_degree = [=](vertex_t k, index_t const* head, vertex_t const* csr) -> bool {
     for (auto u : csr_range(head, csr, k)) {
-      if (not part.has_local(u)) {
-        return true;
-      }
-      if (scc_id[part.to_local(u)] == scc_id_undecided) {
-        return true;
-      }
+      if (not part.has_local(u)) { return true; }
+      if (scc_id[part.to_local(u)] == scc_id_undecided) { return true; }
     }
     return false;
   };

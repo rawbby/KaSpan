@@ -23,16 +23,16 @@ parse_kv_map(std::filesystem::path const& file) -> Result<std::unordered_map<std
 
   std::string line;
   while (std::getline(in, line)) {
-    if (line.empty() || line[0] == '%')
-      continue;
+    if (line.empty() || line[0] == '%') { continue;
+}
 
     auto const key_end = line.find(' ');
     RESULT_ASSERT(key_end != std::string::npos, DESERIALIZE_ERROR);
 
     // skip spaces after key to get the start of the value
     size_t value_start = key_end;
-    while (value_start < line.size() && line[value_start] == ' ')
-      ++value_start;
+    while (value_start < line.size() && line[value_start] == ' ') { ++value_start;
+}
 
     auto const key   = line.substr(0, key_end);
     auto const value = value_start < line.size() ? line.substr(value_start) : std::string{};
@@ -101,7 +101,7 @@ parse_endian(std::string_view value_str) -> std::endian
 
 } // namespace manifest_internal
 
-struct Manifest
+struct manifest
 {
   u32         schema_version = 0;
   std::string graph_code;
@@ -121,8 +121,7 @@ struct Manifest
   std::filesystem::path bw_head_path;
   std::filesystem::path bw_csr_path;
 
-  static auto
-  load(std::filesystem::path const& file) -> Manifest
+  static auto load(std::filesystem::path const& file) -> manifest
   {
     using namespace manifest_internal;
 
@@ -159,7 +158,7 @@ struct Manifest
     ASSERT_TRY(auto const bw_head_path_str, get_value_str("bw.head.path"));
     ASSERT_TRY(auto const bw_csr_path_str, get_value_str("bw.csr.path"));
 
-    Manifest manifest;
+    manifest manifest;
     ASSERT_TRY(manifest.schema_version, parse_int<u32>(schema_version_str));
     manifest.graph_code   = graph_code_str;
     manifest.graph_name   = graph_name_str;
@@ -177,12 +176,12 @@ struct Manifest
     return manifest;
   }
 
-  auto operator==(Manifest const& other) const -> bool = default;
-  auto operator!=(Manifest const& other) const -> bool = default;
+  auto operator==(manifest const& other) const -> bool = default;
+  auto operator!=(manifest const& other) const -> bool = default;
 };
 
 static auto
-load_graph_from_manifest(Manifest const& manifest) -> LocalGraph
+load_graph_from_manifest(manifest const& manifest) -> LocalGraph
 {
   auto const  n            = manifest.graph_node_count;
   auto const  m            = manifest.graph_edge_count;
@@ -210,10 +209,10 @@ load_graph_from_manifest(Manifest const& manifest) -> LocalGraph
   auto bw_head_buffer = FileBuffer::create_r(bw_head_file, (n + 1) * head_bytes);
   auto bw_csr_buffer  = FileBuffer::create_r(bw_csr_file, m * csr_bytes);
 
-  auto const fw_head_access = DenseUnsignedAccessor<>::view(fw_head_buffer.data(), head_bytes, load_endian);
-  auto const fw_csr_access  = DenseUnsignedAccessor<>::view(fw_csr_buffer.data(), csr_bytes, load_endian);
-  auto const bw_head_access = DenseUnsignedAccessor<>::view(bw_head_buffer.data(), head_bytes, load_endian);
-  auto const bw_csr_access  = DenseUnsignedAccessor<>::view(bw_csr_buffer.data(), csr_bytes, load_endian);
+  auto const fw_head_access = dense_unsigned_accessor<>::view(fw_head_buffer.data(), head_bytes, load_endian);
+  auto const fw_csr_access  = dense_unsigned_accessor<>::view(fw_csr_buffer.data(), csr_bytes, load_endian);
+  auto const bw_head_access = dense_unsigned_accessor<>::view(bw_head_buffer.data(), head_bytes, load_endian);
+  auto const bw_csr_access  = dense_unsigned_accessor<>::view(bw_csr_buffer.data(), csr_bytes, load_endian);
 
   auto g = LocalGraph{};
 
@@ -252,7 +251,7 @@ load_graph_from_manifest(Manifest const& manifest) -> LocalGraph
 
 template<WorldPartConcept Part>
 static auto
-load_graph_part_from_manifest(Part const& part, Manifest const& manifest) -> LocalGraphPart<Part>
+load_graph_part_from_manifest(Part const& part, manifest const& manifest) -> LocalGraphPart<Part>
 {
   DEBUG_ASSERT_EQ(manifest.graph_node_count, part.n);
 
@@ -288,12 +287,12 @@ load_graph_part_from_manifest(Part const& part, Manifest const& manifest) -> Loc
   auto bw_head_buffer = FileBuffer::create_r(bw_head_file, (n + 1) * head_bytes);
   auto bw_csr_buffer  = FileBuffer::create_r(bw_csr_file, m * csr_bytes);
 
-  auto fw_head_access = DenseUnsignedAccessor<>::view(fw_head_buffer.data(), head_bytes, load_endian);
-  auto fw_csr_access  = DenseUnsignedAccessor<>::view(fw_csr_buffer.data(), csr_bytes, load_endian);
-  auto bw_head_access = DenseUnsignedAccessor<>::view(bw_head_buffer.data(), head_bytes, load_endian);
-  auto bw_csr_access  = DenseUnsignedAccessor<>::view(bw_csr_buffer.data(), csr_bytes, load_endian);
+  auto fw_head_access = dense_unsigned_accessor<>::view(fw_head_buffer.data(), head_bytes, load_endian);
+  auto fw_csr_access  = dense_unsigned_accessor<>::view(fw_csr_buffer.data(), csr_bytes, load_endian);
+  auto bw_head_access = dense_unsigned_accessor<>::view(bw_head_buffer.data(), head_bytes, load_endian);
+  auto bw_csr_access  = dense_unsigned_accessor<>::view(bw_csr_buffer.data(), csr_bytes, load_endian);
 
-  auto const local_m = [=, &part](DenseUnsignedAccessor<> const& head) -> index_t {
+  auto const local_m = [=, &part](dense_unsigned_accessor<> const& head) -> index_t {
     if constexpr (Part::continuous) {
       if (local_n > 0) {
 
@@ -350,8 +349,8 @@ load_graph_part_from_manifest(Part const& part, Manifest const& manifest) -> Loc
     auto const begin  = fw_head_access.get(index);
     auto const end    = fw_head_access.get(index + 1);
     result.fw_head[k] = pos;
-    for (auto it = begin; it != end; ++it)
-      result.fw_csr[pos++] = fw_csr_access.get(it);
+    for (auto it = begin; it != end; ++it) { result.fw_csr[pos++] = fw_csr_access.get(it);
+}
   }
   result.fw_head[local_n] = pos;
 
@@ -361,8 +360,8 @@ load_graph_part_from_manifest(Part const& part, Manifest const& manifest) -> Loc
     auto const begin  = bw_head_access.get(index);
     auto const end    = bw_head_access.get(index + 1);
     result.bw_head[k] = pos;
-    for (auto it = begin; it != end; ++it)
-      result.bw_csr[pos++] = bw_csr_access.get(it);
+    for (auto it = begin; it != end; ++it) { result.bw_csr[pos++] = bw_csr_access.get(it);
+}
   }
   result.bw_head[local_n] = pos;
 

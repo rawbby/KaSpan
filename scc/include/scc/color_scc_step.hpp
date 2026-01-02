@@ -11,31 +11,26 @@
 
 template<WorldPartConcept Part>
 void
-color_scc_init_label(
-  Part const& part,
-  vertex_t*   colors)
+color_scc_init_label(Part const& part, vertex_t* colors)
 {
   auto const local_n = part.local_n();
-  for (vertex_t k = 0; k < local_n; ++k) {
-    colors[k] = part.to_global(k);
-  }
+  for (vertex_t k = 0; k < local_n; ++k) { colors[k] = part.to_global(k); }
 }
 
 template<WorldPartConcept Part>
 auto
-color_scc_step(
-  Part const&     part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  vertex_t*       scc_id,
-  vertex_t*       colors,
-  vertex_t*       active_array,
-  BitsAccessor    active,
-  BitsAccessor    changed,
-  edge_frontier&  frontier,
-  vertex_t        decided_count = 0) -> vertex_t
+color_scc_step(Part const&     part,
+               index_t const*  fw_head,
+               vertex_t const* fw_csr,
+               index_t const*  bw_head,
+               vertex_t const* bw_csr,
+               vertex_t*       scc_id,
+               const vertex_t*       colors,
+               vertex_t*       active_array,
+               BitsAccessor    active,
+               BitsAccessor    changed,
+               edge_frontier&  frontier,
+               vertex_t        decided_count = 0) -> vertex_t
 {
   auto const local_n = part.local_n();
 
@@ -43,9 +38,7 @@ color_scc_step(
   // Validate decided_count is consistent with scc_id
   vertex_t actual_decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] != scc_id_undecided) {
-      ++actual_decided_count;
-    }
+    if (scc_id[k] != scc_id_undecided) { ++actual_decided_count; }
   }
   DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
 #endif
@@ -58,9 +51,7 @@ color_scc_step(
   {
     active.fill_cmp(local_n, scc_id, scc_id_undecided);
     std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
-    active.for_each(local_n, [&](auto&& k) {
-      active_stack.push(k);
-    });
+    active.for_each(local_n, [&](auto&& k) { active_stack.push(k); });
 
     while (true) {
       while (not active_stack.empty()) {
@@ -87,16 +78,12 @@ color_scc_step(
       changed.for_each(local_n, [&](auto&& k) {
         auto const label_k = colors[k];
         for (auto v : csr_range(fw_head, fw_csr, k)) {
-          if (label_k < v and not part.has_local(v)) {
-            frontier.push(part.world_rank_of(v), { v, label_k });
-          }
+          if (label_k < v and not part.has_local(v)) { frontier.push(part.world_rank_of(v), { v, label_k }); }
         }
       });
       changed.clear(local_n);
 
-      if (not frontier.comm(part)) {
-        break;
-      }
+      if (not frontier.comm(part)) { break; }
 
       while (frontier.has_next()) {
         auto const [u, label] = frontier.next();
@@ -159,16 +146,12 @@ color_scc_step(
       changed.for_each(local_n, [&](auto&& k) {
         auto const pivot = colors[k];
         for (auto v : csr_range(bw_head, bw_csr, k)) {
-          if (not part.has_local(v)) {
-            frontier.push(part.world_rank_of(v), { v, pivot });
-          }
+          if (not part.has_local(v)) { frontier.push(part.world_rank_of(v), { v, pivot }); }
         }
       });
       changed.clear(local_n);
 
-      if (not frontier.comm(part)) {
-        break;
-      }
+      if (not frontier.comm(part)) { break; }
 
       while (frontier.has_next()) {
         auto const [u, pivot] = frontier.next();

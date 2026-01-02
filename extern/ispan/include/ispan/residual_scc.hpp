@@ -6,7 +6,17 @@
 #include <algorithm>
 
 inline void
-residual_scc(index_t const* sub_wcc_id, index_t* sub_scc_id, index_t const* sub_fw_head, index_t const* sub_bw_head, vertex_t const* sub_fw_csr, vertex_t const* sub_bw_csr, vertex_t* sub_fw_sa, vertex_t sub_n, vertex_t const* sub_wcc_fq, vertex_t sub_wcc_fq_size, vertex_t const* sub_vertices)
+residual_scc(index_t const*  sub_wcc_id,
+             index_t*        sub_scc_id,
+             index_t const*  sub_fw_head,
+             index_t const*  sub_bw_head,
+             vertex_t const* sub_fw_csr,
+             vertex_t const* sub_bw_csr,
+             vertex_t*       sub_fw_sa,
+             vertex_t        sub_n,
+             vertex_t const* sub_wcc_fq,
+             vertex_t        sub_wcc_fq_size,
+             vertex_t const* sub_vertices)
 {
   KASPAN_STATISTIC_SCOPE("residual_scc");
   size_t decided_count = 0;
@@ -44,28 +54,24 @@ residual_scc(index_t const* sub_wcc_id, index_t* sub_scc_id, index_t const* sub_
 
         // fw search
         q[tail++] = sub_u;
-        if (tail == sub_n)
-          tail = 0;
+        if (tail == sub_n) tail = 0;
         while (head != tail) {
           auto const temp_v = q[head++];
-          if (head == sub_n)
-            head = 0;
+          if (head == sub_n) head = 0;
 
           auto       beg = sub_fw_head[temp_v];
           auto const end = sub_fw_head[temp_v + 1];
           for (; beg < end; ++beg) {
             auto const sub_v = sub_fw_csr[beg];
 
-            if (sub_scc_id[sub_v] != scc_id_undecided)
-              continue;
+            if (sub_scc_id[sub_v] != scc_id_undecided) continue;
 
             if (sub_fw_sa[sub_v] != sub_u) {
               // if sub_v was not yet reached
               // add sub_v to queue and mark sub_v reached
 
               q[tail++] = sub_v;
-              if (tail == sub_n)
-                tail = 0;
+              if (tail == sub_n) tail = 0;
               sub_fw_sa[sub_v] = sub_u;
             }
           }
@@ -73,12 +79,10 @@ residual_scc(index_t const* sub_wcc_id, index_t* sub_scc_id, index_t const* sub_
 
         // bw search
         q[tail++] = sub_u;
-        if (tail == sub_n)
-          tail = 0;
+        if (tail == sub_n) tail = 0;
         while (head != tail) {
           auto const temp_v = q[head++];
-          if (head == sub_n)
-            head = 0;
+          if (head == sub_n) head = 0;
 
           auto       beg = sub_bw_head[temp_v];
           auto const end = sub_bw_head[temp_v + 1];
@@ -90,8 +94,7 @@ residual_scc(index_t const* sub_wcc_id, index_t* sub_scc_id, index_t const* sub_
               // add sub_v to queue and set scc id of sub_v
 
               q[tail++] = sub_v;
-              if (tail == sub_n)
-                tail = 0;
+              if (tail == sub_n) tail = 0;
               sub_scc_id[sub_v] = id;
               ++decided_count;
             }

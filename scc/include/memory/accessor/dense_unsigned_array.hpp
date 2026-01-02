@@ -9,7 +9,8 @@
 #include <utility>
 
 template<UnsignedConcept T = u64>
-class DenseUnsignedArray final : public Buffer
+class DenseUnsignedArray final
+  : public Buffer
   , public DenseUnsignedAccessorMixin<DenseUnsignedArray<T>, T>
 {
 public:
@@ -47,25 +48,13 @@ public:
     return DenseUnsignedArray{ count, element_byte_size, endian };
   }
 
-  [[nodiscard]] auto data() -> std::byte*
-  {
-    return static_cast<std::byte*>(Buffer::data());
-  }
+  [[nodiscard]] auto data() -> std::byte* { return static_cast<std::byte*>(Buffer::data()); }
 
-  [[nodiscard]] auto data() const -> std::byte const*
-  {
-    return static_cast<std::byte const*>(Buffer::data());
-  }
+  [[nodiscard]] auto data() const -> std::byte const* { return static_cast<std::byte const*>(Buffer::data()); }
 
-  [[nodiscard]] auto element_bytes() const -> u8
-  {
-    return element_byte_size_;
-  }
+  [[nodiscard]] auto element_bytes() const -> u8 { return element_byte_size_; }
 
-  [[nodiscard]] auto endian() const -> std::endian
-  {
-    return endian_;
-  }
+  [[nodiscard]] auto endian() const -> std::endian { return endian_; }
 
 private:
   u8          element_byte_size_ = 0;

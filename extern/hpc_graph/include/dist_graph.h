@@ -50,14 +50,13 @@
 
 #include "fast_map.h"
 
-
-#define out_degree(g, n) (g->out_degree_list[n+1] - g->out_degree_list[n])
-#define in_degree(g, n) (g->in_degree_list[n+1] - g->in_degree_list[n])
+#define out_degree(g, n) (g->out_degree_list[n + 1] - g->out_degree_list[n])
+#define in_degree(g, n) (g->in_degree_list[n + 1] - g->in_degree_list[n])
 #define out_vertices(g, n) &g->out_edges[g->out_degree_list[n]]
 #define in_vertices(g, n) &g->in_edges[g->in_degree_list[n]]
 
-
-struct dist_graph_t {
+struct dist_graph_t
+{
   uint64_t n;
   uint64_t m;
   uint64_t m_local_out;
@@ -72,20 +71,19 @@ struct dist_graph_t {
   uint64_t max_out_degree;
   uint64_t max_in_degree;
 
-  uint64_t *out_edges;
-  uint64_t *in_edges;
-  uint64_t *out_degree_list;
-  uint64_t *in_degree_list;
+  uint64_t* out_edges;
+  uint64_t* in_edges;
+  uint64_t* out_degree_list;
+  uint64_t* in_degree_list;
 
-  uint64_t *local_unmap;
-  uint64_t *ghost_unmap;
-  uint64_t *ghost_tasks;
-  fast_map map;
+  uint64_t* local_unmap;
+  uint64_t* ghost_unmap;
+  uint64_t* ghost_tasks;
+  fast_map  map;
+};
 
-} ;
-
-
-struct graph_gen_data_t {  
+struct graph_gen_data_t
+{
   uint64_t n;
   uint64_t m;
   uint64_t n_local;
@@ -95,29 +93,35 @@ struct graph_gen_data_t {
   uint64_t m_local_out;
   uint64_t m_local_in;
 
-  uint64_t *gen_edges;;
-  uint64_t *gen_edges_rev;
-
-} ;
+  uint64_t* gen_edges;
+  ;
+  uint64_t* gen_edges_rev;
+};
 
 struct mpi_data_t;
 
+int
+create_graph(graph_gen_data_t* ggi, dist_graph_t* g);
 
-int create_graph(graph_gen_data_t *ggi, dist_graph_t *g);
+int
+create_graph_serial(graph_gen_data_t* ggi, dist_graph_t* g);
 
-int create_graph_serial(graph_gen_data_t *ggi, dist_graph_t *g);
+int
+clear_graph(dist_graph_t* g);
 
-int clear_graph(dist_graph_t *g);
+int
+relabel_edges(dist_graph_t* g);
 
-int relabel_edges(dist_graph_t *g);
+int
+relabel_edges(dist_graph_t* g, int32_t* global_parts);
 
-int relabel_edges(dist_graph_t *g, int32_t* global_parts);
+int
+repart_graph(dist_graph_t* g, mpi_data_t* comm, char* part_file);
 
-int repart_graph(dist_graph_t*g, mpi_data_t* comm, char* part_file);
+void
+repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts);
 
-void repart_graph(dist_graph_t*g, mpi_data_t* comm, int32_t* local_parts);
-
-int get_max_degree_vert(dist_graph_t *g);
-
+int
+get_max_degree_vert(dist_graph_t* g);
 
 #endif

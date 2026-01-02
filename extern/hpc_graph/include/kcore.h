@@ -46,17 +46,19 @@
 #ifndef _KCORE_H_
 #define _KCORE_H_
 
-#include "dist_graph.h"
 #include "comms.h"
+#include "dist_graph.h"
 
-int run_kcore(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
-              uint64_t* kcores, uint32_t num_iter, bool run_approx);
+int
+run_kcore(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* kcores, uint32_t num_iter, bool run_approx);
 
-int kcore_output(dist_graph_t* g, uint64_t* kcores, char* output_file);
+int
+kcore_output(dist_graph_t* g, uint64_t* kcores, char* output_file);
 
-int kcore_verify(dist_graph_t* g, uint64_t* kcores, uint64_t num_to_output);
+int
+kcore_verify(dist_graph_t* g, uint64_t* kcores, uint64_t num_to_output);
 
-int kcore_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
-               uint32_t num_iter, char* output_file, bool run_approx);
+int
+kcore_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint32_t num_iter, char* output_file, bool run_approx);
 
 #endif

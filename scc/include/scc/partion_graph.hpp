@@ -10,9 +10,7 @@ template<WorldPartConcept Part>
 index_t
 partition_degree(index_t const* fw_head, Part const& part)
 {
-  if (part.local_n() > 0) {
-    return fw_head[part.end] - fw_head[part.begin];
-  }
+  if (part.local_n() > 0) { return fw_head[part.end] - fw_head[part.begin]; }
   return 0;
 }
 
@@ -25,15 +23,13 @@ partition_degree(index_t const* fw_head, Part const& part)
   auto const local_n = part.local_n();
 
   index_t m = 0;
-  for (vertex_t k = 0; k < local_n; ++k) {
-    m += degree(fw_head, part.to_global(k));
-  }
+  for (vertex_t k = 0; k < local_n; ++k) { m += degree(fw_head, part.to_global(k)); }
   return m;
 }
 
 template<WorldPartConcept Part>
 auto
-partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, Part const& part) -> LocalGraphPart<Part>
+partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, Part const& part) -> local_graph_part<Part>
 {
   auto const local_n = part.local_n();
   DEBUG_ASSERT_VALID_GRAPH(part.n, m, fw_head, fw_csr);
@@ -61,7 +57,7 @@ partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t con
   auto const local_fw_m = partition_degree(fw_head, part);
   auto const local_bw_m = partition_degree(bw_head, part);
 
-  LocalGraphPart<Part> result;
+  local_graph_part<Part> result;
   result.buffer = make_graph_buffer(local_n, local_fw_m, local_bw_m);
   auto* memory  = result.buffer.data();
 
@@ -85,9 +81,9 @@ template<WorldPartConcept Part>
 auto
 partition(index_t m, index_t const* head, vertex_t const* csr, Part const& part)
 {
-  struct PartitionResult
+  struct partition_result
   {
-    Buffer    buffer;
+    buffer    buffer;
     Part      part;
     index_t   m       = 0;
     index_t   local_m = 0;
@@ -98,7 +94,7 @@ partition(index_t m, index_t const* head, vertex_t const* csr, Part const& part)
   auto const local_n = part.local_n();
   auto const local_m = partition_degree(head, part);
 
-  PartitionResult result;
+  partition_result result;
   result.buffer = make_fw_graph_buffer(local_n + 1, local_m);
   auto* memory  = result.buffer.data();
 

@@ -20,60 +20,29 @@ namespace mpi_basic {
  */
 template<Concept T>
 void
-allgatherv(
-  T const*         send_buffer,
-  MPI_Count        send_count,
-  T*               recv_buffer,
-  MPI_Count const* recv_counts,
-  MPI_Aint const*  recv_displs)
+allgatherv(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count const* recv_counts, MPI_Aint const* recv_displs)
 {
   DEBUG_ASSERT_GE(send_count, 0);
   DEBUG_ASSERT(send_count == 0 or send_buffer != nullptr);
   DEBUG_ASSERT_NE(recv_counts, nullptr);
   DEBUG_ASSERT_NE(recv_displs, nullptr);
-  if (recv_buffer == nullptr) {
-    DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0);
-  }
-  MPI_Allgatherv_c(
-    send_buffer,
-    send_count,
-    type<T>,
-    recv_buffer,
-    recv_counts,
-    recv_displs,
-    type<T>,
-    MPI_COMM_WORLD);
+  if (recv_buffer == nullptr) { DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0); }
+  MPI_Allgatherv_c(send_buffer, send_count, type<T>, recv_buffer, recv_counts, recv_displs, type<T>, MPI_COMM_WORLD);
 }
 
 /**
  * @brief Untyped wrapper for MPI_Allgatherv_c.
  */
 inline void
-allgatherv(
-  void const*      send_buffer,
-  MPI_Count        send_count,
-  void*            recv_buffer,
-  MPI_Count const* recv_counts,
-  MPI_Aint const*  recv_displs,
-  MPI_Datatype     datatype)
+allgatherv(void const* send_buffer, MPI_Count send_count, void* recv_buffer, MPI_Count const* recv_counts, MPI_Aint const* recv_displs, MPI_Datatype datatype)
 {
   DEBUG_ASSERT_GE(send_count, 0);
   DEBUG_ASSERT(send_count == 0 or send_buffer != nullptr);
   DEBUG_ASSERT_NE(recv_counts, nullptr);
   DEBUG_ASSERT_NE(recv_displs, nullptr);
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
-  if (recv_buffer == nullptr) {
-    DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0);
-  }
-  MPI_Allgatherv_c(
-    send_buffer,
-    send_count,
-    datatype,
-    recv_buffer,
-    recv_counts,
-    recv_displs,
-    datatype,
-    MPI_COMM_WORLD);
+  if (recv_buffer == nullptr) { DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0); }
+  MPI_Allgatherv_c(send_buffer, send_count, datatype, recv_buffer, recv_counts, recv_displs, datatype, MPI_COMM_WORLD);
 }
 
 /**
@@ -93,14 +62,14 @@ allgatherv(T const* send_buffer, MPI_Count send_count)
   DEBUG_ASSERT_GE(send_count, 0);
   DEBUG_ASSERT(send_count == 0 or send_buffer != nullptr);
 
-  struct Result
+  struct result
   {
-    Buffer    buffer;
+    buffer    buffer;
     T*        recv;
-    MPI_Count count;
+    MPI_Count count{};
   };
 
-  Result result;
+  result result;
   auto [buffer, counts, d] = counts_and_displs();
   allgatherv_counts(send_count, counts);
 

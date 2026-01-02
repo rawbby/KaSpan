@@ -46,18 +46,19 @@
 #ifndef _PAGERANK_H_
 #define _PAGERANK_H_
 
-#include "dist_graph.h"
 #include "comms.h"
+#include "dist_graph.h"
 
+int
+run_pagerank(dist_graph_t* g, mpi_data_t* comm, double*& pageranks, uint32_t num_iter);
 
-int run_pagerank(dist_graph_t* g, mpi_data_t* comm,
-                 double*& pageranks, uint32_t num_iter);
+int
+pagerank_verify(dist_graph_t* g, double* pageranks);
 
-int pagerank_verify(dist_graph_t* g, double* pageranks);
+int
+pagerank_output(dist_graph_t* g, double* pageranks, char* output_file);
 
-int pagerank_output(dist_graph_t* g, double* pageranks, char* output_file);
-
-int pagerank_dist(dist_graph_t* g, mpi_data_t* comm, 
-                  uint32_t num_iter, char* output_file);
+int
+pagerank_dist(dist_graph_t* g, mpi_data_t* comm, uint32_t num_iter, char* output_file);
 
 #endif

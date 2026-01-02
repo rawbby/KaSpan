@@ -43,29 +43,27 @@
 //@HEADER
 */
 
-
+#include <fstream>
 #include <mpi.h>
 #include <omp.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <fstream>
 
-#include "dist_graph.h"
 #include "comms.h"
-#include "util.h"
+#include "dist_graph.h"
 #include "harmonic.h"
+#include "util.h"
 
 #define HC_NOT_VISITED 18446744073709551615ull
 #define HC_VISITED 18446744073709551614ull
 
-extern int procid, nprocs;
+extern int  procid, nprocs;
 extern bool verbose, debug, verify;
 
-
-int run_harmonic(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
-            uint64_t* distances, uint64_t root)
-{  
+int
+run_harmonic(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* distances, uint64_t root)
+{
   if (debug) { printf("Task %d run_harmonic() start\n", procid); }
   double elt = 0.0;
   if (verbose) {
@@ -74,74 +72,61 @@ int run_harmonic(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
   }
 
   q->queue_size = 0;
-  q->next_size = 0;
-  q->send_size = 0;
+  q->next_size  = 0;
+  q->send_size  = 0;
 
   uint64_t root_index = get_value(&g->map, root);
-  if (root_index != NULL_KEY && root_index < g->n_local)    
-  {
-    q->queue[0] = root;
+  if (root_index != NULL_KEY && root_index < g->n_local) {
+    q->queue[0]   = root;
     q->queue_size = 1;
   }
 
-  uint64_t distance = 0;
+  uint64_t distance       = 0;
   comm->global_queue_size = 1;
 #pragma omp parallel default(shared)
-{
-  thread_queue_t tq;
-  init_thread_queue(&tq);  
+  {
+    thread_queue_t tq;
+    init_thread_queue(&tq);
 
 #pragma omp for
-  for (uint64_t i = 0; i < g->n_total; ++i)
-    distances[i] = HC_NOT_VISITED;
+    for (uint64_t i = 0; i < g->n_total; ++i) distances[i] = HC_NOT_VISITED;
 
-  while (comm->global_queue_size)
-  {
-    if (debug && tq.tid == 0) { 
-      printf("Task %d Distance %lu run_harmonic() GQ: %li, TQ: %lu\n",
-        procid, distance, comm->global_queue_size, q->queue_size); 
-    }
+    while (comm->global_queue_size) {
+      if (debug && tq.tid == 0) { printf("Task %d Distance %lu run_harmonic() GQ: %li, TQ: %lu\n", procid, distance, comm->global_queue_size, q->queue_size); }
 
 #pragma omp for schedule(guided) nowait
-    for (int64_t i = 0; i < q->queue_size; ++i)
-    {
-      uint64_t vert = q->queue[i];
-      uint64_t vert_index = get_value(&g->map, vert);
-      if (distances[vert_index] != HC_NOT_VISITED && 
-          distances[vert_index] != HC_VISITED)
-        continue;
-      distances[vert_index] = distance;
+      for (int64_t i = 0; i < q->queue_size; ++i) {
+        uint64_t vert       = q->queue[i];
+        uint64_t vert_index = get_value(&g->map, vert);
+        if (distances[vert_index] != HC_NOT_VISITED && distances[vert_index] != HC_VISITED) continue;
+        distances[vert_index] = distance;
 
-      uint64_t in_degree = in_degree(g, vert_index);
-      uint64_t* ins = in_vertices(g, vert_index);
-      for (uint64_t j = 0; j < in_degree; ++j)
-      {
-        uint64_t in_index = ins[j];
-        if (distances[in_index] == HC_NOT_VISITED)
-        {
-          distances[in_index] = HC_VISITED;
+        uint64_t  in_degree = in_degree(g, vert_index);
+        uint64_t* ins       = in_vertices(g, vert_index);
+        for (uint64_t j = 0; j < in_degree; ++j) {
+          uint64_t in_index = ins[j];
+          if (distances[in_index] == HC_NOT_VISITED) {
+            distances[in_index] = HC_VISITED;
 
-          if (in_index < g->n_local)
-            add_vid_to_queue(&tq, q, g->local_unmap[in_index]);
-          else
-            add_vid_to_send(&tq, q, in_index);
+            if (in_index < g->n_local) add_vid_to_queue(&tq, q, g->local_unmap[in_index]);
+            else add_vid_to_send(&tq, q, in_index);
+          }
         }
       }
-    }  
 
-    empty_queue(&tq, q);
-    empty_send(&tq, q);
+      empty_queue(&tq, q);
+      empty_send(&tq, q);
 #pragma omp barrier
 
 #pragma omp single
-    {
-      exchange_verts(g, comm, q);
-      ++distance;
-    }
-  } // end while
+      {
+        exchange_verts(g, comm, q);
+        ++distance;
+      }
+    } // end while
 
-  clear_thread_queue(&tq);
-} // end parallel
+    clear_thread_queue(&tq);
+  } // end parallel
 
   if (verbose) {
     elt = omp_get_wtime() - elt;
@@ -152,38 +137,34 @@ int run_harmonic(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
   return 0;
 }
 
-int harmonic_output(dist_graph_t* g, uint64_t num_to_output,
-               uint64_t* input_list, double* centralities,
-               char* output_file)
+int
+harmonic_output(dist_graph_t* g, uint64_t num_to_output, uint64_t* input_list, double* centralities, char* output_file)
 {
-  if (verbose) printf("Task %d centralities to %s\n", procid, output_file); 
+  if (verbose) printf("Task %d centralities to %s\n", procid, output_file);
 
-  if (procid == 0)
-  {     
+  if (procid == 0) {
     std::ofstream outfile;
     outfile.open(output_file);
 
     outfile << "Vertex, Centrality" << std::endl;
 
-    for (uint64_t i = 0; i < num_to_output; ++i)
-      outfile << input_list[i] << "," << centralities[i] << std::endl;
+    for (uint64_t i = 0; i < num_to_output; ++i) outfile << input_list[i] << "," << centralities[i] << std::endl;
 
     outfile.close();
   }
 
-  if (verbose) printf("Task %d done writing centralities\n", procid); 
+  if (verbose) printf("Task %d done writing centralities\n", procid);
 
   return 0;
 }
 
-double harmonic_calc(dist_graph_t* g, uint64_t* distances, uint64_t root)
+double
+harmonic_calc(dist_graph_t* g, uint64_t* distances, uint64_t root)
 {
-  double my_hc = 0.0;
+  double   my_hc = 0.0;
   uint64_t count = 0;
   for (uint64_t i = 0; i < g->n_local; ++i)
-    if (distances[i] > 0 && 
-        distances[i] != HC_VISITED && distances[i] != HC_NOT_VISITED)
-    {
+    if (distances[i] > 0 && distances[i] != HC_VISITED && distances[i] != HC_NOT_VISITED) {
       my_hc += (1.0 / (double)distances[i]);
       ++count;
     }
@@ -191,28 +172,25 @@ double harmonic_calc(dist_graph_t* g, uint64_t* distances, uint64_t root)
   double global_hc = 0.0;
   MPI_Allreduce(&my_hc, &global_hc, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-  if (procid == 0)
-    printf("Vertex %lu - Harmonic Centrality %lf\n", root, global_hc);
+  if (procid == 0) printf("Vertex %lu - Harmonic Centrality %lf\n", root, global_hc);
 
   return global_hc;
 }
 
-int harmonic_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q, 
-                  char* output_file, 
-                  uint64_t num_to_output, uint64_t* input_list)
-{  
+int
+harmonic_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, char* output_file, uint64_t num_to_output, uint64_t* input_list)
+{
   if (debug) { printf("Task %d harmonic_dist() start\n", procid); }
 
   MPI_Barrier(MPI_COMM_WORLD);
   double elt = omp_get_wtime();
 
-  uint64_t* distances = (uint64_t*)malloc(g->n_total*sizeof(uint64_t));  
-  double* centralities = (double*)malloc(num_to_output*sizeof(double));  
+  uint64_t* distances    = (uint64_t*)malloc(g->n_total * sizeof(uint64_t));
+  double*   centralities = (double*)malloc(num_to_output * sizeof(double));
 
-  for (uint64_t i = 0; i < num_to_output; ++i)
-  {
+  for (uint64_t i = 0; i < num_to_output; ++i) {
     uint64_t root = input_list[i];
-    run_harmonic(g, comm, q, distances, root); 
+    run_harmonic(g, comm, q, distances, root);
     centralities[i] = harmonic_calc(g, distances, root);
   }
 
@@ -220,12 +198,10 @@ int harmonic_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q,
   elt = omp_get_wtime() - elt;
   if (procid == 0) printf("Harmonic time %9.6f (s)\n", elt);
 
-  if (output) {
-    harmonic_output(g, num_to_output, input_list, centralities, output_file);
-  }
+  if (output) { harmonic_output(g, num_to_output, input_list, centralities, output_file); }
 
   free(distances);
 
-  if (debug)  printf("Task %d harmonic_dist() success\n", procid); 
+  if (debug) printf("Task %d harmonic_dist() success\n", procid);
   return 0;
 }

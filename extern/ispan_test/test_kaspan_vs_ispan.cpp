@@ -2,12 +2,12 @@
 #include <debug/sub_process.hpp>
 #include <ispan/scc.hpp>
 #include <memory/accessor/stack_accessor.hpp>
+#include <mpi_basic/mpi_basic.hpp>
 #include <scc/adapter/kagen.hpp>
 #include <scc/adapter/manifest.hpp>
 #include <scc/allgather_graph.hpp>
 #include <scc/base.hpp>
 #include <scc/scc.hpp>
-#include <mpi_basic/mpi_basic.hpp>
 
 #include <mpi.h>
 
@@ -24,36 +24,17 @@ main(int argc, char** argv)
   DEBUG_ASSERT_VALID_GRAPH_PART(graph_part.part, graph_part.fw_head, graph_part.fw_csr);
   DEBUG_ASSERT_VALID_GRAPH_PART(graph_part.part, graph_part.bw_head, graph_part.bw_csr);
 
-  auto const graph = allgather_graph(
-    graph_part.part,
-    graph_part.m,
-    graph_part.local_fw_m,
-    graph_part.fw_head,
-    graph_part.fw_csr);
+  auto const graph = allgather_graph(graph_part.part, graph_part.m, graph_part.local_fw_m, graph_part.fw_head, graph_part.fw_csr);
   DEBUG_ASSERT_VALID_GRAPH(graph.n, graph.m, graph.fw_head, graph.fw_csr);
   DEBUG_ASSERT_VALID_GRAPH(graph.n, graph.m, graph.bw_head, graph.bw_csr);
 
   auto const scc_id_buffer = make_buffer<vertex_t>(graph_part.part.local_n());
   auto*      scc_id_access = scc_id_buffer.data();
   auto*      kaspan_scc_id = borrow_array_clean<vertex_t>(&scc_id_access, graph_part.part.local_n());
-  scc(
-    graph_part.part,
-    graph_part.fw_head,
-    graph_part.fw_csr,
-    graph_part.bw_head,
-    graph_part.bw_csr,
-    kaspan_scc_id);
+  scc(graph_part.part, graph_part.fw_head, graph_part.fw_csr, graph_part.bw_head, graph_part.bw_csr, kaspan_scc_id);
 
   std::vector<vertex_t> ispan_scc_id;
-  scc(
-    graph.n,
-    graph.m,
-    graph.fw_head,
-    graph.fw_csr,
-    graph.bw_head,
-    graph.bw_csr,
-    12,
-    &ispan_scc_id);
+  scc(graph.n, graph.m, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, 12, &ispan_scc_id);
 
   ASSERT_EQ(ispan_scc_id.size(), graph_part.part.n);
   for (vertex_t k = 0; k < graph_part.part.local_n(); ++k) {

@@ -9,9 +9,7 @@ template<UnsignedConcept T>
 constexpr auto
 floordiv(T x, T base) noexcept -> T
 {
-  if (not std::is_constant_evaluated()) {
-    DEBUG_ASSERT_GT(base, 0);
-  }
+  if (not std::is_constant_evaluated()) { DEBUG_ASSERT_GT(base, 0); }
   return x / base;
 }
 
@@ -30,9 +28,7 @@ template<UnsignedConcept T>
 constexpr auto
 remainder(T x, T base) noexcept -> T
 {
-  if (not std::is_constant_evaluated()) {
-    DEBUG_ASSERT_GT(base, 0);
-  }
+  if (not std::is_constant_evaluated()) { DEBUG_ASSERT_GT(base, 0); }
   return x % base;
 }
 
@@ -40,9 +36,7 @@ template<UnsignedConcept T>
 constexpr auto
 round_down(T x, T base) noexcept -> T
 {
-  if (not std::is_constant_evaluated()) {
-    DEBUG_ASSERT_GT(base, 0);
-  }
+  if (not std::is_constant_evaluated()) { DEBUG_ASSERT_GT(base, 0); }
   return x - (x % base);
 }
 
@@ -62,9 +56,7 @@ template<UnsignedConcept T>
 constexpr T
 clip(T x, T lo, T hi) noexcept
 {
-  if (not std::is_constant_evaluated()) {
-    DEBUG_ASSERT_LE(lo, hi);
-  }
+  if (not std::is_constant_evaluated()) { DEBUG_ASSERT_LE(lo, hi); }
   return x < lo ? lo : (x > hi ? hi : x);
 }
 
@@ -88,9 +80,7 @@ constexpr auto
 ceildiv(T x) noexcept -> T
 {
   static_assert(base > 0);
-  if (not std::is_constant_evaluated()) {
-    DEBUG_ASSERT_LE(x, std::numeric_limits<T>::max() - base + 1);
-  }
+  if (not std::is_constant_evaluated()) { DEBUG_ASSERT_LE(x, std::numeric_limits<T>::max() - base + 1); }
   if constexpr (base == 1) {
     return x;
   } else {
@@ -134,9 +124,7 @@ constexpr auto
 round_up(T x) noexcept -> T
 {
   static_assert(base > 0);
-  if (not std::is_constant_evaluated()) {
-    DEBUG_ASSERT_LE(x, std::numeric_limits<T>::max() - base + 1);
-  }
+  if (not std::is_constant_evaluated()) { DEBUG_ASSERT_LE(x, std::numeric_limits<T>::max() - base + 1); }
   if constexpr (base == 1) {
     return x;
   } else if constexpr (std::popcount(base) == 1) {

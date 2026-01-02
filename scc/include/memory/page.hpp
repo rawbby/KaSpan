@@ -15,13 +15,9 @@ inline auto    pagesize             = pagesize_default;
 inline auto
 pagesize() -> u64
 {
-  if (detail::pagesize_initialized) [[likely]] {
-    return detail::pagesize;
-  }
+  if (detail::pagesize_initialized) [[likely]] { return detail::pagesize; }
 
-  if (auto const sys_pagesize = sysconf(_SC_PAGESIZE); sys_pagesize > 0) [[likely]] {
-    detail::pagesize = static_cast<u64>(sys_pagesize);
-  }
+  if (auto const sys_pagesize = sysconf(_SC_PAGESIZE); sys_pagesize > 0) [[likely]] { detail::pagesize = static_cast<u64>(sys_pagesize); }
 
   DEBUG_ASSERT_EQ(std::popcount(detail::pagesize), 1, "the page size is assumed to be a power of two");
   detail::pagesize_initialized = true;
@@ -65,9 +61,7 @@ page_alloc(u64 size) noexcept(false) -> void*
   auto const page = pagesize();
   auto const mask = page - 1;
   void*      data = std::aligned_alloc(page, (size + mask) & ~mask);
-  if (data == nullptr) [[unlikely]] {
-    throw std::bad_alloc{};
-  }
+  if (data == nullptr) [[unlikely]] { throw std::bad_alloc{}; }
   return data;
 }
 

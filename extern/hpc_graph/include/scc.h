@@ -48,24 +48,25 @@
 
 #include <stdint.h>
 
-#include "dist_graph.h"
 #include "comms.h"
+#include "dist_graph.h"
 
+int
+scc_bfs_fw(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* scc, uint64_t root);
 
-int scc_bfs_fw(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
-               uint64_t* scc, uint64_t root);
+uint64_t
+scc_bfs_bw(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* scc, uint64_t root);
 
-uint64_t scc_bfs_bw(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
-               uint64_t* scc, uint64_t root);
+int
+scc_color(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* scc, uint64_t* colors);
 
-int scc_color(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
-              uint64_t* scc, uint64_t* colors);
+uint64_t
+scc_verify(dist_graph_t* g, uint64_t* scc);
 
-uint64_t scc_verify(dist_graph_t* g, uint64_t* scc);
+int
+scc_output(dist_graph_t* g, uint64_t* scc, char* output_file);
 
-int scc_output(dist_graph_t* g, uint64_t* scc, char* output_file);
-
-int scc_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q, 
-             uint64_t root, char* output_file);
+int
+scc_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t root, char* output_file);
 
 #endif

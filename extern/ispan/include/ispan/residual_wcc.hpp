@@ -42,8 +42,7 @@ wcc(index_t* wcc_id, index_t const* fw_head, index_t const* fw_csr, index_t cons
       }
     }
 
-    if (not color_changed)
-      break;
+    if (not color_changed) break;
 
     for (vertex_t u = 0; u < n; ++u) {
       if (color[u] != u) { // u is no root

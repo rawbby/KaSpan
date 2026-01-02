@@ -1,9 +1,16 @@
+#include "scc/base.hpp"
+#include "mpi_basic/allreduce_single.hpp"
+#include <cstdlib>
+#include "util/scope_guard.hpp"
+#include "debug/process.hpp"
+#include "mpi_basic/world.hpp"
+#include "debug/assert_lt.hpp"
 #include <debug/statistic.hpp>
 #include <debug/valgrind.hpp>
+#include <limits>
 #include <scc/adapter/kagen.hpp>
 #include <scc/adapter/manifest.hpp>
 #include <scc/async/scc.hpp>
-#include <scc/backward_complement.hpp>
 #include <scc/scc.hpp>
 #include <util/arg_parse.hpp>
 
@@ -13,13 +20,13 @@
 #include <mpi.h>
 
 #include <cstdio>
-#include <fstream>
 #include <print>
 
 void
 usage(int /* argc */, char** argv)
 {
-  std::println("usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file <output_file> [--async [--async_indirect]] [--trim_tarjan]", argv[0]);
+  std::println("usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file <output_file> [--async [--async_indirect]] [--trim_tarjan]",
+               argv[0]);
 }
 
 void
@@ -50,9 +57,10 @@ benchmark(auto const& graph, bool use_async, bool use_async_indirect)
 
 #if KASPAN_STATISTIC
   vertex_t local_component_count = 0;
-  for (vertex_t k = 0; k < graph.part.local_n(); ++k)
-    if (scc_id[k] == graph.part.to_global(k))
-      ++local_component_count;
+  for (vertex_t k = 0; k < graph.part.local_n(); ++k) {
+    if (scc_id[k] == graph.part.to_global(k)) { ++local_component_count;
+}
+}
 
   auto const global_component_count = mpi_basic::allreduce_single(local_component_count, MPI_SUM);
   KASPAN_STATISTIC_ADD("local_component_count", local_component_count);
@@ -63,19 +71,19 @@ benchmark(auto const& graph, bool use_async, bool use_async_indirect)
 int
 main(int argc, char** argv)
 {
-  auto const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
-  auto const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
-  if (not(kagen_option_string == nullptr ^ manifest_file == nullptr)) {
+  const auto *const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
+  const auto *const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
+  if ((kagen_option_string == nullptr ^ manifest_file == nullptr) == 0) {
     usage(argc, argv);
     std::exit(1);
   }
 
-  auto const output_file = arg_select_str(argc, argv, "--output_file", usage);
+  const auto *const output_file = arg_select_str(argc, argv, "--output_file", usage);
 
   auto const use_async          = arg_select_flag(argc, argv, "--async");
   auto const use_async_indirect = arg_select_flag(argc, argv, "--async_indirect");
-  if (use_async_indirect and not use_async)
-    usage(argc, argv);
+  if (use_async_indirect and not use_async) { usage(argc, argv);
+}
 
   KASPAN_DEFAULT_INIT();
   SCOPE_GUARD(KASPAN_STATISTIC_MPI_WRITE_JSON(output_file));

@@ -11,23 +11,22 @@
 #include <set>
 
 inline void
-fw_span(
-  vertex_t const* scc_id,
-  index_t const*  fw_head,
-  index_t const*  bw_head,
-  vertex_t const* fw_csr,
-  vertex_t const* bw_csr,
-  vertex_t        local_beg,
-  vertex_t        local_end,
-  depth_t*        fw_sa,
-  index_t*        front_comm,
-  vertex_t        root,
-  double          alpha,
-  vertex_t        n,
-  index_t         m,
-  vertex_t        step,
-  vertex_t*       fq_comm,
-  unsigned int*   sa_compress)
+fw_span(vertex_t const* scc_id,
+        index_t const*  fw_head,
+        index_t const*  bw_head,
+        vertex_t const* fw_csr,
+        vertex_t const* bw_csr,
+        vertex_t        local_beg,
+        vertex_t        local_end,
+        depth_t*        fw_sa,
+        index_t*        front_comm,
+        vertex_t        root,
+        double          alpha,
+        vertex_t        n,
+        index_t         m,
+        vertex_t        step,
+        vertex_t*       fq_comm,
+        unsigned int*   sa_compress)
 {
   depth_t level                = 0;
   fw_sa[root]                  = level;
@@ -90,14 +89,11 @@ fw_span(
       index_t head = 0;
       index_t tail = 0;
       for (vertex_t vert_id = local_beg; vert_id < local_end; vert_id++) {
-        if (scc_id[vert_id] == scc_id_undecided && fw_sa[vert_id] == level) {
-          q[tail++] = vert_id;
-        }
+        if (scc_id[vert_id] == scc_id_undecided && fw_sa[vert_id] == level) { q[tail++] = vert_id; }
       }
       while (head != tail) {
         auto const temp_v = q[head++];
-        if (head == queue_size)
-          head = 0;
+        if (head == queue_size) head = 0;
 
         auto const beg = fw_head[temp_v];
         auto const end = fw_head[temp_v + 1];
@@ -106,8 +102,7 @@ fw_span(
 
           if (scc_id[w] == scc_id_undecided && fw_sa[w] == depth_unset) {
             q[tail++] = w;
-            if (tail == queue_size)
-              tail = 0;
+            if (tail == queue_size) tail = 0;
             fw_sa[w] = static_cast<depth_t>(level + 1);
           }
         }
@@ -165,8 +160,7 @@ fw_span(
       if (front_count > 10000) {
 
         index_t s = n / 32;
-        if (n % 32 != 0)
-          s += 1;
+        if (n % 32 != 0) s += 1;
 
         // clang-format off
         MPI_Allreduce(
@@ -227,9 +221,7 @@ fw_span(
         }
         for (int i = front_comm[mpi_basic::world_rank]; i < front_count; ++i) {
           auto const v = fq_comm[i];
-          if (fw_sa[v] == depth_unset) {
-            fw_sa[v] = static_cast<depth_t>(level + 1);
-          }
+          if (fw_sa[v] == depth_unset) { fw_sa[v] = static_cast<depth_t>(level + 1); }
         }
       }
     }
@@ -238,28 +230,27 @@ fw_span(
 }
 
 inline void
-bw_span(
-  vertex_t*       scc_id,
-  index_t const*  fw_head,
-  index_t const*  bw_head,
-  vertex_t const* fw_csr,
-  vertex_t const* bw_csr,
+bw_span(vertex_t*       scc_id,
+        index_t const*  fw_head,
+        index_t const*  bw_head,
+        vertex_t const* fw_csr,
+        vertex_t const* bw_csr,
 
-  vertex_t local_beg,
-  vertex_t local_end,
+        vertex_t local_beg,
+        vertex_t local_end,
 
-  depth_t const* fw_sa,
-  depth_t*       bw_sa,
-  index_t*       front_comm,
-  int*           work_comm,
+        depth_t const* fw_sa,
+        depth_t*       bw_sa,
+        index_t*       front_comm,
+        int*           work_comm,
 
-  vertex_t      root,
-  double        alpha,
-  vertex_t      n,
-  vertex_t      m,
-  vertex_t      step,
-  vertex_t*     fq_comm,
-  unsigned int* sa_compress)
+        vertex_t      root,
+        double        alpha,
+        vertex_t      n,
+        vertex_t      m,
+        vertex_t      step,
+        vertex_t*     fq_comm,
+        unsigned int* sa_compress)
 {
   size_t decided_count = 0;
 
@@ -327,13 +318,11 @@ bw_span(
       index_t head = 0;
       index_t tail = 0;
       for (vertex_t vert_id = local_beg; vert_id < local_end; vert_id++) {
-        if (bw_sa[vert_id] == level)
-          q[tail++] = vert_id;
+        if (bw_sa[vert_id] == level) q[tail++] = vert_id;
       }
       while (head != tail) {
         auto const u = q[head++];
-        if (head == queue_size)
-          head = 0;
+        if (head == queue_size) head = 0;
 
         auto const beg = bw_head[u];
         auto const end = bw_head[u + 1];
@@ -342,8 +331,7 @@ bw_span(
 
           if (bw_sa[v] == depth_unset && fw_sa[v] != depth_unset) {
             q[tail++] = v;
-            if (tail == queue_size)
-              tail = 0;
+            if (tail == queue_size) tail = 0;
             scc_id[v] = scc_id_largest;
             ++decided_count;
             bw_sa[v] = static_cast<depth_t>(level + 1);
@@ -403,8 +391,7 @@ bw_span(
       if (front_count > 10000) {
 
         index_t s = n / 32;
-        if (n % 32 != 0)
-          s += 1;
+        if (n % 32 != 0) s += 1;
 
         // clang-format off
         MPI_Allreduce(
@@ -414,9 +401,7 @@ bw_span(
 
         vertex_t num_sa = 0;
         for (vertex_t i = 0; i < n; ++i) {
-          if (fw_sa[i] != depth_unset and
-              bw_sa[i] == depth_unset and
-              (sa_compress[i / 32] & 1 << (i % 32)) != 0) {
+          if (fw_sa[i] != depth_unset and bw_sa[i] == depth_unset and (sa_compress[i / 32] & 1 << (i % 32)) != 0) {
             bw_sa[i] = static_cast<depth_t>(level + 1);
             num_sa += 1;
           }
@@ -467,9 +452,7 @@ bw_span(
         }
         for (int i = 0; i < front_count; ++i) {
           auto const v_new = fq_comm[i];
-          if (bw_sa[v_new] == depth_unset) {
-            bw_sa[v_new] = static_cast<depth_t>(level + 1);
-          }
+          if (bw_sa[v_new] == depth_unset) { bw_sa[v_new] = static_cast<depth_t>(level + 1); }
         }
       }
     }

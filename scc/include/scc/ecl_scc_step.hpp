@@ -20,10 +20,7 @@
 
 template<WorldPartConcept Part>
 void
-ecl_scc_init_lable(
-  Part const& part,
-  vertex_t*   ecl_fw_label,
-  vertex_t*   ecl_bw_label)
+ecl_scc_init_lable(Part const& part, vertex_t* ecl_fw_label, vertex_t* ecl_bw_label)
 {
   auto const local_n = part.local_n();
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -35,20 +32,19 @@ ecl_scc_init_lable(
 
 template<WorldPartConcept Part>
 auto
-ecl_scc_step(
-  Part const&     part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  vertex_t*       scc_id,
-  vertex_t*       ecl_fw_label,
-  vertex_t*       ecl_bw_label,
-  vertex_t*       active_array,
-  BitsAccessor    active,
-  BitsAccessor    changed,
-  edge_frontier&  frontier,
-  vertex_t        decided_count = 0) -> vertex_t
+ecl_scc_step(Part const&     part,
+             index_t const*  fw_head,
+             vertex_t const* fw_csr,
+             index_t const*  bw_head,
+             vertex_t const* bw_csr,
+             vertex_t*       scc_id,
+             vertex_t*       ecl_fw_label,
+             vertex_t*       ecl_bw_label,
+             vertex_t*       active_array,
+             BitsAccessor    active,
+             BitsAccessor    changed,
+             edge_frontier&  frontier,
+             vertex_t        decided_count = 0) -> vertex_t
 {
   // this function uses the project convention that:
   // k,l always describe local vertex ids
@@ -62,9 +58,7 @@ ecl_scc_step(
   // Validate decided_count is consistent with scc_id
   vertex_t actual_decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] != scc_id_undecided) {
-      ++actual_decided_count;
-    }
+    if (scc_id[k] != scc_id_undecided) { ++actual_decided_count; }
   }
   DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
 #endif
@@ -77,9 +71,7 @@ ecl_scc_step(
 
     active.fill_cmp(local_n, scc_id, scc_id_undecided);
     std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
-    active.for_each(local_n, [&](auto&& k) {
-      active_stack.push(k);
-    });
+    active.for_each(local_n, [&](auto&& k) { active_stack.push(k); });
 
     while (true) {
 
@@ -130,9 +122,7 @@ ecl_scc_step(
       // if no messages to exchange (globally)
       // the labels converged.
 
-      if (not frontier.comm(part)) {
-        break;
-      }
+      if (not frontier.comm(part)) { break; }
 
       // === CHECK INCOMING PROPAGATIONS ===
 

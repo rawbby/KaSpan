@@ -1,10 +1,17 @@
-#include <debug/assert.hpp>
+#include "debug/assert_ge.hpp"
+#include "mpi_basic/world.hpp"
+#include "debug/assert_lt.hpp"
+#include "debug/assert_eq.hpp"
+#include "mpi_basic/allreduce_single.hpp"
+#include "mpi_basic/allgather.hpp"
+#include "scc/graph.hpp"
+#include "memory/borrow.hpp"
+#include "scc/base.hpp"
+#include "scc/backward_complement.hpp"
+#include "scc/part.hpp"
 #include <debug/sub_process.hpp>
-#include <scc/allgather_graph.hpp>
 #include <scc/allgather_sub_graph.hpp>
-#include <scc/fuzzy.hpp>
 #include <scc/partion_graph.hpp>
-#include <util/scope_guard.hpp>
 
 int
 main(int argc, char** argv)
@@ -80,11 +87,10 @@ main(int argc, char** argv)
 
   constexpr auto local_sub_n = 1; // one sub_n on every rank
 
-  auto const sub_g = allgather_sub_graph(
-    gp.part, local_sub_n, gp.fw_head, gp.fw_csr, gp.bw_head, gp.bw_csr, [&](vertex_t k) {
-      auto const u = gp.part.to_global(k);
-      return u == 1 or u == 2 or u == 4;
-    });
+  auto const sub_g = allgather_sub_graph(gp.part, local_sub_n, gp.fw_head, gp.fw_csr, gp.bw_head, gp.bw_csr, [&](vertex_t k) {
+    auto const u = gp.part.to_global(k);
+    return u == 1 or u == 2 or u == 4;
+  });
 
   ASSERT_EQ(sub_g.n, 3);
   ASSERT_EQ(sub_g.m, 4);

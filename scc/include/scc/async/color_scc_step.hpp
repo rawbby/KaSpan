@@ -21,18 +21,17 @@ namespace async {
 
 template<WorldPartConcept Part, typename BriefQueue>
 auto
-color_scc_step(
-  Part const&     part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  BriefQueue&     mq,
-  vertex_t*       scc_id,
-  vertex_t*       colors,
-  vertex_t*       active_array,
-  BitsAccessor    active,
-  vertex_t        decided_count = 0) -> vertex_t
+color_scc_step(Part const&     part,
+               index_t const*  fw_head,
+               vertex_t const* fw_csr,
+               index_t const*  bw_head,
+               vertex_t const* bw_csr,
+               BriefQueue&     mq,
+               vertex_t*       scc_id,
+               const vertex_t*       colors,
+               vertex_t*       active_array,
+               BitsAccessor    active,
+               vertex_t        decided_count = 0) -> vertex_t
 {
   auto const local_n = part.local_n();
 
@@ -40,9 +39,7 @@ color_scc_step(
   // Validate decided_count is consistent with scc_id
   vertex_t actual_decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] != scc_id_undecided) {
-      ++actual_decided_count;
-    }
+    if (scc_id[k] != scc_id_undecided) { ++actual_decided_count; }
   }
   DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
 #endif
@@ -68,9 +65,7 @@ color_scc_step(
     };
 
     active.fill_cmp(local_n, scc_id, scc_id_undecided);
-    active.for_each(local_n, [&](auto&& k) {
-      active_stack.push(k);
-    });
+    active.for_each(local_n, [&](auto&& k) { active_stack.push(k); });
 
     mpi_basic::barrier();
     mq.reactivate();
@@ -100,9 +95,7 @@ color_scc_step(
       }
 
       mq.poll_throttled(on_message);
-      if (active_stack.empty() and mq.terminate(on_message)) {
-        break;
-      }
+      if (active_stack.empty() and mq.terminate(on_message)) { break; }
     }
   }
 
@@ -167,9 +160,7 @@ color_scc_step(
       }
 
       mq.poll_throttled(on_message);
-      if (active_stack.empty() and mq.terminate(on_message)) {
-        break;
-      }
+      if (active_stack.empty() and mq.terminate(on_message)) { break; }
     }
   }
 

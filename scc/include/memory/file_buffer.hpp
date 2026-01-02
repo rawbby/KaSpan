@@ -9,13 +9,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-class FileBuffer final
+class file_buffer final
 {
 public:
-  FileBuffer() noexcept = default;
-  ~FileBuffer()
+  file_buffer() noexcept = default;
+  ~file_buffer()
   {
-    if (data_) {
+    if (data_ != nullptr) {
       munmap(data_, size_);
       data_ = nullptr;
       size_ = 0;
@@ -23,29 +23,27 @@ public:
   }
 
 private:
-  FileBuffer(void* data, size_t size)
+  file_buffer(void* data, size_t size)
     : data_(data)
     , size_(size)
   {
   }
 
 public:
-  FileBuffer(FileBuffer const&) = delete;
-  FileBuffer(FileBuffer&& rhs) noexcept
+  file_buffer(file_buffer const&) = delete;
+  file_buffer(file_buffer&& rhs) noexcept : data_(rhs.data_), size_(rhs.size_)
   {
-    data_     = rhs.data_;
-    size_     = rhs.size_;
+    
+    
     rhs.data_ = nullptr;
     rhs.size_ = 0;
   }
 
-  auto operator=(FileBuffer const&) -> FileBuffer& = delete;
-  auto operator=(FileBuffer&& rhs) noexcept -> FileBuffer&
+  auto operator=(file_buffer const&) -> file_buffer& = delete;
+  auto operator=(file_buffer&& rhs) noexcept -> file_buffer&
   {
     if (this != &rhs) {
-      if (data_) {
-        munmap(data_, size_);
-      }
+      if (data_ != nullptr) { munmap(data_, size_); }
       data_     = rhs.data_;
       size_     = rhs.size_;
       rhs.data_ = nullptr;
@@ -54,36 +52,33 @@ public:
     return *this;
   }
 
-  [[nodiscard]] static auto create_r(char const* file, size_t byte_size) -> FileBuffer
+  [[nodiscard]] static auto create_r(char const* file, size_t byte_size) -> file_buffer
   {
-    if (byte_size == 0) {
-      return FileBuffer{};
-    }
+    if (byte_size == 0) { return file_buffer{}; }
 
     auto const fd = open(file, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
     ASSERT(fd != -1);
     SCOPE_GUARD(close(fd));
 
-    struct stat st{};
+    struct stat st
+    {};
     ASSERT(fstat(fd, &st) == 0);
     ASSERT(S_ISREG(st.st_mode));
     ASSERT(st.st_size == byte_size);
 
     auto* data = mmap(nullptr, byte_size, PROT_READ, MAP_PRIVATE, fd, 0);
     ASSERT(data != MAP_FAILED);
-    return FileBuffer{ data, byte_size };
+    return file_buffer{ data, byte_size };
   }
 
   template<bool allocate = false>
-  [[nodiscard]] static auto create_w(char const* file, size_t size) -> FileBuffer
+  [[nodiscard]] static auto create_w(char const* file, size_t size) -> file_buffer
   {
-    if (size == 0)
-      return FileBuffer{};
+    if (size == 0) { return file_buffer{};
+}
 
     auto const fd = [file] {
-      if (allocate) {
-        return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW | O_CREAT | O_EXCL, 0600);
-      }
+      if (allocate) { return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW | O_CREAT | O_EXCL, 0600); }
       return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
     }();
     ASSERT(fd != -1);
@@ -92,7 +87,8 @@ public:
     if (allocate) {
       ASSERT(ftruncate(fd, static_cast<off_t>(size)) == 0);
     } else {
-      struct stat st{};
+      struct stat st
+      {};
       ASSERT(fstat(fd, &st) == 0);
       ASSERT(S_ISREG(st.st_mode));
       ASSERT(st.st_size == size);
@@ -100,20 +96,16 @@ public:
 
     auto* data = mmap(nullptr, size, PROT_WRITE, MAP_SHARED, fd, 0);
     ASSERT(data != MAP_FAILED);
-    return FileBuffer{ data, size };
+    return file_buffer{ data, size };
   }
 
   template<bool allocate = false>
-  [[nodiscard]] static auto create_rw(char const* file, size_t byte_size) -> FileBuffer
+  [[nodiscard]] static auto create_rw(char const* file, size_t byte_size) -> file_buffer
   {
-    if (byte_size == 0) {
-      return FileBuffer{};
-    }
+    if (byte_size == 0) { return file_buffer{}; }
 
     auto const fd = [file] {
-      if (allocate) {
-        return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW | O_CREAT | O_EXCL, 0600);
-      }
+      if (allocate) { return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW | O_CREAT | O_EXCL, 0600); }
       return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
     }();
     ASSERT(fd != -1);
@@ -122,7 +114,8 @@ public:
     if (allocate) {
       ASSERT(ftruncate(fd, static_cast<off_t>(byte_size)) == 0);
     } else {
-      struct stat st{};
+      struct stat st
+      {};
       ASSERT(fstat(fd, &st) == 0);
       ASSERT(S_ISREG(st.st_mode));
       ASSERT(st.st_size == byte_size);
@@ -130,13 +123,10 @@ public:
 
     auto* data = mmap(nullptr, byte_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     ASSERT(data != MAP_FAILED);
-    return FileBuffer{ data, byte_size };
+    return file_buffer{ data, byte_size };
   }
 
-  [[nodiscard]] auto data() const -> void*
-  {
-    return data_;
-  }
+  [[nodiscard]] auto data() const -> void* { return data_; }
 
 private:
   void*  data_ = nullptr;
@@ -144,21 +134,21 @@ private:
 };
 
 [[nodiscard]] static auto
-make_file_buffer_r(char const* file, size_t size) noexcept(false) -> FileBuffer
+make_file_buffer_r(char const* file, size_t size) noexcept(false) -> file_buffer
 {
-  return FileBuffer::create_r(file, size);
+  return file_buffer::create_r(file, size);
 }
 
 template<bool allocate = false>
 [[nodiscard]] static auto
-make_file_buffer_w(char const* file, size_t size) noexcept(false) -> FileBuffer
+make_file_buffer_w(char const* file, size_t size) noexcept(false) -> file_buffer
 {
-  return FileBuffer::create_w<allocate>(file, size);
+  return file_buffer::create_w<allocate>(file, size);
 }
 
 template<bool allocate = false>
 [[nodiscard]] static auto
-make_file_buffer_rw(char const* file, size_t size) noexcept(false) -> FileBuffer
+make_file_buffer_rw(char const* file, size_t size) noexcept(false) -> file_buffer
 {
-  return FileBuffer::create_rw<allocate>(file, size);
+  return file_buffer::create_rw<allocate>(file, size);
 }

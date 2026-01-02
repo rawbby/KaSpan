@@ -11,16 +11,9 @@ pivot_selection(Degree max_degree) -> vertex_t
 
 template<WorldPartConcept Part>
 auto
-pivot_selection(
-  Part const&     part,
-  index_t const*  fw_head,
-  index_t const*  bw_head,
-  vertex_t const* scc_id) -> vertex_t
+pivot_selection(Part const& part, index_t const* fw_head, index_t const* bw_head, vertex_t const* scc_id) -> vertex_t
 {
-  Degree max_degree{
-    .degree_product = std::numeric_limits<index_t>::min(),
-    .u              = std::numeric_limits<vertex_t>::min()
-  };
+  Degree max_degree{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
 
   for (vertex_t k = 0; k < part.local_n(); ++k) {
     if (scc_id[k] == scc_id_undecided) {

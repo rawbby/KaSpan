@@ -27,7 +27,7 @@ allreduce_single(T const& send_value, MPI_Datatype datatype, MPI_Op op) -> T
 {
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
   DEBUG_ASSERT_NE(op, MPI_OP_NULL);
-  T recv_value;
+  T recv_value{};
   MPI_Allreduce_c(&send_value, &recv_value, 1, datatype, op, MPI_COMM_WORLD);
   return recv_value;
 }

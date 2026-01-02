@@ -17,60 +17,42 @@
 
 namespace convert_graph_internal {
 
-struct Edge64
+struct edge64
 {
   u64 u;
   u64 v;
 };
 
-struct Edge64Less
+struct edge64_less
 {
-  constexpr auto operator()(Edge64 const& lhs, Edge64 const& rhs) const noexcept -> bool
-  {
-    return lhs.u < rhs.u or (lhs.u == rhs.u and lhs.v < rhs.v);
-  }
+  constexpr auto operator()(edge64 const& lhs, edge64 const& rhs) const noexcept -> bool { return lhs.u < rhs.u or (lhs.u == rhs.u and lhs.v < rhs.v); }
 
-  static constexpr auto min_value() -> Edge64
-  {
-    return { std::numeric_limits<u64>::min(), std::numeric_limits<u64>::min() };
-  }
+  static constexpr auto min_value() -> edge64 { return { std::numeric_limits<u64>::min(), std::numeric_limits<u64>::min() }; }
 
-  static constexpr auto max_value() -> Edge64
-  {
-    return { std::numeric_limits<u64>::max(), std::numeric_limits<u64>::max() };
-  }
+  static constexpr auto max_value() -> edge64 { return { std::numeric_limits<u64>::max(), std::numeric_limits<u64>::max() }; }
 };
 
-struct Edge64Greater
+struct edge64_greater
 {
-  constexpr auto operator()(Edge64 const& lhs, Edge64 const& rhs) const noexcept -> bool
-  {
-    return lhs.u > rhs.u or (lhs.u == rhs.u and lhs.v > rhs.v);
-  }
+  constexpr auto operator()(edge64 const& lhs, edge64 const& rhs) const noexcept -> bool { return lhs.u > rhs.u or (lhs.u == rhs.u and lhs.v > rhs.v); }
 
-  static constexpr auto min_value() -> Edge64
-  {
-    return { std::numeric_limits<u64>::min(), std::numeric_limits<u64>::min() };
-  }
+  static constexpr auto min_value() -> edge64 { return { std::numeric_limits<u64>::min(), std::numeric_limits<u64>::min() }; }
 
-  static constexpr auto max_value() -> Edge64
-  {
-    return { std::numeric_limits<u64>::max(), std::numeric_limits<u64>::max() };
-  }
+  static constexpr auto max_value() -> edge64 { return { std::numeric_limits<u64>::max(), std::numeric_limits<u64>::max() }; }
 };
 
 inline auto
-parse_uv(std::string const& s) -> Edge64
+parse_uv(std::string const& s) -> edge64
 {
   u64 pos = 0;
 
   auto skip_ws = [&] {
-    while (pos < s.size() && std::isspace(static_cast<unsigned char>(s[pos])))
-      ++pos;
+    while (pos < s.size() && (std::isspace(static_cast<unsigned char>(s[pos])) != 0)) { ++pos;
+}
   };
 
   auto read_u64 = [&]() -> u64 {
-    u64         val      = 0;
+    u64         const val      = 0;
     char const* begin    = s.data() + pos;
     char const* end      = s.data() + s.size();
     auto const [ptr, ec] = std::from_chars(begin, end, val, 10);
@@ -88,98 +70,63 @@ parse_uv(std::string const& s) -> Edge64
   // skip_ws();
   // ASSERT(pos == s.size(), "failed to parse '%s' (remaining line content)", s.c_str());
 
-  return Edge64{ u, v };
+  return edge64{ u, v };
 }
 
-struct LocalSortAdapter
+struct local_sort_adapter
 {
-  std::vector<Edge64> buffer;
+  std::vector<Edge64> buffer{};
 
-  explicit LocalSortAdapter(u64 memory)
-  {
-    buffer.reserve(memory / sizeof(Edge64));
-  }
+  explicit local_sort_adapter(u64 memory) { buffer.reserve(memory / sizeof(Edge64)); }
 
-  void push(Edge64 edge)
-  {
-    buffer.push_back(edge);
-  }
+  void push(edge64 edge) { buffer.push_back(edge); }
 
-  void operator()()
-  {
-    std::ranges::sort(buffer, Edge64Greater{});
-  }
+  void operator()() { std::ranges::sort(buffer, Edge64Greater{}); }
 
-  [[nodiscard]] auto size() const -> size_t
-  {
-    return buffer.size();
-  }
+  [[nodiscard]] auto size() const -> size_t { return buffer.size(); }
 
-  [[nodiscard]] auto has_next() const -> bool
-  {
-    return not buffer.empty();
-  }
+  [[nodiscard]] auto has_next() const -> bool { return not buffer.empty(); }
 
-  [[nodiscard]] auto next() -> Edge64
+  [[nodiscard]] static auto next() -> edge64
   {
     auto const e = buffer.back();
     buffer.pop_back();
     return e;
   }
 
-  void clear()
-  {
-    buffer.clear();
-  }
+  void clear() { buffer.clear(); }
 };
 
-struct ExternSortAdapter
+struct extern_sort_adapter
 {
-  stxxl::sorter<Edge64, Edge64Less> buffer;
+  stxxl::sorter<Edge64, Edge64Less> buffer{};
 
-  explicit ExternSortAdapter(u64 memory)
+  explicit extern_sort_adapter(u64 memory)
     : buffer(Edge64Less{}, memory)
   {
   }
 
-  void push(Edge64 edge)
-  {
-    buffer.push(edge);
-  }
+  void push(edge64 edge) { buffer.push(edge); }
 
-  void operator()()
-  {
-    buffer.sort();
-  }
+  void operator()() { buffer.sort(); }
 
-  [[nodiscard]] auto size() const -> size_t
-  {
-    return buffer.size();
-  }
+  [[nodiscard]] auto size() const -> size_t { return buffer.size(); }
 
-  [[nodiscard]] auto has_next() const -> bool
-  {
-    return not buffer.empty();
-  }
+  [[nodiscard]] auto has_next() const -> bool { return not buffer.empty(); }
 
-  [[nodiscard]] auto next() -> Edge64
+  [[nodiscard]] static auto next() -> edge64
   {
     auto const e = *buffer;
     ++buffer;
     return e;
   }
 
-  void clear()
-  {
-    buffer.clear();
-  }
+  void clear() { buffer.clear(); }
 };
 
 template<typename Sorter>
 auto
-convert_graph(std::string const& input_file,
-              u64                mem_bytes,
-              std::string const& graph_name = std::string()) -> VoidResult
+convert_graph(std::string const& input_file, u64 mem_bytes, std::string const& graph_name = std::string()) -> VoidResult
 {
 
   std::string const code = input_file.substr(0, input_file.find_first_of('.'));
@@ -209,8 +156,8 @@ convert_graph(std::string const& input_file,
 
     std::string line;
     while (std::getline(in, line)) {
-      if (line.empty() or line[0] == '%' or line[0] == '#' or (line[0] == '/' and line[1] == '/'))
-        continue;
+      if (line.empty() or line[0] == '%' or line[0] == '#' or (line[0] == '/' and line[1] == '/')) { continue;
+}
 
       auto const [u, v] = parse_uv(line);
       sort.push({ u, v });
@@ -248,8 +195,8 @@ convert_graph(std::string const& input_file,
     while (sort.has_next()) {
       auto const [u, v] = sort.next();
 
-      if (u == last_u and v == last_v)
-        has_duplicates = true;
+      if (u == last_u and v == last_v) { has_duplicates = true;
+}
       last_u = u;
       last_v = v;
 
@@ -278,11 +225,11 @@ convert_graph(std::string const& input_file,
   {
     std::string line;
     while (std::getline(in, line)) {
-      if (line.empty() or line[0] == '%' or line[0] == '#' or (line[0] == '/' and line[1] == '/'))
-        continue;
+      if (line.empty() or line[0] == '%' or line[0] == '#' or (line[0] == '/' and line[1] == '/')) { continue;
+}
 
       auto const [u, v] = parse_uv(line);
-      sort.push(Edge64{ v, u });
+      sort.push(edge64{ v, u });
     }
 
     ASSERT(not in.bad());
@@ -352,13 +299,10 @@ convert_graph(std::string const& input_file,
 } // namespace convert_graph_internal
 
 inline auto
-convert_graph(
-  std::string const& input_file,
-  u64                mem_bytes,
-  std::string const& graph_name = std::string{}) -> VoidResult
+convert_graph(std::string const& input_file, u64 mem_bytes, std::string const& graph_name = std::string{}) -> VoidResult
 {
   auto const file_size = std::filesystem::file_size(input_file);
-  if (file_size < mem_bytes)
-    return convert_graph_internal::convert_graph<convert_graph_internal::LocalSortAdapter>(input_file, file_size, graph_name);
-  return convert_graph_internal::convert_graph<convert_graph_internal::ExternSortAdapter>(input_file, file_size, graph_name);
+  if (file_size < mem_bytes) { return convert_graph_internal::convert_graph<convert_graph_internal::local_sort_adapter>(input_file, file_size, graph_name);
+}
+  return convert_graph_internal::convert_graph<convert_graph_internal::extern_sort_adapter>(input_file, file_size, graph_name);
 }

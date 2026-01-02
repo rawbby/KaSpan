@@ -10,17 +10,18 @@ constexpr auto
 representing_bytes(u64 max_val) -> u8
 {
   constexpr auto one = static_cast<u64>(1);
-  for (u8 bytes = 1; bytes < 8; ++bytes)
-    if (max_val < one << (bytes * 8))
-      return bytes;
+  for (u8 bytes = 1; bytes < 8; ++bytes) {
+    if (max_val < one << (bytes * 8)) { return bytes;
+}
+}
   return 8;
 }
 
-class Buffer
+class buffer
 {
 public:
-  Buffer() noexcept = default;
-  ~Buffer()
+  buffer() noexcept = default;
+  ~buffer()
   {
     if (data_ != nullptr) {
       DEBUG_ASSERT(is_line_aligned(data_));
@@ -29,24 +30,24 @@ public:
     }
   }
 
-  explicit Buffer(u64 size) noexcept(false)
+  explicit buffer(u64 size) noexcept(false)
   {
-    if (size) {
+    if (size != 0u) {
       data_ = line_alloc(size);
       DEBUG_ASSERT(is_line_aligned(data_));
       KASPAN_VALGRIND_MAKE_MEM_NOACCESS(data_, size);
     }
   }
 
-  Buffer(Buffer const&) = delete;
-  Buffer(Buffer&& rhs) noexcept
+  buffer(buffer const&) = delete;
+  buffer(buffer&& rhs) noexcept : data_(rhs.data_)
   {
-    data_     = rhs.data_;
+    
     rhs.data_ = nullptr;
   }
 
-  auto operator=(Buffer const&) -> Buffer& = delete;
-  auto operator=(Buffer&& rhs) noexcept -> Buffer&
+  auto operator=(buffer const&) -> buffer& = delete;
+  auto operator=(buffer&& rhs) noexcept -> buffer&
   {
     if (this != &rhs) {
       if (data_ != nullptr) {
@@ -60,10 +61,7 @@ public:
     return *this;
   }
 
-  [[nodiscard]] auto data() const noexcept -> void*
-  {
-    return data_;
-  }
+  [[nodiscard]] auto data() const noexcept -> void* { return data_; }
 
 protected:
   void* data_ = nullptr;
@@ -86,12 +84,12 @@ protected:
  */
 template<typename T = byte, std::same_as<void> Disambiguator = void>
 auto
-make_buffer(std::convertible_to<u64> auto... sizes) noexcept(false) -> Buffer
+make_buffer(std::convertible_to<u64> auto... sizes) noexcept(false) -> buffer
   requires(sizeof...(sizes) > 0)
 {
   static_assert(sizeof(T) > 0);
   static_assert(std::same_as<void, Disambiguator>);
-  return Buffer{ (line_align_up(sizes * sizeof(T)) + ...) };
+  return buffer{ (line_align_up(sizes * sizeof(T)) + ...) };
 }
 
 /**
@@ -114,10 +112,10 @@ make_buffer(std::convertible_to<u64> auto... sizes) noexcept(false) -> Buffer
  */
 template<typename... Ts, std::same_as<void> Disambiguator = void>
 auto
-make_buffer(std::convertible_to<u64> auto... sizes) noexcept(false) -> Buffer
+make_buffer(std::convertible_to<u64> auto... sizes) noexcept(false) -> buffer
   requires(sizeof...(Ts) == sizeof...(sizes) and sizeof...(sizes) > 1)
 {
   static_assert(((sizeof(Ts) > 0) and ...));
   static_assert(std::same_as<void, Disambiguator>);
-  return Buffer{ (line_align_up(sizes * sizeof(Ts)) + ...) };
+  return buffer{ (line_align_up(sizes * sizeof(Ts)) + ...) };
 }

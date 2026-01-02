@@ -20,15 +20,11 @@ inplace_partition_by_rank(T* send_buffer, MPI_Count const* send_counts, MPI_Aint
 {
   DEBUG_ASSERT_NE(send_counts, nullptr);
   DEBUG_ASSERT_NE(send_displs, nullptr);
-  if (send_buffer == nullptr) {
-    DEBUG_ASSERT_EQ(std::accumulate(send_counts, send_counts + world_size, static_cast<MPI_Count>(0)), 0);
-  }
+  if (send_buffer == nullptr) { DEBUG_ASSERT_EQ(std::accumulate(send_counts, send_counts + world_size, static_cast<MPI_Count>(0)), 0); }
 
   // Initialize send_displs as element-index prefix sums.
   send_displs[0] = 0;
-  for (i32 r = 1; r < world_size; ++r) {
-    send_displs[r] = send_displs[r - 1] + static_cast<MPI_Aint>(send_counts[r - 1]);
-  }
+  for (i32 r = 1; r < world_size; ++r) { send_displs[r] = send_displs[r - 1] + static_cast<MPI_Aint>(send_counts[r - 1]); }
 
   MPI_Aint ordered_items = 0;
   for (i32 rank = 0; rank < world_size; ++rank) {

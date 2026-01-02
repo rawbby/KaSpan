@@ -9,15 +9,11 @@
 inline auto
 decode_system_status(int status) -> int
 {
-  if (status == -1) {
-    return 127;
-  }
+  if (status == -1) { return 127; }
 
   if (WIFEXITED(status)) {
     auto const code = WEXITSTATUS(status);
-    if (code != 0) {
-      std::println(stderr, "[SUBPROCESS]\n  normal termination\n  status {}\n  code {}\n", status, code);
-    }
+    if (code != 0) { std::println(stderr, "[SUBPROCESS]\n  normal termination\n  status {}\n  code {}\n", status, code); }
     return code;
   }
 
@@ -55,12 +51,13 @@ mpi_sub_process(int argc, char** argv, int npc, int const* npv)
 {
   constexpr std::string_view magic_flag = "--mpi-sub-process";
 
-  for (int i = 1; i < argc; ++i)
-    if (magic_flag == argv[i])
-      return;
+  for (int i = 1; i < argc; ++i) {
+    if (magic_flag == argv[i]) { return;
+}
+}
 
-  auto const env_launcher = std::getenv("MPI_LAUNCHER");
-  auto const launcher     = env_launcher ? env_launcher : "mpirun";
+  auto *const env_launcher = std::getenv("MPI_LAUNCHER");
+  const auto *const launcher     = (env_launcher != nullptr) ? env_launcher : "mpirun";
 
   for (int i = 0; i < npc; ++i) {
 
@@ -70,15 +67,15 @@ mpi_sub_process(int argc, char** argv, int npc, int const* npv)
     cmd_builder << " \"" << argv[0] << "\" ";
     cmd_builder << magic_flag;
 
-    for (int j = 1; j < argc; ++j)
-      cmd_builder << " \"" << argv[j] << '"';
+    for (int j = 1; j < argc; ++j) { cmd_builder << " \"" << argv[j] << '"';
+}
 
     auto const cmd    = cmd_builder.str();
     auto const status = std::system(cmd.c_str());
 
     auto const exit_code = decode_system_status(status);
-    if (exit_code != 0)
-      std::exit(exit_code);
+    if (exit_code != 0) { std::exit(exit_code);
+}
   }
 
   std::exit(0);

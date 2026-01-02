@@ -1,8 +1,10 @@
-#include <debug/assert.hpp>
+#include "mpi_basic/world.hpp"
+#include "scc/base.hpp"
+#include "debug/assert_eq.hpp"
+#include "util/arithmetic.hpp"
 #include <debug/sub_process.hpp>
 #include <memory/buffer.hpp>
 #include <scc/part.hpp>
-#include <util/scope_guard.hpp>
 
 template<bool sorted_variant>
 void
@@ -13,17 +15,17 @@ test_explicit_continuous_world_part()
 
   auto const part = [&memory] {
     if constexpr (sorted_variant) {
-      if (mpi_basic::world_root)
-        return ExplicitSortedContinuousWorldPart{ 10, 3, mpi_basic::world_rank, mpi_basic::world_size, &memory };
-      if (mpi_basic::world_rank == 1)
-        return ExplicitSortedContinuousWorldPart{ 10, 9, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+      if (mpi_basic::world_root) { return ExplicitSortedContinuousWorldPart{ 10, 3, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+}
+      if (mpi_basic::world_rank == 1) { return ExplicitSortedContinuousWorldPart{ 10, 9, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+}
       ASSERT_EQ(mpi_basic::world_rank, 2);
       return ExplicitSortedContinuousWorldPart{ 10, 10, mpi_basic::world_rank, mpi_basic::world_size, &memory };
     } else {
-      if (mpi_basic::world_root)
-        return ExplicitContinuousWorldPart{ 10, 0, 3, mpi_basic::world_rank, mpi_basic::world_size, &memory };
-      if (mpi_basic::world_rank == 1)
-        return ExplicitContinuousWorldPart{ 10, 3, 9, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+      if (mpi_basic::world_root) { return ExplicitContinuousWorldPart{ 10, 0, 3, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+}
+      if (mpi_basic::world_rank == 1) { return ExplicitContinuousWorldPart{ 10, 3, 9, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+}
       ASSERT_EQ(mpi_basic::world_rank, 2);
       return ExplicitContinuousWorldPart{ 10, 9, 10, mpi_basic::world_rank, mpi_basic::world_size, &memory };
     }

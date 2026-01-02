@@ -1,30 +1,37 @@
+#include "util/arithmetic.hpp"
+#include "mpi_basic/allgather.hpp"
+#include "debug/assert_in_range.hpp"
+#include "mpi_basic/world.hpp"
+#include "mpi_basic/inplace_partition_by_rank.hpp"
+#include "memory/buffer.hpp"
+#include "memory/borrow.hpp"
+#include "debug/assert_true.hpp"
+#include "debug/assert_eq.hpp"
+#include <cstddef>
+#include "mpi_basic/counts_and_displs.hpp"
+#include <cstring>
 #include <debug/sub_process.hpp>
 #include <memory/accessor/stack.hpp>
-#include <mpi_basic/mpi_basic.hpp>
 #include <scc/base.hpp>
 
 #include <algorithm>
 #include <random>
 
-struct Item
+struct item
 {
   i32 dest;
   i32 id;
 };
 
 static void
-check_case(Item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts, MPI_Aint* send_displs)
+check_case(item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts, MPI_Aint* send_displs)
 {
   ASSERT_IN_RANGE(mpi_basic::world_rank, 0, mpi_basic::world_size);
 
   send_displs[0] = 0;
-  for (i32 r = 1; r < mpi_basic::world_size; ++r) {
-    send_displs[r] = send_displs[r - 1] + send_counts[r - 1];
-  }
+  for (i32 r = 1; r < mpi_basic::world_size; ++r) { send_displs[r] = send_displs[r - 1] + send_counts[r - 1]; }
 
-  mpi_basic::inplace_partition_by_rank<Item>(send_buffer, send_counts, send_displs, [](Item const& x) {
-    return x.dest;
-  });
+  mpi_basic::inplace_partition_by_rank<item>(send_buffer, send_counts, send_displs, [](item const& x) { return x.dest; });
 
   auto const buffer = make_buffer<MPI_Count>(mpi_basic::world_size, mpi_basic::world_size);
   auto*      memory = buffer.data();
@@ -38,18 +45,12 @@ check_case(Item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts
   }
 
   ASSERT(beg[0] == 0);
-  for (i32 r = 1; r < mpi_basic::world_size; ++r) {
-    ASSERT_EQ(end[r - 1], beg[r]);
-  }
+  for (i32 r = 1; r < mpi_basic::world_size; ++r) { ASSERT_EQ(end[r - 1], beg[r]); }
 
-  if (send_count > 0) {
-    ASSERT_EQ(end[mpi_basic::world_size - 1], send_count);
-  }
+  if (send_count > 0) { ASSERT_EQ(end[mpi_basic::world_size - 1], send_count); }
 
   for (i32 r = 0; r < mpi_basic::world_size; ++r) {
-    for (size_t i = beg[r]; i < end[r]; ++i) {
-      ASSERT(send_buffer[i].dest == r);
-    }
+    for (size_t i = beg[r]; i < end[r]; ++i) { ASSERT(send_buffer[i].dest == r); }
   }
 }
 
@@ -68,7 +69,7 @@ main(int argc, char** argv)
     i32 const     max_send_count = 2 * (mpi_basic::world_size - 1) + min_send_count;
 
     auto [cb, send_counts, send_displs] = mpi_basic::counts_and_displs();
-    auto send_stack                     = Stack<Item>(max_send_count);
+    auto send_stack                     = Stack<item>(max_send_count);
 
     for (i32 trial = 0; trial < 1024; ++trial) {
       std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
@@ -96,14 +97,12 @@ main(int argc, char** argv)
     constexpr auto send_count = 7;
 
     auto [cb, send_counts, send_displs] = mpi_basic::counts_and_displs();
-    auto send_stack                     = Stack<Item>(send_count);
+    auto send_stack                     = Stack<item>(send_count);
 
     std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
     send_counts[target_rank] = send_count;
 
-    for (i32 i = 0; i < send_count; ++i) {
-      send_stack.push({ target_rank, i });
-    }
+    for (i32 i = 0; i < send_count; ++i) { send_stack.push({ target_rank, i }); }
 
     check_case(send_stack.data(), send_count, send_counts, send_displs);
   }
@@ -111,7 +110,7 @@ main(int argc, char** argv)
   // zeros everywhere
   {
     auto [cb, send_counts, send_displs] = mpi_basic::counts_and_displs();
-    auto send_stack                     = Stack<Item>{};
+    auto send_stack                     = Stack<item>{};
 
     std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
     check_case(send_stack.data(), 0, send_counts, send_displs);

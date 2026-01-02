@@ -10,9 +10,9 @@
  *
  * Call once per process before using the wrappers. Not thread-safe.
  */
-#define MPI_INIT()                                       \
-  MPI_Init(nullptr, nullptr);                            \
-  SCOPE_GUARD(MPI_Finalize());                           \
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_basic::world_rank); \
-  MPI_Comm_size(MPI_COMM_WORLD, &mpi_basic::world_size); \
+#define MPI_INIT()                                                                                                                                                                 \
+  MPI_Init(nullptr, nullptr);                                                                                                                                                      \
+  SCOPE_GUARD(MPI_Finalize());                                                                                                                                                     \
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_basic::world_rank);                                                                                                                           \
+  MPI_Comm_size(MPI_COMM_WORLD, &mpi_basic::world_size);                                                                                                                           \
   mpi_basic::world_root = mpi_basic::world_rank == 0;

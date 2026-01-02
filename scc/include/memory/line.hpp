@@ -15,13 +15,9 @@ inline auto    linesize             = linesize_default;
 inline auto
 linesize() -> u64
 {
-  if (detail::linesize_initialized) [[likely]] {
-    return detail::linesize;
-  }
+  if (detail::linesize_initialized) [[likely]] { return detail::linesize; }
 
-  if (auto const sys_linesize = sysconf(_SC_LEVEL1_DCACHE_LINESIZE); sys_linesize > 0) [[likely]] {
-    detail::linesize = static_cast<u64>(sys_linesize);
-  }
+  if (auto const sys_linesize = sysconf(_SC_LEVEL1_DCACHE_LINESIZE); sys_linesize > 0) [[likely]] { detail::linesize = static_cast<u64>(sys_linesize); }
 
   DEBUG_ASSERT_EQ(std::popcount(detail::linesize), 1, "the cacheline size is assumed to be a power of two");
   detail::linesize_initialized = true;
@@ -65,9 +61,7 @@ line_alloc(u64 size) noexcept(false) -> void*
   auto const line = linesize();
   auto const mask = line - 1;
   void*      data = std::aligned_alloc(line, (size + mask) & ~mask);
-  if (data == nullptr) [[unlikely]] {
-    throw std::bad_alloc{};
-  }
+  if (data == nullptr) [[unlikely]] { throw std::bad_alloc{}; }
   return data;
 }
 

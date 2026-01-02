@@ -9,56 +9,39 @@
 #include <type_traits>
 
 template<typename T>
-  requires(std::is_trivially_copyable_v<T> and
-           std::is_trivially_constructible_v<T> and
-           std::is_trivially_destructible_v<T>)
-class StackAccessor final : public StackMixin<StackAccessor<T>, T>
+  requires(std::is_trivially_copyable_v<T> and std::is_trivially_constructible_v<T> and std::is_trivially_destructible_v<T>)
+class stack_accessor final : public stack_mixin<stack_accessor<T>, T>
 {
 public:
-  StackAccessor()  = default;
-  ~StackAccessor() = default;
+  stack_accessor()  = default;
+  ~stack_accessor() = default;
 
-  explicit StackAccessor(void* data)
+  explicit stack_accessor(void* data)
     : data_(data)
   {
   }
 
-  StackAccessor(void* data, u64 end)
+  stack_accessor(void* data, u64 end)
     : data_(data)
     , end_(end)
   {
   }
 
-  StackAccessor(StackAccessor const& rhs) noexcept = default;
-  StackAccessor(StackAccessor&& rhs) noexcept      = default;
+  stack_accessor(stack_accessor const& rhs) noexcept = default;
+  stack_accessor(stack_accessor&& rhs) noexcept      = default;
 
-  auto operator=(StackAccessor const& rhs) noexcept -> StackAccessor& = default;
-  auto operator=(StackAccessor&& rhs) noexcept -> StackAccessor&      = default;
+  auto operator=(stack_accessor const& rhs) noexcept -> stack_accessor& = default;
+  auto operator=(stack_accessor&& rhs) noexcept -> stack_accessor&      = default;
 
-  static auto borrow(void** memory, u64 count) noexcept -> StackAccessor
-  {
-    return StackAccessor{ ::borrow_array<T>(memory, count) };
-  }
+  static auto borrow(void** memory, u64 count) noexcept -> stack_accessor { return stack_accessor{ ::borrow_array<T>(memory, count) }; }
 
-  auto size() const -> u64
-  {
-    return end_;
-  }
+  [[nodiscard]] auto size() const -> u64 { return end_; }
 
-  void set_size(u64 size)
-  {
-    end_ = size;
-  }
+  void set_size(u64 size) { end_ = size; }
 
-  auto data() -> T*
-  {
-    return static_cast<T*>(data_);
-  }
+  auto data() -> T* { return static_cast<T*>(data_); }
 
-  auto data() const -> T const*
-  {
-    return static_cast<T*>(data_);
-  }
+  [[nodiscard]] auto data() const -> T const* { return static_cast<T*>(data_); }
 
 private:
   void* data_ = nullptr;
@@ -67,7 +50,7 @@ private:
 
 template<typename T>
 auto
-borrow_stack(void** memory, u64 size) -> StackAccessor<T>
+borrow_stack(void** memory, u64 size) -> stack_accessor<T>
 {
-  return StackAccessor<T>{ borrow_array<T>(memory, size) };
+  return stack_accessor<T>{ borrow_array<T>(memory, size) };
 }

@@ -10,16 +10,15 @@ namespace async {
 
 template<WorldPartConcept Part, typename BriefQueue>
 auto
-backward_search(
-  Part const&     part,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  BriefQueue&     mq,
-  vertex_t*       scc_id,
-  BitsAccessor    fw_reached,
-  vertex_t*       active_array,
-  vertex_t        root,
-  vertex_t        id) -> vertex_t
+backward_search(Part const&     part,
+                index_t const*  bw_head,
+                vertex_t const* bw_csr,
+                BriefQueue&     mq,
+                vertex_t*       scc_id,
+                BitsAccessor    fw_reached,
+                vertex_t*       active_array,
+                vertex_t        root,
+                vertex_t        id) -> vertex_t
 {
   auto const local_n       = part.local_n();
   auto       active_stack  = StackAccessor<vertex_t>{ active_array };
@@ -74,17 +73,13 @@ backward_search(
     }
 
     mq.poll_throttled(on_message);
-    if (active_stack.empty() and mq.terminate(on_message)) {
-      break;
-    }
+    if (active_stack.empty() and mq.terminate(on_message)) { break; }
   }
 
   // normalise scc_id to minimum vertex in scc
   min_u = mpi_basic::allreduce_single(min_u, mpi_basic::min);
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] == id) {
-      scc_id[k] = min_u;
-    }
+    if (scc_id[k] == id) { scc_id[k] = min_u; }
   }
 
   return decided_count;

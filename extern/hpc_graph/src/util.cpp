@@ -45,53 +45,56 @@
 
 #include <mpi.h>
 #include <omp.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 
 #include "util.h"
 
 #include <cstdlib>
 
-extern int procid, nprocs;
+extern int  procid, nprocs;
 extern bool verbose, debug, verify;
 
-void throw_err(char const* err_message)
+void
+throw_err(char const* err_message)
 {
   fprintf(stderr, "Error: %s\n", err_message);
   MPI_Abort(MPI_COMM_WORLD, 1);
 }
 
-void throw_err(char const* err_message, int32_t task)
+void
+throw_err(char const* err_message, int32_t task)
 {
   fprintf(stderr, "Task %d Error: %s\n", task, err_message);
   MPI_Abort(MPI_COMM_WORLD, 1);
 }
 
-void throw_err(char const* err_message, int32_t task, int32_t thread)
+void
+throw_err(char const* err_message, int32_t task, int32_t thread)
 {
   fprintf(stderr, "Task %d Thread %d Error: %s\n", task, thread, err_message);
   MPI_Abort(MPI_COMM_WORLD, 1);
 }
 
-void quicksort_dec(uint64_t* arr1, uint64_t* arr2, int64_t left, int64_t right) 
+void
+quicksort_dec(uint64_t* arr1, uint64_t* arr2, int64_t left, int64_t right)
 {
-  int64_t i = left;
-  int64_t j = right;
-  uint64_t temp; uint64_t temp2;
+  int64_t  i = left;
+  int64_t  j = right;
+  uint64_t temp;
+  uint64_t temp2;
   uint64_t pivot = arr1[(left + right) / 2];
 
-  while (i <= j) 
-  {
-    while (arr1[i] > pivot) {i++;}
-    while (arr1[j] < pivot) {j--;}
-  
-    if (i <= j) 
-    {
-      temp = arr1[i];
+  while (i <= j) {
+    while (arr1[i] > pivot) { i++; }
+    while (arr1[j] < pivot) { j--; }
+
+    if (i <= j) {
+      temp    = arr1[i];
       arr1[i] = arr1[j];
       arr1[j] = temp;
-      temp2 = arr2[i];
+      temp2   = arr2[i];
       arr2[i] = arr2[j];
       arr2[j] = temp2;
       ++i;
@@ -99,31 +102,25 @@ void quicksort_dec(uint64_t* arr1, uint64_t* arr2, int64_t left, int64_t right)
     }
   }
 
-  if (j > left)
-    quicksort_dec(arr1, arr2, left, j);
-  if (i < right)
-    quicksort_dec(arr1, arr2, i, right);
+  if (j > left) quicksort_dec(arr1, arr2, left, j);
+  if (i < right) quicksort_dec(arr1, arr2, i, right);
 }
 
-
-uint64_t* str_to_array(char *input_list_str, uint64_t* num)
+uint64_t*
+str_to_array(char* input_list_str, uint64_t* num)
 {
-  char *cp = strtok(input_list_str, ",");
-  if (cp == NULL) {
-    return (uint64_t*)malloc((*num)*sizeof(uint64_t));
-  }
+  char* cp = strtok(input_list_str, ",");
+  if (cp == NULL) { return (uint64_t*)malloc((*num) * sizeof(uint64_t)); }
 
-  int64_t my_index = -1;
+  int64_t  my_index = -1;
   uint64_t n;
   if (sscanf(cp, "%lu", &n) == 1) {
-      my_index = (int64_t)*num;
-      *num += 1;
+    my_index = (int64_t)*num;
+    *num += 1;
   } else {
-      printf("Invalid integer token '%s'\n", cp);
+    printf("Invalid integer token '%s'\n", cp);
   }
-  uint64_t *array = str_to_array(NULL, num);
-  if (my_index >= 0) {
-      array[my_index] = n;
-  }
+  uint64_t* array = str_to_array(NULL, num);
+  if (my_index >= 0) { array[my_index] = n; }
   return array;
 }

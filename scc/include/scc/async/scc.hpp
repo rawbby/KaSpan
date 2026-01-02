@@ -27,10 +27,7 @@ template<>
 struct mpi_type_traits<Edge>
 {
   static constexpr bool has_to_be_committed = false;
-  static MPI_Datatype   data_type()
-  {
-    return mpi_edge_t;
-  }
+  static MPI_Datatype   data_type() { return mpi_edge_t; }
 };
 } // namespace kamping
 
@@ -46,13 +43,11 @@ make_briefkasten_vertex()
   if constexpr (std::same_as<IndirectionScheme, briefkasten::NoopIndirectionScheme>) {
     return briefkasten::BufferedMessageQueueBuilder<vertex_t>().build();
   } else {
-    return briefkasten::IndirectionAdapter{
-      briefkasten::BufferedMessageQueueBuilder<vertex_t>()
-        .with_merger(briefkasten::aggregation::EnvelopeSerializationMerger{})
-        .with_splitter(briefkasten::aggregation::EnvelopeSerializationSplitter<vertex_t>{})
-        .build(),
-      IndirectionScheme{ mpi_basic::comm_world }
-    };
+    return briefkasten::IndirectionAdapter{ briefkasten::BufferedMessageQueueBuilder<vertex_t>()
+                                              .with_merger(briefkasten::aggregation::EnvelopeSerializationMerger{})
+                                              .with_splitter(briefkasten::aggregation::EnvelopeSerializationSplitter<vertex_t>{})
+                                              .build(),
+                                            IndirectionScheme{ mpi_basic::comm_world } };
   }
 }
 
@@ -63,10 +58,7 @@ make_briefkasten_edge()
   if constexpr (std::same_as<IndirectionScheme, briefkasten::NoopIndirectionScheme>) {
     return briefkasten::BufferedMessageQueueBuilder<Edge>().build();
   } else {
-    return briefkasten::IndirectionAdapter{
-      briefkasten::BufferedMessageQueueBuilder<Edge>().build(),
-      IndirectionScheme{ mpi_basic::comm_world }
-    };
+    return briefkasten::IndirectionAdapter{ briefkasten::BufferedMessageQueueBuilder<Edge>().build(), IndirectionScheme{ mpi_basic::comm_world } };
   }
 }
 
@@ -93,14 +85,16 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
   // fallback to tarjan on single rank
   if (mpi_basic::world_size == 1) {
-    tarjan(part, fw_head, fw_csr, [=](auto const* cbeg, auto const* cend) {
-      auto const id = *std::min_element(cbeg, cend);
-      std::for_each(cbeg, cend, [=](auto const k) {
-        scc_id[k] = id;
-      });
-    },
-           SCC_ID_UNDECIDED_FILTER(local_n, scc_id),
-           local_decided);
+    tarjan(
+      part,
+      fw_head,
+      fw_csr,
+      [=](auto const* cbeg, auto const* cend) {
+        auto const id = *std::min_element(cbeg, cend);
+        std::for_each(cbeg, cend, [=](auto const k) { scc_id[k] = id; });
+      },
+      SCC_ID_UNDECIDED_FILTER(local_n, scc_id),
+      local_decided);
     return;
   }
 
@@ -151,8 +145,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
       first_iter = false;
 
       color_scc_init_label(part, colors);
-      local_decided += async::color_scc_step(
-        part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors, active_array, active, local_decided);
+      local_decided += async::color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors, active_array, active, local_decided);
     } while (mpi_basic::allreduce_single(local_decided, mpi_basic::sum) < decided_threshold);
 
     KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_decided - prev_local_decided, mpi_basic::sum));
@@ -171,9 +164,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
         auto const min_u = sub_ids_inverse[*std::min_element(beg, end)];
         for (auto sub_u : std::span{ beg, end }) {
           auto const u = sub_ids_inverse[sub_u];
-          if (part.has_local(u)) {
-            scc_id[part.to_local(u)] = min_u;
-          }
+          if (part.has_local(u)) { scc_id[part.to_local(u)] = min_u; }
         }
       });
     }

@@ -28,7 +28,7 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
 {
   KASPAN_STATISTIC_SCOPE("tarjan");
   constexpr auto index_undecided = scc_id_undecided;
-  struct Frame
+  struct frame
   {
     vertex_t local_u;
     index_t  it;
@@ -40,9 +40,7 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
   // Validate decided_count is consistent with filter
   vertex_t filtered_out_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (not filter(k)) {
-      ++filtered_out_count;
-    }
+    if (not filter(k)) { ++filtered_out_count; }
   }
   DEBUG_ASSERT_EQ(filtered_out_count, decided_count);
 #endif
@@ -51,23 +49,22 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
 
   vertex_t index_count = 0;
 
-  auto buffer = make_buffer<vertex_t, vertex_t, vertex_t, Frame>(
-    local_n, local_n, undecided_count, undecided_count);
+  auto  buffer = make_buffer<vertex_t, vertex_t, vertex_t, frame>(local_n, local_n, undecided_count, undecided_count);
   void* memory = buffer.data();
 
   auto index    = borrow_array_filled<vertex_t>(&memory, index_undecided, local_n);
   auto low      = borrow_array_clean<vertex_t>(&memory, local_n);
   auto on_stack = make_bits_clean(local_n);
   auto st       = make_stack<vertex_t>(undecided_count);
-  auto dfs      = make_stack<Frame>(undecided_count);
+  auto dfs      = make_stack<frame>(undecided_count);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
   for (vertex_t local_root = 0; local_root < local_n; ++local_root) {
-    if (not filter(local_root))
-      continue;
+    if (not filter(local_root)) { continue;
+}
 
-    if (index[local_root] != index_undecided)
-      continue;
+    if (index[local_root] != index_undecided) { continue;
+}
 
     index[local_root] = low[local_root] = index_count++;
     st.push(local_root);
@@ -82,8 +79,8 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
 
         if (part.has_local(v)) { // ignore non local edges
           auto const local_v = part.to_local(v);
-          if (not filter(local_v))
-            continue;
+          if (not filter(local_v)) { continue;
+}
 
           auto const v_index = index[local_v];
 
@@ -109,8 +106,8 @@ tarjan(Part const& part, index_t const* head, vertex_t const* csr, Callback call
           auto const local_v = st.back();
           on_stack.unset(local_v);
           st.pop();
-          if (local_v == local_u)
-            break;
+          if (local_v == local_u) { break;
+}
         }
 
         auto const begin = st.size();

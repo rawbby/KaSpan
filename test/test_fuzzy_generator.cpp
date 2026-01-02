@@ -1,9 +1,13 @@
-#include <debug/assert.hpp>
+#include "scc/base.hpp"
+#include "scc/graph.hpp"
+#include "debug/assert_ne.hpp"
+#include "debug/assert_ge.hpp"
+#include "debug/assert_eq.hpp"
+#include <cmath>
 #include <scc/fuzzy.hpp>
 #include <scc/tarjan.hpp>
 
 #include <algorithm>
-#include <iostream>
 #include <random>
 
 void
@@ -11,20 +15,14 @@ verify_graph(vertex_t n, index_t m, index_t const* head, vertex_t const* csr, ve
 {
   DEBUG_ASSERT_VALID_GRAPH(n, m, head, csr);
   for (vertex_t u = 0; u < n; ++u) {
-    for (auto v : csr_range(head, csr, u)) {
-      ASSERT_NE(u, v, "fuzzy generator is not supposed to generate self loops");
-    }
+    for (auto v : csr_range(head, csr, u)) { ASSERT_NE(u, v, "fuzzy generator is not supposed to generate self loops"); }
   }
 
-  if (n > 0 and d >= 0.0) {
-    ASSERT_GE(static_cast<double>(m) / n, d, "fuzzy generator should generate at least an average degree of d");
-  }
+  if (n > 0 and d >= 0.0) { ASSERT_GE(static_cast<double>(m) / n, d, "fuzzy generator should generate at least an average degree of d"); }
 
   tarjan(n, head, csr, [&](auto const* beg, auto const* end) {
     vertex_t min_id = *std::min_element(beg, end);
-    for (auto const* it = beg; it != end; ++it) {
-      ASSERT_EQ(scc_id[*it], min_id, "invalid instance was generated");
-    }
+    for (auto const* it = beg; it != end; ++it) { ASSERT_EQ(scc_id[*it], min_id, "invalid instance was generated"); }
   });
 }
 
@@ -33,11 +31,14 @@ main()
 {
   constexpr auto clamp_degree = [](vertex_t n, double d) {
     // clang-format off
-    if (n < 2 or d == -1) return -1.0;
+    if (n < 2 or d == -1) { return -1.0;
+}
     auto const min_d = std::log(std::max(1.0, std::log(static_cast<double>(n))));
     auto const max_d = static_cast<double>(n - 1) / 2.0;
-    if (d < min_d) return min_d;
-    if (d > max_d) return max_d;
+    if (d < min_d) { return min_d;
+}
+    if (d > max_d) { return max_d;
+}
     return d;
     // clang-format on
   };

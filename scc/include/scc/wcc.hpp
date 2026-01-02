@@ -85,9 +85,7 @@ wcc(vertex_t n, index_t* fw_head, index_t* fw_csr, vertex_t* wcc_id) -> size_t
       }
     }
 
-    if (not wcc_id_changed) {
-      break;
-    }
+    if (not wcc_id_changed) { break; }
 
     for (vertex_t u = 0; u < n; ++u) {
       if (wcc_id[u] != u) { // u is no root

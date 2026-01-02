@@ -8,16 +8,15 @@
 #include <unordered_set>
 
 inline void
-residual_scc(
-  vertex_t const* wcc_id,
-  vertex_t        wcc_count,
-  vertex_t*       sub_scc_id,
-  vertex_t        n,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  vertex_t const* sub_ids_inverse)
+residual_scc(vertex_t const* wcc_id,
+             vertex_t        wcc_count,
+             vertex_t*       sub_scc_id,
+             vertex_t        n,
+             index_t const*  fw_head,
+             vertex_t const* fw_csr,
+             index_t const*  bw_head,
+             vertex_t const* bw_csr,
+             vertex_t const* sub_ids_inverse)
 {
   KASPAN_STATISTIC_SCOPE("residual_scc");
 
@@ -48,9 +47,7 @@ residual_scc(
         auto const end = fw_head[u + 1];
         for (auto it = beg; it < end; ++it) {
           auto const v = fw_csr[it];
-          if (sub_scc_id[v] == scc_id_undecided and fw_reach.emplace(v).second) {
-            queue.emplace_back(v);
-          }
+          if (sub_scc_id[v] == scc_id_undecided and fw_reach.emplace(v).second) { queue.emplace_back(v); }
         }
       }
 

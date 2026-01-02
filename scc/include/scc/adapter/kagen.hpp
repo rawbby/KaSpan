@@ -13,10 +13,10 @@ kagen_forward_graph_part(char const* generator_args)
     using Part = ExplicitSortedContinuousWorldPart;
     Buffer    buffer;
     Part      part;
-    index_t   m;
-    index_t   local_m;
-    index_t*  head;
-    vertex_t* csr;
+    index_t   m{};
+    index_t   local_m{};
+    index_t*  head{};
+    vertex_t* csr{};
   } result;
 
   kagen::KaGen graph_generator{ mpi_basic::comm_world };
@@ -59,25 +59,25 @@ kagen_forward_graph_part(char const* generator_args)
 inline auto
 kagen_graph_part(char const* generator_args)
 {
-  struct LocalKaGenGraph
+  struct local_ka_gen_graph
   {
     using Part = ExplicitSortedContinuousWorldPart;
     Buffer    fw_buffer;
     Buffer    bw_buffer;
     Part      part;
-    index_t   m;
-    index_t   local_fw_m;
-    index_t   local_bw_m;
-    index_t*  fw_head;
-    vertex_t* fw_csr;
-    index_t*  bw_head;
-    vertex_t* bw_csr;
+    index_t   m{};
+    index_t   local_fw_m{};
+    index_t   local_bw_m{};
+    index_t*  fw_head{};
+    vertex_t* fw_csr{};
+    index_t*  bw_head{};
+    vertex_t* bw_csr{};
   };
 
   auto fw_graph = kagen_forward_graph_part(generator_args);
   auto bw_graph = backward_complement_graph_part(fw_graph.part, fw_graph.local_m, fw_graph.head, fw_graph.csr);
 
-  LocalKaGenGraph result;
+  local_ka_gen_graph result;
   result.fw_buffer  = std::move(fw_graph.buffer);
   result.bw_buffer  = std::move(bw_graph.buffer);
   result.part       = fw_graph.part;

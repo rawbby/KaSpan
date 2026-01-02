@@ -1,9 +1,13 @@
-#include <debug/assert.hpp>
+#include "debug/assert_in_range.hpp"
+#include "debug/assert_ge.hpp"
+#include "debug/assert_eq.hpp"
+#include "scc/base.hpp"
+#include "debug/assert_lt.hpp"
+#include "scc/graph.hpp"
 #include <debug/sub_process.hpp>
 #include <scc/allgather_graph.hpp>
 #include <scc/fuzzy.hpp>
 #include <scc/partion_graph.hpp>
-#include <util/scope_guard.hpp>
 
 void
 check_gp(auto const& gp)
@@ -95,9 +99,7 @@ check_p_p(auto const& p, auto const& p_)
   ASSERT_EQ(p.end, p_.end);
   ASSERT_EQ(p.world_rank, p_.world_rank);
   ASSERT_EQ(p.world_size, p_.world_size);
-  for (vertex_t k = 0; k < p.local_n(); ++k) {
-    ASSERT_EQ(p.to_global(k), p.to_global(k), "k={}", k);
-  }
+  for (vertex_t k = 0; k < p.local_n(); ++k) { ASSERT_EQ(p.to_global(k), p.to_global(k), "k={}", k); }
 }
 
 void
@@ -116,12 +118,8 @@ check_gp_gp(auto const& gp, auto const& gp_)
     ASSERT_EQ(gp.fw_head[k], gp_.fw_head[k], "k={}", k);
     ASSERT_EQ(gp.bw_head[k], gp_.bw_head[k], "k={}", k);
   }
-  for (index_t it = 0; it < gp.local_fw_m; ++it) {
-    ASSERT_EQ(gp.fw_csr[it], gp_.fw_csr[it], "it={}", it);
-  }
-  for (index_t it = 0; it < gp.local_bw_m; ++it) {
-    ASSERT_EQ(gp.bw_csr[it], gp_.bw_csr[it], "it={}", it);
-  }
+  for (index_t it = 0; it < gp.local_fw_m; ++it) { ASSERT_EQ(gp.fw_csr[it], gp_.fw_csr[it], "it={}", it); }
+  for (index_t it = 0; it < gp.local_bw_m; ++it) { ASSERT_EQ(gp.bw_csr[it], gp_.bw_csr[it], "it={}", it); }
 }
 
 void
@@ -146,9 +144,7 @@ check_g_gp(auto const& g, auto const& gp)
     auto const gp_deg = gp.fw_head[k + 1] - gp_beg;
 
     ASSERT_EQ(g_deg, gp_deg);
-    for (index_t i = 0; i < g_deg; ++i) {
-      ASSERT_EQ(g.fw_csr[g_beg + i], gp.fw_csr[gp_beg + i], "i={}", i);
-    }
+    for (index_t i = 0; i < g_deg; ++i) { ASSERT_EQ(g.fw_csr[g_beg + i], gp.fw_csr[gp_beg + i], "i={}", i); }
 
     gp_local_fw_m += gp_deg;
   }
@@ -165,9 +161,7 @@ check_g_gp(auto const& g, auto const& gp)
     auto const gp_deg = gp.bw_head[k + 1] - gp_beg;
 
     ASSERT_EQ(g_deg, gp_deg);
-    for (index_t i = 0; i < g_deg; ++i) {
-      ASSERT_EQ(g.bw_csr[g_beg + i], gp.bw_csr[gp_beg + i], "i={}", i);
-    }
+    for (index_t i = 0; i < g_deg; ++i) { ASSERT_EQ(g.bw_csr[g_beg + i], gp.bw_csr[gp_beg + i], "i={}", i); }
 
     gp_local_bw_m += gp_deg;
   }
@@ -201,16 +195,16 @@ test_allgather_graph(auto const& g, auto const& p)
   check_gp(gp);
   check_g_gp(g, gp);
 
-  auto g_ = allgather_graph(gp.part, gp.m, gp.local_fw_m, gp.fw_head, gp.fw_csr);
-  check_g(g_);
-  check_g_g(g, g_);
-  check_g_gp(g_, gp);
+  auto g = allgather_graph(gp.part, gp.m, gp.local_fw_m, gp.fw_head, gp.fw_csr);
+  check_g(g);
+  check_g_g(g, g);
+  check_g_gp(g, gp);
 
-  auto gp_ = partition(g_.m, g_.fw_head, g_.fw_csr, g_.bw_head, g_.bw_csr, gp.part);
-  check_gp(gp_);
-  check_g_gp(g, gp_);
-  check_g_gp(g_, gp_);
-  check_gp_gp(gp, gp_);
+  auto gp = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, gp.part);
+  check_gp(gp);
+  check_g_gp(g, gp);
+  check_g_gp(g, gp);
+  check_gp_gp(gp, gp);
 }
 
 int
@@ -224,6 +218,6 @@ main(int argc, char** argv)
 
   constexpr auto n     = 1024;
   auto const     graph = fuzzy_global_scc_id_and_graph(1, n, 1);
-  test_allgather_graph(graph, TrivialSlicePart{ n });
-  test_allgather_graph(graph, BalancedSlicePart{ n });
+  test_allgather_graph(graph, trivial_slice_part{ n });
+  test_allgather_graph(graph, balanced_slice_part{ n });
 }

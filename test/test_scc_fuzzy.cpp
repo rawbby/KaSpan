@@ -1,11 +1,21 @@
-#include <debug/assert.hpp>
+#include "scc/base.hpp"
+#include "mpi_basic/allgather.hpp"
+#include "debug/assert_eq.hpp"
+#include "mpi_basic/world.hpp"
+#include "mpi_basic/allreduce_single.hpp"
+#include "mpi_basic/allreduce_max_time.hpp"
+#include "memory/buffer.hpp"
+#include "memory/borrow.hpp"
+#include <briefkasten/noop_indirection.hpp>
 #include <debug/sub_process.hpp>
+#include <ios>
 #include <scc/async/scc.hpp>
 #include <scc/fuzzy.hpp>
 #include <scc/scc.hpp>
-#include <util/scope_guard.hpp>
+#include <sstream>
 
 #include <iomanip>
+#include <utility>
 
 template<typename Graph>
 void
@@ -20,10 +30,13 @@ verify_scc_id(Graph const& graph, vertex_t* scc_id_orig, vertex_t* scc_id)
     if (scc_id_orig[k] != scc_id[k]) {
       // clang-format off
       auto const [beg, end] = [&] -> std::pair<vertex_t, vertex_t> {
-        if (local_n <= 50)    return { 0, local_n };
-        if (k < 25)           return { 0, 50 };
-        if (k > local_n - 25) return { local_n - 50, local_n };
-        else                  return { k - 25, k + 25 };
+        if (local_n <= 50) {    return { 0, local_n };
+}
+        if (k < 25) {           return { 0, 50 };
+}
+        if (k > local_n - 25) { return { local_n - 50, local_n };
+        } else {                  return { k - 25, k + 25 };
+}
       }();
       // clang-format on
 
@@ -48,19 +61,18 @@ verify_scc_id(Graph const& graph, vertex_t* scc_id_orig, vertex_t* scc_id)
         mrk_stream << (scc_id_orig[it] == scc_id[it] ? p : m);
       }
 
-      ASSERT_EQ(
-        graph.scc_id_part[k],
-        scc_id[k],
-        "k={}; u={}; n={}; rank={}; size={};\n{}\n{}\n{}\n{}",
-        k,
-        part.to_global(k),
-        part.n,
-        mpi_basic::world_rank,
-        mpi_basic::world_size,
-        idx_stream.str(),
-        ref_stream.str(),
-        rlt_stream.str(),
-        mrk_stream.str());
+      ASSERT_EQ(graph.scc_id_part[k],
+                scc_id[k],
+                "k={}; u={}; n={}; rank={}; size={};\n{}\n{}\n{}\n{}",
+                k,
+                part.to_global(k),
+                part.n,
+                mpi_basic::world_rank,
+                mpi_basic::world_size,
+                idx_stream.str(),
+                ref_stream.str(),
+                rlt_stream.str(),
+                mrk_stream.str());
     }
   }
 }

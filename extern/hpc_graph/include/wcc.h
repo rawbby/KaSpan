@@ -48,21 +48,22 @@
 
 #include <stdint.h>
 
-#include "dist_graph.h"
 #include "comms.h"
+#include "dist_graph.h"
 
+int
+wcc_bfs(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc, uint64_t root);
 
-int wcc_bfs(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
-            uint64_t* wcc, uint64_t root);
+int
+wcc_color(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc);
 
-int wcc_color(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q,
-              uint64_t* wcc);
+int
+wcc_verify(dist_graph_t* g, uint64_t* wcc);
 
-int wcc_verify(dist_graph_t* g, uint64_t* wcc);
+int
+wcc_output(dist_graph_t* g, uint64_t* wcc, char* output_file);
 
-int wcc_output(dist_graph_t* g, uint64_t* wcc, char* output_file);
-
-int wcc_dist(dist_graph_t *g, mpi_data_t* comm, queue_data_t* q, 
-             uint64_t root, char* output_file);
+int
+wcc_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t root, char* output_file);
 
 #endif

@@ -3,14 +3,7 @@
 #include <ispan/util.hpp>
 
 inline void
-trim_1_normal(
-  vertex_t*       scc_id,
-  index_t const*  fw_head,
-  index_t const*  bw_head,
-  vertex_t const* fw_csr,
-  vertex_t const* bw_csr,
-  vertex_t        vert_beg,
-  vertex_t        vert_end)
+trim_1_normal(vertex_t* scc_id, index_t const* fw_head, index_t const* bw_head, vertex_t const* fw_csr, vertex_t const* bw_csr, vertex_t vert_beg, vertex_t vert_end)
 {
   KASPAN_STATISTIC_SCOPE("trim_1_normal");
   size_t decided_count = 0;

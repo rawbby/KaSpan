@@ -1,14 +1,21 @@
+#include "debug/assert_lt.hpp"
 #include "kaspan_adapter.hpp"
 
+#include <cstdint>
+#include <cstdlib>
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
 #include <debug/valgrind.hpp>
+#include <limits>
 #include <scc/adapter/kagen.hpp>
 #include <scc/adapter/manifest.hpp>
 #include <scc/pivot_selection.hpp>
 #include <util/arg_parse.hpp>
 
+#include "mpi_basic/world.hpp"
 #include "scc.h"
+#include "scc/base.hpp"
+#include "util/scope_guard.hpp"
 
 #include <mpi.h>
 #include <omp.h>
@@ -25,10 +32,9 @@ bool output  = false;
 void
 usage(int /* argc */, char** argv)
 {
-  std::println(
-    "usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file "
-    "<output_file> [--threads <threads>]",
-    argv[0]);
+  std::println("usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file "
+               "<output_file> [--threads <threads>]",
+               argv[0]);
 }
 
 void
@@ -44,21 +50,14 @@ benchmark(auto&& graph_part)
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
   // Create HPCGraph data structure from kaspan graph
-  HPCGraphData hpc_data;
+  hpc_graph_data hpc_data;
   Part         part_copy;
-  index_t      local_fw_m_copy;
-  index_t      local_bw_m_copy;
+  index_t      local_fw_m_copy = 0;
+  index_t      local_bw_m_copy = 0;
   {
     KASPAN_STATISTIC_PUSH("adapter");
     hpc_data = create_hpc_graph_from_graph_part(
-      graph_part.part,
-      graph_part.m,
-      graph_part.local_fw_m,
-      graph_part.local_bw_m,
-      graph_part.fw_head,
-      graph_part.fw_csr,
-      graph_part.bw_head,
-      graph_part.bw_csr);
+      graph_part.part, graph_part.m, graph_part.local_fw_m, graph_part.local_bw_m, graph_part.fw_head, graph_part.fw_csr, graph_part.bw_head, graph_part.bw_csr);
     KASPAN_STATISTIC_POP();
 
     // Save partitioning info (lightweight) before releasing kaspan memory
@@ -86,10 +85,7 @@ benchmark(auto&& graph_part)
   KASPAN_STATISTIC_POP();
 
   KASPAN_STATISTIC_PUSH("pivot");
-  Degree max_degree{
-    .degree_product = std::numeric_limits<index_t>::min(),
-    .u              = std::numeric_limits<vertex_t>::min()
-  };
+  Degree max_degree{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
   // Pivot selection using HPCGraph data (kaspan memory has been released)
   for (uint64_t k = 0; k < hpc_data.g.n_local; ++k) {
     auto const out_degree     = hpc_data.g.out_degree_list[k + 1] - hpc_data.g.out_degree_list[k];
@@ -112,12 +108,12 @@ benchmark(auto&& graph_part)
 int
 main(int argc, char** argv)
 {
-  auto const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
-  auto const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
-  auto const output_file         = arg_select_str(argc, argv, "--output_file", usage);
+  const auto *const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
+  const auto *const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
+  const auto *const output_file         = arg_select_str(argc, argv, "--output_file", usage);
   auto const threads             = arg_select_default_int(argc, argv, "--threads", 1);
 
-  if (not(kagen_option_string == nullptr ^ manifest_file == nullptr)) {
+  if ((kagen_option_string == nullptr ^ manifest_file == nullptr) == 0) {
     usage(argc, argv);
     std::exit(1);
   }

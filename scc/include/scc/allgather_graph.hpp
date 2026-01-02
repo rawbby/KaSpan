@@ -42,12 +42,12 @@
 template<WorldPartConcept Part>
   requires(Part::ordered)
 auto
-allgather_graph(Part const& part, index_t m, index_t local_fw_m, index_t const* fw_head, vertex_t const* fw_csr) -> LocalGraph
+allgather_graph(Part const& part, index_t m, index_t local_fw_m, index_t const* fw_head, vertex_t const* fw_csr) -> local_graph
 {
   auto const n       = part.n;
   auto const local_n = part.local_n();
 
-  LocalGraph result;
+  local_graph result;
   result.buffer = make_graph_buffer(n, m);
 
   void* memory   = result.buffer.data();

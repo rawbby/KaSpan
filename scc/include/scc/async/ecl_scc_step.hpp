@@ -9,10 +9,7 @@ namespace async {
 
 template<WorldPartConcept Part>
 void
-ecl_scc_init_label(
-  Part const& part,
-  vertex_t*   ecl_fw_label,
-  vertex_t*   ecl_bw_label)
+ecl_scc_init_label(Part const& part, vertex_t* ecl_fw_label, vertex_t* ecl_bw_label)
 {
   auto const local_n = part.local_n();
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -24,23 +21,22 @@ ecl_scc_init_label(
 
 template<WorldPartConcept Part, typename BriefQueue>
 auto
-ecl_scc_step(
-  Part const&     part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  BriefQueue&     mq,
-  vertex_t*       scc_id,
-  vertex_t*       ecl_fw_label,
-  vertex_t*       ecl_bw_label,
-  vertex_t*       fw_active_array,
-  vertex_t*       bw_active_array,
-  BitsAccessor    fw_active,
-  BitsAccessor    bw_active,
-  BitsAccessor    fw_changed,
-  BitsAccessor    bw_changed,
-  vertex_t        decided_count = 0) -> vertex_t
+ecl_scc_step(Part const&     part,
+             index_t const*  fw_head,
+             vertex_t const* fw_csr,
+             index_t const*  bw_head,
+             vertex_t const* bw_csr,
+             BriefQueue&     mq,
+             vertex_t*       scc_id,
+             vertex_t*       ecl_fw_label,
+             vertex_t*       ecl_bw_label,
+             vertex_t*       fw_active_array,
+             vertex_t*       bw_active_array,
+             BitsAccessor    fw_active,
+             BitsAccessor    bw_active,
+             BitsAccessor    fw_changed,
+             BitsAccessor    bw_changed,
+             vertex_t        decided_count = 0) -> vertex_t
 {
   auto const local_n = part.local_n();
 
@@ -83,15 +79,11 @@ ecl_scc_step(
 
   fw_active.fill_cmp(local_n, scc_id, scc_id_undecided);
   std::memcpy(fw_changed.data(), fw_active.data(), (local_n + 7) >> 3);
-  fw_active.for_each(local_n, [&](auto k) {
-    fw_active_stack.push(k);
-  });
+  fw_active.for_each(local_n, [&](auto k) { fw_active_stack.push(k); });
 
   bw_active.fill_cmp(local_n, scc_id, scc_id_undecided);
   std::memcpy(bw_changed.data(), bw_active.data(), (local_n + 7) >> 3);
-  bw_active.for_each(local_n, [&](auto k) {
-    bw_active_stack.push(k);
-  });
+  bw_active.for_each(local_n, [&](auto k) { bw_active_stack.push(k); });
 
   mpi_basic::barrier();
   mq.reactivate();
@@ -122,9 +114,7 @@ ecl_scc_step(
       }
 
       mq.poll_throttled(on_bw_message);
-      if (fw_active_stack.empty() and mq.terminate(on_bw_message)) {
-        break;
-      }
+      if (fw_active_stack.empty() and mq.terminate(on_bw_message)) { break; }
     }
 
     // 3. barrier + reactivate and push fw borders
@@ -136,9 +126,7 @@ ecl_scc_step(
       fw_changed.unset(k);
       auto const label_k = ecl_fw_label[k];
       for (auto v : csr_range(fw_head, fw_csr, k)) {
-        if (not part.has_local(v) and label_k < v) {
-          mq.post_message_blocking(Edge{ v, label_k }, part.world_rank_of(v), on_fw_message);
-        }
+        if (not part.has_local(v) and label_k < v) { mq.post_message_blocking(Edge{ v, label_k }, part.world_rank_of(v), on_fw_message); }
       }
     });
 
@@ -167,9 +155,7 @@ ecl_scc_step(
       }
 
       mq.poll_throttled(on_fw_message);
-      if (bw_active_stack.empty() and mq.terminate(on_fw_message)) {
-        break;
-      }
+      if (bw_active_stack.empty() and mq.terminate(on_fw_message)) { break; }
     }
 
     // 6. barrier + reactivate and push bw borders
@@ -181,15 +167,11 @@ ecl_scc_step(
       bw_changed.unset(k);
       auto const label_k = ecl_bw_label[k];
       for (auto v : csr_range(bw_head, bw_csr, k)) {
-        if (not part.has_local(v) and label_k < v) {
-          mq.post_message_blocking(Edge{ v, label_k }, part.world_rank_of(v), on_bw_message);
-        }
+        if (not part.has_local(v) and label_k < v) { mq.post_message_blocking(Edge{ v, label_k }, part.world_rank_of(v), on_bw_message); }
       }
     });
 
-    if (!mpi_basic::allreduce_single(fw_pushed or bw_pushed, mpi_basic::lor)) {
-      break;
-    }
+    if (!mpi_basic::allreduce_single(fw_pushed or bw_pushed, mpi_basic::lor)) { break; }
   }
 
   mpi_basic::barrier();
