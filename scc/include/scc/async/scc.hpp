@@ -7,8 +7,10 @@
 #include <memory/buffer.hpp>
 #include <scc/allgather_sub_graph.hpp>
 #include <scc/async/backward_search.hpp>
+#include <scc/async/forward_search.hpp>
 #include <scc/async/ecl_scc_step.hpp>
 #include <scc/base.hpp>
+#include <scc/pivot_selection.hpp>
 #include <scc/tarjan.hpp>
 #include <scc/trim_1.hpp>
 
@@ -38,22 +40,22 @@ struct mpi_type_traits<Edge>
 
 namespace async {
 
-// template<typename IndirectionScheme>
-// auto
-// make_briefkasten_vertex()
-// {
-//   if constexpr (std::same_as<IndirectionScheme, briefkasten::NoopIndirectionScheme>) {
-//     return briefkasten::BufferedMessageQueueBuilder<vertex_t>().build();
-//   } else {
-//     return briefkasten::IndirectionAdapter{
-//       briefkasten::BufferedMessageQueueBuilder<vertex_t>()
-//         .with_merger(briefkasten::aggregation::EnvelopeSerializationMerger{})
-//         .with_splitter(briefkasten::aggregation::EnvelopeSerializationSplitter<vertex_t>{})
-//         .build(),
-//       IndirectionScheme{ MPI_COMM_WORLD }
-//     };
-//   }
-// }
+template<typename IndirectionScheme>
+auto
+make_briefkasten_vertex()
+{
+  if constexpr (std::same_as<IndirectionScheme, briefkasten::NoopIndirectionScheme>) {
+    return briefkasten::BufferedMessageQueueBuilder<vertex_t>().build();
+  } else {
+    return briefkasten::IndirectionAdapter{
+      briefkasten::BufferedMessageQueueBuilder<vertex_t>()
+        .with_merger(briefkasten::aggregation::EnvelopeSerializationMerger{})
+        .with_splitter(briefkasten::aggregation::EnvelopeSerializationSplitter<vertex_t>{})
+        .build(),
+      IndirectionScheme{ MPI_COMM_WORLD }
+    };
+  }
+}
 
 template<typename IndirectionScheme>
 auto
@@ -105,6 +107,29 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
   auto const decided_threshold = n - (2 * n / mpi_world_size); // as we only gather fw graph we can only reduce to 2 * local_n
   DEBUG_ASSERT_GE(decided_threshold, 0);
+
+  if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
+    {
+      KASPAN_STATISTIC_SCOPE("forward_backward_search");
+      auto const prev_local_decided = local_decided;
+
+      auto pivot        = pivot_selection(max);
+      auto bitvector    = make_bits_clean(local_n);
+      auto vertex_queue = make_briefkasten_vertex<IndirectionScheme>();
+
+      forward_search(part, fw_head, fw_csr, vertex_queue, scc_id, bitvector, pivot);
+      local_decided += backward_search(part, bw_head, bw_csr, vertex_queue, scc_id, bitvector, pivot, pivot);
+
+      KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(local_decided - prev_local_decided, MPI_SUM));
+      KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+    }
+    {
+      KASPAN_STATISTIC_SCOPE("trim_1_fw_bw");
+      auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
+      local_decided += trim_1_decided;
+      KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(trim_1_decided, MPI_SUM));
+    }
+  }
 
   if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
     KASPAN_STATISTIC_SCOPE("ecl");
