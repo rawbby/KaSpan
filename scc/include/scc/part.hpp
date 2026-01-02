@@ -542,7 +542,7 @@ struct ExplicitContinuousWorldPart final : ExplicitContinuousPart
     part = ::borrow_array<vertex_t>(memory, 2 * world_size);
 
     auto const local_range = std::array{ begin, end };
-    mpi_basic::allgather(&local_range, 2, mpi_vertex_t, part, 2, mpi_vertex_t);
+    mpi_basic::allgather(local_range.data(), 2, part, 2);
 
     this->n     = n;
     this->begin = part[2 * world_rank];
@@ -596,8 +596,8 @@ struct ExplicitSortedContinuousWorldPart final : ExplicitContinuousPart
   {
     part = ::borrow_array<vertex_t>(memory, world_size);
 
-    u64 const local_end = end;
-    mpi_basic::allgather(&local_end, 1, mpi_basic::type<u64>, part, 1, mpi_basic::type<u64>);
+    vertex_t const local_end = end;
+    mpi_basic::allgather(local_end, part);
 
     this->n     = n;
     this->begin = world_rank == 0 ? 0 : part[world_rank - 1];

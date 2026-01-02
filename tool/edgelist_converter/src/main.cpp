@@ -4,8 +4,8 @@
 #include <scc/adapter/manifest.hpp>
 #include <util/arg_parse.hpp>
 
-#include <print>
 #include <cstdio>
+#include <print>
 
 [[noreturn]] void
 usage(int /* argc */, char** argv)

@@ -26,13 +26,13 @@ struct HPCGraphData
 template<WorldPartConcept Part>
 auto
 create_hpc_graph_from_graph_part(
-  Part const& part,
-  index_t m,
-  index_t local_fw_m,
-  index_t local_bw_m,
-  index_t const* fw_head,
+  Part const&     part,
+  index_t         m,
+  index_t         local_fw_m,
+  index_t         local_bw_m,
+  index_t const*  fw_head,
   vertex_t const* fw_csr,
-  index_t const* bw_head,
+  index_t const*  bw_head,
   vertex_t const* bw_csr) -> HPCGraphData
 {
   HPCGraphData data;
@@ -53,7 +53,7 @@ create_hpc_graph_from_graph_part(
   // Allocate and convert forward edges (out_edges)
   auto out_degree_list_buf = make_buffer<uint64_t>(local_n + 1);
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(out_degree_list_buf.data(), (local_n + 1) * sizeof(uint64_t));
-  auto out_edges_buf       = make_buffer<uint64_t>(local_fw_m);
+  auto out_edges_buf = make_buffer<uint64_t>(local_fw_m);
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(out_edges_buf.data(), local_fw_m * sizeof(uint64_t));
 
   uint64_t* out_degree_list = static_cast<uint64_t*>(out_degree_list_buf.data());
@@ -73,7 +73,7 @@ create_hpc_graph_from_graph_part(
   // Allocate and convert backward edges (in_edges)
   auto in_degree_list_buf = make_buffer<uint64_t>(local_n + 1);
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(in_degree_list_buf.data(), (local_n + 1) * sizeof(uint64_t));
-  auto in_edges_buf       = make_buffer<uint64_t>(local_bw_m);
+  auto in_edges_buf = make_buffer<uint64_t>(local_bw_m);
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(in_edges_buf.data(), local_bw_m * sizeof(uint64_t));
 
   uint64_t* in_degree_list = static_cast<uint64_t*>(in_degree_list_buf.data());
@@ -91,9 +91,9 @@ create_hpc_graph_from_graph_part(
   }
 
   // Create local_unmap (maps local index to global vertex id)
-  auto      local_unmap_buf = make_buffer<uint64_t>(local_n);
+  auto local_unmap_buf = make_buffer<uint64_t>(local_n);
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(local_unmap_buf.data(), local_n * sizeof(uint64_t));
-  uint64_t* local_unmap     = static_cast<uint64_t*>(local_unmap_buf.data());
+  uint64_t* local_unmap = static_cast<uint64_t*>(local_unmap_buf.data());
 
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(local_unmap, local_n * sizeof(uint64_t));
   for (vertex_t i = 0; i < local_n; ++i) {
@@ -130,14 +130,14 @@ create_hpc_graph_from_graph_part(
   // The pointers in data.g point to memory owned by the buffers that will be destroyed
   // We need to keep ALL buffers alive, so we combine their sizes
   // Note: Ghost arrays will be added later by initialize_ghost_cells()
-  size_t total_size = (local_n + 1) * sizeof(uint64_t)        // out_degree_list
-                      + local_fw_m * sizeof(uint64_t) // out_edges
-                      + (local_n + 1) * sizeof(uint64_t)         // in_degree_list
-                      + local_bw_m * sizeof(uint64_t) // in_edges
-                      + local_n * sizeof(uint64_t);              // local_unmap
+  size_t total_size = (local_n + 1) * sizeof(uint64_t)   // out_degree_list
+                      + local_fw_m * sizeof(uint64_t)    // out_edges
+                      + (local_n + 1) * sizeof(uint64_t) // in_degree_list
+                      + local_bw_m * sizeof(uint64_t)    // in_edges
+                      + local_n * sizeof(uint64_t);      // local_unmap
 
   // Create a single combined buffer to hold all data
-  data.buffer          = make_buffer<uint64_t>(total_size / sizeof(uint64_t));
+  data.buffer = make_buffer<uint64_t>(total_size / sizeof(uint64_t));
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(data.buffer.data(), total_size);
   char*  combined_data = static_cast<char*>(data.buffer.data());
   size_t offset        = 0;
@@ -201,9 +201,9 @@ initialize_ghost_cells(HPCGraphData& data, Part const& part, index_t local_fw_m,
   }
 
   // Create ghost_unmap and ghost_tasks arrays
-  vertex_t n_ghost = static_cast<vertex_t>(ghost_set.size());
-  auto ghost_unmap_buf = make_buffer<uint64_t>(std::max(n_ghost, vertex_t(1)));
-  auto ghost_tasks_buf = make_buffer<uint64_t>(std::max(n_ghost, vertex_t(1)));
+  vertex_t n_ghost         = static_cast<vertex_t>(ghost_set.size());
+  auto     ghost_unmap_buf = make_buffer<uint64_t>(std::max(n_ghost, vertex_t(1)));
+  auto     ghost_tasks_buf = make_buffer<uint64_t>(std::max(n_ghost, vertex_t(1)));
 
   uint64_t* ghost_unmap = static_cast<uint64_t*>(ghost_unmap_buf.data());
   uint64_t* ghost_tasks = static_cast<uint64_t*>(ghost_tasks_buf.data());
@@ -223,12 +223,12 @@ initialize_ghost_cells(HPCGraphData& data, Part const& part, index_t local_fw_m,
   data.g.n_total = data.g.n_local + data.g.n_ghost;
 
   // Need to extend the buffer to include ghost arrays
-  size_t ghost_size = std::max(n_ghost, vertex_t(1)) * sizeof(uint64_t);
-  size_t old_buffer_size = (local_n + 1) * sizeof(uint64_t)        // out_degree_list
-                         + local_fw_m * sizeof(uint64_t) // out_edges
-                         + (local_n + 1) * sizeof(uint64_t)         // in_degree_list
-                         + local_bw_m * sizeof(uint64_t) // in_edges
-                         + local_n * sizeof(uint64_t);              // local_unmap
+  size_t ghost_size      = std::max(n_ghost, vertex_t(1)) * sizeof(uint64_t);
+  size_t old_buffer_size = (local_n + 1) * sizeof(uint64_t)   // out_degree_list
+                           + local_fw_m * sizeof(uint64_t)    // out_edges
+                           + (local_n + 1) * sizeof(uint64_t) // in_degree_list
+                           + local_bw_m * sizeof(uint64_t)    // in_edges
+                           + local_n * sizeof(uint64_t);      // local_unmap
   size_t new_buffer_size = old_buffer_size + 2 * ghost_size;
 
   // Create new buffer with space for ghost arrays
@@ -244,10 +244,10 @@ initialize_ghost_cells(HPCGraphData& data, Part const& part, index_t local_fw_m,
 
   // Update pointers to point to new buffer
   data.g.out_degree_list = reinterpret_cast<uint64_t*>(new_base + (reinterpret_cast<char*>(data.g.out_degree_list) - old_base));
-  data.g.out_edges = reinterpret_cast<uint64_t*>(new_base + (reinterpret_cast<char*>(data.g.out_edges) - old_base));
-  data.g.in_degree_list = reinterpret_cast<uint64_t*>(new_base + (reinterpret_cast<char*>(data.g.in_degree_list) - old_base));
-  data.g.in_edges = reinterpret_cast<uint64_t*>(new_base + (reinterpret_cast<char*>(data.g.in_edges) - old_base));
-  data.g.local_unmap = reinterpret_cast<uint64_t*>(new_base + (reinterpret_cast<char*>(data.g.local_unmap) - old_base));
+  data.g.out_edges       = reinterpret_cast<uint64_t*>(new_base + (reinterpret_cast<char*>(data.g.out_edges) - old_base));
+  data.g.in_degree_list  = reinterpret_cast<uint64_t*>(new_base + (reinterpret_cast<char*>(data.g.in_degree_list) - old_base));
+  data.g.in_edges        = reinterpret_cast<uint64_t*>(new_base + (reinterpret_cast<char*>(data.g.in_edges) - old_base));
+  data.g.local_unmap     = reinterpret_cast<uint64_t*>(new_base + (reinterpret_cast<char*>(data.g.local_unmap) - old_base));
 
   // Add ghost arrays at the end
   size_t offset = old_buffer_size;
@@ -279,8 +279,8 @@ initialize_ghost_cells(HPCGraphData& data, Part const& part, index_t local_fw_m,
 
   // Convert edge arrays from global IDs to local/ghost indices
   for (uint64_t i = 0; i < data.g.m_local_out; ++i) {
-    uint64_t global_id = data.g.out_edges[i];
-    uint64_t local_idx = get_value(&data.g.map, global_id);
+    uint64_t global_id  = data.g.out_edges[i];
+    uint64_t local_idx  = get_value(&data.g.map, global_id);
     data.g.out_edges[i] = local_idx;
   }
   for (uint64_t i = 0; i < data.g.m_local_in; ++i) {
@@ -294,13 +294,13 @@ initialize_ghost_cells(HPCGraphData& data, Part const& part, index_t local_fw_m,
 template<WorldPartConcept Part>
 auto
 create_hpc_graph_from_local_graph_part(
-  Part const& part,
-  index_t m,
-  index_t local_fw_m,
-  index_t local_bw_m,
-  index_t const* fw_head,
+  Part const&     part,
+  index_t         m,
+  index_t         local_fw_m,
+  index_t         local_bw_m,
+  index_t const*  fw_head,
   vertex_t const* fw_csr,
-  index_t const* bw_head,
+  index_t const*  bw_head,
   vertex_t const* bw_csr) -> HPCGraphData
 {
   return create_hpc_graph_from_graph_part(part, m, local_fw_m, local_bw_m, fw_head, fw_csr, bw_head, bw_csr);

@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <bit>
-#include <cstddef>
 #include <cstring>
 #include <span>
 
@@ -27,17 +26,17 @@ public:
 
     // ReSharper disable CppDFAUnreachableCode
     if (std::endian::native == std::endian::little) {
-      if (derived()->endian() == std::endian::big) {                                           // rv = 03 02 01
+      if (derived()->endian() == std::endian::big) {                                       // rv = 03 02 01
         std::memcpy(result_view.data(), data_view.data(), derived()->element_bytes());     // bv = 03 02 01 00
         std::reverse(result_view.data(), result_view.data() + derived()->element_bytes()); // bv = 01 02 03 00
-      } else {                                                                     // rv = 01 02 03
+      } else {                                                                             // rv = 01 02 03
         std::memcpy(result_view.data(), data_view.data(), derived()->element_bytes());     // bv = 01 02 03 00
       }
     } else {
-      if (derived()->endian() == std::endian::little) {                                    // rv = 01 02 03
+      if (derived()->endian() == std::endian::little) {                                // rv = 01 02 03
         std::memcpy(result_view.data(), data_view.data(), derived()->element_bytes()); // bv = 01 02 03 00
-        std::reverse(result_view.data(), result_view.data() + sizeof(T));      // bv = 00 03 02 01
-      } else {                                                                 // rv = 03 02 01
+        std::reverse(result_view.data(), result_view.data() + sizeof(T));              // bv = 00 03 02 01
+      } else {                                                                         // rv = 03 02 01
         auto const offset = sizeof(T) - derived()->element_bytes();
         std::memcpy(result_view.data() + offset, data_view.data(), derived()->element_bytes()); // bv = 00 03 02 01
       }
@@ -61,7 +60,7 @@ public:
       }
     } else { // bv = 00 03 02 01
       if (derived()->endian() == std::endian::little) {
-        std::reverse(value_view.data(), value_view.data() + sizeof(T));       // bv = 01 02 03 00
+        std::reverse(value_view.data(), value_view.data() + sizeof(T));               // bv = 01 02 03 00
         std::memcpy(data_view.data(), value_view.data(), derived()->element_bytes()); // rv = 01 02 03
       } else {
         auto const offset = sizeof(T) - derived()->element_bytes();

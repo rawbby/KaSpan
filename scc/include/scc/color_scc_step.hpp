@@ -100,7 +100,7 @@ color_scc_step(
 
       while (frontier.has_next()) {
         auto const [u, label] = frontier.next();
-        auto const k = part.to_local(u);
+        auto const k          = part.to_local(u);
         if (scc_id[k] == scc_id_undecided and label < colors[k]) {
           colors[k] = label;
           changed.set(k);
@@ -172,7 +172,7 @@ color_scc_step(
 
       while (frontier.has_next()) {
         auto const [u, pivot] = frontier.next();
-        auto const k = part.to_local(u);
+        auto const k          = part.to_local(u);
         if (scc_id[k] == scc_id_undecided and colors[k] == pivot) {
           scc_id[k] = pivot;
           ++local_decided_count;

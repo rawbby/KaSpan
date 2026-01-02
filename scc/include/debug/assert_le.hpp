@@ -1,13 +1,13 @@
 #pragma once
 
-#include <util/formatable.hpp>
 #include <debug/debug.hpp>
 #include <debug/debug_break.hpp>
+#include <util/formatable.hpp>
 #include <util/pp.hpp>
 
+#include <cstdio>
 #include <format>
 #include <print>
-#include <cstdio>
 
 template<typename Lhs, typename Rhs, FormattableConcept... Args>
   requires(not FormattableConcept<Lhs, Rhs>)

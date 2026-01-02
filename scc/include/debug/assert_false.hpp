@@ -4,9 +4,9 @@
 #include <debug/debug_break.hpp>
 #include <util/pp.hpp>
 
+#include <cstdio>
 #include <format>
 #include <print>
-#include <cstdio>
 
 template<FormattableConcept... Args>
 void

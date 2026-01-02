@@ -1,6 +1,5 @@
 #pragma once
 
-#include <util/arithmetic.hpp>
 #include <mpi.h>
 
 namespace mpi_basic {

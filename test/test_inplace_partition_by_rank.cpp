@@ -1,8 +1,7 @@
 #include <debug/sub_process.hpp>
 #include <memory/accessor/stack.hpp>
-#include <memory/accessor/stack_accessor.hpp>
-#include <scc/base.hpp>
 #include <mpi_basic/mpi_basic.hpp>
+#include <scc/base.hpp>
 
 #include <algorithm>
 #include <random>
@@ -69,7 +68,7 @@ main(int argc, char** argv)
     i32 const     max_send_count = 2 * (mpi_basic::world_size - 1) + min_send_count;
 
     auto [cb, send_counts, send_displs] = mpi_basic::counts_and_displs();
-    auto  send_stack               = Stack<Item>(max_send_count);
+    auto send_stack                     = Stack<Item>(max_send_count);
 
     for (i32 trial = 0; trial < 1024; ++trial) {
       std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
@@ -97,7 +96,7 @@ main(int argc, char** argv)
     constexpr auto send_count = 7;
 
     auto [cb, send_counts, send_displs] = mpi_basic::counts_and_displs();
-    auto send_stack               = Stack<Item>(send_count);
+    auto send_stack                     = Stack<Item>(send_count);
 
     std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
     send_counts[target_rank] = send_count;

@@ -1,10 +1,10 @@
 #pragma once
 
+#include <algorithm>
 #include <memory/accessor/bits_accessor.hpp>
 #include <memory/accessor/stack_accessor.hpp>
 #include <scc/base.hpp>
 #include <scc/graph.hpp>
-#include <algorithm>
 
 namespace async {
 
@@ -21,10 +21,10 @@ backward_search(
   vertex_t        root,
   vertex_t        id) -> vertex_t
 {
-  auto const local_n = part.local_n();
-  auto active_stack = StackAccessor<vertex_t>{ active_array };
-  vertex_t decided_count = 0;
-  vertex_t min_u = part.n;
+  auto const local_n       = part.local_n();
+  auto       active_stack  = StackAccessor<vertex_t>{ active_array };
+  vertex_t   decided_count = 0;
+  vertex_t   min_u         = part.n;
 
   auto on_message = [&](auto env) {
     for (auto v : env.message) {
@@ -32,7 +32,7 @@ backward_search(
       auto const k = part.to_local(v);
       if (fw_reached.get(k) and scc_id[k] == scc_id_undecided) {
         scc_id[k] = id;
-        min_u = std::min(min_u, v);
+        min_u     = std::min(min_u, v);
         ++decided_count;
         active_stack.push(k);
       }
@@ -43,7 +43,7 @@ backward_search(
     auto const k = part.to_local(root);
     if (fw_reached.get(k) and scc_id[k] == scc_id_undecided) {
       scc_id[k] = id;
-      min_u = std::min(min_u, root);
+      min_u     = std::min(min_u, root);
       ++decided_count;
       active_stack.push(k);
     }
@@ -62,7 +62,7 @@ backward_search(
           auto const l = part.to_local(v);
           if (fw_reached.get(l) and scc_id[l] == scc_id_undecided) {
             scc_id[l] = id;
-            min_u = std::min(min_u, v);
+            min_u     = std::min(min_u, v);
             ++decided_count;
             active_stack.push(l);
           }

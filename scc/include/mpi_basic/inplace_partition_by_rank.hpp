@@ -1,10 +1,9 @@
 #pragma once
 
+#include <concepts>
+#include <mpi.h>
 #include <mpi_basic/world.hpp>
 #include <util/arithmetic.hpp>
-#include <mpi.h>
-#include <numeric>
-#include <concepts>
 
 namespace mpi_basic {
 

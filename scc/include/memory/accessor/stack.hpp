@@ -1,7 +1,7 @@
 #pragma once
 
-#include <memory/accessor/stack_mixin.hpp>
 #include <memory/accessor/stack_accessor.hpp>
+#include <memory/accessor/stack_mixin.hpp>
 #include <memory/buffer.hpp>
 #include <util/arithmetic.hpp>
 

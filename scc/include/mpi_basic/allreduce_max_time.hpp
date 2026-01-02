@@ -1,9 +1,9 @@
 #pragma once
 
+#include <chrono>
+#include <mpi.h>
 #include <mpi_basic/allreduce_single.hpp>
 #include <util/arithmetic.hpp>
-#include <mpi.h>
-#include <chrono>
 
 namespace mpi_basic {
 

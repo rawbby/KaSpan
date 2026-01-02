@@ -1,5 +1,5 @@
-#include <ispan/scc.hpp>
 #include <debug/valgrind.hpp>
+#include <ispan/scc.hpp>
 #include <scc/adapter/kagen.hpp>
 #include <scc/adapter/manifest.hpp>
 #include <scc/allgather_graph.hpp>

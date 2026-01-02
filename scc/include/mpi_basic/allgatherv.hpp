@@ -1,14 +1,11 @@
 #pragma once
 
-#include <mpi_basic/type.hpp>
-#include <mpi_basic/world.hpp>
+#include <memory/borrow.hpp>
+#include <mpi.h>
 #include <mpi_basic/allgatherv_counts.hpp>
 #include <mpi_basic/counts_and_displs.hpp>
 #include <mpi_basic/displs.hpp>
-#include <util/arithmetic.hpp>
-#include <memory/borrow.hpp>
-#include <mpi.h>
-#include <numeric>
+#include <mpi_basic/type.hpp>
 
 namespace mpi_basic {
 

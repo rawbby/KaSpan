@@ -4,12 +4,9 @@
 #include <memory/borrow.hpp>
 #include <util/arithmetic.hpp>
 
-#include <algorithm>
 #include <bit>
 #include <cstddef>
 #include <cstdlib>
-#include <cstring>
-#include <span>
 
 template<UnsignedConcept T = u64>
 class DenseUnsignedAccessor final : public DenseUnsignedMixin<DenseUnsignedAccessor<T>, T>
@@ -41,7 +38,7 @@ public:
     return DenseUnsignedAccessor{ ::borrow_array(memory, count * element_byte_size), element_byte_size, endian };
   }
 
-  static auto view(void*  memory, u8 element_byte_size, std::endian endian = std::endian::native) noexcept
+  static auto view(void* memory, u8 element_byte_size, std::endian endian = std::endian::native) noexcept
     -> DenseUnsignedAccessor
   {
     return DenseUnsignedAccessor{ memory, element_byte_size, endian };

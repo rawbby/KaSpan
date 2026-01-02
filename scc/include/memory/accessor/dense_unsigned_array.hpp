@@ -9,7 +9,8 @@
 #include <utility>
 
 template<UnsignedConcept T = u64>
-class DenseUnsignedArray final : public Buffer, public DenseUnsignedAccessorMixin<DenseUnsignedArray<T>, T>
+class DenseUnsignedArray final : public Buffer
+  , public DenseUnsignedAccessorMixin<DenseUnsignedArray<T>, T>
 {
 public:
   DenseUnsignedArray() noexcept = default;

@@ -1,10 +1,7 @@
 #pragma once
 
-#include <mpi_basic/type.hpp>
-#include <mpi_basic/world.hpp>
-#include <util/arithmetic.hpp>
 #include <mpi.h>
-#include <numeric>
+#include <mpi_basic/type.hpp>
 
 namespace mpi_basic {
 

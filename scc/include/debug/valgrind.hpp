@@ -12,8 +12,8 @@
 #endif
 
 #if KASPAN_VALGRIND
-#include <valgrind/valgrind.h>
 #include <valgrind/memcheck.h>
+#include <valgrind/valgrind.h>
 
 #define KASPAN_VALGRIND_RUNNING_ON_VALGRIND RUNNING_ON_VALGRIND
 #define KASPAN_VALGRIND_MAKE_MEM_NOACCESS(_addr, _len) VALGRIND_MAKE_MEM_NOACCESS(_addr, _len)

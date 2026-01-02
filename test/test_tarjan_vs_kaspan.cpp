@@ -1,13 +1,13 @@
 #include <debug/statistic.hpp>
 #include <debug/sub_process.hpp>
 #include <memory/accessor/stack_accessor.hpp>
+#include <mpi_basic/mpi_basic.hpp>
 #include <scc/adapter/kagen.hpp>
 #include <scc/adapter/manifest.hpp>
 #include <scc/allgather_graph.hpp>
 #include <scc/async/scc.hpp>
 #include <scc/base.hpp>
 #include <scc/scc.hpp>
-#include <mpi_basic/mpi_basic.hpp>
 
 #include <mpi.h>
 
@@ -59,8 +59,8 @@ main(int argc, char** argv)
   // Test async version with NoopIndirectionScheme
   {
     auto const scc_id_buffer = make_buffer<vertex_t>(graph_part.part.local_n());
-    auto* scc_id_access = scc_id_buffer.data();
-    auto* async_scc_id = borrow_array_clean<vertex_t>(&scc_id_access, graph_part.part.local_n());
+    auto*      scc_id_access = scc_id_buffer.data();
+    auto*      async_scc_id  = borrow_array_clean<vertex_t>(&scc_id_access, graph_part.part.local_n());
     async::scc<briefkasten::NoopIndirectionScheme>(
       graph_part.part,
       graph_part.fw_head,

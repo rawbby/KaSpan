@@ -4,8 +4,8 @@
 #include <debug/debug_break.hpp>
 #include <util/pp.hpp>
 
-#include <format>
 #include <cstdio>
+#include <format>
 #include <print>
 
 template<typename Lhs, typename Rhs, FormattableConcept... Args>

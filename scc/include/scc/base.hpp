@@ -1,12 +1,10 @@
 #pragma once
 
-#include <debug/assert.hpp>
-#include <util/arithmetic.hpp>
 #include <mpi_basic/mpi_basic.hpp>
+#include <util/arithmetic.hpp>
 
 #include <cstdio>
 #include <limits>
-#include <print>
 
 #ifdef KASPAN_INDEX64
 using index_t = i64;
@@ -46,8 +44,8 @@ init_mpi_edge_t()
   MPI_Aint            displs[2];
   mpi_basic::Datatype types[2] = { mpi_vertex_t, mpi_vertex_t };
 
-  constexpr Edge   dummy{};
-  MPI_Aint         base;
+  constexpr Edge dummy{};
+  MPI_Aint       base;
   mpi_basic::get_address(&dummy, &base);
   mpi_basic::get_address(&dummy.u, &displs[0]);
   mpi_basic::get_address(&dummy.v, &displs[1]);

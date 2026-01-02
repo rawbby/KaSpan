@@ -19,8 +19,8 @@ forward_search(
   vertex_t*       active_array,
   vertex_t        root) -> vertex_t
 {
-  auto const local_n = part.local_n();
-  auto active_stack = StackAccessor<vertex_t>{ active_array };
+  auto const local_n      = part.local_n();
+  auto       active_stack = StackAccessor<vertex_t>{ active_array };
 
   auto on_message = [&](auto env) {
     for (auto v : env.message) {

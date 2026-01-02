@@ -1,7 +1,7 @@
 #pragma once
 
-#include <util/arithmetic.hpp>
 #include <mpi.h>
+#include <util/arithmetic.hpp>
 
 namespace mpi_basic {
 
@@ -18,11 +18,11 @@ inline bool world_root = true;
 /**
  * @brief The rank of the process in MPI_COMM_WORLD.
  */
-inline i32  world_rank = 0;
+inline i32 world_rank = 0;
 
 /**
  * @brief The size of MPI_COMM_WORLD.
  */
-inline i32  world_size = 1;
+inline i32 world_size = 1;
 
 } // namespace mpi_basic

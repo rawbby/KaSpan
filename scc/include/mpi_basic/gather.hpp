@@ -1,8 +1,7 @@
 #pragma once
 
-#include <mpi_basic/type.hpp>
-#include <mpi_basic/world.hpp>
 #include <mpi.h>
+#include <mpi_basic/type.hpp>
 
 namespace mpi_basic {
 

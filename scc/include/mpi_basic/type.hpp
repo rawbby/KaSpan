@@ -1,7 +1,7 @@
 #pragma once
 
-#include <util/arithmetic.hpp>
 #include <mpi.h>
+#include <util/arithmetic.hpp>
 
 namespace mpi_basic {
 
@@ -10,7 +10,7 @@ namespace mpi_basic {
  * @brief Mapping from C++ types to MPI datatypes.
  */
 template<typename T>
-const inline MPI_Datatype type =
+constexpr inline auto type =
   ByteConcept<T> ? MPI_BYTE     :
   I8Concept<T>   ? MPI_INT8_T   :
   I16Concept<T>  ? MPI_INT16_T  :
@@ -22,8 +22,6 @@ const inline MPI_Datatype type =
   U64Concept<T>  ? MPI_UINT64_T :
   F32Concept<T>  ? MPI_FLOAT    :
   F64Concept<T>  ? MPI_DOUBLE   :
-  std::same_as<T, int>  ? MPI_INT      :
-  std::same_as<T, char> ? MPI_CHAR     :
   MPI_DATATYPE_NULL;
 // clang-format on
 
@@ -33,19 +31,15 @@ const inline MPI_Datatype type =
 template<typename T>
 concept Concept = type<T> != MPI_DATATYPE_NULL;
 
-constexpr inline auto byte_t   = MPI_BYTE;
-constexpr inline auto i8_t     = MPI_INT8_T;
-constexpr inline auto i16_t    = MPI_INT16_T;
-constexpr inline auto i32_t    = MPI_INT32_T;
-constexpr inline auto i64_t    = MPI_INT64_T;
-constexpr inline auto u8_t     = MPI_UINT8_T;
-constexpr inline auto u16_t    = MPI_UINT16_T;
-constexpr inline auto u32_t    = MPI_UINT32_T;
-constexpr inline auto u64_t    = MPI_UINT64_T;
-constexpr inline auto float_t  = MPI_FLOAT;
-constexpr inline auto double_t = MPI_DOUBLE;
-constexpr inline auto char_t   = MPI_CHAR;
-constexpr inline auto int_t    = MPI_INT;
+constexpr inline auto byte_t = MPI_BYTE;
+constexpr inline auto i8_t   = MPI_INT8_T;
+constexpr inline auto i16_t  = MPI_INT16_T;
+constexpr inline auto i32_t  = MPI_INT32_T;
+constexpr inline auto i64_t  = MPI_INT64_T;
+constexpr inline auto u8_t   = MPI_UINT8_T;
+constexpr inline auto u16_t  = MPI_UINT16_T;
+constexpr inline auto u32_t  = MPI_UINT32_T;
+constexpr inline auto u64_t  = MPI_UINT64_T;
 
 using Datatype = MPI_Datatype;
 using Op       = MPI_Op;

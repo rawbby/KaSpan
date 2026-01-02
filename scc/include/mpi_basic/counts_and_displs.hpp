@@ -1,9 +1,9 @@
 #pragma once
 
-#include <mpi_basic/world.hpp>
-#include <util/return_pack.hpp>
 #include <memory/borrow.hpp>
 #include <mpi.h>
+#include <mpi_basic/world.hpp>
+#include <util/return_pack.hpp>
 
 namespace mpi_basic {
 

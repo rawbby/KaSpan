@@ -9,7 +9,7 @@
 #define TOSTRING(X) STRINGIFY(X)
 
 // === CAT ===
-#define CAT_IMPL(A,B) A##B
+#define CAT_IMPL(A,B) A## B
 #define CAT(A,B) CAT_IMPL(A,B)
 
 // === ARGS ===

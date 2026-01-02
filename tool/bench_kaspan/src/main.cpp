@@ -12,9 +12,9 @@
 
 #include <mpi.h>
 
+#include <cstdio>
 #include <fstream>
 #include <print>
-#include <cstdio>
 
 void
 usage(int /* argc */, char** argv)

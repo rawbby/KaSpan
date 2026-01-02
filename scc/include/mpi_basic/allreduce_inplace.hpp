@@ -1,8 +1,8 @@
 #pragma once
 
+#include <mpi.h>
 #include <mpi_basic/type.hpp>
 #include <util/arithmetic.hpp>
-#include <mpi.h>
 
 namespace mpi_basic {
 
