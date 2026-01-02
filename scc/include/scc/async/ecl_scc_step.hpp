@@ -109,13 +109,11 @@ ecl_scc_step(
 
   mpi_basic_barrier();
   mq.reactivate();
-  mpi_basic_barrier();
 
   propagate(fw_head, fw_csr, ecl_fw_label);
 
   mpi_basic_barrier();
   mq.reactivate();
-  mpi_basic_barrier();
 
   propagate(bw_head, bw_csr, ecl_bw_label);
 
