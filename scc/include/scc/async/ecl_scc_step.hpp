@@ -53,7 +53,7 @@ ecl_scc_step(
       auto const label = edge.v;
       DEBUG_ASSERT(part.has_local(u));
       auto const k = part.to_local(u);
-      if (label < ecl_fw_label[k] and scc_id[k] == scc_id_undecided) {
+      if (scc_id[k] == scc_id_undecided and label < ecl_fw_label[k]) {
         ecl_fw_label[k] = label;
         fw_changed.set(k);
         if (!fw_active.get(k)) {
@@ -70,7 +70,7 @@ ecl_scc_step(
       auto const label = edge.v;
       DEBUG_ASSERT(part.has_local(u));
       auto const k = part.to_local(u);
-      if (label < ecl_bw_label[k] and scc_id[k] == scc_id_undecided) {
+      if (scc_id[k] == scc_id_undecided and label < ecl_bw_label[k]) {
         ecl_bw_label[k] = label;
         bw_changed.set(k);
         if (!bw_active.get(k)) {
@@ -108,7 +108,7 @@ ecl_scc_step(
         for (auto v : csr_range(fw_head, fw_csr, k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (label_k < ecl_fw_label[l] and scc_id[l] == scc_id_undecided) {
+            if (scc_id[l] == scc_id_undecided and label_k < ecl_fw_label[l]) {
               ecl_fw_label[l] = label_k;
               fw_changed.set(l);
               if (!fw_active.get(l)) {
@@ -153,7 +153,7 @@ ecl_scc_step(
         for (auto v : csr_range(bw_head, bw_csr, k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (label_k < ecl_bw_label[l] and scc_id[l] == scc_id_undecided) {
+            if (scc_id[l] == scc_id_undecided and label_k < ecl_bw_label[l]) {
               ecl_bw_label[l] = label_k;
               bw_changed.set(l);
               if (!bw_active.get(l)) {
@@ -196,14 +196,13 @@ ecl_scc_step(
   mq.reactivate();
 
   vertex_t local_decided_count = 0;
-  for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] == scc_id_undecided) {
-      if (ecl_fw_label[k] == ecl_bw_label[k]) {
-        scc_id[k] = ecl_fw_label[k];
-        ++local_decided_count;
-      }
+  fw_active.fill_cmp(local_n, scc_id, scc_id_undecided);
+  fw_active.for_each(local_n, [&](auto k) {
+    if (ecl_fw_label[k] == ecl_bw_label[k]) {
+      scc_id[k] = ecl_fw_label[k];
+      ++local_decided_count;
     }
-  }
+  });
 
   ASSERT_GE(local_decided_count, 0);
   return local_decided_count;

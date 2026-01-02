@@ -59,7 +59,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     {
       KASPAN_STATISTIC_SCOPE("forward_backward_search");
 
-      auto frontier = vertex_frontier::create();
+      auto frontier = vertex_frontier::create(local_n);
       auto pivot    = pivot_selection(max);
 
       auto bitvector = make_bits_clean(local_n);
@@ -90,7 +90,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
       auto active_array = make_array<vertex_t>(local_n - local_decided);
       auto active       = make_bits_clean(local_n);
       auto changed      = make_bits_clean(local_n);
-      auto frontier     = edge_frontier::create();
+      auto frontier     = edge_frontier::create(local_n);
 
       auto const prev_global_decided = global_decided;
 

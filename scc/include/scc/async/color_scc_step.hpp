@@ -32,7 +32,6 @@ color_scc_step(
   vertex_t*       colors,
   vertex_t*       active_array,
   BitsAccessor    active,
-  BitsAccessor    changed,
   vertex_t        decided_count = 0) -> vertex_t
 {
   auto const local_n = part.local_n();
@@ -58,7 +57,7 @@ color_scc_step(
         auto const label = edge.v;
         DEBUG_ASSERT(part.has_local(u));
         auto const k = part.to_local(u);
-        if (label < colors[k] and scc_id[k] == scc_id_undecided) {
+        if (scc_id[k] == scc_id_undecided and label < colors[k]) {
           colors[k] = label;
           if (not active.get(k)) {
             active.set(k);
@@ -86,7 +85,7 @@ color_scc_step(
         for (auto v : csr_range(fw_head, fw_csr, k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (label < colors[l] and scc_id[l] == scc_id_undecided) {
+            if (scc_id[l] == scc_id_undecided and label < colors[l]) {
               colors[l] = label;
               if (not active.get(l)) {
                 active.set(l);
@@ -128,15 +127,16 @@ color_scc_step(
     };
 
     DEBUG_ASSERT(active_stack.empty());
-    active.clear(local_n);
-    for (vertex_t k = 0; k < local_n; ++k) {
-      if (scc_id[k] == scc_id_undecided and colors[k] == part.to_global(k)) {
+    active.fill_cmp(local_n, scc_id, scc_id_undecided);
+    active.for_each(local_n, [&](auto k) {
+      if (colors[k] == part.to_global(k)) {
         scc_id[k] = colors[k];
         ++local_decided_count;
-        active.set(k);
         active_stack.push(k);
+      } else {
+        active.unset(k);
       }
-    }
+    });
 
     mpi_basic_barrier();
     mq.reactivate();

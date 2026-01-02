@@ -52,19 +52,26 @@ allgather_csr_degrees(
   index_t const*  head,
   vertex_t const* csr,
 
-  vertex_t const*                               local_ids_inverse,
-  std::unordered_map<vertex_t, vertex_t> const& sub_ids)
+  vertex_t const* local_ids_inverse,
+  vertex_t        sub_n,
+  vertex_t const* ids_inverse)
 {
   auto const local_n = part.local_n();
-  auto const local_m = head[local_n];
+
+  index_t local_sub_m_upper_bound = 0;
+  for (vertex_t i = 0; i < local_sub_n; ++i) {
+    auto const u = local_ids_inverse[i];
+    auto const k = part.to_local(u);
+    local_sub_m_upper_bound += head[k + 1] - head[k];
+  }
 
   auto buffer = make_buffer<MPI_Count, MPI_Aint, vertex_t, index_t>(
-    mpi_world_size, mpi_world_size, local_m, mpi_world_root + local_sub_n);
+    mpi_world_size, mpi_world_size, local_sub_m_upper_bound, mpi_world_root + local_sub_n);
   void* memory = buffer.data();
-  KASPAN_VALGRIND_MAKE_MEM_DEFINED(memory, line_align_up(mpi_world_size * sizeof(MPI_Count)) + line_align_up(mpi_world_size * sizeof(MPI_Aint)) + line_align_up(local_m * sizeof(vertex_t)) + line_align_up((local_sub_n + mpi_world_root) * sizeof(index_t)));
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(memory, line_align_up(mpi_world_size * sizeof(MPI_Count)) + line_align_up(mpi_world_size * sizeof(MPI_Aint)) + line_align_up(local_sub_m_upper_bound * sizeof(vertex_t)) + line_align_up((local_sub_n + mpi_world_root) * sizeof(index_t)));
 
   auto [counts, displs]  = mpi_basic_counts_and_displs(&memory);
-  auto local_sub_csr     = StackAccessor<vertex_t>::borrow(&memory, local_m);
+  auto local_sub_csr     = StackAccessor<vertex_t>::borrow(&memory, local_sub_m_upper_bound);
   auto local_sub_degrees = StackAccessor<index_t>::borrow(&memory, local_sub_n + mpi_world_root);
   if (mpi_world_root) {
     local_sub_degrees.push(0);
@@ -78,10 +85,10 @@ allgather_csr_degrees(
 
     index_t deg = 0;
     for (index_t it = beg; it < end; ++it) {
-      auto const v = csr[it];
-      // v is in sub graph if contained by sub_ids
-      if (auto const jt = sub_ids.find(v); jt != sub_ids.end()) {
-        local_sub_csr.push(jt->second);
+      auto const v  = csr[it];
+      auto const jt = std::lower_bound(ids_inverse, ids_inverse + sub_n, v);
+      if (jt != ids_inverse + sub_n and *jt == v) {
+        local_sub_csr.push(static_cast<vertex_t>(std::distance(ids_inverse, jt)));
         ++deg;
       }
     }
@@ -138,16 +145,10 @@ allgather_sub_graph(
   sub.ids_inverse        = ids_inverse;
   sub.n                  = sub_n;
 
-  std::unordered_map<vertex_t, vertex_t> sub_ids;
-  sub_ids.reserve(sub_n);
-  for (vertex_t new_id = 0; new_id < sub_n; ++new_id) {
-    sub_ids.emplace(ids_inverse[new_id], new_id);
-  }
-
   // communicate forward graph
   {
     auto [TMP(), sub_m, counts, displs, local_sub_fw_csr, local_sub_fw_degrees] =
-      sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_ids);
+      sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_n, ids_inverse);
 
     DEBUG_ASSERT_GE(sub_m, 0);
     sub.m        = sub_m;
@@ -173,7 +174,7 @@ allgather_sub_graph(
   // communicate backward graph
   {
     auto [TMP(), sub_m, counts, displs, local_sub_bw_csr, local_sub_bw_degrees] =
-      sub_graph::allgather_csr_degrees(part, local_sub_n, bw_head, bw_csr, local_ids_inverse, sub_ids);
+      sub_graph::allgather_csr_degrees(part, local_sub_n, bw_head, bw_csr, local_ids_inverse, sub_n, ids_inverse);
 
     DEBUG_ASSERT_EQ(sub.m, sub_m);
 
@@ -224,16 +225,10 @@ allgather_fw_sub_graph(
   sub.ids_inverse        = ids_inverse;
   sub.n                  = sub_n;
 
-  std::unordered_map<vertex_t, vertex_t> sub_ids;
-  sub_ids.reserve(sub_n);
-  for (vertex_t new_id = 0; new_id < sub_n; ++new_id) {
-    sub_ids.emplace(ids_inverse[new_id], new_id);
-  }
-
   // communicate forward graph
   {
     auto [TMP(), sub_m, counts, displs, local_sub_fw_csr, local_sub_fw_degrees] =
-      sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_ids);
+      sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_n, ids_inverse);
 
     sub.m        = sub_m;
     sub.buffer   = make_fw_graph_buffer(sub_n, sub_m);

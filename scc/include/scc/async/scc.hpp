@@ -114,10 +114,11 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
       auto pivot        = pivot_selection(max);
       auto bitvector    = make_bits_clean(local_n);
+      auto active_array = make_array<vertex_t>(local_n);
       auto vertex_queue = make_briefkasten_vertex<IndirectionScheme>();
 
-      forward_search(part, fw_head, fw_csr, vertex_queue, scc_id, bitvector, pivot);
-      local_decided += backward_search(part, bw_head, bw_csr, vertex_queue, scc_id, bitvector, pivot, pivot);
+      forward_search(part, fw_head, fw_csr, vertex_queue, scc_id, bitvector, active_array.data(), pivot);
+      local_decided += backward_search(part, bw_head, bw_csr, vertex_queue, scc_id, bitvector, active_array.data(), pivot, pivot);
 
       KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(local_decided - prev_local_decided, MPI_SUM));
       KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
@@ -134,9 +135,8 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     KASPAN_STATISTIC_SCOPE("color");
 
     auto colors       = make_array<vertex_t>(local_n);
-    auto active_array = make_array<vertex_t>(local_n);
+    auto active_array = make_array<vertex_t>(local_n - local_decided);
     auto active       = make_bits_clean(local_n);
-    auto changed      = make_bits_clean(local_n);
     auto edge_queue   = make_briefkasten_edge<IndirectionScheme>();
 
     auto const prev_local_decided = local_decided;
@@ -152,7 +152,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
       color_scc_init_label(part, colors);
       local_decided += async::color_scc_step(
-        part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors, active_array, active, changed, local_decided);
+        part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors, active_array, active, local_decided);
     } while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold);
 
     KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(local_decided - prev_local_decided, MPI_SUM));

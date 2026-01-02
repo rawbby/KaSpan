@@ -1,9 +1,9 @@
 #pragma once
 
 #include <memory/accessor/bits_accessor.hpp>
+#include <memory/accessor/stack_accessor.hpp>
 #include <scc/base.hpp>
 #include <scc/graph.hpp>
-#include <vector>
 #include <algorithm>
 
 namespace async {
@@ -17,11 +17,12 @@ backward_search(
   BriefQueue&     mq,
   vertex_t*       scc_id,
   BitsAccessor    fw_reached,
+  vertex_t*       active_array,
   vertex_t        root,
   vertex_t        id) -> vertex_t
 {
   auto const local_n = part.local_n();
-  std::vector<vertex_t> active_stack;
+  auto active_stack = StackAccessor<vertex_t>{ active_array };
   vertex_t decided_count = 0;
   vertex_t min_u = part.n;
 
@@ -33,7 +34,7 @@ backward_search(
         scc_id[k] = id;
         min_u = std::min(min_u, v);
         ++decided_count;
-        active_stack.push_back(k);
+        active_stack.push(k);
       }
     }
   };
@@ -44,7 +45,7 @@ backward_search(
       scc_id[k] = id;
       min_u = std::min(min_u, root);
       ++decided_count;
-      active_stack.push_back(k);
+      active_stack.push(k);
     }
   }
 
@@ -54,7 +55,7 @@ backward_search(
   while (true) {
     while (not active_stack.empty()) {
       auto const k = active_stack.back();
-      active_stack.pop_back();
+      active_stack.pop();
 
       for (auto v : csr_range(bw_head, bw_csr, k)) {
         if (part.has_local(v)) {
@@ -63,7 +64,7 @@ backward_search(
             scc_id[l] = id;
             min_u = std::min(min_u, v);
             ++decided_count;
-            active_stack.push_back(l);
+            active_stack.push(l);
           }
         } else {
           mq.post_message_blocking(v, part.world_rank_of(v), on_message);

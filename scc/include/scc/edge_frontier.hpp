@@ -18,13 +18,17 @@ struct edge_frontier
   MPI_Count* recv_counts = nullptr;
   MPI_Aint*  recv_displs = nullptr;
 
-  static auto create() -> edge_frontier
+  static auto create(u64 capacity = 0) -> edge_frontier
   {
     auto buffer = make_buffer<MPI_Count, MPI_Count, MPI_Aint, MPI_Aint>(
       mpi_world_size, mpi_world_size, mpi_world_size, mpi_world_size);
     auto* memory = buffer.data();
 
     edge_frontier frontier;
+    if (capacity) {
+      frontier.send_buffer.reserve(capacity);
+      frontier.recv_buffer.reserve(capacity);
+    }
     frontier.buffer      = std::move(buffer);
     frontier.send_counts = ::borrow_array_clean<MPI_Count>(&memory, mpi_world_size);
     frontier.send_displs = ::borrow_array<MPI_Aint>(&memory, mpi_world_size);

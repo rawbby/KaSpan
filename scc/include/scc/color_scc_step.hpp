@@ -71,7 +71,7 @@ color_scc_step(
         for (auto v : csr_range(fw_head, fw_csr, k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (label < colors[l] and scc_id[l] == scc_id_undecided) {
+            if (scc_id[l] == scc_id_undecided and label < colors[l]) {
               colors[l] = label;
               changed.set(l);
               if (not active.get(l)) {
@@ -101,7 +101,7 @@ color_scc_step(
       while (frontier.has_next()) {
         auto const [u, label] = frontier.next();
         auto const k = part.to_local(u);
-        if (label < colors[k] and scc_id[k] == scc_id_undecided) {
+        if (scc_id[k] == scc_id_undecided and label < colors[k]) {
           colors[k] = label;
           changed.set(k);
           if (not active.get(k)) {
@@ -120,17 +120,18 @@ color_scc_step(
   vertex_t local_decided_count = 0;
   {
     DEBUG_ASSERT(active_stack.empty());
-    active.clear(local_n);
+    active.fill_cmp(local_n, scc_id, scc_id_undecided);
     changed.clear(local_n);
-    for (vertex_t k = 0; k < local_n; ++k) {
-      if (scc_id[k] == scc_id_undecided and colors[k] == part.to_global(k)) {
+    active.for_each(local_n, [&](auto k) {
+      if (colors[k] == part.to_global(k)) {
         scc_id[k] = colors[k];
         ++local_decided_count;
-        active.set(k);
         changed.set(k);
         active_stack.push(k);
+      } else {
+        active.unset(k);
       }
-    }
+    });
 
     while (true) {
       while (not active_stack.empty()) {
