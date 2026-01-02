@@ -21,7 +21,7 @@ struct vertex_frontier
   static auto create(u64 capacity = 0) -> vertex_frontier
   {
     auto buffer = make_buffer<MPI_Count, MPI_Count, MPI_Aint, MPI_Aint>(
-      mpi_world_size, mpi_world_size, mpi_world_size, mpi_world_size);
+      mpi_basic::world_size, mpi_basic::world_size, mpi_basic::world_size, mpi_basic::world_size);
     auto* memory = buffer.data();
 
     vertex_frontier frontier;
@@ -30,10 +30,10 @@ struct vertex_frontier
       frontier.recv_buffer.reserve(capacity);
     }
     frontier.buffer      = std::move(buffer);
-    frontier.send_counts = ::borrow_array_clean<MPI_Count>(&memory, mpi_world_size);
-    frontier.send_displs = ::borrow_array<MPI_Aint>(&memory, mpi_world_size);
-    frontier.recv_counts = ::borrow_array<MPI_Count>(&memory, mpi_world_size);
-    frontier.recv_displs = ::borrow_array<MPI_Aint>(&memory, mpi_world_size);
+    frontier.send_counts = ::borrow_array_clean<MPI_Count>(&memory, mpi_basic::world_size);
+    frontier.send_displs = ::borrow_array<MPI_Aint>(&memory, mpi_basic::world_size);
+    frontier.recv_counts = ::borrow_array<MPI_Count>(&memory, mpi_basic::world_size);
+    frontier.recv_displs = ::borrow_array<MPI_Aint>(&memory, mpi_basic::world_size);
     return frontier;
   }
 
@@ -63,26 +63,26 @@ struct vertex_frontier
   template<WorldPartConcept Part>
   auto comm(Part const& part) -> bool
   {
-    auto const send_count = mpi_basic_displs(send_counts, send_displs);
+    auto const send_count = mpi_basic::displs(send_counts, send_displs);
     DEBUG_ASSERT_EQ(send_count, send_buffer.size());
 
-    auto const total_messages = mpi_basic_allreduce_single(send_count, MPI_SUM);
+    auto const total_messages = mpi_basic::allreduce_single(send_count, mpi_basic::sum);
     if (total_messages == 0) {
       return false;
     }
 
-    mpi_basic_alltoallv_counts(send_counts, recv_counts);
-    auto const recv_count = mpi_basic_displs(recv_counts, recv_displs);
+    mpi_basic::alltoallv_counts(send_counts, recv_counts);
+    auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
 
     auto const recv_offset = recv_buffer.size();
     recv_buffer.resize(recv_offset + recv_count);
     auto* recv_memory = recv_buffer.data() + recv_offset;
 
-    mpi_basic_inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](vertex_t u) {
+    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](vertex_t u) {
       return part.world_rank_of(u);
     });
 
-    mpi_basic_alltoallv(
+    mpi_basic::alltoallv(
       send_buffer.data(),
       send_counts,
       send_displs,
@@ -91,7 +91,7 @@ struct vertex_frontier
       recv_displs);
 
     send_buffer.clear();
-    std::memset(send_counts, 0, mpi_world_size * sizeof(MPI_Count));
+    std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
 
     return true;
   }

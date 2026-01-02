@@ -34,7 +34,7 @@ void
 test_single_all_to_all()
 {
   auto received = std::vector<i32>{};
-  received.reserve(mpi_world_size - 1);
+  received.reserve(mpi_basic::world_size - 1);
 
   auto on_message = [&](auto env) {
     for (auto val : env.message) {
@@ -43,20 +43,20 @@ test_single_all_to_all()
   };
 
   auto mq = briefkasten::BufferedMessageQueueBuilder<i32>{}.build();
-  for (i32 i = 0; i < mpi_world_size; ++i) {
-    if (i != mpi_world_rank) {
-      mq.post_message_blocking(mpi_world_rank, i, on_message);
+  for (i32 i = 0; i < mpi_basic::world_size; ++i) {
+    if (i != mpi_basic::world_rank) {
+      mq.post_message_blocking(mpi_basic::world_rank, i, on_message);
     }
   }
 
   await_messages(mq, on_message);
 
-  ASSERT_EQ(received.size(), mpi_world_size - 1);
+  ASSERT_EQ(received.size(), mpi_basic::world_size - 1);
 
   auto expected = std::vector<i32>{};
-  expected.reserve(mpi_world_size - 1);
-  for (i32 i = 0; i < mpi_world_size; ++i) {
-    if (i != mpi_world_rank) {
+  expected.reserve(mpi_basic::world_size - 1);
+  for (i32 i = 0; i < mpi_basic::world_size; ++i) {
+    if (i != mpi_basic::world_rank) {
       expected.push_back(i);
     }
   }
@@ -72,11 +72,11 @@ test_reactivation()
 {
   constexpr auto num_messages = 10;
 
-  i32 const send_target = (mpi_world_rank + 1) % mpi_world_size;
-  i32 const recv_source = (mpi_world_rank - 1 + mpi_world_size) % mpi_world_size;
+  i32 const send_target = (mpi_basic::world_rank + 1) % mpi_basic::world_size;
+  i32 const recv_source = (mpi_basic::world_rank - 1 + mpi_basic::world_size) % mpi_basic::world_size;
 
   auto received = std::vector<i32>{};
-  received.reserve(std::max(mpi_world_size, num_messages));
+  received.reserve(std::max(mpi_basic::world_size, num_messages));
   auto expected = std::vector<i32>{};
   expected.reserve(num_messages);
 
@@ -94,20 +94,20 @@ test_reactivation()
 
   // send a bunch of messages that hopefully dont leak and reset
   {
-    for (i32 i = 0; i < mpi_world_size; ++i) {
-      if (i != mpi_world_rank) {
-        mq.post_message_blocking(mpi_world_size * num_messages + i, i, on_message);
+    for (i32 i = 0; i < mpi_basic::world_size; ++i) {
+      if (i != mpi_basic::world_rank) {
+        mq.post_message_blocking(mpi_basic::world_size * num_messages + i, i, on_message);
       }
     }
     await_messages(mq, on_message);
-    ASSERT_EQ(received.size(), static_cast<size_t>(mpi_world_size - 1));
-    mpi_basic_barrier();
+    ASSERT_EQ(received.size(), static_cast<size_t>(mpi_basic::world_size - 1));
+    mpi_basic::barrier();
     mq.reactivate();
     received.clear();
   }
 
   for (i32 i = 0; i < num_messages; ++i) {
-    mq.post_message_blocking(mpi_world_rank * num_messages + i, send_target, on_message);
+    mq.post_message_blocking(mpi_basic::world_rank * num_messages + i, send_target, on_message);
   }
 
   await_messages(mq, on_message);
@@ -124,8 +124,8 @@ test_neighbour_multiple()
 {
   constexpr auto num_messages = 10;
 
-  i32 const send_target = (mpi_world_rank + 1) % mpi_world_size;
-  i32 const recv_source = (mpi_world_rank - 1 + mpi_world_size) % mpi_world_size;
+  i32 const send_target = (mpi_basic::world_rank + 1) % mpi_basic::world_size;
+  i32 const recv_source = (mpi_basic::world_rank - 1 + mpi_basic::world_size) % mpi_basic::world_size;
 
   auto received = std::vector<i32>{};
   received.reserve(num_messages);
@@ -144,7 +144,7 @@ test_neighbour_multiple()
 
   auto mq = briefkasten::BufferedMessageQueueBuilder<i32>{}.build();
   for (i32 i = 0; i < num_messages; ++i) {
-    mq.post_message_blocking(mpi_world_rank * num_messages + i, send_target, on_message);
+    mq.post_message_blocking(mpi_basic::world_rank * num_messages + i, send_target, on_message);
   }
 
   await_messages(mq, on_message);
@@ -180,13 +180,13 @@ test_single_self_message()
 
   auto on_message = [&](auto env) {
     for (auto val : env.message) {
-      ASSERT_EQ(val, mpi_world_rank);
+      ASSERT_EQ(val, mpi_basic::world_rank);
       received.push_back(val);
     }
   };
 
   auto mq = briefkasten::BufferedMessageQueueBuilder<i32>{}.build();
-  mq.post_message_blocking(mpi_world_rank, mpi_world_rank, on_message);
+  mq.post_message_blocking(mpi_basic::world_rank, mpi_basic::world_rank, on_message);
   await_messages(mq, on_message);
 
   ASSERT_EQ(received.size(), 1u);
@@ -208,14 +208,14 @@ main(int argc, char** argv)
     // this is required as message ids and stuff is reused.
 
     test_single_all_to_all();
-    mpi_basic_barrier();
+    mpi_basic::barrier();
     test_reactivation();
-    mpi_basic_barrier();
+    mpi_basic::barrier();
     test_neighbour_multiple();
-    mpi_basic_barrier();
+    mpi_basic::barrier();
     test_no_communication();
-    mpi_basic_barrier();
+    mpi_basic::barrier();
     test_single_self_message();
-    mpi_basic_barrier();
+    mpi_basic::barrier();
   }
 }

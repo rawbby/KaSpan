@@ -62,8 +62,8 @@ main(int argc, char** argv)
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  KASPAN_STATISTIC_ADD("world_rank", mpi_world_rank);
-  KASPAN_STATISTIC_ADD("world_size", mpi_world_size);
+  KASPAN_STATISTIC_ADD("world_rank", mpi_basic::world_rank);
+  KASPAN_STATISTIC_ADD("world_size", mpi_basic::world_size);
   KASPAN_STATISTIC_ADD("valgrind", KASPAN_VALGRIND_RUNNING_ON_VALGRIND);
   KASPAN_STATISTIC_ADD("alpha", alpha);
 

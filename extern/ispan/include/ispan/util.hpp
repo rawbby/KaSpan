@@ -2,11 +2,11 @@
 
 #include <scc/base.hpp>
 #include <sys/stat.h>
-#include <util/mpi_basic.hpp>
+#include <mpi_basic/mpi_basic.hpp>
 
 using depth_t = i16;
 
-constexpr inline auto mpi_depth_t = mpi_basic_type<depth_t>;
+constexpr inline auto mpi_depth_t = mpi_basic::type<depth_t>;
 
 constexpr inline depth_t depth_unset = -1;
 

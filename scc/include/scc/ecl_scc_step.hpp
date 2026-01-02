@@ -118,7 +118,7 @@ ecl_scc_step(
         auto const label_k = ecl_lable[k];
         for (auto v : csr_range(head, csr, k)) {
           if (label_k < v and not part.has_local(v)) {
-            DEBUG_ASSERT_NE(part.world_rank_of(v), mpi_world_rank);
+            DEBUG_ASSERT_NE(part.world_rank_of(v), mpi_basic::world_rank);
             frontier.push(part.world_rank_of(v), { v, label_k });
           }
         }
@@ -167,6 +167,6 @@ ecl_scc_step(
     }
   }
 
-  DEBUG_ASSERT_GT(mpi_basic_allreduce_single(local_decided_count, MPI_SUM), 0);
+  DEBUG_ASSERT_GT(mpi_basic::allreduce_single(local_decided_count, mpi_basic::sum), 0);
   return local_decided_count;
 }

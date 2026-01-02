@@ -8,7 +8,7 @@
 void
 test_trivial_hard_coded()
 {
-  auto const part = TrivialSlicePart{ mpi_world_size };
+  auto const part = TrivialSlicePart{ mpi_basic::world_size };
   ASSERT_EQ(part.local_n(), 1);
 
   auto front = edge_frontier::create();
@@ -27,27 +27,27 @@ test_trivial_hard_coded()
     front.push(r, { u, 0 });
   }
 
-  for (i32 r = 0; r < mpi_world_size; ++r) {
+  for (i32 r = 0; r < mpi_basic::world_size; ++r) {
     ASSERT_EQ(front.send_counts[r], 1);
   }
 
   ASSERT_EQ(front.recv_buffer.size(), 0);
-  ASSERT_EQ(front.send_buffer.size(), mpi_world_size);
+  ASSERT_EQ(front.send_buffer.size(), mpi_basic::world_size);
 
   ASSERT(front.comm(part));
-  for (i32 r = 0; r < mpi_world_size; ++r) {
+  for (i32 r = 0; r < mpi_basic::world_size; ++r) {
     ASSERT_EQ(front.send_counts[r], 0);
     ASSERT_EQ(front.recv_counts[r], 1);
     ASSERT_EQ(front.send_displs[r], r);
     ASSERT_EQ(front.recv_displs[r], r);
   }
 
-  ASSERT_EQ(front.recv_buffer.size(), mpi_world_size);
+  ASSERT_EQ(front.recv_buffer.size(), mpi_basic::world_size);
   ASSERT_EQ(front.send_buffer.size(), 0);
 
   ASSERT_NOT(front.comm(part));
 
-  ASSERT_EQ(front.recv_buffer.size(), mpi_world_size);
+  ASSERT_EQ(front.recv_buffer.size(), mpi_basic::world_size);
   ASSERT_EQ(front.send_buffer.size(), 0);
 
   i32 message_count = 0;
@@ -55,12 +55,12 @@ test_trivial_hard_coded()
     auto const [u, v] = front.next();
     auto const r      = part.world_rank_of(u);
     ASSERT_EQ(r, u);
-    ASSERT_EQ(r, mpi_world_rank);
+    ASSERT_EQ(r, mpi_basic::world_rank);
     ASSERT_EQ(v, 0);
     ++message_count;
   }
 
-  ASSERT_EQ(message_count, mpi_world_size);
+  ASSERT_EQ(message_count, mpi_basic::world_size);
 }
 
 int
@@ -76,8 +76,8 @@ main(int argc, char** argv)
 
   ASSERT_NE(rank, -1);
   ASSERT_NE(size, -1);
-  ASSERT_EQ(rank, mpi_world_rank);
-  ASSERT_EQ(size, mpi_world_size);
+  ASSERT_EQ(rank, mpi_basic::world_rank);
+  ASSERT_EQ(size, mpi_basic::world_size);
   ASSERT_LT(rank, size);
 
   test_trivial_hard_coded();

@@ -8,30 +8,30 @@ template<bool sorted_variant>
 void
 test_explicit_continuous_world_part()
 {
-  auto  buffer = Buffer(2 * mpi_world_size * sizeof(vertex_t));
+  auto  buffer = Buffer(2 * mpi_basic::world_size * sizeof(vertex_t));
   auto* memory = buffer.data();
 
   auto const part = [&memory] {
     if constexpr (sorted_variant) {
-      if (mpi_world_root)
-        return ExplicitSortedContinuousWorldPart{ 10, 3, mpi_world_rank, mpi_world_size, &memory };
-      if (mpi_world_rank == 1)
-        return ExplicitSortedContinuousWorldPart{ 10, 9, mpi_world_rank, mpi_world_size, &memory };
-      ASSERT_EQ(mpi_world_rank, 2);
-      return ExplicitSortedContinuousWorldPart{ 10, 10, mpi_world_rank, mpi_world_size, &memory };
+      if (mpi_basic::world_root)
+        return ExplicitSortedContinuousWorldPart{ 10, 3, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+      if (mpi_basic::world_rank == 1)
+        return ExplicitSortedContinuousWorldPart{ 10, 9, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+      ASSERT_EQ(mpi_basic::world_rank, 2);
+      return ExplicitSortedContinuousWorldPart{ 10, 10, mpi_basic::world_rank, mpi_basic::world_size, &memory };
     } else {
-      if (mpi_world_root)
-        return ExplicitContinuousWorldPart{ 10, 0, 3, mpi_world_rank, mpi_world_size, &memory };
-      if (mpi_world_rank == 1)
-        return ExplicitContinuousWorldPart{ 10, 3, 9, mpi_world_rank, mpi_world_size, &memory };
-      ASSERT_EQ(mpi_world_rank, 2);
-      return ExplicitContinuousWorldPart{ 10, 9, 10, mpi_world_rank, mpi_world_size, &memory };
+      if (mpi_basic::world_root)
+        return ExplicitContinuousWorldPart{ 10, 0, 3, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+      if (mpi_basic::world_rank == 1)
+        return ExplicitContinuousWorldPart{ 10, 3, 9, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+      ASSERT_EQ(mpi_basic::world_rank, 2);
+      return ExplicitContinuousWorldPart{ 10, 9, 10, mpi_basic::world_rank, mpi_basic::world_size, &memory };
     }
   }();
 
   ASSERT_EQ(part.n, 10);
-  ASSERT_EQ(part.world_rank, mpi_world_rank);
-  ASSERT_EQ(part.world_size, mpi_world_size);
+  ASSERT_EQ(part.world_rank, mpi_basic::world_rank);
+  ASSERT_EQ(part.world_size, mpi_basic::world_size);
   ASSERT_EQ(part.world_rank_of(0), 0);
   ASSERT_EQ(part.world_rank_of(1), 0);
   ASSERT_EQ(part.world_rank_of(2), 0);
@@ -43,15 +43,15 @@ test_explicit_continuous_world_part()
   ASSERT_EQ(part.world_rank_of(8), 1);
   ASSERT_EQ(part.world_rank_of(9), 2);
 
-  if (mpi_world_rank == 0) {
+  if (mpi_basic::world_rank == 0) {
     ASSERT_EQ(part.begin, 0);
     ASSERT_EQ(part.end, 3);
   }
-  if (mpi_world_rank == 1) {
+  if (mpi_basic::world_rank == 1) {
     ASSERT_EQ(part.begin, 3);
     ASSERT_EQ(part.end, 9);
   }
-  if (mpi_world_rank == 2) {
+  if (mpi_basic::world_rank == 2) {
     ASSERT_EQ(part.begin, 9);
     ASSERT_EQ(part.end, 10);
   }

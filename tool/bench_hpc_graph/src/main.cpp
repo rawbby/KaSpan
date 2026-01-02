@@ -133,8 +133,8 @@ main(int argc, char** argv)
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
   KASPAN_STATISTIC_SCOPE("benchmark");
-  KASPAN_STATISTIC_ADD("world_rank", mpi_world_rank);
-  KASPAN_STATISTIC_ADD("world_size", mpi_world_size);
+  KASPAN_STATISTIC_ADD("world_rank", mpi_basic::world_rank);
+  KASPAN_STATISTIC_ADD("world_size", mpi_basic::world_size);
   KASPAN_STATISTIC_ADD("valgrind", KASPAN_VALGRIND_RUNNING_ON_VALGRIND);
 
   if (kagen_option_string != nullptr) {

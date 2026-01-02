@@ -49,7 +49,7 @@ backward_search(
     }
   }
 
-  mpi_basic_barrier();
+  mpi_basic::barrier();
   mq.reactivate();
 
   while (true) {
@@ -80,7 +80,7 @@ backward_search(
   }
 
   // normalise scc_id to minimum vertex in scc
-  min_u = mpi_basic_allreduce_single(min_u, MPI_MIN);
+  min_u = mpi_basic::allreduce_single(min_u, mpi_basic::min);
   for (vertex_t k = 0; k < local_n; ++k) {
     if (scc_id[k] == id) {
       scc_id[k] = min_u;

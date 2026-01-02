@@ -72,7 +72,7 @@ color_scc_step(
       active_stack.push(k);
     });
 
-    mpi_basic_barrier();
+    mpi_basic::barrier();
     mq.reactivate();
 
     while (true) {
@@ -138,7 +138,7 @@ color_scc_step(
       }
     });
 
-    mpi_basic_barrier();
+    mpi_basic::barrier();
     mq.reactivate();
 
     while (true) {

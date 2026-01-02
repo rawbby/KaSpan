@@ -41,7 +41,7 @@ forward_search(
     }
   }
 
-  mpi_basic_barrier();
+  mpi_basic::barrier();
   mq.reactivate();
 
   while (true) {

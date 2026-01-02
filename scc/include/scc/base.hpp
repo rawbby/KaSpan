@@ -2,7 +2,7 @@
 
 #include <debug/assert.hpp>
 #include <util/arithmetic.hpp>
-#include <util/mpi_basic.hpp>
+#include <mpi_basic/mpi_basic.hpp>
 
 #include <cstdio>
 #include <limits>
@@ -20,8 +20,8 @@ using vertex_t = i64;
 using vertex_t = i32;
 #endif
 
-constexpr inline auto mpi_index_t  = mpi_basic_type<index_t>;
-constexpr inline auto mpi_vertex_t = mpi_basic_type<vertex_t>;
+constexpr inline auto mpi_index_t  = mpi_basic::type<index_t>;
+constexpr inline auto mpi_vertex_t = mpi_basic::type<vertex_t>;
 
 struct Edge
 {
@@ -36,31 +36,31 @@ edge_less(Edge const& lhs, Edge const& rhs) -> bool
   return lhs.u < rhs.u or (lhs.u == rhs.u and lhs.v < rhs.v);
 }
 
-inline MPI_Datatype mpi_edge_t = MPI_DATATYPE_NULL;
+inline mpi_basic::Datatype mpi_edge_t = mpi_basic::datatype_null;
 
 inline void
 init_mpi_edge_t()
 {
-  DEBUG_ASSERT_EQ(mpi_edge_t, MPI_DATATYPE_NULL);
-  int          blocklengths[2] = { 1, 1 };
-  MPI_Aint     displs[2];
-  MPI_Datatype types[2] = { mpi_vertex_t, mpi_vertex_t };
+  DEBUG_ASSERT_EQ(mpi_edge_t, mpi_basic::datatype_null);
+  int                 blocklengths[2] = { 1, 1 };
+  MPI_Aint            displs[2];
+  mpi_basic::Datatype types[2] = { mpi_vertex_t, mpi_vertex_t };
 
-  constexpr Edge dummy{};
-  MPI_Aint       base;
-  MPI_Get_address(&dummy, &base);
-  MPI_Get_address(&dummy.u, &displs[0]);
-  MPI_Get_address(&dummy.v, &displs[1]);
+  constexpr Edge   dummy{};
+  MPI_Aint         base;
+  mpi_basic::get_address(&dummy, &base);
+  mpi_basic::get_address(&dummy.u, &displs[0]);
+  mpi_basic::get_address(&dummy.v, &displs[1]);
   displs[0] -= base;
   displs[1] -= base;
 
-  MPI_Type_create_struct(2, blocklengths, displs, types, &mpi_edge_t);
-  MPI_Type_commit(&mpi_edge_t);
+  mpi_basic::type_create_struct(2, blocklengths, displs, types, &mpi_edge_t);
+  mpi_basic::type_commit(&mpi_edge_t);
 
 #if KASPAN_DEBUG
   MPI_Aint lb     = 0;
   MPI_Aint extent = 0;
-  MPI_Type_get_extent(mpi_edge_t, &lb, &extent);
+  mpi_basic::type_get_extent(mpi_edge_t, &lb, &extent);
   ASSERT_EQ(extent, sizeof(Edge));
 #endif
 }
@@ -68,9 +68,9 @@ init_mpi_edge_t()
 inline void
 free_mpi_edge_t()
 {
-  DEBUG_ASSERT_NE(mpi_edge_t, MPI_DATATYPE_NULL);
-  MPI_Type_free(&mpi_edge_t);
-  mpi_edge_t = MPI_DATATYPE_NULL;
+  DEBUG_ASSERT_NE(mpi_edge_t, mpi_basic::datatype_null);
+  mpi_basic::type_free(&mpi_edge_t);
+  mpi_edge_t = mpi_basic::datatype_null;
 }
 
 constexpr auto scc_id_undecided = std::numeric_limits<vertex_t>::max();
@@ -82,32 +82,32 @@ struct Degree
   vertex_t u;
 };
 
-inline MPI_Datatype mpi_degree_t      = MPI_DATATYPE_NULL;
-inline MPI_Op       mpi_degree_max_op = MPI_OP_NULL;
+inline mpi_basic::Datatype mpi_degree_t      = mpi_basic::datatype_null;
+inline mpi_basic::Op       mpi_degree_max_op = mpi_basic::op_null;
 
 inline void
 init_mpi_degree_t()
 {
-  DEBUG_ASSERT_EQ(mpi_degree_t, MPI_DATATYPE_NULL);
-  int          blocklengths[2] = { 1, 1 };
-  MPI_Aint     displs[2];
-  MPI_Datatype types[2] = { mpi_index_t, mpi_vertex_t };
+  DEBUG_ASSERT_EQ(mpi_degree_t, mpi_basic::datatype_null);
+  int                 blocklengths[2] = { 1, 1 };
+  MPI_Aint            displs[2];
+  mpi_basic::Datatype types[2] = { mpi_index_t, mpi_vertex_t };
 
   constexpr Degree dummy{};
   MPI_Aint         base;
-  MPI_Get_address(&dummy, &base);
-  MPI_Get_address(&dummy.degree_product, &displs[0]);
-  MPI_Get_address(&dummy.u, &displs[1]);
+  mpi_basic::get_address(&dummy, &base);
+  mpi_basic::get_address(&dummy.degree_product, &displs[0]);
+  mpi_basic::get_address(&dummy.u, &displs[1]);
   displs[0] -= base;
   displs[1] -= base;
 
-  MPI_Type_create_struct(2, blocklengths, displs, types, &mpi_degree_t);
-  MPI_Type_commit(&mpi_degree_t);
+  mpi_basic::type_create_struct(2, blocklengths, displs, types, &mpi_degree_t);
+  mpi_basic::type_commit(&mpi_degree_t);
 
 #if KASPAN_DEBUG
   MPI_Aint lb     = 0;
   MPI_Aint extent = 0;
-  MPI_Type_get_extent(mpi_degree_t, &lb, &extent);
+  mpi_basic::type_get_extent(mpi_degree_t, &lb, &extent);
   ASSERT_EQ(extent, sizeof(Degree));
 #endif
 }
@@ -115,13 +115,13 @@ init_mpi_degree_t()
 inline void
 free_mpi_degree_t()
 {
-  DEBUG_ASSERT_NE(mpi_degree_t, MPI_DATATYPE_NULL);
-  MPI_Type_free(&mpi_degree_t);
-  mpi_degree_t = MPI_DATATYPE_NULL;
+  DEBUG_ASSERT_NE(mpi_degree_t, mpi_basic::datatype_null);
+  mpi_basic::type_free(&mpi_degree_t);
+  mpi_degree_t = mpi_basic::datatype_null;
 }
 
 inline void
-degree_max_reduce(void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/)
+degree_max_reduce(void* invec, void* inoutvec, int* len, mpi_basic::Datatype* /*datatype*/)
 {
   auto const* in    = static_cast<Degree const*>(invec);
   auto*       inout = static_cast<Degree*>(inoutvec);
@@ -139,16 +139,16 @@ degree_max_reduce(void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatyp
 inline void
 init_mpi_degree_max_op()
 {
-  DEBUG_ASSERT_EQ(mpi_degree_max_op, MPI_OP_NULL);
-  MPI_Op_create(&degree_max_reduce, /*commute=*/1, &mpi_degree_max_op);
+  DEBUG_ASSERT_EQ(mpi_degree_max_op, mpi_basic::op_null);
+  mpi_basic::op_create(&degree_max_reduce, /*commute=*/1, &mpi_degree_max_op);
 }
 
 inline void
 free_mpi_degree_max_op()
 {
-  DEBUG_ASSERT_NE(mpi_degree_max_op, MPI_OP_NULL);
-  MPI_Op_free(&mpi_degree_max_op);
-  mpi_degree_max_op = MPI_OP_NULL;
+  DEBUG_ASSERT_NE(mpi_degree_max_op, mpi_basic::op_null);
+  mpi_basic::op_free(&mpi_degree_max_op);
+  mpi_degree_max_op = mpi_basic::op_null;
 }
 
 #define SCC_ID_UNDECIDED_FILTER(LOCAL_N, SCC_ID) [=](auto&& k) { \
@@ -157,7 +157,7 @@ free_mpi_degree_max_op()
 }
 
 #define KASPAN_DEFAULT_INIT()                                \
-  MPI_DEFAULT_INIT();                                        \
+  MPI_INIT();                                                \
   init_mpi_edge_t();                                         \
   init_mpi_degree_t();                                       \
   init_mpi_degree_max_op();                                  \

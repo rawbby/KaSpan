@@ -15,11 +15,11 @@ main(int argc, char** argv)
 
   KASPAN_DEFAULT_INIT();
 
-  ASSERT_GE(mpi_world_rank, 0);
-  ASSERT_LT(mpi_world_rank, mpi_world_size);
-  ASSERT_EQ(mpi_world_size, 3);
+  ASSERT_GE(mpi_basic::world_rank, 0);
+  ASSERT_LT(mpi_basic::world_rank, mpi_basic::world_size);
+  ASSERT_EQ(mpi_basic::world_size, 3);
 
-  ASSERT_EQ(mpi_basic_allreduce_single(mpi_world_rank, MPI_SUM), 0 + 1 + 2);
+  ASSERT_EQ(mpi_basic::allreduce_single(mpi_basic::world_rank, MPI_SUM), 0 + 1 + 2);
 
   LocalGraph g;
   g.n = 6;

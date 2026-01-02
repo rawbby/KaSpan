@@ -6,7 +6,7 @@
 inline auto
 pivot_selection(Degree max_degree) -> vertex_t
 {
-  return mpi_basic_allreduce_single(max_degree, mpi_degree_t, mpi_degree_max_op).u;
+  return mpi_basic::allreduce_single(max_degree, mpi_degree_t, mpi_degree_max_op).u;
 }
 
 template<WorldPartConcept Part>

@@ -59,7 +59,7 @@ allgather_graph(Part const& part, index_t m, index_t local_fw_m, index_t const* 
   result.bw_csr  = borrow_array<vertex_t>(&memory, m);
 
   // buffer counts and displs for multiple usages (cb guards lifetime)
-  auto [cb, counts, displs] = mpi_basic_counts_and_displs();
+  auto [cb, counts, displs] = mpi_basic::counts_and_displs();
 
   // 1) Allgather fw_head
   {
@@ -68,15 +68,15 @@ allgather_graph(Part const& part, index_t m, index_t local_fw_m, index_t const* 
     counts[0] = static_cast<MPI_Count>(root_part.end + 1);
     displs[0] = static_cast<MPI_Aint>(0);
 
-    for (i32 rank = 1; rank < mpi_world_size; ++rank) {
+    for (i32 rank = 1; rank < mpi_basic::world_size; ++rank) {
       auto const rank_part = part.world_part_of(rank);
       counts[rank]         = static_cast<MPI_Count>(rank_part.end - rank_part.begin);
       displs[rank]         = static_cast<MPI_Aint>(rank_part.begin + 1);
     }
 
-    auto const* send_buffer = fw_head + (mpi_world_root ? 0 : 1);
-    auto const  send_count  = local_n + mpi_world_root;
-    mpi_basic_allgatherv<index_t>(send_buffer, send_count, result.fw_head, counts, displs);
+    auto const* send_buffer = fw_head + (mpi_basic::world_root ? 0 : 1);
+    auto const  send_count  = local_n + mpi_basic::world_root;
+    mpi_basic::allgatherv<index_t>(send_buffer, send_count, result.fw_head, counts, displs);
   }
 
   // Per-rank offset fix: convert concatenated local heads to global head
@@ -88,7 +88,7 @@ allgather_graph(Part const& part, index_t m, index_t local_fw_m, index_t const* 
     counts[0]      = static_cast<MPI_Count>(offset);   // edge elements of rank 0
     displs[0]      = static_cast<MPI_Aint>(0);
 
-    for (i32 rank = 1; rank < mpi_world_size; ++rank) {
+    for (i32 rank = 1; rank < mpi_basic::world_size; ++rank) {
       for (MPI_Count k = 0; k < counts[rank]; ++k) {
         result.fw_head[vertex_it++] += offset; // shift to global
       }
@@ -100,7 +100,7 @@ allgather_graph(Part const& part, index_t m, index_t local_fw_m, index_t const* 
   }
 
   // 2) Gather forward CSR edges (reuse counts/displs computed above).
-  mpi_basic_allgatherv<vertex_t>(fw_csr, static_cast<MPI_Count>(local_fw_m), result.fw_csr, counts, displs);
+  mpi_basic::allgatherv<vertex_t>(fw_csr, static_cast<MPI_Count>(local_fw_m), result.fw_csr, counts, displs);
 
   // 3) Build backward graph locally from forward graph (no communication).
   backward_complement_graph(result.n, result.fw_head, result.fw_csr, result.bw_head, result.bw_csr);

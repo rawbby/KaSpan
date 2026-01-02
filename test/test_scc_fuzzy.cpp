@@ -55,8 +55,8 @@ verify_scc_id(Graph const& graph, vertex_t* scc_id_orig, vertex_t* scc_id)
         k,
         part.to_global(k),
         part.n,
-        mpi_world_rank,
-        mpi_world_size,
+        mpi_basic::world_rank,
+        mpi_basic::world_size,
         idx_stream.str(),
         ref_stream.str(),
         rlt_stream.str(),
@@ -73,9 +73,9 @@ main(int argc, char** argv)
 
   for (int run = 1; run <= 40; ++run) {
     for (vertex_t n : { 0, 1, 6, 8, 16, 33, 64 }) {
-      DEBUG_ASSERT_EQ(n, mpi_basic_allreduce_single(n, MPI_MAX));
+      DEBUG_ASSERT_EQ(n, mpi_basic::allreduce_single(n, MPI_MAX));
 
-      auto const seed = mpi_basic_allreduce_max_time();
+      auto const seed = mpi_basic::allreduce_max_time();
       auto const part = BalancedSlicePart{ n };
 
       auto const graph = fuzzy_local_scc_id_and_graph(seed, part);

@@ -51,7 +51,7 @@ make_briefkasten_vertex()
         .with_merger(briefkasten::aggregation::EnvelopeSerializationMerger{})
         .with_splitter(briefkasten::aggregation::EnvelopeSerializationSplitter<vertex_t>{})
         .build(),
-      IndirectionScheme{ MPI_COMM_WORLD }
+      IndirectionScheme{ mpi_basic::comm_world }
     };
   }
 }
@@ -65,7 +65,7 @@ make_briefkasten_edge()
   } else {
     return briefkasten::IndirectionAdapter{
       briefkasten::BufferedMessageQueueBuilder<Edge>().build(),
-      IndirectionScheme{ MPI_COMM_WORLD }
+      IndirectionScheme{ mpi_basic::comm_world }
     };
   }
 }
@@ -87,12 +87,12 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   // notice: trim_1_first has a side effect by initializing scc_id with scc_id undecided
   // if trim_1_first is removed one has to initialize scc_id with scc_id_undecided manually!
   auto const [trim_1_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
-  KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(trim_1_decided, MPI_SUM));
+  KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(trim_1_decided, mpi_basic::sum));
   local_decided += trim_1_decided;
   KASPAN_STATISTIC_POP();
 
   // fallback to tarjan on single rank
-  if (mpi_world_size == 1) {
+  if (mpi_basic::world_size == 1) {
     tarjan(part, fw_head, fw_csr, [=](auto const* cbeg, auto const* cend) {
       auto const id = *std::min_element(cbeg, cend);
       std::for_each(cbeg, cend, [=](auto const k) {
@@ -104,10 +104,10 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     return;
   }
 
-  auto const decided_threshold = n - (2 * n / mpi_world_size); // as we only gather fw graph we can only reduce to 2 * local_n
+  auto const decided_threshold = n - (2 * n / mpi_basic::world_size); // as we only gather fw graph we can only reduce to 2 * local_n
   DEBUG_ASSERT_GE(decided_threshold, 0);
 
-  if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
+  if (mpi_basic::allreduce_single(local_decided, mpi_basic::sum) < decided_threshold) {
     {
       KASPAN_STATISTIC_SCOPE("forward_backward_search");
       auto const prev_local_decided = local_decided;
@@ -120,18 +120,18 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
       forward_search(part, fw_head, fw_csr, vertex_queue, scc_id, bitvector, active_array.data(), pivot);
       local_decided += backward_search(part, bw_head, bw_csr, vertex_queue, scc_id, bitvector, active_array.data(), pivot, pivot);
 
-      KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(local_decided - prev_local_decided, MPI_SUM));
+      KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_decided - prev_local_decided, mpi_basic::sum));
       KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     }
     {
       KASPAN_STATISTIC_SCOPE("trim_1_fw_bw");
       auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
       local_decided += trim_1_decided;
-      KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(trim_1_decided, MPI_SUM));
+      KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(trim_1_decided, mpi_basic::sum));
     }
   }
 
-  if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
+  if (mpi_basic::allreduce_single(local_decided, mpi_basic::sum) < decided_threshold) {
     KASPAN_STATISTIC_SCOPE("color");
 
     auto colors       = make_array<vertex_t>(local_n);
@@ -145,7 +145,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     do {
       if (!first_iter) {
         // Reactivate queue for next iteration - requires barrier to prevent race condition
-        MPI_Barrier(MPI_COMM_WORLD);
+        mpi_basic::barrier();
         edge_queue.reactivate();
       }
       first_iter = false;
@@ -153,9 +153,9 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
       color_scc_init_label(part, colors);
       local_decided += async::color_scc_step(
         part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors, active_array, active, local_decided);
-    } while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold);
+    } while (mpi_basic::allreduce_single(local_decided, mpi_basic::sum) < decided_threshold);
 
-    KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(local_decided - prev_local_decided, MPI_SUM));
+    KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_decided - prev_local_decided, mpi_basic::sum));
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   }
 
@@ -181,7 +181,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     KASPAN_STATISTIC_ADD("n", sub_n);
     KASPAN_STATISTIC_ADD("m", sub_m);
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
-    KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(local_n - local_decided, MPI_SUM));
+    KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_n - local_decided, mpi_basic::sum));
   }
 }
 

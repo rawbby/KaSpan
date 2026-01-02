@@ -19,7 +19,7 @@ kagen_forward_graph_part(char const* generator_args)
     vertex_t* csr;
   } result;
 
-  kagen::KaGen graph_generator{ MPI_COMM_WORLD };
+  kagen::KaGen graph_generator{ mpi_basic::comm_world };
   graph_generator.UseCSRRepresentation();
 
   auto const ka_graph   = graph_generator.GenerateFromOptionString(generator_args);
@@ -29,10 +29,10 @@ kagen_forward_graph_part(char const* generator_args)
   auto const local_fw_m = static_cast<index_t>(ka_graph.NumberOfLocalEdges());
   auto const vertex_end = static_cast<vertex_t>(ka_graph.vertex_range.second);
 
-  result.buffer = make_buffer<i32, index_t, vertex_t>(mpi_world_size, local_n + 1, local_fw_m);
+  result.buffer = make_buffer<i32, index_t, vertex_t>(mpi_basic::world_size, local_n + 1, local_fw_m);
   void* memory  = result.buffer.data();
 
-  result.part = ExplicitSortedContinuousWorldPart{ global_n, vertex_end, mpi_world_rank, mpi_world_size, &memory };
+  result.part = ExplicitSortedContinuousWorldPart{ global_n, vertex_end, mpi_basic::world_rank, mpi_basic::world_size, &memory };
   DEBUG_ASSERT_EQ(result.part.n, global_n);
   DEBUG_ASSERT_EQ(result.part.local_n(), local_n);
 

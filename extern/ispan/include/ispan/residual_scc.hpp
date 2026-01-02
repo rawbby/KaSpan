@@ -13,8 +13,8 @@ residual_scc(index_t const* sub_wcc_id, index_t* sub_scc_id, index_t const* sub_
 
   // prepare the local slice this rank calculates
 
-  index_t const step         = (sub_wcc_fq_size + mpi_world_size - 1) / mpi_world_size;
-  index_t const rank_wcc_beg = mpi_world_rank * step;
+  index_t const step         = (sub_wcc_fq_size + mpi_basic::world_size - 1) / mpi_basic::world_size;
+  index_t const rank_wcc_beg = mpi_basic::world_rank * step;
   index_t const rank_wcc_end = rank_wcc_beg + step;
 
   auto* q = new index_t[sub_n]{};

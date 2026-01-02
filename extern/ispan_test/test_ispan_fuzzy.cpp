@@ -15,7 +15,7 @@ main(int argc, char** argv) -> int
 
   for (vertex_t n = 32; n < 64; n += 8) {
 
-    auto const s = mpi_basic_allreduce_max_time();
+    auto const s = mpi_basic::allreduce_max_time();
     auto const g = fuzzy_global_scc_id_and_graph(s, n);
 
     std::vector<vertex_t> scc_id_ispan;

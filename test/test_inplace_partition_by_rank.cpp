@@ -2,7 +2,7 @@
 #include <memory/accessor/stack.hpp>
 #include <memory/accessor/stack_accessor.hpp>
 #include <scc/base.hpp>
-#include <util/mpi_basic.hpp>
+#include <mpi_basic/mpi_basic.hpp>
 
 #include <algorithm>
 #include <random>
@@ -16,38 +16,38 @@ struct Item
 static void
 check_case(Item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts, MPI_Aint* send_displs)
 {
-  ASSERT_IN_RANGE(mpi_world_rank, 0, mpi_world_size);
+  ASSERT_IN_RANGE(mpi_basic::world_rank, 0, mpi_basic::world_size);
 
   send_displs[0] = 0;
-  for (i32 r = 1; r < mpi_world_size; ++r) {
+  for (i32 r = 1; r < mpi_basic::world_size; ++r) {
     send_displs[r] = send_displs[r - 1] + send_counts[r - 1];
   }
 
-  mpi_basic_inplace_partition_by_rank<Item>(send_buffer, send_counts, send_displs, [](Item const& x) {
+  mpi_basic::inplace_partition_by_rank<Item>(send_buffer, send_counts, send_displs, [](Item const& x) {
     return x.dest;
   });
 
-  auto const buffer = make_buffer<MPI_Count>(mpi_world_size, mpi_world_size);
+  auto const buffer = make_buffer<MPI_Count>(mpi_basic::world_size, mpi_basic::world_size);
   auto*      memory = buffer.data();
 
-  auto* beg = borrow_array<MPI_Count>(&memory, mpi_world_size);
-  auto* end = borrow_array<MPI_Count>(&memory, mpi_world_size);
+  auto* beg = borrow_array<MPI_Count>(&memory, mpi_basic::world_size);
+  auto* end = borrow_array<MPI_Count>(&memory, mpi_basic::world_size);
 
-  for (i32 r = 0; r < mpi_world_size; ++r) {
+  for (i32 r = 0; r < mpi_basic::world_size; ++r) {
     beg[r] = static_cast<MPI_Count>(send_displs[r]);
     end[r] = beg[r] + send_counts[r];
   }
 
   ASSERT(beg[0] == 0);
-  for (i32 r = 1; r < mpi_world_size; ++r) {
+  for (i32 r = 1; r < mpi_basic::world_size; ++r) {
     ASSERT_EQ(end[r - 1], beg[r]);
   }
 
   if (send_count > 0) {
-    ASSERT_EQ(end[mpi_world_size - 1], send_count);
+    ASSERT_EQ(end[mpi_basic::world_size - 1], send_count);
   }
 
-  for (i32 r = 0; r < mpi_world_size; ++r) {
+  for (i32 r = 0; r < mpi_basic::world_size; ++r) {
     for (size_t i = beg[r]; i < end[r]; ++i) {
       ASSERT(send_buffer[i].dest == r);
     }
@@ -63,16 +63,16 @@ main(int argc, char** argv)
   // random
   {
     auto rng  = std::mt19937(123);
-    auto dist = std::uniform_int_distribution(0, mpi_world_size - 1);
+    auto dist = std::uniform_int_distribution(0, mpi_basic::world_size - 1);
 
     constexpr i32 min_send_count = 10;
-    i32 const     max_send_count = 2 * (mpi_world_size - 1) + min_send_count;
+    i32 const     max_send_count = 2 * (mpi_basic::world_size - 1) + min_send_count;
 
-    auto [cb, send_counts, send_displs] = mpi_basic_counts_and_displs();
+    auto [cb, send_counts, send_displs] = mpi_basic::counts_and_displs();
     auto  send_stack               = Stack<Item>(max_send_count);
 
     for (i32 trial = 0; trial < 1024; ++trial) {
-      std::memset(send_counts, 0, mpi_world_size * sizeof(MPI_Count));
+      std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
       send_stack.clear();
 
       i32 send_count = dist(rng) + dist(rng) + min_send_count;
@@ -92,14 +92,14 @@ main(int argc, char** argv)
 
   // all to one rank
   {
-    auto const target_rank = std::min(2, mpi_world_size - 1);
+    auto const target_rank = std::min(2, mpi_basic::world_size - 1);
 
     constexpr auto send_count = 7;
 
-    auto [cb, send_counts, send_displs] = mpi_basic_counts_and_displs();
+    auto [cb, send_counts, send_displs] = mpi_basic::counts_and_displs();
     auto send_stack               = Stack<Item>(send_count);
 
-    std::memset(send_counts, 0, mpi_world_size * sizeof(MPI_Count));
+    std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
     send_counts[target_rank] = send_count;
 
     for (i32 i = 0; i < send_count; ++i) {
@@ -111,10 +111,10 @@ main(int argc, char** argv)
 
   // zeros everywhere
   {
-    auto [cb, send_counts, send_displs] = mpi_basic_counts_and_displs();
+    auto [cb, send_counts, send_displs] = mpi_basic::counts_and_displs();
     auto send_stack                     = Stack<Item>{};
 
-    std::memset(send_counts, 0, mpi_world_size * sizeof(MPI_Count));
+    std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
     check_case(send_stack.data(), 0, send_counts, send_displs);
   }
 }

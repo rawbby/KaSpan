@@ -33,13 +33,13 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     KASPAN_STATISTIC_SCOPE("trim_1_first");
     auto const [trim_1_decided, trim_1_max] = trim_1_first(part, fw_head, bw_head, scc_id);
     local_decided += trim_1_decided;
-    global_decided = mpi_basic_allreduce_single(local_decided, MPI_SUM);
+    global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     KASPAN_STATISTIC_ADD("decided_count", global_decided);
     return trim_1_max;
   }();
 
   // fallback to tarjan on single rank
-  if (mpi_world_size == 1) {
+  if (mpi_basic::world_size == 1) {
     auto const undecided_filter = SCC_ID_UNDECIDED_FILTER(local_n, scc_id);
     auto const on_scc_range     = [=](vertex_t* beg, vertex_t* end) {
       auto const id = *std::min_element(beg, end);
@@ -52,7 +52,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
     return;
   }
 
-  auto const decided_threshold = n - (2 * n / mpi_world_size); // as we only gather fw graph we can only reduce to 2 * local_n
+  auto const decided_threshold = n - (2 * n / mpi_basic::world_size); // as we only gather fw graph we can only reduce to 2 * local_n
   DEBUG_ASSERT_GE(decided_threshold, 0);
 
   if (global_decided < decided_threshold) {
@@ -68,7 +68,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
       auto const prev_global_decided = global_decided;
 
-      global_decided = mpi_basic_allreduce_single(local_decided, MPI_SUM);
+      global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
       KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
       KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     }
@@ -77,7 +77,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
       auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
       local_decided += trim_1_decided;
       auto const prev_global_decided = global_decided;
-      global_decided                 = mpi_basic_allreduce_single(local_decided, MPI_SUM);
+      global_decided                 = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
       KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
     }
   }
@@ -98,7 +98,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
         color_scc_init_label(part, colors);
         local_decided += color_scc_step(
           part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors, active_array, active, changed, frontier, local_decided);
-        global_decided = mpi_basic_allreduce_single(local_decided, MPI_SUM);
+        global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
         // maybe: redistribute graph - sort vertices by color and run trim tarjan (as there is now a lot locality)
       } while (global_decided < decided_threshold);
 
@@ -110,7 +110,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
       auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
       local_decided += trim_1_decided;
       auto const prev_global_decided = global_decided;
-      global_decided                 = mpi_basic_allreduce_single(local_decided, MPI_SUM);
+      global_decided                 = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
       KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
     }
   }
@@ -141,7 +141,7 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
     auto const prev_global_decided = global_decided;
 
-    global_decided = mpi_basic_allreduce_single(local_decided, MPI_SUM);
+    global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
 
     DEBUG_ASSERT_EQ(global_decided, part.n);

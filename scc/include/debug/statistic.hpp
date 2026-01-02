@@ -7,7 +7,7 @@
 
 #include <chrono>
 #include <fstream>
-#include <mpi.h>
+#include <mpi_basic/mpi_basic.hpp>
 #include <ostream>
 #include <vector>
 
@@ -146,10 +146,8 @@ kaspan_statistic_mpi_write_json(char const* file_path)
     DEBUG_ASSERT_EQ(eit, entries.size());
   };
 
-  int rank = 0;
-  int size = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  int const rank = mpi_basic::world_rank;
+  int const size = mpi_basic::world_size;
 
   if (rank == 0) {
 
@@ -160,7 +158,7 @@ kaspan_statistic_mpi_write_json(char const* file_path)
 
     std::vector recvcounts(size, 0);
     std::vector displs(size, 0);
-    MPI_Gather(&local_size, 1, MPI_INT, recvcounts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+    mpi_basic::gather(local_size, recvcounts.data(), 0);
 
     size_t total_bytes = 0;
     for (int r = 0; r < size; ++r) {
@@ -169,7 +167,7 @@ kaspan_statistic_mpi_write_json(char const* file_path)
     }
 
     std::vector<char> recvbuf(total_bytes);
-    MPI_Gatherv(nullptr, 0, MPI_CHAR, recvbuf.data(), recvcounts.data(), displs.data(), MPI_CHAR, 0, MPI_COMM_WORLD);
+    mpi_basic::gatherv<char>(nullptr, 0, recvbuf.data(), recvcounts.data(), displs.data(), 0);
     for (int r = 1; r < size; ++r) {
       auto const offset = static_cast<size_t>(displs[r]);
       auto const count  = static_cast<size_t>(recvcounts[r]);
@@ -185,8 +183,8 @@ kaspan_statistic_mpi_write_json(char const* file_path)
     kaspan_statistic_write_json(ss);
     auto const json        = ss.str();
     auto const buffer_size = static_cast<int>(json.size());
-    MPI_Gather(&buffer_size, 1, MPI_INT, nullptr, 0, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(json.data(), buffer_size, MPI_CHAR, nullptr, nullptr, nullptr, MPI_CHAR, 0, MPI_COMM_WORLD);
+    mpi_basic::gather<int>(buffer_size, nullptr, 0);
+    mpi_basic::gatherv<char>(json.data(), buffer_size, nullptr, nullptr, nullptr, 0);
   }
 }
 

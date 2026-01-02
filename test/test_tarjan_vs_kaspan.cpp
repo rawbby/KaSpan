@@ -7,7 +7,7 @@
 #include <scc/async/scc.hpp>
 #include <scc/base.hpp>
 #include <scc/scc.hpp>
-#include <util/mpi_basic.hpp>
+#include <mpi_basic/mpi_basic.hpp>
 
 #include <mpi.h>
 

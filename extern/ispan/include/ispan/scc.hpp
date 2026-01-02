@@ -4,7 +4,7 @@
 #include <debug/debug.hpp>
 #include <debug/process.hpp>
 #include <debug/statistic.hpp>
-#include <util/mpi_basic.hpp>
+#include <mpi_basic/mpi_basic.hpp>
 
 #include <ispan/fw_bw_span.hpp>
 #include <ispan/get_scc_result.hpp>
@@ -31,24 +31,24 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
   KASPAN_STATISTIC_SCOPE("scc");
   KASPAN_STATISTIC_PUSH("alloc");
 
-  auto* front_comm = new index_t[mpi_world_size]{};
+  auto* front_comm = new index_t[mpi_basic::world_size]{};
   SCOPE_GUARD(delete[] front_comm);
 
-  auto* work_comm = new int[mpi_world_size]{};
+  auto* work_comm = new int[mpi_basic::world_size]{};
   SCOPE_GUARD(delete[] work_comm);
 
   vertex_t s = n / 32;
   if (n % 32 != 0)
     s += 1;
 
-  vertex_t t = s / mpi_world_size;
-  if (s % mpi_world_size != 0)
+  vertex_t t = s / mpi_basic::world_size;
+  if (s % mpi_basic::world_size != 0)
     t += 1;
 
   vertex_t const step          = t * 32;
-  vertex_t const virtual_count = t * mpi_world_size * 32;
-  vertex_t const local_beg     = std::min<index_t>(step * mpi_world_rank, n);
-  vertex_t const local_end     = std::min<index_t>(step * (mpi_world_rank + 1), n);
+  vertex_t const virtual_count = t * mpi_basic::world_size * 32;
+  vertex_t const local_beg     = std::min<index_t>(step * mpi_basic::world_rank, n);
+  vertex_t const local_end     = std::min<index_t>(step * (mpi_basic::world_rank + 1), n);
 
   auto* sa_compress = new unsigned int[s]{};
   SCOPE_GUARD(delete[] sa_compress);

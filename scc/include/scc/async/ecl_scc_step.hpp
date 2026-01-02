@@ -93,7 +93,7 @@ ecl_scc_step(
     bw_active_stack.push(k);
   });
 
-  mpi_basic_barrier();
+  mpi_basic::barrier();
   mq.reactivate();
 
   while (true) {
@@ -128,7 +128,7 @@ ecl_scc_step(
     }
 
     // 3. barrier + reactivate and push fw borders
-    mpi_basic_barrier();
+    mpi_basic::barrier();
     mq.reactivate();
     bool fw_pushed = false;
     fw_changed.for_each(local_n, [&](auto k) {
@@ -173,7 +173,7 @@ ecl_scc_step(
     }
 
     // 6. barrier + reactivate and push bw borders
-    mpi_basic_barrier();
+    mpi_basic::barrier();
     mq.reactivate();
     bool bw_pushed = false;
     bw_changed.for_each(local_n, [&](auto k) {
@@ -187,12 +187,12 @@ ecl_scc_step(
       }
     });
 
-    if (!mpi_basic_allreduce_single(fw_pushed or bw_pushed, MPI_LOR)) {
+    if (!mpi_basic::allreduce_single(fw_pushed or bw_pushed, mpi_basic::lor)) {
       break;
     }
   }
 
-  mpi_basic_barrier();
+  mpi_basic::barrier();
   mq.reactivate();
 
   vertex_t local_decided_count = 0;

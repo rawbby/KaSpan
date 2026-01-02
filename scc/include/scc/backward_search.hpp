@@ -52,7 +52,7 @@ backward_search(
   } while (frontier.comm(part));
 
   // normalise scc_id to minimum vertex in scc
-  min_u = mpi_basic_allreduce_single(min_u, MPI_MIN);
+  min_u = mpi_basic::allreduce_single(min_u, mpi_basic::min);
   for (vertex_t k = 0; k < local_n; ++k) {
     if (scc_id[k] == pivot) {
       scc_id[k] = min_u;

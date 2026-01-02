@@ -54,7 +54,7 @@ benchmark(auto const& graph, bool use_async, bool use_async_indirect)
     if (scc_id[k] == graph.part.to_global(k))
       ++local_component_count;
 
-  auto const global_component_count = mpi_basic_allreduce_single(local_component_count, MPI_SUM);
+  auto const global_component_count = mpi_basic::allreduce_single(local_component_count, MPI_SUM);
   KASPAN_STATISTIC_ADD("local_component_count", local_component_count);
   KASPAN_STATISTIC_ADD("global_component_count", global_component_count);
 #endif
@@ -82,8 +82,8 @@ main(int argc, char** argv)
 
   KASPAN_STATISTIC_SCOPE("benchmark");
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
-  KASPAN_STATISTIC_ADD("world_rank", mpi_world_rank);
-  KASPAN_STATISTIC_ADD("world_size", mpi_world_size);
+  KASPAN_STATISTIC_ADD("world_rank", mpi_basic::world_rank);
+  KASPAN_STATISTIC_ADD("world_size", mpi_basic::world_size);
   KASPAN_STATISTIC_ADD("valgrind", KASPAN_VALGRIND_RUNNING_ON_VALGRIND);
 
   if (kagen_option_string != nullptr) {

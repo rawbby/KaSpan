@@ -99,7 +99,7 @@ backward_complement_graph_part(
   auto const local_n = part.local_n();
   DEBUG_ASSERT_EQ(local_m, head[local_n]);
 
-  if (mpi_world_size == 1) [[unlikely]] {
+  if (mpi_basic::world_size == 1) [[unlikely]] {
     result.local_m = local_m;
     result.buffer  = make_fw_graph_buffer(local_n, local_m);
     auto* memory   = result.buffer.data();
@@ -113,8 +113,8 @@ backward_complement_graph_part(
   void* send_stack_memory = send_stack_buffer.data();
 
   StackAccessor<Edge> send_stack{ send_stack_memory };
-  auto [sb, send_counts, send_displs] = mpi_basic_counts_and_displs();
-  std::memset(send_counts, 0, mpi_world_size * sizeof(MPI_Count));
+  auto [sb, send_counts, send_displs] = mpi_basic::counts_and_displs();
+  std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
 
   index_t it = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -128,7 +128,7 @@ backward_complement_graph_part(
   }
 
   i8 any_edges = local_m > 0 ? 1 : 0;
-  mpi_basic_allreduce_inplace(&any_edges, 1, MPI_LOR);
+  mpi_basic::allreduce_inplace(&any_edges, 1, mpi_basic::lor);
 
   if (any_edges == 0) [[unlikely]] {
     result.local_m = 0;
@@ -139,17 +139,17 @@ backward_complement_graph_part(
     return result;
   }
 
-  auto [rb, recv_counts, recv_displs] = mpi_basic_counts_and_displs();
-  mpi_basic_alltoallv_counts(send_counts, recv_counts);
-  auto const recv_count = mpi_basic_displs(recv_counts, recv_displs);
-  mpi_basic_inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&part](Edge const& e) {
+  auto [rb, recv_counts, recv_displs] = mpi_basic::counts_and_displs();
+  mpi_basic::alltoallv_counts(send_counts, recv_counts);
+  auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
+  mpi_basic::inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&part](Edge const& e) {
     return part.world_rank_of(e.u);
   });
 
   auto  recv_buffer = make_buffer<Edge>(recv_count);
   auto* recv_access = static_cast<Edge*>(recv_buffer.data());
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(recv_access, recv_count * sizeof(Edge));
-  mpi_basic_alltoallv(send_stack.data(), send_counts, send_displs, recv_access, recv_counts, recv_displs, mpi_edge_t);
+  mpi_basic::alltoallv(send_stack.data(), send_counts, send_displs, recv_access, recv_counts, recv_displs, mpi_edge_t);
 
   result.local_m = recv_count;
   result.buffer  = make_fw_graph_buffer(local_n, result.local_m);
