@@ -201,6 +201,12 @@ main(int argc, char** argv)
   KASPAN_DEFAULT_INIT();
 
   for (i32 i = 0; i < 32; ++i) {
+
+    // tho briefkasten is async it needs a barrier
+    // between reactivations and recreations to ensure
+    // new messages are not not mixing with old messages.
+    // this is required as message ids and stuff is reused.
+
     test_single_all_to_all();
     mpi_basic_barrier();
     test_reactivation();
