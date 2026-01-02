@@ -5,7 +5,7 @@
 #include <scc/allgather_sub_graph.hpp>
 #include <scc/backward_search.hpp>
 #include <scc/base.hpp>
-#include <scc/ecl_scc_step.hpp>
+#include <scc/color_scc_step.hpp>
 #include <scc/forward_search.hpp>
 #include <scc/pivot_selection.hpp>
 #include <scc/trim_1.hpp>
@@ -84,10 +84,9 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
 
   if (global_decided < decided_threshold) {
     {
-      KASPAN_STATISTIC_SCOPE("ecl");
+      KASPAN_STATISTIC_SCOPE("color");
 
-      auto fw_label     = make_array<vertex_t>(local_n);
-      auto bw_label     = make_array<vertex_t>(local_n);
+      auto colors       = make_array<vertex_t>(local_n);
       auto active_array = make_array<vertex_t>(local_n - local_decided);
       auto active       = make_bits_clean(local_n);
       auto changed      = make_bits_clean(local_n);
@@ -96,18 +95,18 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
       auto const prev_global_decided = global_decided;
 
       do {
-        ecl_scc_init_lable(part, fw_label, bw_label);
-        local_decided += ecl_scc_step(
-          part, fw_head, fw_csr, bw_head, bw_csr, scc_id, fw_label, bw_label, active_array, active, changed, frontier, local_decided);
+        color_scc_init_label(part, colors);
+        local_decided += color_scc_step(
+          part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors, active_array, active, changed, frontier, local_decided);
         global_decided = mpi_basic_allreduce_single(local_decided, MPI_SUM);
-        // maybe: redistribute graph - sort vertices by ecl label and run trim tarjan (as there is now a lot locality)
+        // maybe: redistribute graph - sort vertices by color and run trim tarjan (as there is now a lot locality)
       } while (global_decided < decided_threshold);
 
       KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
       KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     }
     {
-      KASPAN_STATISTIC_SCOPE("trim_1_ecl");
+      KASPAN_STATISTIC_SCOPE("trim_1_color");
       auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
       local_decided += trim_1_decided;
       auto const prev_global_decided = global_decided;
