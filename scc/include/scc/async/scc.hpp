@@ -4,11 +4,10 @@
 #include <debug/statistic.hpp>
 #include <memory/accessor/bits.hpp>
 #include <memory/borrow.hpp>
-#include <memory/buffer.hpp>
 #include <scc/allgather_sub_graph.hpp>
 #include <scc/async/backward_search.hpp>
+#include <scc/async/color_scc_step.hpp>
 #include <scc/async/forward_search.hpp>
-#include <scc/async/ecl_scc_step.hpp>
 #include <scc/base.hpp>
 #include <scc/pivot_selection.hpp>
 #include <scc/tarjan.hpp>
@@ -132,17 +131,15 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
   }
 
   if (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold) {
-    KASPAN_STATISTIC_SCOPE("ecl");
+    KASPAN_STATISTIC_SCOPE("color");
 
-    auto fw_label        = make_array<vertex_t>(local_n);
-    auto bw_label        = make_array<vertex_t>(local_n);
-    auto fw_active_array = make_array<vertex_t>(local_n - local_decided);
-    auto bw_active_array = make_array<vertex_t>(local_n - local_decided);
-    auto fw_active       = make_bits_clean(local_n);
-    auto bw_active       = make_bits_clean(local_n);
-    auto fw_changed      = make_bits_clean(local_n);
-    auto bw_changed      = make_bits_clean(local_n);
-    auto edge_queue      = make_briefkasten_edge<IndirectionScheme>();
+    auto colors       = make_array<vertex_t>(local_n);
+    auto active_array = make_array<vertex_t>(local_n);
+    auto active       = make_bits_clean(local_n);
+    auto changed      = make_bits_clean(local_n);
+    auto edge_queue   = make_briefkasten_edge<IndirectionScheme>();
+
+    auto const prev_local_decided = local_decided;
 
     bool first_iter = true;
     do {
@@ -153,27 +150,12 @@ scc(Part const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t co
       }
       first_iter = false;
 
-      ecl_scc_init_label(part, fw_label, bw_label);
-      local_decided += async::ecl_scc_step(
-        part,
-        fw_head,
-        fw_csr,
-        bw_head,
-        bw_csr,
-        edge_queue,
-        scc_id,
-        fw_label,
-        bw_label,
-        fw_active_array,
-        bw_active_array,
-        fw_active,
-        bw_active,
-        fw_changed,
-        bw_changed,
-        local_decided);
+      color_scc_init_label(part, colors);
+      local_decided += async::color_scc_step(
+        part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors, active_array, active, changed, local_decided);
     } while (mpi_basic_allreduce_single(local_decided, MPI_SUM) < decided_threshold);
 
-    KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(local_n - local_decided, MPI_SUM));
+    KASPAN_STATISTIC_ADD("decided_count", mpi_basic_allreduce_single(local_decided - prev_local_decided, MPI_SUM));
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   }
 
