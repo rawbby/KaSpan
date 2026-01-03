@@ -1,6 +1,6 @@
 target_link_libraries(${TARGET_NAME} PRIVATE
         hpc_graph
-        scc
+        kaspan
         util
         debug
         MPI::MPI_CXX

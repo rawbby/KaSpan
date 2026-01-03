@@ -1,4 +1,4 @@
-target_include_directories(${TARGET_NAME} PUBLIC include "${PROJECT_SOURCE_DIR}/scc/include")
+target_include_directories(${TARGET_NAME} PUBLIC include "${PROJECT_SOURCE_DIR}/kaspan/include")
 target_link_libraries(${TARGET_NAME} PUBLIC
         MPI::MPI_CXX
         OpenMP::OpenMP_CXX)

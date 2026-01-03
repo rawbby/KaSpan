@@ -1,1 +1,1 @@
-target_link_libraries(${TARGET_NAME} PRIVATE scc OpenMP::OpenMP_CXX)
+target_link_libraries(${TARGET_NAME} PRIVATE kaspan OpenMP::OpenMP_CXX)

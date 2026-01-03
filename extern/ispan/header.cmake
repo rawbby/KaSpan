@@ -1,1 +1,1 @@
-target_link_libraries(${TARGET_NAME} INTERFACE scc)
+target_link_libraries(${TARGET_NAME} INTERFACE kaspan)

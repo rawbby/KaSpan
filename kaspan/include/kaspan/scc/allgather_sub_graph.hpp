@@ -1,0 +1,240 @@
+#pragma once
+
+#include <kaspan/memory/accessor/stack.hpp>
+#include <kaspan/memory/accessor/stack_accessor.hpp>
+#include <kaspan/memory/buffer.hpp>
+#include <kaspan/mpi_basic/allgatherv.hpp>
+#include <kaspan/mpi_basic/allgatherv_counts.hpp>
+#include <kaspan/mpi_basic/counts_and_displs.hpp>
+#include <kaspan/mpi_basic/displs.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/graph.hpp>
+#include <kaspan/scc/part.hpp>
+#include <kaspan/util/return_pack.hpp>
+
+#include <unordered_map>
+
+namespace kaspan {
+namespace sub_graph {
+
+template<class part_t, class fn_t>
+auto
+allgather_sub_ids(part_t const& part, vertex_t local_sub_n, fn_t&& in_sub_graph)
+{
+  auto const local_n = part.local_n();
+
+  auto local_ids_inverse_stack = stack<vertex_t>(local_sub_n);
+  for (vertex_t k = 0; k < local_n; ++k) {
+    if (in_sub_graph(k)) {
+      local_ids_inverse_stack.push(part.to_global(k));
+    }
+  }
+  DEBUG_ASSERT_EQ(local_ids_inverse_stack.size(), local_sub_n);
+
+  auto [TMP(), counts, displs] = mpi_basic::counts_and_displs();
+
+  mpi_basic::allgatherv_counts(local_ids_inverse_stack.size(), counts);
+  auto const sub_n = static_cast<vertex_t>(mpi_basic::displs(counts, displs));
+
+  auto  ids_inverse_buffer = make_buffer<vertex_t>(sub_n);
+  auto* ids_inverse        = static_cast<vertex_t*>(ids_inverse_buffer.data());
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(ids_inverse, sub_n * sizeof(vertex_t));
+  mpi_basic::allgatherv<vertex_t>(local_ids_inverse_stack.data(), local_ids_inverse_stack.size(), ids_inverse, counts, displs);
+
+  auto* local_ids_inverse = ids_inverse + displs[mpi_basic::world_rank];
+  return PACK(sub_n, ids_inverse_buffer, local_ids_inverse, ids_inverse);
+}
+
+template<class part_t>
+auto
+allgather_csr_degrees(part_t const&   part,
+                      vertex_t        local_sub_n,
+                      index_t const*  head,
+                      vertex_t const* csr,
+
+                      vertex_t const* local_ids_inverse,
+                      vertex_t        sub_n,
+                      vertex_t const* ids_inverse)
+{
+  auto const local_n = part.local_n();
+
+  index_t local_sub_m_upper_bound = 0;
+  for (vertex_t i = 0; i < local_sub_n; ++i) {
+    auto const u = local_ids_inverse[i];
+    auto const k = part.to_local(u);
+    local_sub_m_upper_bound += head[k + 1] - head[k];
+  }
+
+  auto  buffer = make_buffer<MPI_Count, MPI_Aint, vertex_t, index_t>(mpi_basic::world_size, mpi_basic::world_size, local_sub_m_upper_bound, mpi_basic::world_root + local_sub_n);
+  void* memory = buffer.data();
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(memory,
+                                   line_align_up(mpi_basic::world_size * sizeof(MPI_Count)) + line_align_up(mpi_basic::world_size * sizeof(MPI_Aint)) +
+                                     line_align_up(local_sub_m_upper_bound * sizeof(vertex_t)) + line_align_up((local_sub_n + mpi_basic::world_root) * sizeof(index_t)));
+
+  auto [counts, displs]  = mpi_basic::counts_and_displs(&memory);
+  auto local_sub_csr     = stack_accessor<vertex_t>::borrow(&memory, local_sub_m_upper_bound);
+  auto local_sub_degrees = stack_accessor<index_t>::borrow(&memory, local_sub_n + mpi_basic::world_root);
+  if (mpi_basic::world_root) {
+    local_sub_degrees.push(0);
+  }
+
+  for (vertex_t i = 0; i < local_sub_n; ++i) { // for each vertex in part and in sub graph
+    auto const u   = local_ids_inverse[i];
+    auto const k   = part.to_local(u);
+    auto const beg = head[k];
+    auto const end = head[k + 1];
+
+    index_t deg = 0;
+    for (index_t it = beg; it < end; ++it) {
+      auto const        v  = csr[it];
+      auto const* const jt = std::lower_bound(ids_inverse, ids_inverse + sub_n, v);
+      if (jt != ids_inverse + sub_n and *jt == v) {
+        local_sub_csr.push(static_cast<vertex_t>(std::distance(ids_inverse, jt)));
+        ++deg;
+      }
+    }
+    local_sub_degrees.push(deg);
+  }
+
+  mpi_basic::allgatherv_counts(local_sub_csr.size(), counts);
+  auto const sub_m = mpi_basic::displs(counts, displs);
+
+  return PACK(buffer, sub_m, counts, displs, local_sub_csr, local_sub_degrees);
+}
+
+}
+
+template<class part_t, class fn_t>
+  requires(part_t::ordered and std::convertible_to<std::invoke_result_t<fn_t, kaspan::vertex_t>, bool>)
+auto
+allgather_sub_graph(part_t const&           part,
+                    kaspan::vertex_t        local_sub_n,
+                    kaspan::index_t const*  fw_head,
+                    kaspan::vertex_t const* fw_csr,
+                    kaspan::index_t const*  bw_head,
+                    kaspan::vertex_t const* bw_csr,
+                    fn_t&&                  in_sub_graph)
+{
+  struct result // NOLINT(*-pro-type-member-init)
+  {
+    kaspan::buffer    ids_inverse_storage;
+    kaspan::vertex_t* ids_inverse{};
+
+    kaspan::buffer    storage;
+    kaspan::vertex_t  n{};
+    kaspan::index_t   m{};
+    kaspan::index_t*  fw_head{};
+    kaspan::vertex_t* fw_csr{};
+    kaspan::index_t*  bw_head{};
+    kaspan::vertex_t* bw_csr{};
+  } sub;
+
+  DEBUG_ASSERT_VALID_GRAPH_PART(part, fw_head, fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH_PART(part, bw_head, bw_csr);
+
+  auto [sub_n, ids_inverse_buffer, local_ids_inverse, ids_inverse] = kaspan::sub_graph::allgather_sub_ids(part, local_sub_n, in_sub_graph);
+
+  sub.ids_inverse_storage = std::move(ids_inverse_buffer);
+  sub.ids_inverse         = ids_inverse;
+  sub.n                   = sub_n;
+
+  // communicate forward graph
+  {
+    auto [TMP(), sub_m, counts, displs, local_sub_fw_csr, local_sub_fw_degrees] =
+      kaspan::sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_n, ids_inverse);
+
+    DEBUG_ASSERT_GE(sub_m, 0);
+    sub.m        = sub_m;
+    sub.storage  = make_graph_buffer(sub_n, sub_m);
+    void* memory = sub.storage.data();
+    DEBUG_ASSERT_NE(memory, nullptr);
+    sub.fw_head = borrow_array<kaspan::index_t>(&memory, sub_n + 1);
+    sub.fw_csr  = borrow_array<kaspan::vertex_t>(&memory, sub_m);
+    sub.bw_head = borrow_array<kaspan::index_t>(&memory, sub_n + 1);
+    sub.bw_csr  = borrow_array<kaspan::vertex_t>(&memory, sub_m);
+
+    kaspan::mpi_basic::allgatherv<kaspan::vertex_t>(local_sub_fw_csr.data(), local_sub_fw_csr.size(), sub.fw_csr, counts, displs);
+    auto const send_count = local_sub_fw_degrees.size();
+    kaspan::mpi_basic::allgatherv_counts(send_count, counts);
+    auto const recv_count = kaspan::mpi_basic::displs(counts, displs);
+    DEBUG_ASSERT_EQ(sub.n + 1, recv_count);
+    kaspan::mpi_basic::allgatherv<kaspan::index_t>(local_sub_fw_degrees.data(), send_count, sub.fw_head, counts, displs);
+    for (kaspan::vertex_t u = 0; u < sub_n; ++u) {
+      sub.fw_head[u + 1] = sub.fw_head[u] + sub.fw_head[u + 1];
+    }
+  }
+
+  // communicate backward graph
+  {
+    auto [TMP(), sub_m, counts, displs, local_sub_bw_csr, local_sub_bw_degrees] =
+      kaspan::sub_graph::allgather_csr_degrees(part, local_sub_n, bw_head, bw_csr, local_ids_inverse, sub_n, ids_inverse);
+
+    DEBUG_ASSERT_EQ(sub.m, sub_m);
+
+    kaspan::mpi_basic::allgatherv<kaspan::vertex_t>(local_sub_bw_csr.data(), local_sub_bw_csr.size(), sub.bw_csr, counts, displs);
+    auto const send_count = local_sub_bw_degrees.size();
+    kaspan::mpi_basic::allgatherv_counts(send_count, counts);
+    auto const recv_count = kaspan::mpi_basic::displs(counts, displs);
+    DEBUG_ASSERT_EQ(sub.n + 1, recv_count);
+    kaspan::mpi_basic::allgatherv<kaspan::index_t>(local_sub_bw_degrees.data(), send_count, sub.bw_head, counts, displs);
+    for (kaspan::vertex_t u = 0; u < sub_n; ++u) {
+      sub.bw_head[u + 1] = sub.bw_head[u] + sub.bw_head[u + 1];
+    }
+  }
+
+  DEBUG_ASSERT_VALID_GRAPH(sub.n, sub.fw_head[sub.n], sub.fw_head, sub.fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(sub.n, sub.bw_head[sub.n], sub.bw_head, sub.bw_csr);
+  return sub;
+}
+
+template<class part_t, class fn_t>
+  requires(part_t::ordered and std::convertible_to<std::invoke_result_t<fn_t, kaspan::vertex_t>, bool>)
+auto
+allgather_fw_sub_graph(part_t const& part, kaspan::vertex_t local_sub_n, kaspan::index_t const* fw_head, kaspan::vertex_t const* fw_csr, fn_t&& in_sub_graph)
+{
+  struct result // NOLINT(*-pro-type-member-init)
+  {
+    kaspan::buffer    ids_inverse_storage;
+    kaspan::vertex_t* ids_inverse{};
+
+    kaspan::buffer    storage;
+    kaspan::vertex_t  n{};
+    kaspan::index_t   m{};
+    kaspan::index_t*  fw_head{};
+    kaspan::vertex_t* fw_csr{};
+  } sub;
+
+  DEBUG_ASSERT_VALID_GRAPH_PART(part, fw_head, fw_csr);
+
+  auto [sub_n, ids_inverse_buffer, local_ids_inverse, ids_inverse] = kaspan::sub_graph::allgather_sub_ids(part, local_sub_n, in_sub_graph);
+
+  sub.ids_inverse_storage = std::move(ids_inverse_buffer);
+  sub.ids_inverse         = ids_inverse;
+  sub.n                   = sub_n;
+
+  // communicate forward graph
+  {
+    auto [TMP(), sub_m, counts, displs, local_sub_fw_csr, local_sub_fw_degrees] =
+      kaspan::sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_n, ids_inverse);
+
+    sub.m        = sub_m;
+    sub.storage  = make_fw_graph_buffer(sub_n, sub_m);
+    void* memory = sub.storage.data();
+    sub.fw_head  = borrow_array<kaspan::index_t>(&memory, sub_n + 1);
+    sub.fw_csr   = borrow_array<kaspan::vertex_t>(&memory, sub_m);
+
+    kaspan::mpi_basic::allgatherv<kaspan::vertex_t>(local_sub_fw_csr.data(), local_sub_fw_csr.size(), sub.fw_csr, counts, displs);
+    auto const send_count = local_sub_fw_degrees.size();
+    kaspan::mpi_basic::allgatherv_counts(send_count, counts);
+    auto const recv_count = kaspan::mpi_basic::displs(counts, displs);
+    DEBUG_ASSERT_EQ(sub.n + 1, recv_count);
+    kaspan::mpi_basic::allgatherv<kaspan::index_t>(local_sub_fw_degrees.data(), send_count, sub.fw_head, counts, displs);
+    for (kaspan::vertex_t u = 0; u < sub_n; ++u) {
+      sub.fw_head[u + 1] = sub.fw_head[u] + sub.fw_head[u + 1];
+    }
+  }
+
+  DEBUG_ASSERT_VALID_GRAPH(sub.n, sub.fw_head[sub.n], sub.fw_head, sub.fw_csr);
+  return sub;
+}
+}
