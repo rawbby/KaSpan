@@ -8,9 +8,7 @@
 #include <mpi.h>
 #include <numeric> // std::accumulate
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief Typed wrapper for MPI_Allgatherv_c with element counts and displacements.
@@ -29,7 +27,9 @@ allgatherv(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count
   DEBUG_ASSERT(send_count == 0 or send_buffer != nullptr);
   DEBUG_ASSERT_NE(recv_counts, nullptr);
   DEBUG_ASSERT_NE(recv_displs, nullptr);
-  if (recv_buffer == nullptr) { DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0); }
+  if (recv_buffer == nullptr) {
+    DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0);
+  }
   MPI_Allgatherv_c(send_buffer, send_count, type<T>, recv_buffer, recv_counts, recv_displs, type<T>, MPI_COMM_WORLD);
 }
 
@@ -44,7 +44,9 @@ allgatherv(void const* send_buffer, MPI_Count send_count, void* recv_buffer, MPI
   DEBUG_ASSERT_NE(recv_counts, nullptr);
   DEBUG_ASSERT_NE(recv_displs, nullptr);
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
-  if (recv_buffer == nullptr) { DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0); }
+  if (recv_buffer == nullptr) {
+    DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0);
+  }
   MPI_Allgatherv_c(send_buffer, send_count, datatype, recv_buffer, recv_counts, recv_displs, datatype, MPI_COMM_WORLD);
 }
 
@@ -84,6 +86,4 @@ allgatherv(T const* send_buffer, MPI_Count send_count)
   return res;
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

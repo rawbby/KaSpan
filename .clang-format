@@ -4,11 +4,8 @@ IndentWidth: 2
 UseTab: Never
 MaxEmptyLinesToKeep: 1
 BreakBeforeBinaryOperators: None
-AllowShortBlocksOnASingleLine: Always
-AllowShortFunctionsOnASingleLine: All
-AllowShortIfStatementsOnASingleLine: AllIfsAndElse
-AllowShortLambdasOnASingleLine: All
-AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Empty
 Standard: Latest
 AlignConsecutiveAssignments:
   Enabled: true

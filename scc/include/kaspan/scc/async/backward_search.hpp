@@ -6,9 +6,7 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/graph.hpp>
 
-namespace kaspan {
-
-namespace async {
+namespace kaspan::async {
 
 template<world_part_concept part_t, typename brief_queue_t>
 auto
@@ -75,18 +73,20 @@ backward_search(part_t const&   part,
     }
 
     mq.poll_throttled(on_message);
-    if (active_stack.empty() and mq.terminate(on_message)) { break; }
+    if (active_stack.empty() and mq.terminate(on_message)) {
+      break;
+    }
   }
 
   // normalise scc_id to minimum vertex in scc
   min_u = mpi_basic::allreduce_single(min_u, mpi_basic::min);
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] == id) { scc_id[k] = min_u; }
+    if (scc_id[k] == id) {
+      scc_id[k] = min_u;
+    }
   }
 
   return decided_count;
 }
 
-} // namespace async
-
-} // namespace kaspan
+} // namespace kaspan::async

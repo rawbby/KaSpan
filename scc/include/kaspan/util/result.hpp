@@ -69,27 +69,60 @@ public:
     return result();
   }
 
-  static constexpr auto success(V value) -> result { return result(std::move(value)); }
+  static constexpr auto success(V value) -> result
+  {
+    return result(std::move(value));
+  }
 
-  static constexpr auto failure() -> result { return result(error_code::ERROR); }
+  static constexpr auto failure() -> result
+  {
+    return result(error_code::ERROR);
+  }
 
-  static constexpr auto failure(error_code error) -> result { return result(error); }
+  static constexpr auto failure(error_code error) -> result
+  {
+    return result(error);
+  }
 
-  [[nodiscard]] constexpr auto has_value() const -> bool { return std::holds_alternative<V>(data); }
+  [[nodiscard]] constexpr auto has_value() const -> bool
+  {
+    return std::holds_alternative<V>(data);
+  }
 
-  constexpr explicit operator bool() const { return has_value(); }
+  constexpr explicit operator bool() const
+  {
+    return has_value();
+  }
 
-  constexpr auto error() -> error_code { return std::get<error_code>(data); }
+  constexpr auto error() -> error_code
+  {
+    return std::get<error_code>(data);
+  }
 
-  [[nodiscard]] constexpr auto error() const -> error_code { return std::get<error_code>(data); }
+  [[nodiscard]] constexpr auto error() const -> error_code
+  {
+    return std::get<error_code>(data);
+  }
 
-  constexpr auto value() & -> V& { return std::get<V>(data); }
+  constexpr auto value() & -> V&
+  {
+    return std::get<V>(data);
+  }
 
-  [[nodiscard]] constexpr auto value() const& -> V const& { return std::get<V>(data); }
+  [[nodiscard]] constexpr auto value() const& -> V const&
+  {
+    return std::get<V>(data);
+  }
 
-  constexpr auto value() && -> V&& { return std::move(std::get<V>(data)); }
+  constexpr auto value() && -> V&&
+  {
+    return std::move(std::get<V>(data));
+  }
 
-  [[nodiscard]] constexpr auto value() const&& -> V const&& { return std::move(std::get<V>(data)); }
+  [[nodiscard]] constexpr auto value() const&& -> V const&&
+  {
+    return std::move(std::get<V>(data));
+  }
 
   template<class U>
     requires(value_convertible_v<U>)
@@ -114,7 +147,9 @@ public:
   [[nodiscard]] constexpr auto map(F&& mapper) const
   {
     using R = result<std::invoke_result_t<F, V const&>>;
-    if (not has_value()) { return R::failure(error()); }
+    if (not has_value()) {
+      return R::failure(error());
+    }
     return R::success(std::invoke(std::forward<F>(mapper), value()));
   }
 
@@ -122,7 +157,9 @@ public:
   [[nodiscard]] constexpr auto and_then(F&& consumer) const
   {
     using R = std::invoke_result_t<F, V const&>;
-    if (not has_value()) { return R::failure(error()); }
+    if (not has_value()) {
+      return R::failure(error());
+    }
     return std::invoke(std::forward<F>(consumer), value());
   }
 
@@ -177,7 +214,7 @@ public:
 #define RESULT_ASSERT(...) CAT(RESULT_ASSERT_, ARGS_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
 #define ASSERT_TRY_1(EXPR, TMP)                                                                                                                                                    \
-  auto&& TMP = (EXPR);                                                                                                                                                             \
+  auto && (TMP) = (EXPR);                                                                                                                                                          \
   ASSERT(TMP, #EXPR)
 #define ASSERT_TRY_2(VAR_1, EXPR, TMP)                                                                                                                                             \
   ASSERT_TRY_1(EXPR, TMP);                                                                                                                                                         \

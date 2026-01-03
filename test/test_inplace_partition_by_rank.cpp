@@ -1,3 +1,4 @@
+#include "kaspan/mpi_basic/type.hpp"
 #include <cstddef>
 #include <cstring>
 #include <kaspan/debug/assert_eq.hpp>
@@ -7,7 +8,6 @@
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/mpi_basic/allgather.hpp>
 #include <kaspan/mpi_basic/counts_and_displs.hpp>
 #include <kaspan/mpi_basic/inplace_partition_by_rank.hpp>
 #include <kaspan/mpi_basic/world.hpp>
@@ -31,9 +31,13 @@ check_case(item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts
   ASSERT_IN_RANGE(mpi_basic::world_rank, 0, mpi_basic::world_size);
 
   send_displs[0] = 0;
-  for (i32 r = 1; r < mpi_basic::world_size; ++r) { send_displs[r] = send_displs[r - 1] + send_counts[r - 1]; }
+  for (i32 r = 1; r < mpi_basic::world_size; ++r) {
+    send_displs[r] = send_displs[r - 1] + send_counts[r - 1];
+  }
 
-  mpi_basic::inplace_partition_by_rank<item>(send_buffer, send_counts, send_displs, [](item const& x) { return x.dest; });
+  mpi_basic::inplace_partition_by_rank<item>(send_buffer, send_counts, send_displs, [](item const& x) {
+    return x.dest;
+  });
 
   auto const buffer = make_buffer<MPI_Count>(mpi_basic::world_size, mpi_basic::world_size);
   auto*      memory = buffer.data();
@@ -47,12 +51,18 @@ check_case(item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts
   }
 
   ASSERT(beg[0] == 0);
-  for (i32 r = 1; r < mpi_basic::world_size; ++r) { ASSERT_EQ(end[r - 1], beg[r]); }
+  for (i32 r = 1; r < mpi_basic::world_size; ++r) {
+    ASSERT_EQ(end[r - 1], beg[r]);
+  }
 
-  if (send_count > 0) { ASSERT_EQ(end[mpi_basic::world_size - 1], send_count); }
+  if (send_count > 0) {
+    ASSERT_EQ(end[mpi_basic::world_size - 1], send_count);
+  }
 
   for (i32 r = 0; r < mpi_basic::world_size; ++r) {
-    for (size_t i = beg[r]; i < end[r]; ++i) { ASSERT(send_buffer[i].dest == r); }
+    for (size_t i = beg[r]; i < end[r]; ++i) {
+      ASSERT(send_buffer[i].dest == r);
+    }
   }
 }
 
@@ -104,7 +114,9 @@ main(int argc, char** argv)
     std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
     send_counts[target_rank] = send_count;
 
-    for (i32 i = 0; i < send_count; ++i) { send_stack.push({ target_rank, i }); }
+    for (i32 i = 0; i < send_count; ++i) {
+      send_stack.push({ target_rank, i });
+    }
 
     check_case(send_stack.data(), send_count, send_counts, send_displs);
   }

@@ -42,15 +42,30 @@ public:
     return *this;
   }
 
-  [[nodiscard]] auto data() -> T* { return static_cast<T*>(buffer::data()); }
+  [[nodiscard]] auto data() -> T*
+  {
+    return static_cast<T*>(buffer::data());
+  }
 
-  [[nodiscard]] auto data() const -> T const* { return static_cast<T const*>(buffer::data()); }
+  [[nodiscard]] auto data() const -> T const*
+  {
+    return static_cast<T const*>(buffer::data());
+  }
 
-  [[nodiscard]] auto size() const -> u64 { return end_; }
+  [[nodiscard]] auto size() const -> u64
+  {
+    return end_;
+  }
 
-  void set_size(u64 size) { end_ = size; }
+  void set_size(u64 size)
+  {
+    end_ = size;
+  }
 
-  [[nodiscard]] explicit operator stack_accessor<T>() const noexcept { return stack_accessor<T>{ data(), end_ }; }
+  [[nodiscard]] explicit operator stack_accessor<T>() const noexcept
+  {
+    return stack_accessor<T>{ data(), end_ };
+  }
 
 private:
   u64 end_ = 0;

@@ -42,7 +42,9 @@ tarjan(part_t const& part, index_t const* head, vertex_t const* csr, callback_t 
   // Validate decided_count is consistent with filter
   vertex_t filtered_out_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (not filter(k)) { ++filtered_out_count; }
+    if (not filter(k)) {
+      ++filtered_out_count;
+    }
   }
   DEBUG_ASSERT_EQ(filtered_out_count, decided_count);
 #endif
@@ -62,9 +64,13 @@ tarjan(part_t const& part, index_t const* head, vertex_t const* csr, callback_t 
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
   for (vertex_t local_root = 0; local_root < local_n; ++local_root) {
-    if (not filter(local_root)) { continue; }
+    if (not filter(local_root)) {
+      continue;
+    }
 
-    if (index[local_root] != index_undecided) { continue; }
+    if (index[local_root] != index_undecided) {
+      continue;
+    }
 
     index[local_root] = low[local_root] = index_count++;
     st.push(local_root);
@@ -79,7 +85,9 @@ tarjan(part_t const& part, index_t const* head, vertex_t const* csr, callback_t 
 
         if (part.has_local(v)) { // ignore non local edges
           auto const local_v = part.to_local(v);
-          if (not filter(local_v)) { continue; }
+          if (not filter(local_v)) {
+            continue;
+          }
 
           auto const v_index = index[local_v];
 
@@ -105,7 +113,9 @@ tarjan(part_t const& part, index_t const* head, vertex_t const* csr, callback_t 
           auto const local_v = st.back();
           on_stack.unset(local_v);
           st.pop();
-          if (local_v == local_u) { break; }
+          if (local_v == local_u) {
+            break;
+          }
         }
 
         auto const begin = st.size();

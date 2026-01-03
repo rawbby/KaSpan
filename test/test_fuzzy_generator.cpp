@@ -17,14 +17,20 @@ verify_graph(vertex_t n, index_t m, index_t const* head, vertex_t const* csr, ve
 {
   DEBUG_ASSERT_VALID_GRAPH(n, m, head, csr);
   for (vertex_t u = 0; u < n; ++u) {
-    for (auto v : csr_range(head, csr, u)) { ASSERT_NE(u, v, "fuzzy generator is not supposed to generate self loops"); }
+    for (auto v : csr_range(head, csr, u)) {
+      ASSERT_NE(u, v, "fuzzy generator is not supposed to generate self loops");
+    }
   }
 
-  if (n > 0 and d >= 0.0) { ASSERT_GE(static_cast<double>(m) / n, d, "fuzzy generator should generate at least an average degree of d"); }
+  if (n > 0 and d >= 0.0) {
+    ASSERT_GE(static_cast<double>(m) / n, d, "fuzzy generator should generate at least an average degree of d");
+  }
 
   tarjan(n, head, csr, [&](auto const* beg, auto const* end) {
     vertex_t min_id = *std::min_element(beg, end);
-    for (auto const* it = beg; it != end; ++it) { ASSERT_EQ(scc_id[*it], min_id, "invalid instance was generated"); }
+    for (auto const* it = beg; it != end; ++it) {
+      ASSERT_EQ(scc_id[*it], min_id, "invalid instance was generated");
+    }
   });
 }
 

@@ -1,27 +1,25 @@
-#include <briefkasten/noop_indirection.hpp>
-#include <ios>
+#include "kaspan/mpi_basic/allreduce_max_time.hpp"
+#include "kaspan/mpi_basic/allreduce_single.hpp"
+#include "kaspan/mpi_basic/world.hpp"
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/sub_process.hpp>
-#include <kaspan/memory/borrow.hpp>
-#include <kaspan/memory/buffer.hpp>
-#include <kaspan/mpi_basic/allgather.hpp>
-#include <kaspan/mpi_basic/allreduce_max_time.hpp>
-#include <kaspan/mpi_basic/allreduce_single.hpp>
-#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/async/scc.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/fuzzy.hpp>
+#include <kaspan/scc/part.hpp>
 #include <kaspan/scc/scc.hpp>
-#include <sstream>
-
+#include <cmath>
 #include <iomanip>
+#include <ios>
+#include <sstream>
+#include <string>
 #include <utility>
 
 using namespace kaspan;
 
 template<typename Graph>
 void
-verify_scc_id(Graph const& graph, vertex_t* scc_id_orig, vertex_t* scc_id)
+verify_scc_id(Graph const& graph, vertex_t const* scc_id_orig, vertex_t* scc_id)
 {
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -91,6 +89,9 @@ main(int argc, char** argv)
 
       auto const seed = mpi_basic::allreduce_max_time();
       auto const part = balanced_slice_part{ n };
+      {
+        n;
+      };
 
       auto const graph = fuzzy_local_scc_id_and_graph(seed, part);
 

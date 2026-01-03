@@ -3,9 +3,7 @@
 #include <kaspan/mpi_basic/type.hpp>
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief Gathers data from all processes and distributes it to all processes.
@@ -53,6 +51,4 @@ allgather(void const* send_buffer, int send_count, MPI_Datatype send_type, void*
   MPI_Allgather(send_buffer, send_count, send_type, recv_buffer, recv_count, recv_type, MPI_COMM_WORLD);
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

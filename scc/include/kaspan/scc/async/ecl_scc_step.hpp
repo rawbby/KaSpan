@@ -81,11 +81,15 @@ ecl_scc_step(part_t const&   part,
 
   fw_active.fill_cmp(local_n, scc_id, scc_id_undecided);
   std::memcpy(fw_changed.data(), fw_active.data(), (local_n + 7) >> 3);
-  fw_active.for_each(local_n, [&](auto k) { fw_active_stack.push(k); });
+  fw_active.for_each(local_n, [&](auto k) {
+    fw_active_stack.push(k);
+  });
 
   bw_active.fill_cmp(local_n, scc_id, scc_id_undecided);
   std::memcpy(bw_changed.data(), bw_active.data(), (local_n + 7) >> 3);
-  bw_active.for_each(local_n, [&](auto k) { bw_active_stack.push(k); });
+  bw_active.for_each(local_n, [&](auto k) {
+    bw_active_stack.push(k);
+  });
 
   mpi_basic::barrier();
   mq.reactivate();
@@ -116,7 +120,9 @@ ecl_scc_step(part_t const&   part,
       }
 
       mq.poll_throttled(on_bw_message);
-      if (fw_active_stack.empty() and mq.terminate(on_bw_message)) { break; }
+      if (fw_active_stack.empty() and mq.terminate(on_bw_message)) {
+        break;
+      }
     }
 
     // 3. barrier + reactivate and push fw borders
@@ -128,7 +134,9 @@ ecl_scc_step(part_t const&   part,
       fw_changed.unset(k);
       auto const label_k = ecl_fw_label[k];
       for (auto v : csr_range(fw_head, fw_csr, k)) {
-        if (not part.has_local(v) and label_k < v) { mq.post_message_blocking(edge{ v, label_k }, part.world_rank_of(v), on_fw_message); }
+        if (not part.has_local(v) and label_k < v) {
+          mq.post_message_blocking(edge{ v, label_k }, part.world_rank_of(v), on_fw_message);
+        }
       }
     });
 
@@ -157,7 +165,9 @@ ecl_scc_step(part_t const&   part,
       }
 
       mq.poll_throttled(on_fw_message);
-      if (bw_active_stack.empty() and mq.terminate(on_fw_message)) { break; }
+      if (bw_active_stack.empty() and mq.terminate(on_fw_message)) {
+        break;
+      }
     }
 
     // 6. barrier + reactivate and push bw borders
@@ -169,11 +179,15 @@ ecl_scc_step(part_t const&   part,
       bw_changed.unset(k);
       auto const label_k = ecl_bw_label[k];
       for (auto v : csr_range(bw_head, bw_csr, k)) {
-        if (not part.has_local(v) and label_k < v) { mq.post_message_blocking(edge{ v, label_k }, part.world_rank_of(v), on_bw_message); }
+        if (not part.has_local(v) and label_k < v) {
+          mq.post_message_blocking(edge{ v, label_k }, part.world_rank_of(v), on_bw_message);
+        }
       }
     });
 
-    if (!mpi_basic::allreduce_single(fw_pushed or bw_pushed, mpi_basic::lor)) { break; }
+    if (!mpi_basic::allreduce_single(fw_pushed or bw_pushed, mpi_basic::lor)) {
+      break;
+    }
   }
 
   mpi_basic::barrier();

@@ -89,11 +89,14 @@ fw_span(kaspan::vertex_t const* scc_id,
       kaspan::index_t head = 0;
       kaspan::index_t tail = 0;
       for (kaspan::vertex_t vert_id = local_beg; vert_id < local_end; vert_id++) {
-        if (scc_id[vert_id] == kaspan::scc_id_undecided && fw_sa[vert_id] == level) { q[tail++] = vert_id; }
+        if (scc_id[vert_id] == kaspan::scc_id_undecided && fw_sa[vert_id] == level) {
+          q[tail++] = vert_id;
+        }
       }
       while (head != tail) {
         auto const temp_v = q[head++];
-        if (head == queue_size) head = 0;
+        if (head == queue_size)
+          head = 0;
 
         auto const beg = fw_head[temp_v];
         auto const end = fw_head[temp_v + 1];
@@ -102,7 +105,8 @@ fw_span(kaspan::vertex_t const* scc_id,
 
           if (scc_id[w] == kaspan::scc_id_undecided && fw_sa[w] == depth_unset) {
             q[tail++] = w;
-            if (tail == queue_size) tail = 0;
+            if (tail == queue_size)
+              tail = 0;
             fw_sa[w] = static_cast<depth_t>(level + 1);
           }
         }
@@ -160,7 +164,8 @@ fw_span(kaspan::vertex_t const* scc_id,
       if (front_count > 10000) {
 
         kaspan::index_t s = n / 32;
-        if (n % 32 != 0) s += 1;
+        if (n % 32 != 0)
+          s += 1;
 
         // clang-format off
         MPI_Allreduce(
@@ -221,7 +226,9 @@ fw_span(kaspan::vertex_t const* scc_id,
         }
         for (int i = front_comm[kaspan::mpi_basic::world_rank]; i < front_count; ++i) {
           auto const v = fq_comm[i];
-          if (fw_sa[v] == depth_unset) { fw_sa[v] = static_cast<depth_t>(level + 1); }
+          if (fw_sa[v] == depth_unset) {
+            fw_sa[v] = static_cast<depth_t>(level + 1);
+          }
         }
       }
     }
@@ -318,11 +325,13 @@ bw_span(kaspan::vertex_t*       scc_id,
       kaspan::index_t head = 0;
       kaspan::index_t tail = 0;
       for (kaspan::vertex_t vert_id = local_beg; vert_id < local_end; vert_id++) {
-        if (bw_sa[vert_id] == level) q[tail++] = vert_id;
+        if (bw_sa[vert_id] == level)
+          q[tail++] = vert_id;
       }
       while (head != tail) {
         auto const u = q[head++];
-        if (head == queue_size) head = 0;
+        if (head == queue_size)
+          head = 0;
 
         auto const beg = bw_head[u];
         auto const end = bw_head[u + 1];
@@ -331,7 +340,8 @@ bw_span(kaspan::vertex_t*       scc_id,
 
           if (bw_sa[v] == depth_unset && fw_sa[v] != depth_unset) {
             q[tail++] = v;
-            if (tail == queue_size) tail = 0;
+            if (tail == queue_size)
+              tail = 0;
             scc_id[v] = scc_id_largest;
             ++decided_count;
             bw_sa[v] = static_cast<depth_t>(level + 1);
@@ -391,7 +401,8 @@ bw_span(kaspan::vertex_t*       scc_id,
       if (front_count > 10000) {
 
         kaspan::index_t s = n / 32;
-        if (n % 32 != 0) s += 1;
+        if (n % 32 != 0)
+          s += 1;
 
         // clang-format off
         MPI_Allreduce(
@@ -452,7 +463,9 @@ bw_span(kaspan::vertex_t*       scc_id,
         }
         for (int i = 0; i < front_count; ++i) {
           auto const v_new = fq_comm[i];
-          if (bw_sa[v_new] == depth_unset) { bw_sa[v_new] = static_cast<depth_t>(level + 1); }
+          if (bw_sa[v_new] == depth_unset) {
+            bw_sa[v_new] = static_cast<depth_t>(level + 1);
+          }
         }
       }
     }

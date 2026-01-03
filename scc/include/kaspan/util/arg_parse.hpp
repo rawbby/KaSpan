@@ -11,7 +11,9 @@ inline auto
 arg_select_flag(int argc, char** argv, char const* flag) -> bool
 {
   for (int i = 1; i < argc; ++i) {
-    if (strcmp(argv[i], flag) == 0) { return true; }
+    if (strcmp(argv[i], flag) == 0) {
+      return true;
+    }
   }
   return false;
 }
@@ -20,7 +22,9 @@ inline auto
 arg_select_str(int argc, char** argv, char const* flag, void (*usage)(int, char**)) -> char const*
 {
   for (int i = 1; i < argc - 1; ++i) {
-    if (strcmp(argv[i], flag) == 0) { return argv[i + 1]; }
+    if (strcmp(argv[i], flag) == 0) {
+      return argv[i + 1];
+    }
   }
   usage(argc, argv);
   std::exit(1);
@@ -30,7 +34,9 @@ inline auto
 arg_select_optional_str(int argc, char** argv, char const* flag) -> char const*
 {
   for (int i = 1; i < argc - 1; ++i) {
-    if (strcmp(argv[i], flag) == 0) { return argv[i + 1]; }
+    if (strcmp(argv[i], flag) == 0) {
+      return argv[i + 1];
+    }
   }
   return nullptr;
 }
@@ -39,7 +45,9 @@ inline auto
 arg_select_default_str(int argc, char** argv, char const* flag, char const* default_value) -> char const*
 {
   for (int i = 1; i < argc - 1; ++i) {
-    if (strcmp(argv[i], flag) == 0) { return argv[i + 1]; }
+    if (strcmp(argv[i], flag) == 0) {
+      return argv[i + 1];
+    }
   }
   return default_value;
 }

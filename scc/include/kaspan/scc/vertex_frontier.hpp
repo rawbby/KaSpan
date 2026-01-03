@@ -11,8 +11,8 @@ namespace kaspan {
 
 struct vertex_frontier
 {
-  std::vector<vertex_t> send_buffer;
-  std::vector<vertex_t> recv_buffer;
+  std::vector<vertex_t> send_buffer{};
+  std::vector<vertex_t> recv_buffer{};
 
   buffer     storage;
   MPI_Count* send_counts = nullptr;
@@ -38,7 +38,10 @@ struct vertex_frontier
     return frontier;
   }
 
-  void local_push(vertex_t u) { recv_buffer.emplace_back(u); }
+  void local_push(vertex_t u)
+  {
+    recv_buffer.emplace_back(u);
+  }
 
   void push(i32 rank, vertex_t u)
   {
@@ -46,7 +49,10 @@ struct vertex_frontier
     ++send_counts[rank];
   }
 
-  [[nodiscard]] auto has_next() const -> bool { return not recv_buffer.empty(); }
+  [[nodiscard]] auto has_next() const -> bool
+  {
+    return not recv_buffer.empty();
+  }
 
   auto next() -> vertex_t
   {
@@ -62,7 +68,9 @@ struct vertex_frontier
     DEBUG_ASSERT_EQ(send_count, send_buffer.size());
 
     auto const total_messages = mpi_basic::allreduce_single(send_count, mpi_basic::sum);
-    if (total_messages == 0) { return false; }
+    if (total_messages == 0) {
+      return false;
+    }
 
     mpi_basic::alltoallv_counts(send_counts, recv_counts);
     auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
@@ -71,7 +79,9 @@ struct vertex_frontier
     recv_buffer.resize(recv_offset + recv_count);
     auto* recv_memory = recv_buffer.data() + recv_offset;
 
-    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](vertex_t u) { return part.world_rank_of(u); });
+    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](vertex_t u) {
+      return part.world_rank_of(u);
+    });
 
     mpi_basic::alltoallv(send_buffer.data(), send_counts, send_displs, recv_memory, recv_counts, recv_displs);
 

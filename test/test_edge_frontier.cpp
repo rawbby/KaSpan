@@ -1,10 +1,10 @@
+#include "kaspan/mpi_basic/type.hpp"
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/assert_false.hpp>
 #include <kaspan/debug/assert_lt.hpp>
 #include <kaspan/debug/assert_ne.hpp>
 #include <kaspan/debug/assert_true.hpp>
 #include <kaspan/debug/sub_process.hpp>
-#include <kaspan/mpi_basic/allgather.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/edge_frontier.hpp>
@@ -35,7 +35,9 @@ test_trivial_hard_coded()
     front.push(r, { u, 0 });
   }
 
-  for (i32 r = 0; r < mpi_basic::world_size; ++r) { ASSERT_EQ(front.send_counts[r], 1); }
+  for (i32 r = 0; r < mpi_basic::world_size; ++r) {
+    ASSERT_EQ(front.send_counts[r], 1);
+  }
 
   ASSERT_EQ(front.recv_buffer.size(), 0);
   ASSERT_EQ(front.send_buffer.size(), mpi_basic::world_size);

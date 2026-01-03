@@ -5,9 +5,7 @@
 #include <kaspan/util/arithmetic.hpp>
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief Get the maximum current time across all ranks.
@@ -22,6 +20,4 @@ allreduce_max_time() -> u64
   return allreduce_single(static_cast<u64>(timestamp_ns.count()), MPI_MAX);
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

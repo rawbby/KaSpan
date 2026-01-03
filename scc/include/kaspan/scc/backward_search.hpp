@@ -18,7 +18,9 @@ backward_search(part_t const& part, index_t const* bw_head, vertex_t const* bw_c
   vertex_t decided_count = 0;
   vertex_t min_u         = part.n;
 
-  if (part.has_local(pivot)) { frontier.local_push(pivot); }
+  if (part.has_local(pivot)) {
+    frontier.local_push(pivot);
+  }
 
   do {
     while (frontier.has_next()) {
@@ -26,7 +28,9 @@ backward_search(part_t const& part, index_t const* bw_head, vertex_t const* bw_c
       DEBUG_ASSERT(part.has_local(u));
       auto const k = part.to_local(u);
 
-      if (!fw_reached.get(k) or scc_id[k] != scc_id_undecided) { continue; }
+      if (!fw_reached.get(k) or scc_id[k] != scc_id_undecided) {
+        continue;
+      }
 
       // (inside fw-reached and bw-reached => contributes to scc)
       scc_id[k] = pivot;
@@ -47,7 +51,9 @@ backward_search(part_t const& part, index_t const* bw_head, vertex_t const* bw_c
   // normalise scc_id to minimum vertex in scc
   min_u = mpi_basic::allreduce_single(min_u, mpi_basic::min);
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] == pivot) { scc_id[k] = min_u; }
+    if (scc_id[k] == pivot) {
+      scc_id[k] = min_u;
+    }
   }
 
   return decided_count;

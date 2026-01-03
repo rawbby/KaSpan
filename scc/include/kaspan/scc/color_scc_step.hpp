@@ -16,7 +16,9 @@ void
 color_scc_init_label(part_t const& part, vertex_t* colors)
 {
   auto const local_n = part.local_n();
-  for (vertex_t k = 0; k < local_n; ++k) { colors[k] = part.to_global(k); }
+  for (vertex_t k = 0; k < local_n; ++k) {
+    colors[k] = part.to_global(k);
+  }
 }
 
 template<world_part_concept part_t>
@@ -40,7 +42,9 @@ color_scc_step(part_t const&   part,
   // Validate decided_count is consistent with scc_id
   vertex_t actual_decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] != scc_id_undecided) { ++actual_decided_count; }
+    if (scc_id[k] != scc_id_undecided) {
+      ++actual_decided_count;
+    }
   }
   DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
 #endif
@@ -53,7 +57,9 @@ color_scc_step(part_t const&   part,
   {
     active.fill_cmp(local_n, scc_id, scc_id_undecided);
     std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
-    active.for_each(local_n, [&](auto&& k) { active_stack.push(k); });
+    active.for_each(local_n, [&](auto&& k) {
+      active_stack.push(k);
+    });
 
     while (true) {
       while (not active_stack.empty()) {
@@ -80,12 +86,16 @@ color_scc_step(part_t const&   part,
       changed.for_each(local_n, [&](auto&& k) {
         auto const label_k = colors[k];
         for (auto v : csr_range(fw_head, fw_csr, k)) {
-          if (label_k < v and not part.has_local(v)) { frontier.push(part.world_rank_of(v), { v, label_k }); }
+          if (label_k < v and not part.has_local(v)) {
+            frontier.push(part.world_rank_of(v), { v, label_k });
+          }
         }
       });
       changed.clear(local_n);
 
-      if (not frontier.comm(part)) { break; }
+      if (not frontier.comm(part)) {
+        break;
+      }
 
       while (frontier.has_next()) {
         auto const [u, label] = frontier.next();
@@ -148,12 +158,16 @@ color_scc_step(part_t const&   part,
       changed.for_each(local_n, [&](auto&& k) {
         auto const pivot = colors[k];
         for (auto v : csr_range(bw_head, bw_csr, k)) {
-          if (not part.has_local(v)) { frontier.push(part.world_rank_of(v), { v, pivot }); }
+          if (not part.has_local(v)) {
+            frontier.push(part.world_rank_of(v), { v, pivot });
+          }
         }
       });
       changed.clear(local_n);
 
-      if (not frontier.comm(part)) { break; }
+      if (not frontier.comm(part)) {
+        break;
+      }
 
       while (frontier.has_next()) {
         auto const [u, pivot] = frontier.next();

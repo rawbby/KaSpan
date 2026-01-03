@@ -2,9 +2,7 @@
 
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief Wait for an MPI request to complete.
@@ -16,6 +14,4 @@ wait(MPI_Request request)
   MPI_Wait(&request, MPI_STATUS_IGNORE);
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

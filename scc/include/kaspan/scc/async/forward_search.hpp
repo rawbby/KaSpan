@@ -5,9 +5,7 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/graph.hpp>
 
-namespace kaspan {
-
-namespace async {
+namespace kaspan::async {
 
 template<world_part_concept part_t, typename brief_queue_t>
 auto
@@ -65,12 +63,12 @@ forward_search(part_t const&   part,
     }
 
     mq.poll_throttled(on_message);
-    if (active_stack.empty() and mq.terminate(on_message)) { break; }
+    if (active_stack.empty() and mq.terminate(on_message)) {
+      break;
+    }
   }
 
   return 0;
 }
 
-} // namespace async
-
-} // namespace kaspan
+} // namespace kaspan::async

@@ -13,7 +13,9 @@ representing_bytes(u64 max_val) -> u8
 {
   constexpr auto one = static_cast<u64>(1);
   for (u8 bytes = 1; bytes < 8; ++bytes) {
-    if (max_val < one << (bytes * 8)) { return bytes; }
+    if (max_val < one << (bytes * 8)) {
+      return bytes;
+    }
   }
   return 8;
 }
@@ -63,7 +65,10 @@ public:
     return *this;
   }
 
-  [[nodiscard]] auto data() const noexcept -> void* { return data_; }
+  [[nodiscard]] auto data() const noexcept -> void*
+  {
+    return data_;
+  }
 
 protected:
   void* data_ = nullptr;

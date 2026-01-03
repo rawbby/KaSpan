@@ -34,6 +34,8 @@ main(int argc, char** argv)
       ASSERT_IN_RANGE(*it, 0, graph.n);
       min_u = std::min(min_u, *it);
     }
-    for (auto it = beg; it < end; ++it) { ASSERT_EQ(ispan_scc_id[*it], min_u); }
+    for (auto it = beg; it < end; ++it) {
+      ASSERT_EQ(ispan_scc_id[*it], min_u);
+    }
   });
 }

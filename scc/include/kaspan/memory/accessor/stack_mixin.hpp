@@ -14,11 +14,20 @@ template<typename Derived, typename T>
 class stack_mixin
 {
 public:
-  [[nodiscard]] auto operator[](size_t index) -> T& { return derived()->data()[index]; }
+  [[nodiscard]] auto operator[](size_t index) -> T&
+  {
+    return derived()->data()[index];
+  }
 
-  [[nodiscard]] auto operator[](size_t index) const -> T const& { return derived()->data()[index]; }
+  [[nodiscard]] auto operator[](size_t index) const -> T const&
+  {
+    return derived()->data()[index];
+  }
 
-  void clear() { derived()->set_size(0); }
+  void clear()
+  {
+    derived()->set_size(0);
+  }
 
   void push(T const& t) noexcept
   {
@@ -48,15 +57,24 @@ public:
     derived()->set_size(derived()->size() - 1);
   }
 
-  [[nodiscard]] auto empty() const -> bool { return derived()->size() == static_cast<u64>(0); }
+  [[nodiscard]] auto empty() const -> bool
+  {
+    return derived()->size() == static_cast<u64>(0);
+  }
 
 protected:
   ~stack_mixin() = default;
 
 private:
-  auto derived() -> Derived* { return static_cast<Derived*>(this); }
+  auto derived() -> Derived*
+  {
+    return static_cast<Derived*>(this);
+  }
 
-  [[nodiscard]] auto derived() const -> Derived const* { return static_cast<Derived const*>(this); }
+  [[nodiscard]] auto derived() const -> Derived const*
+  {
+    return static_cast<Derived const*>(this);
+  }
 };
 
 } // namespace kaspan

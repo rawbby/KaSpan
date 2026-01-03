@@ -34,19 +34,36 @@ public:
   auto operator=(array const&) -> array& = delete;
   auto operator=(array&& rhs) noexcept -> array&
   {
-    if (this != &rhs) { buffer::operator=(std::move(rhs)); }
+    if (this != &rhs) {
+      buffer::operator=(std::move(rhs));
+    }
     return *this;
   }
 
-  [[nodiscard]] auto operator*() const noexcept -> T& { return *data(); }
+  [[nodiscard]] auto operator*() const noexcept -> T&
+  {
+    return *data();
+  }
 
-  [[nodiscard]] auto operator->() const noexcept -> T* { return data(); }
+  [[nodiscard]] auto operator->() const noexcept -> T*
+  {
+    return data();
+  }
 
-  [[nodiscard]] auto operator[](u64 idx) const noexcept -> T& { return data()[idx]; }
+  [[nodiscard]] auto operator[](u64 idx) const noexcept -> T&
+  {
+    return data()[idx];
+  }
 
-  [[nodiscard]] auto operator+(std::ptrdiff_t offset) const noexcept -> T* { return data() + offset; }
+  [[nodiscard]] auto operator+(std::ptrdiff_t offset) const noexcept -> T*
+  {
+    return data() + offset;
+  }
 
-  [[nodiscard]] auto operator-(std::ptrdiff_t offset) const noexcept -> T* { return data() - offset; }
+  [[nodiscard]] auto operator-(std::ptrdiff_t offset) const noexcept -> T*
+  {
+    return data() - offset;
+  }
 
   auto operator+=(std::ptrdiff_t offset) noexcept -> array&
   {
@@ -86,35 +103,80 @@ public:
     return tmp;
   }
 
-  [[nodiscard]] friend auto operator==(array const& lhs, array const& rhs) noexcept -> bool { return lhs.data() == rhs.data(); }
+  [[nodiscard]] friend auto operator==(array const& lhs, array const& rhs) noexcept -> bool
+  {
+    return lhs.data() == rhs.data();
+  }
 
-  [[nodiscard]] friend auto operator!=(array const& lhs, array const& rhs) noexcept -> bool { return lhs.data() != rhs.data(); }
+  [[nodiscard]] friend auto operator!=(array const& lhs, array const& rhs) noexcept -> bool
+  {
+    return lhs.data() != rhs.data();
+  }
 
-  [[nodiscard]] friend auto operator<(array const& lhs, array const& rhs) noexcept -> bool { return lhs.data() < rhs.data(); }
+  [[nodiscard]] friend auto operator<(array const& lhs, array const& rhs) noexcept -> bool
+  {
+    return lhs.data() < rhs.data();
+  }
 
-  [[nodiscard]] friend auto operator<=(array const& lhs, array const& rhs) noexcept -> bool { return lhs.data() <= rhs.data(); }
+  [[nodiscard]] friend auto operator<=(array const& lhs, array const& rhs) noexcept -> bool
+  {
+    return lhs.data() <= rhs.data();
+  }
 
-  [[nodiscard]] friend auto operator>(array const& lhs, array const& rhs) noexcept -> bool { return lhs.data() > rhs.data(); }
+  [[nodiscard]] friend auto operator>(array const& lhs, array const& rhs) noexcept -> bool
+  {
+    return lhs.data() > rhs.data();
+  }
 
-  [[nodiscard]] friend auto operator>=(array const& lhs, array const& rhs) noexcept -> bool { return lhs.data() >= rhs.data(); }
+  [[nodiscard]] friend auto operator>=(array const& lhs, array const& rhs) noexcept -> bool
+  {
+    return lhs.data() >= rhs.data();
+  }
 
-  [[nodiscard]] friend auto operator==(array const& arr, std::nullptr_t) noexcept -> bool { return arr.data() == nullptr; }
+  [[nodiscard]] friend auto operator==(array const& arr, std::nullptr_t) noexcept -> bool
+  {
+    return arr.data() == nullptr;
+  }
 
-  [[nodiscard]] friend auto operator==(std::nullptr_t, array const& arr) noexcept -> bool { return arr.data() == nullptr; }
+  [[nodiscard]] friend auto operator==(std::nullptr_t, array const& arr) noexcept -> bool
+  {
+    return arr.data() == nullptr;
+  }
 
-  [[nodiscard]] friend auto operator!=(array const& arr, std::nullptr_t) noexcept -> bool { return arr.data() != nullptr; }
+  [[nodiscard]] friend auto operator!=(array const& arr, std::nullptr_t) noexcept -> bool
+  {
+    return arr.data() != nullptr;
+  }
 
-  [[nodiscard]] friend auto operator!=(std::nullptr_t, array const& arr) noexcept -> bool { return arr.data() != nullptr; }
+  [[nodiscard]] friend auto operator!=(std::nullptr_t, array const& arr) noexcept -> bool
+  {
+    return arr.data() != nullptr;
+  }
 
-  [[nodiscard]] friend auto operator+(std::ptrdiff_t offset, array const& arr) noexcept -> T* { return arr.data() + offset; }
+  [[nodiscard]] friend auto operator+(std::ptrdiff_t offset, array const& arr) noexcept -> T*
+  {
+    return arr.data() + offset;
+  }
 
-  [[nodiscard]] operator T*() const noexcept { return data(); }
+  [[nodiscard]] explicit operator T*() const noexcept
+  {
+    return data();
+  }
 
-  [[nodiscard]] operator T const*() const noexcept { return data(); }
+  [[nodiscard]] explicit operator T const*() const noexcept
+  {
+    return data();
+  }
 
-  [[nodiscard]] explicit operator bool() const noexcept { return data_ != nullptr; }
+  [[nodiscard]] explicit operator bool() const noexcept
+  {
+    return data_ != nullptr;
+  }
 
-  [[nodiscard]] auto data() const noexcept -> T* { return static_cast<T*>(data_); }
+  [[nodiscard]] auto data() const noexcept -> T*
+  {
+    return static_cast<T*>(data_);
+  }
 };
 
 template<typename T = byte>
@@ -152,7 +214,9 @@ make_array_filled(T const& value, u64 count) noexcept -> array<T>
 {
   auto result = array<T>{ count };
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(result.data(), count * sizeof(T));
-  for (u64 i = 0; i < count; ++i) { std::memcpy(&result[i], &value, sizeof(T)); }
+  for (u64 i = 0; i < count; ++i) {
+    std::memcpy(&result[i], &value, sizeof(T));
+  }
   return result;
 }
 
@@ -163,7 +227,9 @@ borrow_array(void** memory, u64 count) noexcept -> T*
 {
   DEBUG_ASSERT_NE(memory, nullptr);
   DEBUG_ASSERT_GE(count, 0);
-  if (count > 0) { DEBUG_ASSERT_NE(*memory, nullptr); }
+  if (count > 0) {
+    DEBUG_ASSERT_NE(*memory, nullptr);
+  }
 
   DEBUG_ASSERT_EQ(reinterpret_cast<std::uintptr_t>(*memory) % alignof(T), 0);
   DEBUG_ASSERT(is_line_aligned(*memory));
@@ -200,7 +266,9 @@ static auto
 borrow_array_filled(void** memory, T const& value, u64 count) noexcept -> T*
 {
   auto result = borrow_array<T>(memory, count);
-  for (u64 i = 0; i < count; ++i) { std::memcpy(&result[i], &value, sizeof(T)); }
+  for (u64 i = 0; i < count; ++i) {
+    std::memcpy(&result[i], &value, sizeof(T));
+  }
   return result;
 }
 

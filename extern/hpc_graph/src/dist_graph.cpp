@@ -62,7 +62,9 @@ extern bool verbose, debug, verify, output;
 int
 create_graph(graph_gen_data_t* ggi, dist_graph_t* g)
 {
-  if (debug) { printf("Task %d create_graph() start\n", procid); }
+  if (debug) {
+    printf("Task %d create_graph() start\n", procid);
+  }
 
   double elt = 0.0;
   if (verbose) {
@@ -81,21 +83,27 @@ create_graph(graph_gen_data_t* ggi, dist_graph_t* g)
   uint64_t* out_edges       = (uint64_t*)malloc(g->m_local_out * sizeof(uint64_t));
   uint64_t* out_degree_list = (uint64_t*)malloc((g->n_local + 1) * sizeof(uint64_t));
   uint64_t* temp_counts     = (uint64_t*)malloc(g->n_local * sizeof(uint64_t));
-  if (out_edges == NULL || out_degree_list == NULL || temp_counts == NULL) throw_err("create_graph(), unable to allocate out edge storage", procid);
+  if (out_edges == NULL || out_degree_list == NULL || temp_counts == NULL)
+    throw_err("create_graph(), unable to allocate out edge storage", procid);
 
 #pragma omp parallel
   {
 #pragma omp for nowait
-    for (uint64_t i = 0; i < g->n_local + 1; ++i) out_degree_list[i] = 0;
+    for (uint64_t i = 0; i < g->n_local + 1; ++i)
+      out_degree_list[i] = 0;
 #pragma omp for
-    for (uint64_t i = 0; i < g->n_local; ++i) temp_counts[i] = 0;
+    for (uint64_t i = 0; i < g->n_local; ++i)
+      temp_counts[i] = 0;
   }
 
-  for (uint64_t i = 0; i < g->m_local_out * 2; i += 2) ++temp_counts[ggi->gen_edges[i] - g->n_offset];
-  for (uint64_t i = 0; i < g->n_local; ++i) out_degree_list[i + 1] = out_degree_list[i] + temp_counts[i];
+  for (uint64_t i = 0; i < g->m_local_out * 2; i += 2)
+    ++temp_counts[ggi->gen_edges[i] - g->n_offset];
+  for (uint64_t i = 0; i < g->n_local; ++i)
+    out_degree_list[i + 1] = out_degree_list[i] + temp_counts[i];
   memcpy(temp_counts, out_degree_list, g->n_local * sizeof(uint64_t));
 
-  for (uint64_t i = 0; i < g->m_local_out * 2; i += 2) out_edges[temp_counts[ggi->gen_edges[i] - g->n_offset]++] = ggi->gen_edges[i + 1];
+  for (uint64_t i = 0; i < g->m_local_out * 2; i += 2)
+    out_edges[temp_counts[ggi->gen_edges[i] - g->n_offset]++] = ggi->gen_edges[i + 1];
 
   free(ggi->gen_edges);
   g->out_edges       = out_edges;
@@ -103,20 +111,26 @@ create_graph(graph_gen_data_t* ggi, dist_graph_t* g)
 
   uint64_t* in_edges       = (uint64_t*)malloc(g->m_local_in * sizeof(uint64_t));
   uint64_t* in_degree_list = (uint64_t*)malloc((g->n_local + 1) * sizeof(uint64_t));
-  if (in_edges == NULL || in_degree_list == NULL) throw_err("create_graph(), unable to allocate in edge storage\n", procid);
+  if (in_edges == NULL || in_degree_list == NULL)
+    throw_err("create_graph(), unable to allocate in edge storage\n", procid);
 
 #pragma omp parallel
   {
 #pragma omp for nowait
-    for (uint64_t i = 0; i < g->n_local + 1; ++i) in_degree_list[i] = 0;
+    for (uint64_t i = 0; i < g->n_local + 1; ++i)
+      in_degree_list[i] = 0;
 #pragma omp for nowait
-    for (uint64_t i = 0; i < g->n_local; ++i) temp_counts[i] = 0;
+    for (uint64_t i = 0; i < g->n_local; ++i)
+      temp_counts[i] = 0;
   }
 
-  for (uint64_t i = 0; i < g->m_local_in * 2; i += 2) ++temp_counts[ggi->gen_edges_rev[i + 1] - g->n_offset];
-  for (uint64_t i = 0; i < g->n_local; ++i) in_degree_list[i + 1] = in_degree_list[i] + temp_counts[i];
+  for (uint64_t i = 0; i < g->m_local_in * 2; i += 2)
+    ++temp_counts[ggi->gen_edges_rev[i + 1] - g->n_offset];
+  for (uint64_t i = 0; i < g->n_local; ++i)
+    in_degree_list[i + 1] = in_degree_list[i] + temp_counts[i];
   memcpy(temp_counts, in_degree_list, g->n_local * sizeof(uint64_t));
-  for (uint64_t i = 0; i < g->m_local_in * 2; i += 2) in_edges[temp_counts[ggi->gen_edges_rev[i + 1] - g->n_offset]++] = ggi->gen_edges_rev[i];
+  for (uint64_t i = 0; i < g->m_local_in * 2; i += 2)
+    in_edges[temp_counts[ggi->gen_edges_rev[i + 1] - g->n_offset]++] = ggi->gen_edges_rev[i];
 
   free(temp_counts);
   free(ggi->gen_edges_rev);
@@ -124,24 +138,30 @@ create_graph(graph_gen_data_t* ggi, dist_graph_t* g)
   g->in_degree_list = in_degree_list;
 
   g->local_unmap = (uint64_t*)malloc(g->n_local * sizeof(uint64_t));
-  if (g->local_unmap == NULL) throw_err("create_graph(), unable to allocate unmap", procid);
+  if (g->local_unmap == NULL)
+    throw_err("create_graph(), unable to allocate unmap", procid);
 
 #pragma omp parallel for
-  for (uint64_t i = 0; i < g->n_local; ++i) g->local_unmap[i] = i + g->n_offset;
+  for (uint64_t i = 0; i < g->n_local; ++i)
+    g->local_unmap[i] = i + g->n_offset;
 
   if (verbose) {
     elt = omp_get_wtime() - elt;
     printf("Task %d create_graph() %9.6f (s)\n", procid, elt);
   }
 
-  if (debug) { printf("Task %d create_graph() success\n", procid); }
+  if (debug) {
+    printf("Task %d create_graph() success\n", procid);
+  }
   return 0;
 }
 
 int
 create_graph_serial(graph_gen_data_t* ggi, dist_graph_t* g)
 {
-  if (debug) { printf("Task %d create_graph_serial() success\n", procid); }
+  if (debug) {
+    printf("Task %d create_graph_serial() success\n", procid);
+  }
   double elt = 0.0;
   if (verbose) {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -161,40 +181,52 @@ create_graph_serial(graph_gen_data_t* ggi, dist_graph_t* g)
   uint64_t* out_edges       = (uint64_t*)malloc(g->m_local_out * sizeof(uint64_t));
   uint64_t* out_degree_list = (uint64_t*)malloc((g->n_local + 1) * sizeof(uint64_t));
   uint64_t* temp_counts     = (uint64_t*)malloc(g->n_local * sizeof(uint64_t));
-  if (out_edges == NULL || out_degree_list == NULL || temp_counts == NULL) throw_err("create_graph_serial(), unable to allocate out edge storage\n", procid);
+  if (out_edges == NULL || out_degree_list == NULL || temp_counts == NULL)
+    throw_err("create_graph_serial(), unable to allocate out edge storage\n", procid);
 
 #pragma omp parallel
   {
 #pragma omp for nowait
-    for (uint64_t i = 0; i < g->n_local + 1; ++i) out_degree_list[i] = 0;
+    for (uint64_t i = 0; i < g->n_local + 1; ++i)
+      out_degree_list[i] = 0;
 #pragma omp for nowait
-    for (uint64_t i = 0; i < g->n_local; ++i) temp_counts[i] = 0;
+    for (uint64_t i = 0; i < g->n_local; ++i)
+      temp_counts[i] = 0;
   }
 
-  for (uint64_t i = 0; i < g->m_local_out * 2; i += 2) ++temp_counts[ggi->gen_edges[i] - g->n_offset];
-  for (uint64_t i = 0; i < g->n_local; ++i) out_degree_list[i + 1] = out_degree_list[i] + temp_counts[i];
+  for (uint64_t i = 0; i < g->m_local_out * 2; i += 2)
+    ++temp_counts[ggi->gen_edges[i] - g->n_offset];
+  for (uint64_t i = 0; i < g->n_local; ++i)
+    out_degree_list[i + 1] = out_degree_list[i] + temp_counts[i];
   memcpy(temp_counts, out_degree_list, g->n_local * sizeof(uint64_t));
-  for (uint64_t i = 0; i < g->m_local_out * 2; i += 2) out_edges[temp_counts[ggi->gen_edges[i] - (uint64_t)g->n_offset]++] = ggi->gen_edges[i + 1];
+  for (uint64_t i = 0; i < g->m_local_out * 2; i += 2)
+    out_edges[temp_counts[ggi->gen_edges[i] - (uint64_t)g->n_offset]++] = ggi->gen_edges[i + 1];
 
   g->out_edges       = out_edges;
   g->out_degree_list = out_degree_list;
 
   uint64_t* in_edges       = (uint64_t*)malloc(g->m_local_in * sizeof(uint64_t));
   uint64_t* in_degree_list = (uint64_t*)malloc((g->n_local + 1) * sizeof(uint64_t));
-  if (in_edges == NULL || in_degree_list == NULL) throw_err("create_graph_serial(), unable to allocate in edge storage\n", procid);
+  if (in_edges == NULL || in_degree_list == NULL)
+    throw_err("create_graph_serial(), unable to allocate in edge storage\n", procid);
 
 #pragma omp parallel
   {
 #pragma omp for nowait
-    for (uint64_t i = 0; i < g->n_local + 1; ++i) in_degree_list[i] = 0;
+    for (uint64_t i = 0; i < g->n_local + 1; ++i)
+      in_degree_list[i] = 0;
 #pragma omp for nowait
-    for (uint64_t i = 0; i < g->n_local; ++i) temp_counts[i] = 0;
+    for (uint64_t i = 0; i < g->n_local; ++i)
+      temp_counts[i] = 0;
   }
 
-  for (uint64_t i = 0; i < g->m_local_in * 2; i += 2) ++temp_counts[ggi->gen_edges[i + 1] - g->n_offset];
-  for (uint64_t i = 0; i < g->n_local; ++i) in_degree_list[i + 1] = in_degree_list[i] + temp_counts[i];
+  for (uint64_t i = 0; i < g->m_local_in * 2; i += 2)
+    ++temp_counts[ggi->gen_edges[i + 1] - g->n_offset];
+  for (uint64_t i = 0; i < g->n_local; ++i)
+    in_degree_list[i + 1] = in_degree_list[i] + temp_counts[i];
   memcpy(temp_counts, in_degree_list, g->n_local * sizeof(uint64_t));
-  for (uint64_t i = 0; i < g->m_local_in * 2; i += 2) in_edges[temp_counts[ggi->gen_edges[i + 1] - (uint64_t)g->n_offset]++] = ggi->gen_edges[i];
+  for (uint64_t i = 0; i < g->m_local_in * 2; i += 2)
+    in_edges[temp_counts[ggi->gen_edges[i + 1] - (uint64_t)g->n_offset]++] = ggi->gen_edges[i];
 
   free(temp_counts);
   free(ggi->gen_edges);
@@ -202,26 +234,33 @@ create_graph_serial(graph_gen_data_t* ggi, dist_graph_t* g)
   g->in_degree_list = in_degree_list;
 
   g->local_unmap = (uint64_t*)malloc(g->n_local * sizeof(uint64_t));
-  if (g->local_unmap == NULL) throw_err("create_graph(), unable to allocate unmap\n", procid);
+  if (g->local_unmap == NULL)
+    throw_err("create_graph(), unable to allocate unmap\n", procid);
 
-  for (uint64_t i = 0; i < g->n_local; ++i) g->local_unmap[i] = i + g->n_offset;
+  for (uint64_t i = 0; i < g->n_local; ++i)
+    g->local_unmap[i] = i + g->n_offset;
 
   // int64_t total_edges = g->m_local_in + g->m_local_out;
   init_map_nohash(&g->map, g->n);
-  for (uint64_t i = 0; i < g->n_local; ++i) set_value_uq(&g->map, i, i);
+  for (uint64_t i = 0; i < g->n_local; ++i)
+    set_value_uq(&g->map, i, i);
 
   if (verbose) {
     elt = omp_get_wtime() - elt;
     printf("Task %d create_graph_serial() %9.6f (s)\n", procid, elt);
   }
-  if (debug) { printf("Task %d create_graph_serial() success\n", procid); }
+  if (debug) {
+    printf("Task %d create_graph_serial() success\n", procid);
+  }
   return 0;
 }
 
 int
 clear_graph(dist_graph_t* g)
 {
-  if (debug) { printf("Task %d clear_graph() start\n", procid); }
+  if (debug) {
+    printf("Task %d clear_graph() start\n", procid);
+  }
 
   free(g->out_edges);
   free(g->in_edges);
@@ -234,14 +273,18 @@ clear_graph(dist_graph_t* g)
     free(g->ghost_tasks);
   }
 
-  if (debug) { printf("Task %d clear_graph() success\n", procid); }
+  if (debug) {
+    printf("Task %d clear_graph() success\n", procid);
+  }
   return 0;
 }
 
 int
 relabel_edges(dist_graph_t* g)
 {
-  if (debug) { printf("Task %d relabel_edges() start\n", procid); }
+  if (debug) {
+    printf("Task %d relabel_edges() start\n", procid);
+  }
   double elt = 0.0;
   if (verbose) {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -251,7 +294,8 @@ relabel_edges(dist_graph_t* g)
   uint64_t cur_label   = g->n_local;
   uint64_t total_edges = g->m_local_in + g->m_local_out;
 
-  if (is_init(&g->map)) clear_map(&g->map);
+  if (is_init(&g->map))
+    clear_map(&g->map);
   init_map(&g->map, total_edges * 2);
 
   for (uint64_t i = 0; i < g->n_local; ++i) {
@@ -265,7 +309,8 @@ relabel_edges(dist_graph_t* g)
     if (val == NULL_KEY) {
       set_value_uq(&g->map, out, cur_label);
       g->out_edges[i] = cur_label++;
-    } else g->out_edges[i] = val;
+    } else
+      g->out_edges[i] = val;
   }
   for (uint64_t i = 0; i < g->m_local_in; ++i) {
     uint64_t in  = g->in_edges[i];
@@ -273,17 +318,20 @@ relabel_edges(dist_graph_t* g)
     if (val == NULL_KEY) {
       set_value_uq(&g->map, in, cur_label);
       g->in_edges[i] = cur_label++;
-    } else g->in_edges[i] = val;
+    } else
+      g->in_edges[i] = val;
   }
 
   g->n_ghost = (uint64_t)g->map.num_unique;
   g->n_total = g->n_ghost + g->n_local;
 
-  if (debug) printf("Task %d, n_ghost %lu\n", procid, g->n_ghost);
+  if (debug)
+    printf("Task %d, n_ghost %lu\n", procid, g->n_ghost);
 
   g->ghost_unmap = (uint64_t*)malloc(g->n_ghost * sizeof(uint64_t));
   g->ghost_tasks = (uint64_t*)malloc(g->n_ghost * sizeof(uint64_t));
-  if (g->ghost_unmap == NULL || g->ghost_tasks == NULL) throw_err("relabel_edges(), unable to allocate ghost unmaps", procid);
+  if (g->ghost_unmap == NULL || g->ghost_tasks == NULL)
+    throw_err("relabel_edges(), unable to allocate ghost unmaps", procid);
 
   uint64_t n_per_rank = g->n / (uint64_t)nprocs + 1;
 
@@ -301,14 +349,18 @@ relabel_edges(dist_graph_t* g)
     printf(" Task %d relabel_edges() %9.6f (s)\n", procid, elt);
   }
 
-  if (debug) { printf("Task %d relabel_edges() success\n", procid); }
+  if (debug) {
+    printf("Task %d relabel_edges() success\n", procid);
+  }
   return 0;
 }
 
 int
 relabel_edges(dist_graph_t* g, int32_t* global_parts)
 {
-  if (debug) { printf("Task %d relabel_edges() start\n", procid); }
+  if (debug) {
+    printf("Task %d relabel_edges() start\n", procid);
+  }
   double elt = 0.0;
   if (verbose) {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -332,7 +384,8 @@ relabel_edges(dist_graph_t* g, int32_t* global_parts)
     if (val == NULL_KEY) {
       set_value_uq(&g->map, out, cur_label);
       g->out_edges[i] = cur_label++;
-    } else g->out_edges[i] = val;
+    } else
+      g->out_edges[i] = val;
   }
   for (uint64_t i = 0; i < g->m_local_in; ++i) {
     uint64_t in  = g->in_edges[i];
@@ -340,19 +393,22 @@ relabel_edges(dist_graph_t* g, int32_t* global_parts)
     if (val == NULL_KEY) {
       set_value_uq(&g->map, in, cur_label);
       g->in_edges[i] = cur_label++;
-    } else g->in_edges[i] = val;
+    } else
+      g->in_edges[i] = val;
   }
 
   g->n_ghost = (uint64_t)g->map.num_unique;
   g->n_total = g->n_ghost + g->n_local;
 
-  if (debug) printf("Task %d, n_ghost %lu\n", procid, g->n_ghost);
+  if (debug)
+    printf("Task %d, n_ghost %lu\n", procid, g->n_ghost);
 
   free(g->ghost_unmap);
   free(g->ghost_tasks);
   g->ghost_unmap = (uint64_t*)malloc(g->n_ghost * sizeof(uint64_t));
   g->ghost_tasks = (uint64_t*)malloc(g->n_ghost * sizeof(uint64_t));
-  if (g->ghost_unmap == NULL || g->ghost_tasks == NULL) throw_err("relabel_edges(), unable to allocate ghost unmaps", procid);
+  if (g->ghost_unmap == NULL || g->ghost_tasks == NULL)
+    throw_err("relabel_edges(), unable to allocate ghost unmaps", procid);
 
 #pragma omp parallel for
   for (uint64_t i = 0; i < g->n_ghost; ++i) {
@@ -368,14 +424,18 @@ relabel_edges(dist_graph_t* g, int32_t* global_parts)
     printf(" Task %d relabel_edges() %9.6f (s)\n", procid, elt);
   }
 
-  if (debug) { printf("Task %d relabel_edges() success\n", procid); }
+  if (debug) {
+    printf("Task %d relabel_edges() success\n", procid);
+  }
   return 0;
 }
 
 int
 repart_graph(dist_graph_t* g, mpi_data_t* comm, char* part_file)
 {
-  if (debug) { printf("Task %d repart_graph() start\n", procid); }
+  if (debug) {
+    printf("Task %d repart_graph() start\n", procid);
+  }
   double elt = 0.0;
   if (verbose) {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -386,13 +446,15 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, char* part_file)
   int32_t* local_parts  = (int32_t*)malloc(g->n_local * sizeof(int32_t));
 
 #pragma omp parallel for
-  for (uint64_t i = 0; i < g->n; ++i) global_parts[i] = -1;
+  for (uint64_t i = 0; i < g->n; ++i)
+    global_parts[i] = -1;
 
   if (procid == 0) {
     std::ifstream outfile;
     outfile.open(part_file);
 
-    for (uint64_t i = 0; i < g->n; ++i) outfile >> global_parts[i];
+    for (uint64_t i = 0; i < g->n; ++i)
+      outfile >> global_parts[i];
 
     outfile.close();
 
@@ -407,7 +469,8 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, char* part_file)
   MPI_Bcast(global_parts, (int32_t)g->n, MPI_INT32_T, 0, MPI_COMM_WORLD);
 
 #pragma omp parallel for
-  for (uint64_t i = 0; i < g->n_local; ++i) local_parts[i] = global_parts[g->local_unmap[i]];
+  for (uint64_t i = 0; i < g->n_local; ++i)
+    local_parts[i] = global_parts[g->local_unmap[i]];
 
   repart_graph(g, comm, local_parts);
   relabel_edges(g, global_parts);
@@ -424,7 +487,9 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, char* part_file)
     printf("Task %d repart_graph() %9.6f (s)\n", procid, elt);
   }
 
-  if (debug) { printf("Task %d repart_graph() success\n", procid); }
+  if (debug) {
+    printf("Task %d repart_graph() success\n", procid);
+  }
   return 0;
 }
 
@@ -453,26 +518,30 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts)
   uint64_t* recvbuf_vids    = (uint64_t*)malloc(total_recv * sizeof(uint64_t));
   uint64_t* recvbuf_deg_out = (uint64_t*)malloc(total_recv * sizeof(uint64_t));
   uint64_t* recvbuf_deg_in  = (uint64_t*)malloc(total_recv * sizeof(uint64_t));
-  if (recvbuf_vids == NULL || recvbuf_deg_out == NULL || recvbuf_deg_in == NULL) throw_err("repart_graph(), unable to allocate buffers\n", procid);
+  if (recvbuf_vids == NULL || recvbuf_deg_out == NULL || recvbuf_deg_in == NULL)
+    throw_err("repart_graph(), unable to allocate buffers\n", procid);
 
   uint64_t max_transfer = total_send > total_recv ? total_send : total_recv;
   uint64_t num_comms    = max_transfer / (uint64_t)(MAX_SEND_SIZE / (g->m / g->n)) + 1;
   MPI_Allreduce(MPI_IN_PLACE, &num_comms, 1, MPI_UINT64_T, MPI_MAX, MPI_COMM_WORLD);
 
-  if (debug) printf("Task %d repart_graph() num_comms %lu total_send %lu total_recv %lu\n", procid, num_comms, total_send, total_recv);
+  if (debug)
+    printf("Task %d repart_graph() num_comms %lu total_send %lu total_recv %lu\n", procid, num_comms, total_send, total_recv);
 
   uint64_t sum_recv_deg = 0;
   for (uint64_t c = 0; c < num_comms; ++c) {
     uint64_t send_begin = (g->n_local * c) / num_comms;
     uint64_t send_end   = (g->n_local * (c + 1)) / num_comms;
-    if (c == (num_comms - 1)) send_end = g->n_local;
+    if (c == (num_comms - 1))
+      send_end = g->n_local;
 
     for (int32_t i = 0; i < nprocs; ++i) {
       comm->sendcounts[i] = 0;
       comm->recvcounts[i] = 0;
     }
 
-    if (debug) printf("Task %d send_begin %lu send_end %lu\n", procid, send_begin, send_end);
+    if (debug)
+      printf("Task %d send_begin %lu send_end %lu\n", procid, send_begin, send_end);
     for (uint64_t i = send_begin; i < send_end; ++i) {
       int32_t rank = local_parts[i];
       ++comm->sendcounts[rank];
@@ -494,7 +563,8 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts)
     uint64_t* sendbuf_vids    = (uint64_t*)malloc((uint64_t)cur_send * sizeof(uint64_t));
     uint64_t* sendbuf_deg_out = (uint64_t*)malloc((uint64_t)cur_send * sizeof(uint64_t));
     uint64_t* sendbuf_deg_in  = (uint64_t*)malloc((uint64_t)cur_send * sizeof(uint64_t));
-    if (sendbuf_vids == NULL || sendbuf_deg_out == NULL || sendbuf_deg_in == NULL) throw_err("repart_graph(), unable to allocate buffers\n", procid);
+    if (sendbuf_vids == NULL || sendbuf_deg_out == NULL || sendbuf_deg_in == NULL)
+      throw_err("repart_graph(), unable to allocate buffers\n", procid);
 
     for (uint64_t i = send_begin; i < send_end; ++i) {
       int32_t rank               = local_parts[i];
@@ -533,20 +603,23 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts)
   }
 
   uint64_t* recvbuf_e_out = (uint64_t*)malloc(total_recv * sizeof(uint64_t));
-  if (recvbuf_e_out == NULL) throw_err("repart_graph(), unable to allocate buffer\n", procid);
+  if (recvbuf_e_out == NULL)
+    throw_err("repart_graph(), unable to allocate buffer\n", procid);
 
   // max_transfer = total_send > total_recv ? total_send : total_recv;
   // num_comms = max_transfer / (uint64_t)MAX_SEND_SIZE + 1;
   // MPI_Allreduce(MPI_IN_PLACE, &num_comms, 1,
   //               MPI_UINT64_T, MPI_MAX, MPI_COMM_WORLD);
 
-  if (debug) printf("Task %d repart_graph() num_comms %lu total_send %lu total_recv %lu\n", procid, num_comms, total_send, total_recv);
+  if (debug)
+    printf("Task %d repart_graph() num_comms %lu total_send %lu total_recv %lu\n", procid, num_comms, total_send, total_recv);
 
   uint64_t sum_recv_e_out = 0;
   for (uint64_t c = 0; c < num_comms; ++c) {
     uint64_t send_begin = (g->n_local * c) / num_comms;
     uint64_t send_end   = (g->n_local * (c + 1)) / num_comms;
-    if (c == (num_comms - 1)) send_end = g->n_local;
+    if (c == (num_comms - 1))
+      send_end = g->n_local;
 
     for (int32_t i = 0; i < nprocs; ++i) {
       comm->sendcounts[i] = 0;
@@ -572,7 +645,8 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts)
     int32_t   cur_send      = comm->sdispls[nprocs - 1] + comm->sendcounts[nprocs - 1];
     int32_t   cur_recv      = comm->rdispls[nprocs - 1] + comm->recvcounts[nprocs - 1];
     uint64_t* sendbuf_e_out = (uint64_t*)malloc((uint64_t)cur_send * sizeof(uint64_t));
-    if (sendbuf_e_out == NULL) throw_err("repart_graph(), unable to allocate buffer\n", procid);
+    if (sendbuf_e_out == NULL)
+      throw_err("repart_graph(), unable to allocate buffer\n", procid);
 
     for (uint64_t i = send_begin; i < send_end; ++i) {
       uint64_t  out_degree = out_degree(g, i);
@@ -582,8 +656,10 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts)
       comm->sdispls_cpy[rank] += out_degree;
       for (uint64_t j = 0; j < out_degree; ++j) {
         uint64_t out;
-        if (outs[j] < g->n_local) out = g->local_unmap[outs[j]];
-        else out = g->ghost_unmap[outs[j] - g->n_local];
+        if (outs[j] < g->n_local)
+          out = g->local_unmap[outs[j]];
+        else
+          out = g->ghost_unmap[outs[j] - g->n_local];
         sendbuf_e_out[snd_index++] = out;
       }
     }
@@ -599,7 +675,8 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts)
   g->m_local_out        = (uint64_t)sum_recv_e_out;
   g->out_degree_list    = (uint64_t*)malloc((sum_recv_deg + 1) * sizeof(uint64_t));
   g->out_degree_list[0] = 0;
-  for (uint64_t i = 0; i < sum_recv_deg; ++i) g->out_degree_list[i + 1] = g->out_degree_list[i] + recvbuf_deg_out[i];
+  for (uint64_t i = 0; i < sum_recv_deg; ++i)
+    g->out_degree_list[i + 1] = g->out_degree_list[i] + recvbuf_deg_out[i];
   assert(g->out_degree_list[sum_recv_deg] == g->m_local_out);
   free(recvbuf_deg_out);
 
@@ -623,20 +700,23 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts)
   }
 
   uint64_t* recvbuf_e_in = (uint64_t*)malloc(total_recv * sizeof(uint64_t));
-  if (recvbuf_e_in == NULL) throw_err("repart_graph(), unable to allocate buffer\n", procid);
+  if (recvbuf_e_in == NULL)
+    throw_err("repart_graph(), unable to allocate buffer\n", procid);
 
   // max_transfer = total_send > total_recv ? total_send : total_recv;
   // num_comms = max_transfer / (uint64_t)MAX_SEND_SIZE + 1;
   // MPI_Allreduce(MPI_IN_PLACE, &num_comms, 1,
   //               MPI_UINT64_T, MPI_MAX, MPI_COMM_WORLD);
 
-  if (debug) printf("Task %d repart_graph() num_comms %lu total_send %lu total_recv %lu\n", procid, num_comms, total_send, total_recv);
+  if (debug)
+    printf("Task %d repart_graph() num_comms %lu total_send %lu total_recv %lu\n", procid, num_comms, total_send, total_recv);
 
   uint64_t sum_recv_e_in = 0;
   for (uint64_t c = 0; c < num_comms; ++c) {
     uint64_t send_begin = (g->n_local * c) / num_comms;
     uint64_t send_end   = (g->n_local * (c + 1)) / num_comms;
-    if (c == (num_comms - 1)) send_end = g->n_local;
+    if (c == (num_comms - 1))
+      send_end = g->n_local;
 
     for (int32_t i = 0; i < nprocs; ++i) {
       comm->sendcounts[i] = 0;
@@ -662,7 +742,8 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts)
     int32_t   cur_send     = comm->sdispls[nprocs - 1] + comm->sendcounts[nprocs - 1];
     int32_t   cur_recv     = comm->rdispls[nprocs - 1] + comm->recvcounts[nprocs - 1];
     uint64_t* sendbuf_e_in = (uint64_t*)malloc((uint64_t)cur_send * sizeof(uint64_t));
-    if (sendbuf_e_in == NULL) throw_err("repart_graph(), unable to allocate buffer\n", procid);
+    if (sendbuf_e_in == NULL)
+      throw_err("repart_graph(), unable to allocate buffer\n", procid);
 
     for (uint64_t i = send_begin; i < send_end; ++i) {
       uint64_t  in_degree = in_degree(g, i);
@@ -672,8 +753,10 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts)
       comm->sdispls_cpy[rank] += in_degree;
       for (uint32_t j = 0; j < in_degree; ++j) {
         uint64_t in;
-        if (ins[j] < g->n_local) in = g->local_unmap[ins[j]];
-        else in = g->ghost_unmap[ins[j] - g->n_local];
+        if (ins[j] < g->n_local)
+          in = g->local_unmap[ins[j]];
+        else
+          in = g->ghost_unmap[ins[j] - g->n_local];
         sendbuf_e_in[snd_index++] = in;
       }
     }
@@ -689,13 +772,15 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts)
   g->m_local_in        = (uint64_t)sum_recv_e_in;
   g->in_degree_list    = (uint64_t*)malloc((sum_recv_deg + 1) * sizeof(uint64_t));
   g->in_degree_list[0] = 0;
-  for (uint64_t i = 0; i < sum_recv_deg; ++i) g->in_degree_list[i + 1] = g->in_degree_list[i] + recvbuf_deg_in[i];
+  for (uint64_t i = 0; i < sum_recv_deg; ++i)
+    g->in_degree_list[i + 1] = g->in_degree_list[i] + recvbuf_deg_in[i];
   assert(g->in_degree_list[sum_recv_deg] == g->m_local_in);
   free(recvbuf_deg_in);
 
   free(g->local_unmap);
   g->local_unmap = (uint64_t*)malloc(sum_recv_deg * sizeof(uint64_t));
-  for (uint64_t i = 0; i < sum_recv_deg; ++i) g->local_unmap[i] = recvbuf_vids[i];
+  for (uint64_t i = 0; i < sum_recv_deg; ++i)
+    g->local_unmap[i] = recvbuf_vids[i];
   free(recvbuf_vids);
 
   g->n_local = sum_recv_deg;
@@ -704,7 +789,9 @@ repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts)
 int
 get_max_degree_vert(dist_graph_t* g)
 {
-  if (debug) { printf("Task %d get_max_degree_vert() start\n", procid); }
+  if (debug) {
+    printf("Task %d get_max_degree_vert() start\n", procid);
+  }
   double elt = 0.0;
   if (verbose) {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -723,8 +810,10 @@ get_max_degree_vert(dist_graph_t* g)
       my_max_degree = this_degree;
       my_max_vert   = g->local_unmap[i];
     }
-    if (out_degree > my_max_out_degree) my_max_out_degree = out_degree;
-    if (in_degree > my_max_in_degree) my_max_in_degree = in_degree;
+    if (out_degree > my_max_out_degree)
+      my_max_out_degree = out_degree;
+    if (in_degree > my_max_in_degree)
+      my_max_in_degree = in_degree;
   }
 
   uint64_t max_in_degree;
@@ -735,8 +824,10 @@ get_max_degree_vert(dist_graph_t* g)
   MPI_Allreduce(&my_max_out_degree, &max_out_degree, 1, MPI_UINT64_T, MPI_MAX, MPI_COMM_WORLD);
   MPI_Allreduce(&my_max_in_degree, &max_in_degree, 1, MPI_UINT64_T, MPI_MAX, MPI_COMM_WORLD);
   MPI_Allreduce(&my_max_degree, &max_degree, 1, MPI_UINT64_T, MPI_MAX, MPI_COMM_WORLD);
-  if (my_max_degree == max_degree) max_vert = my_max_vert;
-  else max_vert = NULL_KEY;
+  if (my_max_degree == max_degree)
+    max_vert = my_max_vert;
+  else
+    max_vert = NULL_KEY;
   MPI_Allreduce(MPI_IN_PLACE, &max_vert, 1, MPI_UINT64_T, MPI_MIN, MPI_COMM_WORLD);
 
   g->max_degree_vert = max_vert;
@@ -748,6 +839,8 @@ get_max_degree_vert(dist_graph_t* g)
     printf("Task %d, max_degree %lu, max_vert %lu, max_in_degree %lu, max_out_degree %lu, %f (s)\n", procid, max_degree, max_vert, max_in_degree, max_out_degree, elt);
   }
 
-  if (debug) { printf("Task %d get_max_degree_vert() success\n", procid); }
+  if (debug) {
+    printf("Task %d get_max_degree_vert() success\n", procid);
+  }
   return 0;
 }

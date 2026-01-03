@@ -47,7 +47,9 @@ public:
   auto operator=(file_buffer&& rhs) noexcept -> file_buffer&
   {
     if (this != &rhs) {
-      if (data_ != nullptr) { munmap(data_, size_); }
+      if (data_ != nullptr) {
+        munmap(data_, size_);
+      }
       data_     = rhs.data_;
       size_     = rhs.size_;
       rhs.data_ = nullptr;
@@ -58,7 +60,9 @@ public:
 
   [[nodiscard]] static auto create_r(char const* file, size_t byte_size) -> file_buffer
   {
-    if (byte_size == 0) { return file_buffer{}; }
+    if (byte_size == 0) {
+      return file_buffer{};
+    }
 
     auto const fd = open(file, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
     ASSERT(fd != -1);
@@ -78,10 +82,14 @@ public:
   template<bool allocate = false>
   [[nodiscard]] static auto create_w(char const* file, size_t size) -> file_buffer
   {
-    if (size == 0) { return file_buffer{}; }
+    if (size == 0) {
+      return file_buffer{};
+    }
 
     auto const fd = [file] {
-      if (allocate) { return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW | O_CREAT | O_EXCL, 0600); }
+      if (allocate) {
+        return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW | O_CREAT | O_EXCL, 0600);
+      }
       return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
     }();
     ASSERT(fd != -1);
@@ -105,10 +113,14 @@ public:
   template<bool allocate = false>
   [[nodiscard]] static auto create_rw(char const* file, size_t byte_size) -> file_buffer
   {
-    if (byte_size == 0) { return file_buffer{}; }
+    if (byte_size == 0) {
+      return file_buffer{};
+    }
 
     auto const fd = [file] {
-      if (allocate) { return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW | O_CREAT | O_EXCL, 0600); }
+      if (allocate) {
+        return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW | O_CREAT | O_EXCL, 0600);
+      }
       return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
     }();
     ASSERT(fd != -1);
@@ -129,7 +141,10 @@ public:
     return file_buffer{ data, byte_size };
   }
 
-  [[nodiscard]] auto data() const -> void* { return data_; }
+  [[nodiscard]] auto data() const -> void*
+  {
+    return data_;
+  }
 
 private:
   void*  data_ = nullptr;

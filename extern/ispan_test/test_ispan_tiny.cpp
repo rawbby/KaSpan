@@ -83,7 +83,8 @@ main(int argc, char** argv)
   if (mpi_basic::world_rank == 0) {
     std::println("scc_id_orig:  0 1 0 1 1 5 5");
     std::print("scc_id_ispan:");
-    for (size_t i = 0; i < n; ++i) std::print(" {}", scc_id[i]);
+    for (size_t i = 0; i < n; ++i)
+      std::print(" {}", scc_id[i]);
     std::println();
   }
 

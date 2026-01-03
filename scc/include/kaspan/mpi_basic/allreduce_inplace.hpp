@@ -4,9 +4,7 @@
 #include <kaspan/util/arithmetic.hpp>
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief In-place all-reduce for a buffer of typed elements.
@@ -60,6 +58,4 @@ allreduce_inplace(T& send_value, MPI_Count send_count, MPI_Datatype datatype, MP
   MPI_Allreduce_c(MPI_IN_PLACE, &send_value, send_count, datatype, op, MPI_COMM_WORLD);
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

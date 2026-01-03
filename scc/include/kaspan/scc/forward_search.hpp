@@ -20,7 +20,9 @@ forward_search(part_t const& part, index_t const* fw_head, vertex_t const* fw_cs
       DEBUG_ASSERT(part.has_local(u));
       auto const k = part.to_local(u);
 
-      if (fw_reached.get(k) or scc_id[k] != scc_id_undecided) { continue; }
+      if (fw_reached.get(k) or scc_id[k] != scc_id_undecided) {
+        continue;
+      }
 
       fw_reached.set(k);
 

@@ -44,13 +44,25 @@ public:
     return dense_unsigned_accessor{ memory, element_byte_size, endian };
   }
 
-  auto data() -> std::byte* { return static_cast<std::byte*>(data_); }
+  auto data() -> std::byte*
+  {
+    return static_cast<std::byte*>(data_);
+  }
 
-  [[nodiscard]] auto data() const -> std::byte const* { return static_cast<std::byte const*>(data_); }
+  [[nodiscard]] auto data() const -> std::byte const*
+  {
+    return static_cast<std::byte const*>(data_);
+  }
 
-  [[nodiscard]] auto element_bytes() const -> u8 { return element_byte_size_; }
+  [[nodiscard]] auto element_bytes() const -> u8
+  {
+    return element_byte_size_;
+  }
 
-  [[nodiscard]] auto endian() const -> std::endian { return endian_; }
+  [[nodiscard]] auto endian() const -> std::endian
+  {
+    return endian_;
+  }
 
 private:
   void*       data_;

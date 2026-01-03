@@ -5,9 +5,7 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/graph.hpp>
 
-namespace kaspan {
-
-namespace async {
+namespace kaspan::async {
 
 template<world_part_concept part_t, typename brief_queue_t>
 auto
@@ -29,7 +27,9 @@ color_scc_step(part_t const&   part,
   // Validate decided_count is consistent with scc_id
   vertex_t actual_decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] != scc_id_undecided) { ++actual_decided_count; }
+    if (scc_id[k] != scc_id_undecided) {
+      ++actual_decided_count;
+    }
   }
   DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
 #endif
@@ -55,7 +55,9 @@ color_scc_step(part_t const&   part,
     };
 
     active.fill_cmp(local_n, scc_id, scc_id_undecided);
-    active.for_each(local_n, [&](auto&& k) { active_stack.push(k); });
+    active.for_each(local_n, [&](auto&& k) {
+      active_stack.push(k);
+    });
 
     mpi_basic::barrier();
     mq.reactivate();
@@ -85,7 +87,9 @@ color_scc_step(part_t const&   part,
       }
 
       mq.poll_throttled(on_message);
-      if (active_stack.empty() and mq.terminate(on_message)) { break; }
+      if (active_stack.empty() and mq.terminate(on_message)) {
+        break;
+      }
     }
   }
 
@@ -150,13 +154,13 @@ color_scc_step(part_t const&   part,
       }
 
       mq.poll_throttled(on_message);
-      if (active_stack.empty() and mq.terminate(on_message)) { break; }
+      if (active_stack.empty() and mq.terminate(on_message)) {
+        break;
+      }
     }
   }
 
   return local_decided_count;
 }
 
-} // namespace async
-
-} // namespace kaspan
+} // namespace kaspan::async

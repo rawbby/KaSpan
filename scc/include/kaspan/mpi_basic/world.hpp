@@ -3,9 +3,7 @@
 #include <kaspan/util/arithmetic.hpp>
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief The default communicator used by mpi_basic.
@@ -27,6 +25,4 @@ inline i32 world_rank = 0;
  */
 inline i32 world_size = 1;
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

@@ -25,14 +25,18 @@ parse_kv_map(std::filesystem::path const& file) -> result<std::unordered_map<std
 
   std::string line;
   while (std::getline(in, line)) {
-    if (line.empty() || line[0] == '%') { continue; }
+    if (line.empty() || line[0] == '%') {
+      continue;
+    }
 
     auto const key_end = line.find(' ');
     RESULT_ASSERT(key_end != std::string::npos, DESERIALIZE_ERROR);
 
     // skip spaces after key to get the start of the value
     size_t value_start = key_end;
-    while (value_start < line.size() && line[value_start] == ' ') { ++value_start; }
+    while (value_start < line.size() && line[value_start] == ' ') {
+      ++value_start;
+    }
 
     auto const key   = line.substr(0, key_end);
     auto const value = value_start < line.size() ? line.substr(value_start) : std::string{};
@@ -349,7 +353,9 @@ load_graph_part_from_manifest(part_t const& part, manifest const& manifest) -> l
     auto const begin  = fw_head_access.get(index);
     auto const end    = fw_head_access.get(index + 1);
     result.fw_head[k] = pos;
-    for (auto it = begin; it != end; ++it) { result.fw_csr[pos++] = fw_csr_access.get(it); }
+    for (auto it = begin; it != end; ++it) {
+      result.fw_csr[pos++] = fw_csr_access.get(it);
+    }
   }
   result.fw_head[local_n] = pos;
 
@@ -359,7 +365,9 @@ load_graph_part_from_manifest(part_t const& part, manifest const& manifest) -> l
     auto const begin  = bw_head_access.get(index);
     auto const end    = bw_head_access.get(index + 1);
     result.bw_head[k] = pos;
-    for (auto it = begin; it != end; ++it) { result.bw_csr[pos++] = bw_csr_access.get(it); }
+    for (auto it = begin; it != end; ++it) {
+      result.bw_csr[pos++] = bw_csr_access.get(it);
+    }
   }
   result.bw_head[local_n] = pos;
 

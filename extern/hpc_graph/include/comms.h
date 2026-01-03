@@ -213,7 +213,8 @@ exchange_verts(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q)
   for (uint64_t c = 0; c < num_comms; ++c) {
     uint64_t send_begin = (q->send_size * c) / num_comms;
     uint64_t send_end   = (q->send_size * (c + 1)) / num_comms;
-    if (c == (num_comms - 1)) send_end = q->send_size;
+    if (c == (num_comms - 1))
+      send_end = q->send_size;
 
     for (int32_t i = 0; i < nprocs; ++i) {
       comm->sendcounts[i] = 0;
@@ -239,7 +240,8 @@ exchange_verts(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q)
     int32_t cur_send   = comm->sdispls[nprocs - 1] + comm->sendcounts[nprocs - 1];
     int32_t cur_recv   = comm->rdispls[nprocs - 1] + comm->recvcounts[nprocs - 1];
     comm->sendbuf_vert = (uint64_t*)malloc((uint64_t)(cur_send + 1) * sizeof(uint64_t));
-    if (comm->sendbuf_vert == NULL) throw_err("exchange_verts(), unable to allocate comm buffers", procid);
+    if (comm->sendbuf_vert == NULL)
+      throw_err("exchange_verts(), unable to allocate comm buffers", procid);
 
     for (uint64_t i = send_begin; i < send_end; ++i) {
       uint64_t ghost_index                                = q->queue_send[i] - g->n_local;
@@ -265,17 +267,20 @@ exchange_verts(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q)
 inline void
 exchange_vert_data(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q)
 {
-  for (int32_t i = 0; i < nprocs; ++i) comm->recvcounts_temp[i] = 0;
+  for (int32_t i = 0; i < nprocs; ++i)
+    comm->recvcounts_temp[i] = 0;
 
   MPI_Alltoall(comm->sendcounts_temp, 1, MPI_UINT64_T, comm->recvcounts_temp, 1, MPI_UINT64_T, MPI_COMM_WORLD);
 
   comm->total_recv = 0;
-  for (int i = 0; i < nprocs; ++i) comm->total_recv += comm->recvcounts_temp[i];
+  for (int i = 0; i < nprocs; ++i)
+    comm->total_recv += comm->recvcounts_temp[i];
 
   comm->recvbuf_vert     = (uint64_t*)malloc(comm->total_recv * sizeof(uint64_t));
   comm->recvbuf_data     = (uint64_t*)malloc(comm->total_recv * sizeof(uint64_t));
   comm->recvbuf_data_flt = NULL;
-  if (comm->recvbuf_vert == NULL || comm->recvbuf_data == NULL) throw_err("exchange_vert_data() unable to allocate comm buffers", procid);
+  if (comm->recvbuf_vert == NULL || comm->recvbuf_data == NULL)
+    throw_err("exchange_vert_data() unable to allocate comm buffers", procid);
 
   comm->global_queue_size  = 0;
   uint64_t task_queue_size = comm->total_send;
@@ -288,7 +293,8 @@ exchange_vert_data(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q)
     for (int32_t i = 0; i < nprocs; ++i) {
       uint64_t send_begin = (comm->sendcounts_temp[i] * c) / num_comms;
       uint64_t send_end   = (comm->sendcounts_temp[i] * (c + 1)) / num_comms;
-      if (c == (num_comms - 1)) send_end = comm->sendcounts_temp[i];
+      if (c == (num_comms - 1))
+        send_end = comm->sendcounts_temp[i];
       comm->sendcounts[i] = (int32_t)(send_end - send_begin);
       assert(comm->sendcounts[i] >= 0);
     }
@@ -308,12 +314,14 @@ exchange_vert_data(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q)
     int32_t   cur_recv = comm->rdispls[nprocs - 1] + comm->recvcounts[nprocs - 1];
     uint64_t* buf_v    = (uint64_t*)malloc((uint64_t)(cur_send) * sizeof(uint64_t));
     uint64_t* buf_d    = (uint64_t*)malloc((uint64_t)(cur_send) * sizeof(uint64_t));
-    if (buf_v == NULL || buf_d == NULL) throw_err("exchange_verts(), unable to allocate comm buffers", procid);
+    if (buf_v == NULL || buf_d == NULL)
+      throw_err("exchange_verts(), unable to allocate comm buffers", procid);
 
     for (int32_t i = 0; i < nprocs; ++i) {
       uint64_t send_begin = (comm->sendcounts_temp[i] * c) / num_comms;
       uint64_t send_end   = (comm->sendcounts_temp[i] * (c + 1)) / num_comms;
-      if (c == (num_comms - 1)) send_end = comm->sendcounts_temp[i];
+      if (c == (num_comms - 1))
+        send_end = comm->sendcounts_temp[i];
 
       for (uint64_t j = send_begin; j < send_end; ++j) {
         uint64_t vert                 = comm->sendbuf_vert[comm->sdispls_temp[i] + j];
@@ -344,7 +352,9 @@ exchange_vert_data(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q)
 inline void
 exchange_verts(mpi_data_t* comm)
 {
-  if (debug) { printf("Task %d exchange_verts() start\n", procid); }
+  if (debug) {
+    printf("Task %d exchange_verts() start\n", procid);
+  }
 
   uint64_t num_comms = comm->global_queue_size / (uint64_t)MAX_SEND_SIZE + 1;
   uint64_t sum_recv  = 0;
@@ -353,7 +363,8 @@ exchange_verts(mpi_data_t* comm)
     for (int32_t i = 0; i < nprocs; ++i) {
       uint64_t send_begin = (comm->sendcounts_temp[i] * c) / num_comms;
       uint64_t send_end   = (comm->sendcounts_temp[i] * (c + 1)) / num_comms;
-      if (c == (num_comms - 1)) send_end = comm->sendcounts_temp[i];
+      if (c == (num_comms - 1))
+        send_end = comm->sendcounts_temp[i];
       comm->sendcounts[i] = (int32_t)(send_end - send_begin);
       assert(comm->sendcounts[i] >= 0);
     }
@@ -372,12 +383,14 @@ exchange_verts(mpi_data_t* comm)
     int32_t   cur_send = comm->sdispls[nprocs - 1] + comm->sendcounts[nprocs - 1];
     int32_t   cur_recv = comm->rdispls[nprocs - 1] + comm->recvcounts[nprocs - 1];
     uint64_t* buf_v    = (uint64_t*)malloc((uint64_t)(cur_send) * sizeof(uint64_t));
-    if (buf_v == NULL) throw_err("exchange_verts(), unable to allocate comm buffers", procid);
+    if (buf_v == NULL)
+      throw_err("exchange_verts(), unable to allocate comm buffers", procid);
 
     for (int32_t i = 0; i < nprocs; ++i) {
       uint64_t send_begin = (comm->sendcounts_temp[i] * c) / num_comms;
       uint64_t send_end   = (comm->sendcounts_temp[i] * (c + 1)) / num_comms;
-      if (c == (num_comms - 1)) send_end = comm->sendcounts_temp[i];
+      if (c == (num_comms - 1))
+        send_end = comm->sendcounts_temp[i];
 
       for (uint64_t j = send_begin; j < send_end; ++j) {
         uint64_t vert                 = comm->sendbuf_vert[comm->sdispls_temp[i] + j];
@@ -394,13 +407,17 @@ exchange_verts(mpi_data_t* comm)
   assert(sum_recv == comm->total_recv);
   assert(sum_send == comm->total_send);
 
-  if (debug) { printf("Task %d exchange_verts() success\n", procid); }
+  if (debug) {
+    printf("Task %d exchange_verts() success\n", procid);
+  }
 }
 
 inline void
 exchange_data(mpi_data_t* comm)
 {
-  if (debug) { printf("Task %d exchange_data() start\n", procid); }
+  if (debug) {
+    printf("Task %d exchange_data() start\n", procid);
+  }
 
   uint64_t num_comms = comm->global_queue_size / (uint64_t)MAX_SEND_SIZE + 1;
   uint64_t sum_recv  = 0;
@@ -409,7 +426,8 @@ exchange_data(mpi_data_t* comm)
     for (int32_t i = 0; i < nprocs; ++i) {
       uint64_t send_begin = (comm->sendcounts_temp[i] * c) / num_comms;
       uint64_t send_end   = (comm->sendcounts_temp[i] * (c + 1)) / num_comms;
-      if (c == (num_comms - 1)) send_end = comm->sendcounts_temp[i];
+      if (c == (num_comms - 1))
+        send_end = comm->sendcounts_temp[i];
       comm->sendcounts[i] = (int32_t)(send_end - send_begin);
       assert(comm->sendcounts[i] >= 0);
     }
@@ -428,12 +446,14 @@ exchange_data(mpi_data_t* comm)
     int32_t   cur_send = comm->sdispls[nprocs - 1] + comm->sendcounts[nprocs - 1];
     int32_t   cur_recv = comm->rdispls[nprocs - 1] + comm->recvcounts[nprocs - 1];
     uint64_t* buf_d    = (uint64_t*)malloc((uint64_t)(cur_send) * sizeof(uint64_t));
-    if (buf_d == NULL) throw_err("exchange_data(), unable to allocate comm buffers", procid);
+    if (buf_d == NULL)
+      throw_err("exchange_data(), unable to allocate comm buffers", procid);
 
     for (int32_t i = 0; i < nprocs; ++i) {
       uint64_t send_begin = (comm->sendcounts_temp[i] * c) / num_comms;
       uint64_t send_end   = (comm->sendcounts_temp[i] * (c + 1)) / num_comms;
-      if (c == (num_comms - 1)) send_end = comm->sendcounts_temp[i];
+      if (c == (num_comms - 1))
+        send_end = comm->sendcounts_temp[i];
 
       for (uint64_t j = send_begin; j < send_end; ++j) {
         uint64_t data                 = comm->sendbuf_data[comm->sdispls_temp[i] + j];
@@ -450,13 +470,17 @@ exchange_data(mpi_data_t* comm)
   assert(sum_recv == comm->total_recv);
   assert(sum_send == comm->total_send);
 
-  if (debug) { printf("Task %d exchange_data() success\n", procid); }
+  if (debug) {
+    printf("Task %d exchange_data() success\n", procid);
+  }
 }
 
 inline void
 exchange_data_flt(mpi_data_t* comm)
 {
-  if (debug) { printf("Task %d exchange_data_flt() start\n", procid); }
+  if (debug) {
+    printf("Task %d exchange_data_flt() start\n", procid);
+  }
 
   uint64_t num_comms = comm->global_queue_size / (uint64_t)MAX_SEND_SIZE + 1;
   uint64_t sum_recv  = 0;
@@ -465,7 +489,8 @@ exchange_data_flt(mpi_data_t* comm)
     for (int32_t i = 0; i < nprocs; ++i) {
       uint64_t send_begin = (comm->sendcounts_temp[i] * c) / num_comms;
       uint64_t send_end   = (comm->sendcounts_temp[i] * (c + 1)) / num_comms;
-      if (c == (num_comms - 1)) send_end = comm->sendcounts_temp[i];
+      if (c == (num_comms - 1))
+        send_end = comm->sendcounts_temp[i];
       comm->sendcounts[i] = (int32_t)(send_end - send_begin);
       assert(comm->sendcounts[i] >= 0);
     }
@@ -484,12 +509,14 @@ exchange_data_flt(mpi_data_t* comm)
     int32_t cur_send = comm->sdispls[nprocs - 1] + comm->sendcounts[nprocs - 1];
     int32_t cur_recv = comm->rdispls[nprocs - 1] + comm->recvcounts[nprocs - 1];
     double* buf_d    = (double*)malloc((double)(cur_send) * sizeof(double));
-    if (buf_d == NULL) throw_err("exchange_data_flt(), unable to allocate comm buffers", procid);
+    if (buf_d == NULL)
+      throw_err("exchange_data_flt(), unable to allocate comm buffers", procid);
 
     for (int32_t i = 0; i < nprocs; ++i) {
       uint64_t send_begin = (comm->sendcounts_temp[i] * c) / num_comms;
       uint64_t send_end   = (comm->sendcounts_temp[i] * (c + 1)) / num_comms;
-      if (c == (num_comms - 1)) send_end = comm->sendcounts_temp[i];
+      if (c == (num_comms - 1))
+        send_end = comm->sendcounts_temp[i];
 
       for (uint64_t j = send_begin; j < send_end; ++j) {
         double data                   = comm->sendbuf_data_flt[comm->sdispls_temp[i] + j];
@@ -506,13 +533,16 @@ exchange_data_flt(mpi_data_t* comm)
   assert(sum_recv == comm->total_recv);
   assert(sum_send == comm->total_send);
 
-  if (debug) { printf("Task %d exchange_data_flt() success\n", procid); }
+  if (debug) {
+    printf("Task %d exchange_data_flt() success\n", procid);
+  }
 }
 
 inline void
 update_sendcounts_thread(dist_graph_t* g, thread_comm_t* tc, uint64_t vert_index)
 {
-  for (int32_t i = 0; i < nprocs; ++i) tc->v_to_rank[i] = false;
+  for (int32_t i = 0; i < nprocs; ++i)
+    tc->v_to_rank[i] = false;
 
   uint64_t  out_degree = out_degree(g, vert_index);
   uint64_t* outs       = out_vertices(g, vert_index);
@@ -543,7 +573,8 @@ update_sendcounts_thread(dist_graph_t* g, thread_comm_t* tc, uint64_t vert_index
 inline void
 update_sendcounts_thread_out(dist_graph_t* g, thread_comm_t* tc, uint64_t vert_index)
 {
-  for (int32_t i = 0; i < nprocs; ++i) tc->v_to_rank[i] = false;
+  for (int32_t i = 0; i < nprocs; ++i)
+    tc->v_to_rank[i] = false;
 
   uint64_t  out_degree = out_degree(g, vert_index);
   uint64_t* outs       = out_vertices(g, vert_index);
@@ -562,7 +593,8 @@ update_sendcounts_thread_out(dist_graph_t* g, thread_comm_t* tc, uint64_t vert_i
 inline void
 update_vid_data_queues(dist_graph_t* g, thread_comm_t* tc, mpi_data_t* comm, uint64_t vert_index, uint64_t data)
 {
-  for (int32_t i = 0; i < nprocs; ++i) tc->v_to_rank[i] = false;
+  for (int32_t i = 0; i < nprocs; ++i)
+    tc->v_to_rank[i] = false;
 
   uint64_t  out_degree = out_degree(g, vert_index);
   uint64_t* outs       = out_vertices(g, vert_index);
@@ -594,7 +626,8 @@ update_vid_data_queues(dist_graph_t* g, thread_comm_t* tc, mpi_data_t* comm, uin
 inline void
 update_vid_data_queues_out(dist_graph_t* g, thread_comm_t* tc, mpi_data_t* comm, uint64_t vert_index, double data)
 {
-  for (int32_t i = 0; i < nprocs; ++i) tc->v_to_rank[i] = false;
+  for (int32_t i = 0; i < nprocs; ++i)
+    tc->v_to_rank[i] = false;
 
   uint64_t  out_degree = out_degree(g, vert_index);
   uint64_t* outs       = out_vertices(g, vert_index);
@@ -613,7 +646,8 @@ update_vid_data_queues_out(dist_graph_t* g, thread_comm_t* tc, mpi_data_t* comm,
 inline void
 update_vid_data_queues_out(dist_graph_t* g, thread_comm_t* tc, mpi_data_t* comm, uint64_t vert_index, uint64_t data)
 {
-  for (int32_t i = 0; i < nprocs; ++i) tc->v_to_rank[i] = false;
+  for (int32_t i = 0; i < nprocs; ++i)
+    tc->v_to_rank[i] = false;
 
   uint64_t  out_degree = out_degree(g, vert_index);
   uint64_t* outs       = out_vertices(g, vert_index);
@@ -634,7 +668,8 @@ add_vid_to_queue(thread_queue_t* tq, queue_data_t* q, uint64_t vertex_id)
 {
   tq->thread_queue[tq->thread_queue_size++] = vertex_id;
 
-  if (tq->thread_queue_size == THREAD_QUEUE_SIZE) empty_queue(tq, q);
+  if (tq->thread_queue_size == THREAD_QUEUE_SIZE)
+    empty_queue(tq, q);
 }
 
 inline void
@@ -646,7 +681,8 @@ empty_queue(thread_queue_t* tq, queue_data_t* q)
   start_offset = q->next_size += tq->thread_queue_size;
 
   start_offset -= tq->thread_queue_size;
-  for (uint64_t i = 0; i < tq->thread_queue_size; ++i) q->queue_next[start_offset + i] = tq->thread_queue[i];
+  for (uint64_t i = 0; i < tq->thread_queue_size; ++i)
+    q->queue_next[start_offset + i] = tq->thread_queue[i];
   tq->thread_queue_size = 0;
 }
 
@@ -655,7 +691,8 @@ add_vid_to_send(thread_queue_t* tq, queue_data_t* q, uint64_t vertex_id)
 {
   tq->thread_send[tq->thread_send_size++] = vertex_id;
 
-  if (tq->thread_send_size == THREAD_QUEUE_SIZE) empty_send(tq, q);
+  if (tq->thread_send_size == THREAD_QUEUE_SIZE)
+    empty_send(tq, q);
 }
 
 inline void
@@ -667,7 +704,8 @@ empty_send(thread_queue_t* tq, queue_data_t* q)
   start_offset = q->send_size += tq->thread_send_size;
 
   start_offset -= tq->thread_send_size;
-  for (uint64_t i = 0; i < tq->thread_send_size; ++i) q->queue_send[start_offset + i] = tq->thread_send[i];
+  for (uint64_t i = 0; i < tq->thread_send_size; ++i)
+    q->queue_send[start_offset + i] = tq->thread_send[i];
   tq->thread_send_size = 0;
 }
 
@@ -680,7 +718,8 @@ add_vid_data_to_send(thread_comm_t* tc, mpi_data_t* comm, uint64_t vertex_id, ui
   ++tc->thread_queue_size;
   ++tc->sendcounts_thread[send_rank];
 
-  if (tc->thread_queue_size == THREAD_QUEUE_SIZE) empty_vid_data(tc, comm);
+  if (tc->thread_queue_size == THREAD_QUEUE_SIZE)
+    empty_vid_data(tc, comm);
 }
 
 inline void
@@ -692,7 +731,8 @@ add_vid_data_to_send_flt(thread_comm_t* tc, mpi_data_t* comm, uint64_t vertex_id
   ++tc->thread_queue_size;
   ++tc->sendcounts_thread[send_rank];
 
-  if (tc->thread_queue_size == THREAD_QUEUE_SIZE) empty_vid_data_flt(tc, comm);
+  if (tc->thread_queue_size == THREAD_QUEUE_SIZE)
+    empty_vid_data_flt(tc, comm);
 }
 
 inline void

@@ -87,8 +87,12 @@ quicksort_dec(uint64_t* arr1, uint64_t* arr2, int64_t left, int64_t right)
   uint64_t pivot = arr1[(left + right) / 2];
 
   while (i <= j) {
-    while (arr1[i] > pivot) { i++; }
-    while (arr1[j] < pivot) { j--; }
+    while (arr1[i] > pivot) {
+      i++;
+    }
+    while (arr1[j] < pivot) {
+      j--;
+    }
 
     if (i <= j) {
       temp    = arr1[i];
@@ -102,15 +106,19 @@ quicksort_dec(uint64_t* arr1, uint64_t* arr2, int64_t left, int64_t right)
     }
   }
 
-  if (j > left) quicksort_dec(arr1, arr2, left, j);
-  if (i < right) quicksort_dec(arr1, arr2, i, right);
+  if (j > left)
+    quicksort_dec(arr1, arr2, left, j);
+  if (i < right)
+    quicksort_dec(arr1, arr2, i, right);
 }
 
 uint64_t*
 str_to_array(char* input_list_str, uint64_t* num)
 {
   char* cp = strtok(input_list_str, ",");
-  if (cp == NULL) { return (uint64_t*)malloc((*num) * sizeof(uint64_t)); }
+  if (cp == NULL) {
+    return (uint64_t*)malloc((*num) * sizeof(uint64_t));
+  }
 
   int64_t  my_index = -1;
   uint64_t n;
@@ -121,6 +129,8 @@ str_to_array(char* input_list_str, uint64_t* num)
     printf("Invalid integer token '%s'\n", cp);
   }
   uint64_t* array = str_to_array(NULL, num);
-  if (my_index >= 0) { array[my_index] = n; }
+  if (my_index >= 0) {
+    array[my_index] = n;
+  }
   return array;
 }

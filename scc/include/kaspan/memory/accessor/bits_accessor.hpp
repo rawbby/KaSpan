@@ -24,9 +24,15 @@ public:
   auto operator=(bits_accessor const& rhs) noexcept -> bits_accessor& = default;
   auto operator=(bits_accessor&& rhs) noexcept -> bits_accessor&      = default;
 
-  [[nodiscard]] auto data() -> u64* { return static_cast<u64*>(data_); }
+  [[nodiscard]] auto data() -> u64*
+  {
+    return static_cast<u64*>(data_);
+  }
 
-  [[nodiscard]] auto data() const -> u64 const* { return static_cast<u64 const*>(data_); }
+  [[nodiscard]] auto data() const -> u64 const*
+  {
+    return static_cast<u64 const*>(data_);
+  }
 
 private:
   void* data_ = nullptr;

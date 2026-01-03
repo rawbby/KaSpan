@@ -1,5 +1,12 @@
 #pragma once
 
+#include <briefkasten/aggregators.hpp>
+#include <briefkasten/buffered_queue.hpp>
+#include <briefkasten/grid_indirection.hpp>
+#include <briefkasten/indirection.hpp>
+#include <briefkasten/noop_indirection.hpp>
+#include <briefkasten/queue_builder.hpp>
+#include <kamping/mpi_datatype.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/memory/accessor/bits.hpp>
@@ -13,31 +20,24 @@
 #include <kaspan/scc/pivot_selection.hpp>
 #include <kaspan/scc/tarjan.hpp>
 #include <kaspan/scc/trim_1.hpp>
+#include <kaspan/util/return_pack.hpp>
 
 #include <algorithm>
-#include <briefkasten/aggregators.hpp>
-#include <briefkasten/buffered_queue.hpp>
-#include <briefkasten/grid_indirection.hpp>
-#include <briefkasten/indirection.hpp>
-#include <briefkasten/noop_indirection.hpp>
-#include <briefkasten/queue_builder.hpp>
 #include <cstdio>
-#include <kamping/mpi_datatype.hpp>
-
-// Register edge type with KaMPIng's type system for BriefKAsten compatibility
 
 namespace kamping {
 template<>
 struct mpi_type_traits<kaspan::edge>
 {
   static constexpr bool has_to_be_committed = false;
-  static MPI_Datatype   data_type() { return kaspan::mpi_edge_t; }
+  static MPI_Datatype   data_type()
+  {
+    return kaspan::mpi_edge_t;
+  }
 };
 }
 
-namespace kaspan {
-
-namespace async {
+namespace kaspan::async {
 
 template<typename indirection_scheme_t>
 auto
@@ -94,7 +94,9 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
       fw_csr,
       [=](auto const* cbeg, auto const* cend) {
         auto const id = *std::min_element(cbeg, cend);
-        std::for_each(cbeg, cend, [=](auto const k) { scc_id[k] = id; });
+        std::for_each(cbeg, cend, [=](auto const k) {
+          scc_id[k] = id;
+        });
       },
       SCC_ID_UNDECIDED_FILTER(local_n, scc_id),
       local_decided);
@@ -114,8 +116,8 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
       auto active_array = make_array<vertex_t>(local_n);
       auto vertex_queue = make_briefkasten_vertex<indirection_scheme_t>();
 
-      async::forward_search(part, fw_head, fw_csr, vertex_queue, scc_id, bitvector, active_array.data(), pivot);
-      local_decided += async::backward_search(part, bw_head, bw_csr, vertex_queue, scc_id, bitvector, active_array.data(), pivot, pivot);
+      async::forward_search(part, fw_head, fw_csr, vertex_queue, scc_id, static_cast<bits_accessor>(bitvector), active_array.data(), pivot);
+      local_decided += async::backward_search(part, bw_head, bw_csr, vertex_queue, scc_id, static_cast<bits_accessor>(bitvector), active_array.data(), pivot, pivot);
 
       KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_decided - prev_local_decided, mpi_basic::sum));
       KASPAN_STATISTIC_ADD("memory", kaspan::get_resident_set_bytes());
@@ -147,8 +149,8 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
       }
       first_iter = false;
 
-      color_scc_init_label(part, colors);
-      local_decided += async::color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors, active_array, active, local_decided);
+      color_scc_init_label(part, colors.data());
+      local_decided += async::color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors.data(), active_array.data(), static_cast<bits_accessor>(active), local_decided);
     } while (mpi_basic::allreduce_single(local_decided, mpi_basic::sum) < decided_threshold);
 
     KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_decided - prev_local_decided, mpi_basic::sum));
@@ -167,7 +169,9 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
         auto const min_u = sub_ids_inverse[*std::min_element(beg, end)];
         for (auto sub_u : std::span{ beg, end }) {
           auto const u = sub_ids_inverse[sub_u];
-          if (part.has_local(u)) { scc_id[part.to_local(u)] = min_u; }
+          if (part.has_local(u)) {
+            scc_id[part.to_local(u)] = min_u;
+          }
         }
       });
     }
@@ -179,6 +183,4 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
   }
 }
 
-} // namespace async
-
-} // namespace kaspan
+} // namespace kaspan::async

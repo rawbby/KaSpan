@@ -13,7 +13,9 @@ template<world_part_concept part_t>
 index_t
 partition_degree(index_t const* fw_head, part_t const& part)
 {
-  if (part.local_n() > 0) { return fw_head[part.end] - fw_head[part.begin]; }
+  if (part.local_n() > 0) {
+    return fw_head[part.end] - fw_head[part.begin];
+  }
   return 0;
 }
 
@@ -26,7 +28,9 @@ partition_degree(index_t const* fw_head, part_t const& part)
   auto const local_n = part.local_n();
 
   index_t m = 0;
-  for (vertex_t k = 0; k < local_n; ++k) { m += degree(fw_head, part.to_global(k)); }
+  for (vertex_t k = 0; k < local_n; ++k) {
+    m += degree(fw_head, part.to_global(k));
+  }
   return m;
 }
 

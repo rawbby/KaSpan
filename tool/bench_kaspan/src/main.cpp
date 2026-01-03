@@ -1,6 +1,4 @@
-#include <cstdlib>
 #include <kaspan/debug/assert_lt.hpp>
-#include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/mpi_basic/allreduce_single.hpp>
@@ -12,14 +10,11 @@
 #include <kaspan/scc/scc.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/scope_guard.hpp>
-#include <limits>
-
-#include <briefkasten/grid_indirection.hpp>
-#include <briefkasten/noop_indirection.hpp>
 
 #include <mpi.h>
 
 #include <cstdio>
+#include <limits>
 #include <print>
 
 using namespace kaspan;
@@ -52,15 +47,17 @@ benchmark(auto const& graph, bool use_async, bool use_async_indirect)
   if (not use_async) {
     scc(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
   } else if (use_async_indirect) {
-    async::scc<briefkasten::GridIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+    kaspan::async::scc<briefkasten::GridIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
   } else {
-    async::scc<briefkasten::NoopIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+    kaspan::async::scc<briefkasten::NoopIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
   }
 
 #if KASPAN_STATISTIC
   vertex_t local_component_count = 0;
   for (vertex_t k = 0; k < graph.part.local_n(); ++k) {
-    if (scc_id[k] == graph.part.to_global(k)) { ++local_component_count; }
+    if (scc_id[k] == graph.part.to_global(k)) {
+      ++local_component_count;
+    }
   }
 
   auto const global_component_count = mpi_basic::allreduce_single(local_component_count, MPI_SUM);
@@ -83,7 +80,9 @@ main(int argc, char** argv)
 
   auto const use_async          = arg_select_flag(argc, argv, "--async");
   auto const use_async_indirect = arg_select_flag(argc, argv, "--async_indirect");
-  if (use_async_indirect and not use_async) { usage(argc, argv); }
+  if (use_async_indirect and not use_async) {
+    usage(argc, argv);
+  }
 
   KASPAN_DEFAULT_INIT();
   SCOPE_GUARD(KASPAN_STATISTIC_MPI_WRITE_JSON(output_file));
@@ -103,7 +102,10 @@ main(int argc, char** argv)
     KASPAN_STATISTIC_PUSH("load");
     auto const manifest = manifest::load(manifest_file);
     ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
-    auto const part           = balanced_slice_part{ static_cast<vertex_t>(manifest.graph_node_count) };
+    auto const part = balanced_slice_part{};
+    {
+      static_cast<vertex_t>(manifest.graph_node_count);
+    };
     auto const manifest_graph = load_graph_part_from_manifest(part, manifest);
     KASPAN_STATISTIC_POP();
     benchmark(manifest_graph, use_async, use_async_indirect);

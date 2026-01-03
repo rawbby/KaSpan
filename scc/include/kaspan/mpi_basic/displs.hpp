@@ -4,9 +4,7 @@
 #include <kaspan/util/arithmetic.hpp>
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief Calculate displacements from counts.
@@ -29,6 +27,4 @@ displs(MPI_Count const* counts, MPI_Aint* displs) -> MPI_Count
   return count;
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

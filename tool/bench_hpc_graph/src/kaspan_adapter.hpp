@@ -60,10 +60,14 @@ create_hpc_graph_from_graph_part(part_t const&           part,
 
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(out_degree_list, (local_n + 1) * sizeof(uint64_t));
   // Convert forward CSR
-  for (kaspan::vertex_t i = 0; i <= local_n; ++i) { out_degree_list[i] = static_cast<uint64_t>(fw_head[i]); }
+  for (kaspan::vertex_t i = 0; i <= local_n; ++i) {
+    out_degree_list[i] = static_cast<uint64_t>(fw_head[i]);
+  }
 
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(out_edges, local_fw_m * sizeof(uint64_t));
-  for (kaspan::index_t i = 0; i < local_fw_m; ++i) { out_edges[i] = static_cast<uint64_t>(fw_csr[i]); }
+  for (kaspan::index_t i = 0; i < local_fw_m; ++i) {
+    out_edges[i] = static_cast<uint64_t>(fw_csr[i]);
+  }
 
   // Allocate and convert backward edges (in_edges)
   auto in_degree_list_buf = kaspan::make_buffer<uint64_t>(local_n + 1);
@@ -76,10 +80,14 @@ create_hpc_graph_from_graph_part(part_t const&           part,
 
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(in_degree_list, (local_n + 1) * sizeof(uint64_t));
   // Convert backward CSR
-  for (kaspan::vertex_t i = 0; i <= local_n; ++i) { in_degree_list[i] = static_cast<uint64_t>(bw_head[i]); }
+  for (kaspan::vertex_t i = 0; i <= local_n; ++i) {
+    in_degree_list[i] = static_cast<uint64_t>(bw_head[i]);
+  }
 
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(in_edges, local_bw_m * sizeof(uint64_t));
-  for (kaspan::index_t i = 0; i < local_bw_m; ++i) { in_edges[i] = static_cast<uint64_t>(bw_csr[i]); }
+  for (kaspan::index_t i = 0; i < local_bw_m; ++i) {
+    in_edges[i] = static_cast<uint64_t>(bw_csr[i]);
+  }
 
   // Create local_unmap (maps local index to global vertex id)
   auto local_unmap_buf = kaspan::make_buffer<uint64_t>(local_n);
@@ -87,7 +95,9 @@ create_hpc_graph_from_graph_part(part_t const&           part,
   auto* local_unmap = static_cast<uint64_t*>(local_unmap_buf.data());
 
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(local_unmap, local_n * sizeof(uint64_t));
-  for (kaspan::vertex_t i = 0; i < local_n; ++i) { local_unmap[i] = static_cast<uint64_t>(part.to_global(i)); }
+  for (kaspan::vertex_t i = 0; i < local_n; ++i) {
+    local_unmap[i] = static_cast<uint64_t>(part.to_global(i));
+  }
 
   // Temporarily assign pointers
   data.g.out_degree_list = out_degree_list;
@@ -109,8 +119,12 @@ create_hpc_graph_from_graph_part(part_t const&           part,
     uint64_t const out_deg = out_degree_list[i + 1] - out_degree_list[i];
     uint64_t const in_deg  = in_degree_list[i + 1] - in_degree_list[i];
 
-    if (out_deg > data.g.max_out_degree) { data.g.max_out_degree = out_deg; }
-    if (in_deg > data.g.max_in_degree) { data.g.max_in_degree = in_deg; }
+    if (out_deg > data.g.max_out_degree) {
+      data.g.max_out_degree = out_deg;
+    }
+    if (in_deg > data.g.max_in_degree) {
+      data.g.max_in_degree = in_deg;
+    }
   }
 
   // Store buffer for ownership (just use one buffer, others will be freed at end of function)
@@ -175,12 +189,16 @@ initialize_ghost_cells(hpc_graph_data& data, part_t const& part, kaspan::index_t
   for (kaspan::index_t i = 0; i < local_fw_m; ++i) {
     uint64_t global_id = data.g.out_edges[i];
     // Check if it's not a local vertex
-    if (global_id < part.begin || global_id >= part.end) { ghost_set.insert(global_id); }
+    if (global_id < part.begin || global_id >= part.end) {
+      ghost_set.insert(global_id);
+    }
   }
   for (kaspan::index_t i = 0; i < local_bw_m; ++i) {
     uint64_t global_id = data.g.in_edges[i];
     // Check if it's not a local vertex
-    if (global_id < part.begin || global_id >= part.end) { ghost_set.insert(global_id); }
+    if (global_id < part.begin || global_id >= part.end) {
+      ghost_set.insert(global_id);
+    }
   }
 
   // Create ghost_unmap and ghost_tasks arrays
@@ -251,10 +269,14 @@ initialize_ghost_cells(hpc_graph_data& data, part_t const& part, kaspan::index_t
   init_map(&data.g.map, data.g.n_total * 2);
 
   // Add local vertices to map
-  for (uint64_t i = 0; i < data.g.n_local; ++i) { set_value(&data.g.map, data.g.local_unmap[i], i); }
+  for (uint64_t i = 0; i < data.g.n_local; ++i) {
+    set_value(&data.g.map, data.g.local_unmap[i], i);
+  }
 
   // Add ghost vertices to map
-  for (uint64_t i = 0; i < data.g.n_ghost; ++i) { set_value(&data.g.map, data.g.ghost_unmap[i], data.g.n_local + i); }
+  for (uint64_t i = 0; i < data.g.n_ghost; ++i) {
+    set_value(&data.g.map, data.g.ghost_unmap[i], data.g.n_local + i);
+  }
 
   // Convert edge arrays from global IDs to local/ghost indices
   for (uint64_t i = 0; i < data.g.m_local_out; ++i) {

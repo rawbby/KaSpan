@@ -5,9 +5,7 @@
 #include <kaspan/util/return_pack.hpp>
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief Borrow counts and displacements arrays from memory.
@@ -38,6 +36,4 @@ counts_and_displs()
   return PACK(buffer, counts, displs);
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

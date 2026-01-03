@@ -94,8 +94,10 @@ get_max_key(fast_map* map);
 inline uint64_t
 mult_hash(fast_map* map, uint64_t key)
 {
-  if (map->hashing) return (key * 2654435761 % map->capacity);
-  else return key;
+  if (map->hashing)
+    return (key * 2654435761 % map->capacity);
+  else
+    return key;
 }
 
 inline void
@@ -106,9 +108,12 @@ set_value(fast_map* map, uint64_t key, uint64_t value)
   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY) {
     cur_index = (cur_index + 2) % (map->capacity * 2);
     ++count;
-    if (debug && count % 100 == 0) fprintf(stderr, "Warning: fast_map set_value(): Big Count %d -- %lu - %lu, %lu, %lu\n", procid, count, cur_index, key, value);
+    if (debug && count % 100 == 0)
+      fprintf(stderr, "Warning: fast_map set_value(): Big Count %d -- %lu - %lu, %lu, %lu\n", procid, count, cur_index, key, value);
   }
-  if (map->arr[cur_index] == NULL_KEY) { map->arr[cur_index] = key; }
+  if (map->arr[cur_index] == NULL_KEY) {
+    map->arr[cur_index] = key;
+  }
   map->arr[cur_index + 1] = value;
 }
 
@@ -120,7 +125,8 @@ set_value_uq(fast_map* map, uint64_t key, uint64_t value)
   while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY) {
     cur_index = (cur_index + 2) % (map->capacity * 2);
     ++count;
-    if (debug && count % 100 == 0) fprintf(stderr, "Warning: fast_map set_value_uq(): Big Count %d -- %lu - %lu, %lu, %lu\n", procid, count, cur_index, key, value);
+    if (debug && count % 100 == 0)
+      fprintf(stderr, "Warning: fast_map set_value_uq(): Big Count %d -- %lu - %lu, %lu, %lu\n", procid, count, cur_index, key, value);
   }
   if (map->arr[cur_index] == NULL_KEY) {
     map->arr[cur_index]                  = key;
@@ -135,9 +141,12 @@ inline uint64_t
 get_value(fast_map* map, uint64_t key)
 {
   uint64_t cur_index = mult_hash(map, key) * 2;
-  while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY) cur_index = (cur_index + 2) % (map->capacity * 2);
-  if (map->arr[cur_index] == NULL_KEY) return NULL_KEY;
-  else return map->arr[cur_index + 1];
+  while (map->arr[cur_index] != key && map->arr[cur_index] != NULL_KEY)
+    cur_index = (cur_index + 2) % (map->capacity * 2);
+  if (map->arr[cur_index] == NULL_KEY)
+    return NULL_KEY;
+  else
+    return map->arr[cur_index + 1];
 }
 
 inline uint64_t
@@ -155,7 +164,8 @@ get_max_key(fast_map* map)
       vec.push_back(map->arr[map->unique_indexes[i]]);
     }
 
-  if (vec.size() > 0) max_key = vec[(int)rand() % vec.size()];
+  if (vec.size() > 0)
+    max_key = vec[(int)rand() % vec.size()];
 
   return max_key;
 }

@@ -101,7 +101,9 @@ check_p_p(auto const& p, auto const& p_)
   ASSERT_EQ(p.end, p_.end);
   ASSERT_EQ(p.world_rank, p_.world_rank);
   ASSERT_EQ(p.world_size, p_.world_size);
-  for (vertex_t k = 0; k < p.local_n(); ++k) { ASSERT_EQ(p.to_global(k), p.to_global(k), "k={}", k); }
+  for (vertex_t k = 0; k < p.local_n(); ++k) {
+    ASSERT_EQ(p.to_global(k), p.to_global(k), "k={}", k);
+  }
 }
 
 void
@@ -120,8 +122,12 @@ check_gp_gp(auto const& gp, auto const& gp_)
     ASSERT_EQ(gp.fw_head[k], gp_.fw_head[k], "k={}", k);
     ASSERT_EQ(gp.bw_head[k], gp_.bw_head[k], "k={}", k);
   }
-  for (index_t it = 0; it < gp.local_fw_m; ++it) { ASSERT_EQ(gp.fw_csr[it], gp_.fw_csr[it], "it={}", it); }
-  for (index_t it = 0; it < gp.local_bw_m; ++it) { ASSERT_EQ(gp.bw_csr[it], gp_.bw_csr[it], "it={}", it); }
+  for (index_t it = 0; it < gp.local_fw_m; ++it) {
+    ASSERT_EQ(gp.fw_csr[it], gp_.fw_csr[it], "it={}", it);
+  }
+  for (index_t it = 0; it < gp.local_bw_m; ++it) {
+    ASSERT_EQ(gp.bw_csr[it], gp_.bw_csr[it], "it={}", it);
+  }
 }
 
 void
@@ -146,7 +152,9 @@ check_g_gp(auto const& g, auto const& gp)
     auto const gp_deg = gp.fw_head[k + 1] - gp_beg;
 
     ASSERT_EQ(g_deg, gp_deg);
-    for (index_t i = 0; i < g_deg; ++i) { ASSERT_EQ(g.fw_csr[g_beg + i], gp.fw_csr[gp_beg + i], "i={}", i); }
+    for (index_t i = 0; i < g_deg; ++i) {
+      ASSERT_EQ(g.fw_csr[g_beg + i], gp.fw_csr[gp_beg + i], "i={}", i);
+    }
 
     gp_local_fw_m += gp_deg;
   }
@@ -163,7 +171,9 @@ check_g_gp(auto const& g, auto const& gp)
     auto const gp_deg = gp.bw_head[k + 1] - gp_beg;
 
     ASSERT_EQ(g_deg, gp_deg);
-    for (index_t i = 0; i < g_deg; ++i) { ASSERT_EQ(g.bw_csr[g_beg + i], gp.bw_csr[gp_beg + i], "i={}", i); }
+    for (index_t i = 0; i < g_deg; ++i) {
+      ASSERT_EQ(g.bw_csr[g_beg + i], gp.bw_csr[gp_beg + i], "i={}", i);
+    }
 
     gp_local_bw_m += gp_deg;
   }

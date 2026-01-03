@@ -27,7 +27,9 @@ await_messages(auto& mq, auto&& on_message)
   };
 
   auto const deadline    = now_ns() + timeout_8s;
-  auto const on_progress = [=] { ASSERT_LT(now_ns(), deadline); };
+  auto const on_progress = [=] {
+    ASSERT_LT(now_ns(), deadline);
+  };
 
   do {
     on_progress();
@@ -42,12 +44,16 @@ test_single_all_to_all()
   received.reserve(mpi_basic::world_size - 1);
 
   auto on_message = [&](auto env) {
-    for (auto val : env.message) { received.push_back(val); }
+    for (auto val : env.message) {
+      received.push_back(val);
+    }
   };
 
   auto mq = briefkasten::BufferedMessageQueueBuilder<i32>{}.build();
   for (i32 i = 0; i < mpi_basic::world_size; ++i) {
-    if (i != mpi_basic::world_rank) { mq.post_message_blocking(mpi_basic::world_rank, i, on_message); }
+    if (i != mpi_basic::world_rank) {
+      mq.post_message_blocking(mpi_basic::world_rank, i, on_message);
+    }
   }
 
   await_messages(mq, on_message);
@@ -57,11 +63,15 @@ test_single_all_to_all()
   auto expected = std::vector<i32>{};
   expected.reserve(mpi_basic::world_size - 1);
   for (i32 i = 0; i < mpi_basic::world_size; ++i) {
-    if (i != mpi_basic::world_rank) { expected.push_back(i); }
+    if (i != mpi_basic::world_rank) {
+      expected.push_back(i);
+    }
   }
 
   std::ranges::sort(received);
-  for (auto [a, b] : std::views::zip(received, expected)) { ASSERT_EQ(a, b); }
+  for (auto [a, b] : std::views::zip(received, expected)) {
+    ASSERT_EQ(a, b);
+  }
 }
 
 void
@@ -78,17 +88,23 @@ test_reactivation()
   expected.reserve(num_messages);
 
   auto on_message = [&](auto env) {
-    for (auto val : env.message) { received.push_back(val); }
+    for (auto val : env.message) {
+      received.push_back(val);
+    }
   };
 
-  for (i32 i = 0; i < num_messages; ++i) { expected.push_back(recv_source * num_messages + i); }
+  for (i32 i = 0; i < num_messages; ++i) {
+    expected.push_back(recv_source * num_messages + i);
+  }
 
   auto mq = briefkasten::BufferedMessageQueueBuilder<i32>{}.build();
 
   // send a bunch of messages that hopefully dont leak and reset
   {
     for (i32 i = 0; i < mpi_basic::world_size; ++i) {
-      if (i != mpi_basic::world_rank) { mq.post_message_blocking(mpi_basic::world_size * num_messages + i, i, on_message); }
+      if (i != mpi_basic::world_rank) {
+        mq.post_message_blocking(mpi_basic::world_size * num_messages + i, i, on_message);
+      }
     }
     await_messages(mq, on_message);
     ASSERT_EQ(received.size(), static_cast<size_t>(mpi_basic::world_size - 1));
@@ -97,13 +113,17 @@ test_reactivation()
     received.clear();
   }
 
-  for (i32 i = 0; i < num_messages; ++i) { mq.post_message_blocking(mpi_basic::world_rank * num_messages + i, send_target, on_message); }
+  for (i32 i = 0; i < num_messages; ++i) {
+    mq.post_message_blocking(mpi_basic::world_rank * num_messages + i, send_target, on_message);
+  }
 
   await_messages(mq, on_message);
 
   ASSERT_EQ(received.size(), num_messages);
   std::ranges::sort(received);
-  for (auto [a, b] : std::views::zip(received, expected)) { ASSERT_EQ(a, b); }
+  for (auto [a, b] : std::views::zip(received, expected)) {
+    ASSERT_EQ(a, b);
+  }
 }
 
 void
@@ -120,19 +140,27 @@ test_neighbour_multiple()
   expected.reserve(num_messages);
 
   auto on_message = [&](auto env) {
-    for (auto val : env.message) { received.push_back(val); }
+    for (auto val : env.message) {
+      received.push_back(val);
+    }
   };
 
-  for (i32 i = 0; i < num_messages; ++i) { expected.push_back(recv_source * num_messages + i); }
+  for (i32 i = 0; i < num_messages; ++i) {
+    expected.push_back(recv_source * num_messages + i);
+  }
 
   auto mq = briefkasten::BufferedMessageQueueBuilder<i32>{}.build();
-  for (i32 i = 0; i < num_messages; ++i) { mq.post_message_blocking(mpi_basic::world_rank * num_messages + i, send_target, on_message); }
+  for (i32 i = 0; i < num_messages; ++i) {
+    mq.post_message_blocking(mpi_basic::world_rank * num_messages + i, send_target, on_message);
+  }
 
   await_messages(mq, on_message);
 
   std::ranges::sort(received);
   ASSERT_EQ(received.size(), static_cast<size_t>(num_messages));
-  for (auto [a, b] : std::views::zip(received, expected)) { ASSERT_EQ(a, b); }
+  for (auto [a, b] : std::views::zip(received, expected)) {
+    ASSERT_EQ(a, b);
+  }
 }
 
 void
@@ -140,7 +168,9 @@ test_no_communication()
 {
   auto received   = std::vector<i32>{};
   auto on_message = [&](auto env) {
-    for (auto val : env.message) { received.push_back(val); }
+    for (auto val : env.message) {
+      received.push_back(val);
+    }
   };
 
   auto mq = briefkasten::BufferedMessageQueueBuilder<i32>{}.build();

@@ -65,7 +65,9 @@ extern bool verbose, debug, verify;
 int
 run_labelprop(dist_graph_t* g, mpi_data_t* comm, uint64_t*& labels, uint32_t num_iter)
 {
-  if (debug) { printf("Task %d run_labelprop() start\n", procid); }
+  if (debug) {
+    printf("Task %d run_labelprop() start\n", procid);
+  }
   double elt = 0.0;
   if (verbose) {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -74,7 +76,8 @@ run_labelprop(dist_graph_t* g, mpi_data_t* comm, uint64_t*& labels, uint32_t num
 
   uint64_t* labels_next = (uint64_t*)malloc(g->n_total * sizeof(uint64_t));
 
-  for (int32_t i = 0; i < nprocs; ++i) comm->sendcounts_temp[i] = 0;
+  for (int32_t i = 0; i < nprocs; ++i)
+    comm->sendcounts_temp[i] = 0;
 
 #pragma omp parallel default(shared)
   {
@@ -86,16 +89,21 @@ run_labelprop(dist_graph_t* g, mpi_data_t* comm, uint64_t*& labels, uint32_t num
     init_map(&map, (g->max_out_degree + g->max_in_degree) * 2);
 
 #pragma omp for
-    for (uint64_t i = 0; i < g->n_local; ++i) labels[i] = g->local_unmap[i];
+    for (uint64_t i = 0; i < g->n_local; ++i)
+      labels[i] = g->local_unmap[i];
 #pragma omp for
-    for (uint64_t i = 0; i < g->n_local; ++i) labels_next[i] = g->local_unmap[i];
+    for (uint64_t i = 0; i < g->n_local; ++i)
+      labels_next[i] = g->local_unmap[i];
 #pragma omp for
-    for (uint64_t i = 0; i < g->n_ghost; ++i) labels[i + g->n_local] = g->ghost_unmap[i];
+    for (uint64_t i = 0; i < g->n_ghost; ++i)
+      labels[i + g->n_local] = g->ghost_unmap[i];
 #pragma omp for
-    for (uint64_t i = 0; i < g->n_ghost; ++i) labels_next[i + g->n_local] = g->ghost_unmap[i];
+    for (uint64_t i = 0; i < g->n_ghost; ++i)
+      labels_next[i + g->n_local] = g->ghost_unmap[i];
 
 #pragma omp for schedule(guided) nowait
-    for (uint64_t i = 0; i < g->n_local; ++i) update_sendcounts_thread(g, &tc, i);
+    for (uint64_t i = 0; i < g->n_local; ++i)
+      update_sendcounts_thread(g, &tc, i);
 
     for (int32_t i = 0; i < nprocs; ++i) {
 #pragma omp atomic
@@ -112,7 +120,8 @@ run_labelprop(dist_graph_t* g, mpi_data_t* comm, uint64_t*& labels, uint32_t num
     }
 
 #pragma omp for schedule(guided) nowait
-    for (uint64_t i = 0; i < g->n_local; ++i) update_vid_data_queues(g, &tc, comm, i, labels[i]);
+    for (uint64_t i = 0; i < g->n_local; ++i)
+      update_vid_data_queues(g, &tc, comm, i, labels[i]);
 
     empty_vid_data(&tc, comm);
 #pragma omp barrier
@@ -137,7 +146,9 @@ run_labelprop(dist_graph_t* g, mpi_data_t* comm, uint64_t*& labels, uint32_t num
     }
 
     for (uint32_t iter = 0; iter < num_iter; ++iter) {
-      if (debug && tc.tid == 0) { printf("Task %d Iter %u run_labelprop()\n", procid, iter); }
+      if (debug && tc.tid == 0) {
+        printf("Task %d Iter %u run_labelprop()\n", procid, iter);
+      }
 
 #pragma omp for schedule(guided) nowait
       for (uint64_t i = 0; i < g->n_local; ++i) {
@@ -170,8 +181,10 @@ run_labelprop(dist_graph_t* g, mpi_data_t* comm, uint64_t*& labels, uint32_t num
           //   max_label = max_labels[rand() % max_labels.size()];
           // }
           uint64_t val = get_value(&map, label_out);
-          if (val == NULL_KEY) set_value_uq(&map, label_out, 1);
-          else set_value(&map, label_out, val + 1);
+          if (val == NULL_KEY)
+            set_value_uq(&map, label_out, 1);
+          else
+            set_value(&map, label_out, val + 1);
         }
         uint64_t  in_degree = in_degree(g, vert_index);
         uint64_t* ins       = in_vertices(g, vert_index);
@@ -195,17 +208,21 @@ run_labelprop(dist_graph_t* g, mpi_data_t* comm, uint64_t*& labels, uint32_t num
           //   max_label = max_labels[rand() % max_labels.size()];
           // }
           uint64_t val = get_value(&map, label_in);
-          if (val == NULL_KEY) set_value_uq(&map, label_in, 1);
-          else set_value(&map, label_in, val + 1);
+          if (val == NULL_KEY)
+            set_value_uq(&map, label_in, 1);
+          else
+            set_value(&map, label_in, val + 1);
         }
         // labels_next[vert_index] = max_label;
 
         labels_next[vert_index] = get_max_key(&map);
-        if (labels_next[vert_index] == NULL_KEY) labels_next[vert_index] = labels[vert_index];
+        if (labels_next[vert_index] == NULL_KEY)
+          labels_next[vert_index] = labels[vert_index];
       }
 
 #pragma omp for
-      for (uint64_t i = 0; i < comm->total_send; ++i) comm->sendbuf_data[i] = labels_next[comm->sendbuf_vert[i]];
+      for (uint64_t i = 0; i < comm->total_send; ++i)
+        comm->sendbuf_data[i] = labels_next[comm->sendbuf_vert[i]];
 
 #pragma omp single
       {
@@ -213,7 +230,8 @@ run_labelprop(dist_graph_t* g, mpi_data_t* comm, uint64_t*& labels, uint32_t num
       }
 
 #pragma omp for
-      for (uint64_t i = 0; i < comm->total_recv; ++i) labels_next[comm->recvbuf_vert[i]] = comm->recvbuf_data[i];
+      for (uint64_t i = 0; i < comm->total_recv; ++i)
+        labels_next[comm->recvbuf_vert[i]] = comm->recvbuf_data[i];
 
 #pragma omp single
       {
@@ -233,7 +251,9 @@ run_labelprop(dist_graph_t* g, mpi_data_t* comm, uint64_t*& labels, uint32_t num
     elt = omp_get_wtime() - elt;
     printf("Task %d, run_labelprop() time %9.6f (s)\n", procid, elt);
   }
-  if (debug) { printf("Task %d run_labelprop() success\n", procid); }
+  if (debug) {
+    printf("Task %d run_labelprop() success\n", procid);
+  }
 
   return 0;
 }
@@ -241,18 +261,23 @@ run_labelprop(dist_graph_t* g, mpi_data_t* comm, uint64_t*& labels, uint32_t num
 int
 labelprop_output(dist_graph_t* g, uint64_t* labels, char* output_file)
 {
-  if (debug) printf("Task %d labels to %s\n", procid, output_file);
+  if (debug)
+    printf("Task %d labels to %s\n", procid, output_file);
 
   uint64_t* global_labels = (uint64_t*)malloc(g->n * sizeof(uint64_t));
 
 #pragma omp parallel for
-  for (uint64_t i = 0; i < g->n; ++i) global_labels[i] = LABEL_NOT_ASSIGNED;
+  for (uint64_t i = 0; i < g->n; ++i)
+    global_labels[i] = LABEL_NOT_ASSIGNED;
 
 #pragma omp parallel for
-  for (uint64_t i = 0; i < g->n_local; ++i) global_labels[g->local_unmap[i]] = labels[i];
+  for (uint64_t i = 0; i < g->n_local; ++i)
+    global_labels[g->local_unmap[i]] = labels[i];
 
-  if (procid == 0) MPI_Reduce(MPI_IN_PLACE, global_labels, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
-  else MPI_Reduce(global_labels, global_labels, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
+  if (procid == 0)
+    MPI_Reduce(MPI_IN_PLACE, global_labels, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
+  else
+    MPI_Reduce(global_labels, global_labels, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
 
   if (procid == 0) {
     if (debug)
@@ -265,14 +290,16 @@ labelprop_output(dist_graph_t* g, uint64_t* labels, char* output_file)
     std::ofstream outfile;
     outfile.open(output_file);
 
-    for (uint64_t i = 0; i < g->n; ++i) outfile << global_labels[i] << std::endl;
+    for (uint64_t i = 0; i < g->n; ++i)
+      outfile << global_labels[i] << std::endl;
 
     outfile.close();
   }
 
   free(global_labels);
 
-  if (debug) printf("Task %d done writing labels\n", procid);
+  if (debug)
+    printf("Task %d done writing labels\n", procid);
 
   return 0;
 }
@@ -280,35 +307,46 @@ labelprop_output(dist_graph_t* g, uint64_t* labels, char* output_file)
 int
 labelprop_verify(dist_graph_t* g, uint64_t* labels, uint64_t num_to_output)
 {
-  if (debug) { printf("Task %d labelprop_verify() start\n", procid); }
+  if (debug) {
+    printf("Task %d labelprop_verify() start\n", procid);
+  }
 
   uint64_t* global_labels = (uint64_t*)malloc(g->n * sizeof(uint64_t));
   uint64_t* label_counts  = (uint64_t*)malloc(g->n * sizeof(uint64_t));
 
 #pragma omp parallel for
-  for (uint64_t i = 0; i < g->n; ++i) global_labels[i] = LABEL_NOT_ASSIGNED;
+  for (uint64_t i = 0; i < g->n; ++i)
+    global_labels[i] = LABEL_NOT_ASSIGNED;
 
 #pragma omp parallel for
-  for (uint64_t i = 0; i < g->n_local; ++i) global_labels[g->local_unmap[i]] = labels[i];
+  for (uint64_t i = 0; i < g->n_local; ++i)
+    global_labels[g->local_unmap[i]] = labels[i];
 
-  if (procid == 0) MPI_Reduce(MPI_IN_PLACE, global_labels, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
-  else MPI_Reduce(global_labels, global_labels, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
+  if (procid == 0)
+    MPI_Reduce(MPI_IN_PLACE, global_labels, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
+  else
+    MPI_Reduce(global_labels, global_labels, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
 
   if (procid == 0) {
 #pragma omp parallel for
-    for (uint64_t i = 0; i < g->n; ++i) label_counts[i] = 0;
+    for (uint64_t i = 0; i < g->n; ++i)
+      label_counts[i] = 0;
 
-    for (uint64_t i = 0; i < g->n; ++i) ++label_counts[global_labels[i]];
+    for (uint64_t i = 0; i < g->n; ++i)
+      ++label_counts[global_labels[i]];
 
     quicksort_dec(label_counts, global_labels, (int64_t)0, (int64_t)g->n - 1);
 
-    for (uint64_t i = 0; i < num_to_output; ++i) printf("LP VERIFY %lu: label: %lu, size: %lu\n", i, global_labels[i], label_counts[i]);
+    for (uint64_t i = 0; i < num_to_output; ++i)
+      printf("LP VERIFY %lu: label: %lu, size: %lu\n", i, global_labels[i], label_counts[i]);
   }
 
   free(global_labels);
   free(label_counts);
 
-  if (debug) { printf("Task %d labelprop_verify() success\n", procid); }
+  if (debug) {
+    printf("Task %d labelprop_verify() success\n", procid);
+  }
 
   return 0;
 }
@@ -316,7 +354,9 @@ labelprop_verify(dist_graph_t* g, uint64_t* labels, uint64_t num_to_output)
 int
 labelprop_dist(dist_graph_t* g, mpi_data_t* comm, uint32_t num_iter, char* output_file)
 {
-  if (debug) { printf("Task %d labelprop_dist() start\n", procid); }
+  if (debug) {
+    printf("Task %d labelprop_dist() start\n", procid);
+  }
 
   MPI_Barrier(MPI_COMM_WORLD);
   double elt = omp_get_wtime();
@@ -326,14 +366,20 @@ labelprop_dist(dist_graph_t* g, mpi_data_t* comm, uint32_t num_iter, char* outpu
 
   MPI_Barrier(MPI_COMM_WORLD);
   elt = omp_get_wtime() - elt;
-  if (procid == 0) printf("LabelProp time %9.6f (s)\n", elt);
+  if (procid == 0)
+    printf("LabelProp time %9.6f (s)\n", elt);
 
-  if (output) { labelprop_output(g, labels, output_file); }
+  if (output) {
+    labelprop_output(g, labels, output_file);
+  }
 
-  if (verify) { labelprop_verify(g, labels, 100); }
+  if (verify) {
+    labelprop_verify(g, labels, 100);
+  }
 
   free(labels);
 
-  if (debug) printf("Task %d labelprop_dist() success\n", procid);
+  if (debug)
+    printf("Task %d labelprop_dist() success\n", procid);
   return 0;
 }

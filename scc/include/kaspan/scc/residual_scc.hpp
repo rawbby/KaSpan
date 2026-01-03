@@ -49,7 +49,9 @@ residual_scc(vertex_t const* wcc_id,
         auto const end = fw_head[u + 1];
         for (auto it = beg; it < end; ++it) {
           auto const v = fw_csr[it];
-          if (sub_scc_id[v] == scc_id_undecided and fw_reach.emplace(v).second) { queue.emplace_back(v); }
+          if (sub_scc_id[v] == scc_id_undecided and fw_reach.emplace(v).second) {
+            queue.emplace_back(v);
+          }
         }
       }
 

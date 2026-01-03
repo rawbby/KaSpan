@@ -3,9 +3,7 @@
 #include <kaspan/mpi_basic/type.hpp>
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief Gathers data from all processes to the root process.
@@ -39,6 +37,4 @@ gather(T const& send_value, T* recv_buffer, int root = 0)
   MPI_Gather(&send_value, 1, type<T>, recv_buffer, 1, type<T>, root, MPI_COMM_WORLD);
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

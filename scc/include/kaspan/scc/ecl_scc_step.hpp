@@ -60,7 +60,9 @@ ecl_scc_step(part_t const&   part,
   // Validate decided_count is consistent with scc_id
   vertex_t actual_decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] != scc_id_undecided) { ++actual_decided_count; }
+    if (scc_id[k] != scc_id_undecided) {
+      ++actual_decided_count;
+    }
   }
   DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
 #endif
@@ -73,7 +75,9 @@ ecl_scc_step(part_t const&   part,
 
     active.fill_cmp(local_n, scc_id, scc_id_undecided);
     std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
-    active.for_each(local_n, [&](auto&& k) { active_stack.push(k); });
+    active.for_each(local_n, [&](auto&& k) {
+      active_stack.push(k);
+    });
 
     while (true) {
 
@@ -124,7 +128,9 @@ ecl_scc_step(part_t const&   part,
       // if no messages to exchange (globally)
       // the labels converged.
 
-      if (not frontier.comm(part)) { break; }
+      if (not frontier.comm(part)) {
+        break;
+      }
 
       // === CHECK INCOMING PROPAGATIONS ===
 

@@ -4,9 +4,7 @@
 #include <kaspan/mpi_basic/type.hpp>
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief All-reduce for a single typed value.
@@ -35,6 +33,4 @@ allreduce_single(T const& send_value, MPI_Datatype datatype, MPI_Op op) -> T
   return recv_value;
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

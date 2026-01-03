@@ -42,7 +42,8 @@ wcc(kaspan::index_t* wcc_id, kaspan::index_t const* fw_head, kaspan::index_t con
       }
     }
 
-    if (not color_changed) break;
+    if (not color_changed)
+      break;
 
     for (kaspan::vertex_t u = 0; u < n; ++u) {
       if (color[u] != u) { // u is no root

@@ -1,7 +1,7 @@
+#include "kaspan/mpi_basic/type.hpp"
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/mpi_basic/allgather.hpp>
 #include <kaspan/mpi_basic/allreduce_max_time.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/fuzzy.hpp>
@@ -19,7 +19,9 @@ using namespace kaspan;
 void
 lowest_to_compact_inplace(vertex_t n, vertex_t* scc_id)
 {
-  if (n == 0) { return; }
+  if (n == 0) {
+    return;
+  }
 
   std::unordered_map<vertex_t, vertex_t> map;
 
@@ -40,7 +42,9 @@ lowest_to_compact_inplace(vertex_t n, vertex_t* scc_id)
 void
 any_to_lowest_inplace(vertex_t n, vertex_t* scc_id)
 {
-  if (n == 0) { return; }
+  if (n == 0) {
+    return;
+  }
   std::unordered_map<vertex_t, vertex_t> map;
   for (vertex_t v = 0; v < n; ++v) {
     auto id = scc_id[v];
@@ -65,11 +69,15 @@ main(int argc, char** argv)
     auto const graph  = fuzzy_global_scc_id_and_graph(seed, n);
     auto       buffer = make_buffer<vertex_t>(n);
     auto*      scc_id = static_cast<vertex_t*>(buffer.data());
-    for (size_t k = 0; k < n; ++k) { scc_id[k] = -1; }
+    for (size_t k = 0; k < n; ++k) {
+      scc_id[k] = -1;
+    }
 
     vertex_t component_count = 0;
     tarjan(n, graph.fw_head, graph.fw_csr, [&component_count, scc_id](auto const* beg, auto const* end) -> void {
-      for (auto const k : std::span{ beg, end }) { scc_id[k] = component_count; }
+      for (auto const k : std::span{ beg, end }) {
+        scc_id[k] = component_count;
+      }
       ++component_count;
     });
 
@@ -79,15 +87,21 @@ main(int argc, char** argv)
     std::stringstream ss;
 
     std::print(ss, "  index    :");
-    for (vertex_t k = 0; k < n; ++k) { std::print(ss, " {:2}", k); }
+    for (vertex_t k = 0; k < n; ++k) {
+      std::print(ss, " {:2}", k);
+    }
     std::println(ss);
 
     std::print(ss, "  scc_id   :");
-    for (vertex_t k = 0; k < n; ++k) { std::print(ss, " {:2}", graph.scc_id[k]); }
+    for (vertex_t k = 0; k < n; ++k) {
+      std::print(ss, " {:2}", graph.scc_id[k]);
+    }
     std::println(ss);
 
     std::print(ss, "  scc_id_  :");
-    for (vertex_t k = 0; k < n; ++k) { std::print(ss, " {:2}", scc_id[k]); }
+    for (vertex_t k = 0; k < n; ++k) {
+      std::print(ss, " {:2}", scc_id[k]);
+    }
     std::println(ss);
 
     std::print(ss, "            ");
@@ -104,6 +118,8 @@ main(int argc, char** argv)
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    for (vertex_t k = 0; k < n; ++k) { ASSERT_EQ(graph.scc_id[k], scc_id[k], "k = {} \n{}", k, status_str); }
+    for (vertex_t k = 0; k < n; ++k) {
+      ASSERT_EQ(graph.scc_id[k], scc_id[k], "k = {} \n{}", k, status_str);
+    }
   }
 }

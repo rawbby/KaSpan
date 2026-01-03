@@ -120,9 +120,8 @@ free_mpi_degree_t()
   mpi_degree_t = mpi_basic::datatype_null;
 }
 
-// NOLINTBEGIN(-fpermissive)
 inline void
-degree_max_reduce(void* invec, void* inoutvec, int* len, mpi_basic::Datatype* /*datatype*/)
+degree_max_reduce(void* invec, void* inoutvec, int* len, mpi_basic::Datatype* /*datatype*/) // NOLINT(readability-non-const-parameter)
 {
   auto const* in    = static_cast<degree const*>(invec);
   auto*       inout = static_cast<degree*>(inoutvec);
@@ -130,10 +129,11 @@ degree_max_reduce(void* invec, void* inoutvec, int* len, mpi_basic::Datatype* /*
   for (int i = 0; i < *len; ++i) {
     auto const& a = inout[i];
     auto const& b = in[i];
-    if (b.degree_product > a.degree_product or (b.degree_product == a.degree_product and b.u > a.u)) { inout[i] = b; }
+    if (b.degree_product > a.degree_product or (b.degree_product == a.degree_product and b.u > a.u)) {
+      inout[i] = b;
+    }
   }
 }
-// NOLINTEND(-fpermissive)
 
 inline void
 init_mpi_degree_max_op()
@@ -158,9 +158,9 @@ free_mpi_degree_max_op()
 
 #define KASPAN_DEFAULT_INIT()                                                                                                                                                      \
   MPI_INIT();                                                                                                                                                                      \
-  init_mpi_edge_t();                                                                                                                                                               \
-  init_mpi_degree_t();                                                                                                                                                             \
-  init_mpi_degree_max_op();                                                                                                                                                        \
+  kaspan::init_mpi_edge_t();                                                                                                                                                               \
+  kaspan::init_mpi_degree_t();                                                                                                                                                             \
+  kaspan::init_mpi_degree_max_op();                                                                                                                                                        \
   std::set_terminate([] {                                                                                                                                                          \
     if (auto exception_pointer = std::current_exception()) {                                                                                                                       \
       try {                                                                                                                                                                        \

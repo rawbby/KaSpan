@@ -38,13 +38,25 @@ public:
     return *this;
   }
 
-  [[nodiscard]] auto data() -> u64* { return static_cast<u64*>(buffer::data()); }
+  [[nodiscard]] auto data() -> u64*
+  {
+    return static_cast<u64*>(buffer::data());
+  }
 
-  [[nodiscard]] auto data() const -> u64 const* { return static_cast<u64 const*>(buffer::data()); }
+  [[nodiscard]] auto data() const -> u64 const*
+  {
+    return static_cast<u64 const*>(buffer::data());
+  }
 
-  [[nodiscard]] operator bits_accessor() noexcept { return bits_accessor{ data() }; }
+  [[nodiscard]] explicit operator bits_accessor() noexcept
+  {
+    return bits_accessor{ data() };
+  }
 
-  [[nodiscard]] operator bits_accessor() const noexcept { return bits_accessor{ const_cast<u64*>(data()) }; }
+  [[nodiscard]] explicit operator bits_accessor() const noexcept
+  {
+    return bits_accessor{ const_cast<u64*>(data()) };
+  }
 };
 
 inline auto
@@ -61,7 +73,9 @@ make_bits_clean(u64 size) noexcept -> bits
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(res.data(), byte_size);
   std::memset(res.data(), 0x00, byte_size);
 #ifdef KASPAN_DEBUG
-  for (u64 i = 0; i < size; ++i) { ASSERT_EQ(res.get(i), false); }
+  for (u64 i = 0; i < size; ++i) {
+    ASSERT_EQ(res.get(i), false);
+  }
 #endif
   return res;
 }
@@ -74,7 +88,9 @@ make_bits_filled(u64 size) noexcept -> bits
   KASPAN_VALGRIND_MAKE_MEM_DEFINED(res.data(), byte_size);
   std::memset(res.data(), 0xff, byte_size);
 #ifdef KASPAN_DEBUG
-  for (u64 i = 0; i < size; ++i) { ASSERT_EQ(res.get(i), true); }
+  for (u64 i = 0; i < size; ++i) {
+    ASSERT_EQ(res.get(i), true);
+  }
 #endif
   return res;
 }

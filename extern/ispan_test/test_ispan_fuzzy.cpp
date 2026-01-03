@@ -25,19 +25,24 @@ main(int argc, char** argv) -> int
 
     std::stringstream ss;
     ss << "  index        :";
-    for (size_t i = 0; i < n; ++i) ss << ' ' << std::right << std::setw(2) << i;
+    for (size_t i = 0; i < n; ++i)
+      ss << ' ' << std::right << std::setw(2) << i;
     ss << "\n  scc_id_orig  :";
-    for (size_t i = 0; i < n; ++i) ss << ' ' << std::right << std::setw(2) << g.scc_id[i];
+    for (size_t i = 0; i < n; ++i)
+      ss << ' ' << std::right << std::setw(2) << g.scc_id[i];
     ss << "\n  scc_id_ispan :";
-    for (size_t i = 0; i < n; ++i) ss << ' ' << std::right << std::setw(2) << scc_id_ispan[i];
+    for (size_t i = 0; i < n; ++i)
+      ss << ' ' << std::right << std::setw(2) << scc_id_ispan[i];
     ss << "\n                ";
-    for (size_t i = 0; i < n; ++i) ss << (g.scc_id[i] == scc_id_ispan[i] ? "   " : " ^^");
+    for (size_t i = 0; i < n; ++i)
+      ss << (g.scc_id[i] == scc_id_ispan[i] ? "   " : " ^^");
     ss << std::endl;
 
     auto const status_str = ss.str();
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    for (size_t i = 0; i < n; ++i) ASSERT_EQ(g.scc_id[i], scc_id_ispan[i], "i={}\n{}", i, status_str.c_str());
+    for (size_t i = 0; i < n; ++i)
+      ASSERT_EQ(g.scc_id[i], scc_id_ispan[i], "i={}\n{}", i, status_str.c_str());
   }
 }

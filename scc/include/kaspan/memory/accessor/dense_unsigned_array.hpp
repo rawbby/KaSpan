@@ -50,13 +50,25 @@ public:
     return dense_unsigned_array{ count, element_byte_size, endian };
   }
 
-  [[nodiscard]] auto data() -> std::byte* { return static_cast<std::byte*>(buffer::data()); }
+  [[nodiscard]] auto data() -> std::byte*
+  {
+    return static_cast<std::byte*>(buffer::data());
+  }
 
-  [[nodiscard]] auto data() const -> std::byte const* { return static_cast<std::byte const*>(buffer::data()); }
+  [[nodiscard]] auto data() const -> std::byte const*
+  {
+    return static_cast<std::byte const*>(buffer::data());
+  }
 
-  [[nodiscard]] auto element_bytes() const -> u8 { return element_byte_size_; }
+  [[nodiscard]] auto element_bytes() const -> u8
+  {
+    return element_byte_size_;
+  }
 
-  [[nodiscard]] auto endian() const -> std::endian { return endian_; }
+  [[nodiscard]] auto endian() const -> std::endian
+  {
+    return endian_;
+  }
 
 private:
   u8          element_byte_size_ = 0;

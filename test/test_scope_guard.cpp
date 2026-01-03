@@ -13,7 +13,9 @@ test_basic()
 {
   bool called = false;
   {
-    auto const guard = scope_guard([&] { called = true; });
+    auto const guard = scope_guard([&] {
+      called = true;
+    });
     ASSERT(not called);
   }
   ASSERT(called);
@@ -24,7 +26,9 @@ test_exception()
 {
   bool called = false;
   try {
-    auto const guard = scope_guard([&] { called = true; });
+    auto const guard = scope_guard([&] {
+      called = true;
+    });
     throw std::runtime_error("force unwind");
   } catch (...) { // NOLINT(*-empty-catch)
     // destructor must have run

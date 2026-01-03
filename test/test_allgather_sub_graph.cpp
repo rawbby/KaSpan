@@ -1,16 +1,14 @@
+#include "kaspan/mpi_basic/type.hpp"
+#include "kaspan/mpi_basic/world.hpp"
+#include "kaspan/scc/graph.hpp"
+#include "kaspan/scc/part.hpp"
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/assert_ge.hpp>
 #include <kaspan/debug/assert_lt.hpp>
 #include <kaspan/debug/sub_process.hpp>
-#include <kaspan/memory/borrow.hpp>
-#include <kaspan/mpi_basic/allgather.hpp>
-#include <kaspan/mpi_basic/allreduce_single.hpp>
-#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/allgather_sub_graph.hpp>
 #include <kaspan/scc/backward_complement.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/scc/graph.hpp>
-#include <kaspan/scc/part.hpp>
 #include <kaspan/scc/partion_graph.hpp>
 
 using namespace kaspan;

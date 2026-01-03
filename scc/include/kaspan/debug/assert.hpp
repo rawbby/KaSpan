@@ -9,7 +9,3 @@
 #include <kaspan/debug/assert_lt.hpp>
 #include <kaspan/debug/assert_ne.hpp>
 #include <kaspan/debug/assert_true.hpp>
-
-namespace kaspan {
-
-} // namespace kaspan

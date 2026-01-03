@@ -38,7 +38,10 @@ struct edge_frontier
     return frontier;
   }
 
-  void local_push(edge const& e) { recv_buffer.emplace_back(e); }
+  void local_push(edge const& e)
+  {
+    recv_buffer.emplace_back(e);
+  }
 
   void push(i32 rank, edge const& e)
   {
@@ -55,7 +58,10 @@ struct edge_frontier
     }
   }
 
-  [[nodiscard]] auto has_next() const -> bool { return not recv_buffer.empty(); }
+  [[nodiscard]] auto has_next() const -> bool
+  {
+    return not recv_buffer.empty();
+  }
 
   auto next() -> edge
   {
@@ -73,7 +79,9 @@ struct edge_frontier
     DEBUG_ASSERT_EQ(send_count, send_buffer.size());
 
     auto const total_messages = mpi_basic::allreduce_single(send_count, mpi_basic::sum);
-    if (total_messages == 0) { return false; }
+    if (total_messages == 0) {
+      return false;
+    }
 
     mpi_basic::alltoallv_counts(send_counts, recv_counts);
     auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
@@ -82,7 +90,9 @@ struct edge_frontier
     recv_buffer.resize(recv_offset + recv_count);
     auto* recv_memory = recv_buffer.data() + recv_offset;
 
-    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](edge const& e) { return part.world_rank_of(e.u); });
+    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](edge const& e) {
+      return part.world_rank_of(e.u);
+    });
 
     mpi_basic::alltoallv(send_buffer.data(), send_counts, send_displs, recv_memory, recv_counts, recv_displs, mpi_edge_t);
 
@@ -101,7 +111,9 @@ struct edge_frontier
     DEBUG_ASSERT_EQ(send_count, send_buffer.size());
 
     auto const total_messages = mpi_basic::allreduce_single(send_count, mpi_basic::sum);
-    if (total_messages == 0) { return mpi_basic::request_null; }
+    if (total_messages == 0) {
+      return mpi_basic::request_null;
+    }
 
     mpi_basic::alltoallv_counts(send_counts, recv_counts);
     auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
@@ -110,14 +122,18 @@ struct edge_frontier
     recv_buffer.resize(recv_offset + recv_count);
     auto* recv_memory = recv_buffer.data() + recv_offset;
 
-    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](edge const& e) { return part.world_rank_of(e.u); });
+    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](edge const& e) {
+      return part.world_rank_of(e.u);
+    });
 
     return mpi_basic::ialltoallv(send_buffer.data(), send_counts, send_displs, recv_memory, recv_counts, recv_displs, mpi_edge_t);
   }
 
-  bool isync(mpi_basic::Request request)
+  [[nodiscard]] bool isync(mpi_basic::Request request)
   {
-    if (request == mpi_basic::request_null) { return false; }
+    if (request == mpi_basic::request_null) {
+      return false;
+    }
 
     mpi_basic::wait(request);
     send_buffer.clear();

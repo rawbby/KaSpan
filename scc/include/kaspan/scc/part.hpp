@@ -76,13 +76,25 @@ struct single_part
   constexpr auto operator=(single_part const&) noexcept -> single_part& = default;
   constexpr auto operator=(single_part&&) noexcept -> single_part&      = default;
 
-  [[nodiscard]] static constexpr auto has_local(vertex_t /* i */) noexcept -> bool { return true; }
+  [[nodiscard]] static constexpr auto has_local(vertex_t /* i */) noexcept -> bool
+  {
+    return true;
+  }
 
-  [[nodiscard]] static constexpr auto to_local(vertex_t i) noexcept -> vertex_t { return i; }
+  [[nodiscard]] static constexpr auto to_local(vertex_t i) noexcept -> vertex_t
+  {
+    return i;
+  }
 
-  [[nodiscard]] static constexpr auto to_global(vertex_t k) noexcept -> vertex_t { return k; }
+  [[nodiscard]] static constexpr auto to_global(vertex_t k) noexcept -> vertex_t
+  {
+    return k;
+  }
 
-  [[nodiscard]] constexpr auto local_n() const noexcept -> vertex_t { return n; }
+  [[nodiscard]] constexpr auto local_n() const noexcept -> vertex_t
+  {
+    return n;
+  }
 };
 
 struct single_world_part
@@ -111,17 +123,35 @@ struct single_world_part
   constexpr auto operator=(single_world_part const&) noexcept -> single_world_part& = default;
   constexpr auto operator=(single_world_part&&) noexcept -> single_world_part&      = default;
 
-  [[nodiscard]] static constexpr auto has_local(vertex_t /* i */) noexcept -> bool { return true; }
+  [[nodiscard]] static constexpr auto has_local(vertex_t /* i */) noexcept -> bool
+  {
+    return true;
+  }
 
-  [[nodiscard]] static constexpr auto to_local(vertex_t i) noexcept -> vertex_t { return i; }
+  [[nodiscard]] static constexpr auto to_local(vertex_t i) noexcept -> vertex_t
+  {
+    return i;
+  }
 
-  [[nodiscard]] static constexpr auto to_global(vertex_t k) noexcept -> vertex_t { return k; }
+  [[nodiscard]] static constexpr auto to_global(vertex_t k) noexcept -> vertex_t
+  {
+    return k;
+  }
 
-  [[nodiscard]] constexpr auto local_n() const noexcept -> vertex_t { return n; }
+  [[nodiscard]] constexpr auto local_n() const noexcept -> vertex_t
+  {
+    return n;
+  }
 
-  [[nodiscard]] static constexpr auto world_rank_of(vertex_t /* i */) noexcept -> i32 { return 0; }
+  [[nodiscard]] static constexpr auto world_rank_of(vertex_t /* i */) noexcept -> i32
+  {
+    return 0;
+  }
 
-  [[nodiscard]] auto world_part_of(i32 /* r */) const -> single_world_part { return single_world_part{ n }; }
+  [[nodiscard]] auto world_part_of(i32 /* r */) const -> single_world_part
+  {
+    return single_world_part{ n };
+  }
 };
 
 struct explicit_continuous_part
@@ -156,13 +186,25 @@ struct explicit_continuous_part
   constexpr auto operator=(explicit_continuous_part const&) noexcept -> explicit_continuous_part& = default;
   constexpr auto operator=(explicit_continuous_part&&) noexcept -> explicit_continuous_part&      = default;
 
-  [[nodiscard]] constexpr auto has_local(vertex_t global_u) const noexcept -> bool { return global_u >= begin and global_u < end; }
+  [[nodiscard]] constexpr auto has_local(vertex_t global_u) const noexcept -> bool
+  {
+    return global_u >= begin and global_u < end;
+  }
 
-  [[nodiscard]] constexpr auto to_local(vertex_t global_u) const noexcept -> vertex_t { return global_u - begin; }
+  [[nodiscard]] constexpr auto to_local(vertex_t global_u) const noexcept -> vertex_t
+  {
+    return global_u - begin;
+  }
 
-  [[nodiscard]] constexpr auto to_global(vertex_t local_k) const noexcept -> vertex_t { return begin + local_k; }
+  [[nodiscard]] constexpr auto to_global(vertex_t local_k) const noexcept -> vertex_t
+  {
+    return begin + local_k;
+  }
 
-  [[nodiscard]] constexpr auto local_n() const noexcept -> vertex_t { return end - begin; }
+  [[nodiscard]] constexpr auto local_n() const noexcept -> vertex_t
+  {
+    return end - begin;
+  }
 };
 
 struct cyclic_part final
@@ -195,30 +237,47 @@ struct cyclic_part final
   constexpr auto operator=(cyclic_part const&) noexcept -> cyclic_part& = default;
   constexpr auto operator=(cyclic_part&&) noexcept -> cyclic_part&      = default;
 
-  [[nodiscard]] constexpr auto has_local(vertex_t i) const noexcept -> bool { return world_size == 1 || (i % world_size) == world_rank; }
+  [[nodiscard]] constexpr auto has_local(vertex_t i) const noexcept -> bool
+  {
+    return world_size == 1 || (i % world_size) == world_rank;
+  }
 
-  [[nodiscard]] constexpr auto world_rank_of(vertex_t i) const noexcept -> i32 { return world_size == 1 ? 0 : (i % world_size); }
+  [[nodiscard]] constexpr auto world_rank_of(vertex_t i) const noexcept -> i32
+  {
+    return world_size == 1 ? 0 : (i % world_size);
+  }
 
   [[nodiscard]] constexpr auto to_local(vertex_t i) const noexcept -> vertex_t
   {
-    if (world_size == 1) { return i; }
+    if (world_size == 1) {
+      return i;
+    }
     return (i - world_rank) / world_size;
   }
 
   [[nodiscard]] constexpr auto to_global(vertex_t k) const noexcept -> vertex_t
   {
-    if (world_size == 1) { return k; }
+    if (world_size == 1) {
+      return k;
+    }
     return world_rank + (k * world_size);
   }
 
   [[nodiscard]] constexpr auto local_n() const noexcept -> vertex_t
   {
-    if (world_size == 1) { return n; }
-    if (n <= world_rank) { return 0; }
+    if (world_size == 1) {
+      return n;
+    }
+    if (n <= world_rank) {
+      return 0;
+    }
     return ((n - 1 - world_rank) / world_size) + 1;
   }
 
-  [[nodiscard]] auto world_part_of(i32 r) const -> cyclic_part { return cyclic_part{ n, r, world_size }; }
+  [[nodiscard]] auto world_part_of(i32 r) const -> cyclic_part
+  {
+    return cyclic_part{ n, r, world_size };
+  }
 };
 
 struct block_cyclic_part final
@@ -256,14 +315,18 @@ struct block_cyclic_part final
 
   [[nodiscard]] constexpr auto has_local(vertex_t global) const noexcept -> bool
   {
-    if (world_size == 1) { return true; }
+    if (world_size == 1) {
+      return true;
+    }
     vertex_t const block = global / block_size;
     return block % world_size == world_rank;
   }
 
   [[nodiscard]] constexpr auto world_rank_of(vertex_t global) const noexcept -> i32
   {
-    if (world_size == 1) { return 0; }
+    if (world_size == 1) {
+      return 0;
+    }
     vertex_t const block = global / block_size;
     return block % world_size;
   }
@@ -271,7 +334,9 @@ struct block_cyclic_part final
   // Precondition: has_local(i)
   [[nodiscard]] constexpr auto to_local(vertex_t global) const noexcept -> vertex_t
   {
-    if (world_size == 1) { return global; }
+    if (world_size == 1) {
+      return global;
+    }
     vertex_t const block                        = global / block_size;
     i32 const      offset_in_block              = global % block_size;
     vertex_t const num_full_owned_blocks_before = block / world_size;
@@ -281,7 +346,9 @@ struct block_cyclic_part final
   // Precondition: k < local_n()
   [[nodiscard]] constexpr auto to_global(vertex_t local) const noexcept -> vertex_t
   {
-    if (world_size == 1) { return local; }
+    if (world_size == 1) {
+      return local;
+    }
     vertex_t const local_block        = local / block_size; // which owned block (0-based)
     vertex_t const offset             = local % block_size; // offset within that block
     vertex_t const global_block       = (local_block * world_size) + world_rank;
@@ -291,17 +358,27 @@ struct block_cyclic_part final
 
   [[nodiscard]] constexpr auto local_n() const noexcept -> vertex_t
   {
-    if (world_size == 1) { return n; }
-    if (n == 0) { return 0; }
+    if (world_size == 1) {
+      return n;
+    }
+    if (n == 0) {
+      return 0;
+    }
 
     vertex_t const num_blocks = (n + block_size - 1) / block_size; // ceil(n / block_size)
-    if (num_blocks == 0) { return 0; }
+    if (num_blocks == 0) {
+      return 0;
+    }
 
     // Number of owned blocks
     vertex_t owned_blocks = 0;
-    if (num_blocks > world_rank) { owned_blocks = (num_blocks - 1 - world_rank) / world_size + 1; }
+    if (num_blocks > world_rank) {
+      owned_blocks = (num_blocks - 1 - world_rank) / world_size + 1;
+    }
 
-    if (owned_blocks == 0) { return 0; }
+    if (owned_blocks == 0) {
+      return 0;
+    }
 
     // Elements = (owned_blocks - 1) full blocks + local_n of last owned block
     vertex_t const last_owned_block       = world_rank + ((owned_blocks - 1) * world_size);
@@ -311,7 +388,10 @@ struct block_cyclic_part final
     return ((owned_blocks - 1) * block_size) + last_block_size;
   }
 
-  [[nodiscard]] auto world_part_of(i32 r) const -> block_cyclic_part { return block_cyclic_part{ n, r, world_size }; }
+  [[nodiscard]] auto world_part_of(i32 r) const -> block_cyclic_part
+  {
+    return block_cyclic_part{ n, r, world_size };
+  }
 };
 
 struct trivial_slice_part final : explicit_continuous_part
@@ -363,18 +443,27 @@ struct trivial_slice_part final : explicit_continuous_part
 
   [[nodiscard]] constexpr auto world_rank_of(vertex_t global) const noexcept -> i32
   {
-    if (world_size == 1) { return 0; }
+    if (world_size == 1) {
+      return 0;
+    }
 
     vertex_t const base = n / world_size;
-    if (base == 0) { return world_size - 1; }
+    if (base == 0) {
+      return world_size - 1;
+    }
 
     vertex_t const cutoff = base * static_cast<vertex_t>(world_size - 1);
-    if (global < cutoff) { return static_cast<i32>(global / base); }
+    if (global < cutoff) {
+      return static_cast<i32>(global / base);
+    }
 
     return world_size - 1;
   }
 
-  [[nodiscard]] auto world_part_of(i32 r) const -> trivial_slice_part { return trivial_slice_part{ n, r, world_size }; }
+  [[nodiscard]] auto world_part_of(i32 r) const -> trivial_slice_part
+  {
+    return trivial_slice_part{ n, r, world_size };
+  }
 };
 
 struct balanced_slice_part final : explicit_continuous_part
@@ -428,20 +517,29 @@ struct balanced_slice_part final : explicit_continuous_part
 
   [[nodiscard]] constexpr auto world_rank_of(vertex_t i) const noexcept -> i32
   {
-    if (world_size == 1) { return 0; }
+    if (world_size == 1) {
+      return 0;
+    }
 
     vertex_t const base = n / world_size;
     i32 const      rem  = n % world_size;
 
-    if (rem == 0) { return base == 0 ? 0 : i / base; }
+    if (rem == 0) {
+      return base == 0 ? 0 : i / base;
+    }
 
     vertex_t const split = (base + 1) * rem;
-    if (i < split) { return static_cast<i32>(i / (base + 1)); }
+    if (i < split) {
+      return static_cast<i32>(i / (base + 1));
+    }
 
     return rem + static_cast<i32>((i - split) / base);
   }
 
-  [[nodiscard]] auto world_part_of(i32 r) const -> balanced_slice_part { return balanced_slice_part{ n, r, world_size }; }
+  [[nodiscard]] auto world_part_of(i32 r) const -> balanced_slice_part
+  {
+    return balanced_slice_part{ n, r, world_size };
+  }
 };
 
 struct explicit_continuous_world_part final : explicit_continuous_part
@@ -479,7 +577,9 @@ struct explicit_continuous_world_part final : explicit_continuous_part
   [[nodiscard]] auto world_rank_of(vertex_t i) const -> i32
   {
     for (i32 r = 0; r < world_size; ++r) {
-      if (i >= part[2 * r] and i < part[2 * r + 1]) { return r; }
+      if (i >= part[2 * r] and i < part[2 * r + 1]) {
+        return r;
+      }
     }
     return -1;
   }
@@ -531,8 +631,12 @@ struct explicit_sorted_continuous_world_part final : explicit_continuous_part
   [[nodiscard]] auto world_rank_of(vertex_t i) const -> i32
   {
     auto r = i * static_cast<u64>(world_size) / static_cast<u64>(n);
-    while (r > 0 and i < part[r - 1]) { --r; }
-    while (r + 1 < world_size and i >= part[r]) { ++r; }
+    while (r > 0 and i < part[r - 1]) {
+      --r;
+    }
+    while (r + 1 < world_size and i >= part[r]) {
+      ++r;
+    }
     return r;
   }
 

@@ -36,7 +36,8 @@ gfq_origin(kaspan::index_t const   n,
     auto const end = fw_head[u + 1];
     for (auto it = beg; it < end; ++it) {
       auto const v = fw_csr[it];
-      if (scc_id[v] == kaspan::scc_id_undecided) sub_fw_csr[sub_fw_m++] = sub_vertices_inverse[v];
+      if (scc_id[v] == kaspan::scc_id_undecided)
+        sub_fw_csr[sub_fw_m++] = sub_vertices_inverse[v];
     }
     sub_fw_head[sub_u + 1] = sub_fw_m;
   }
@@ -50,7 +51,8 @@ gfq_origin(kaspan::index_t const   n,
     auto const end = bw_head[u + 1];
     for (auto it = beg; it < end; ++it) {
       auto const v = bw_csr[it];
-      if (scc_id[v] == kaspan::scc_id_undecided) sub_bw_csr[sub_bw_m++] = sub_vertices_inverse[v];
+      if (scc_id[v] == kaspan::scc_id_undecided)
+        sub_bw_csr[sub_bw_m++] = sub_vertices_inverse[v];
     }
     sub_bw_head[sub_u + 1] = sub_bw_m;
   }

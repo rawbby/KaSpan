@@ -10,6 +10,7 @@
 #include <kaspan/scc/pivot_selection.hpp>
 #include <kaspan/scc/trim_1.hpp>
 #include <kaspan/scc/trim_tarjan.hpp>
+#include <kaspan/util/return_pack.hpp>
 
 #include <algorithm>
 
@@ -45,7 +46,9 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
     auto const undecided_filter = SCC_ID_UNDECIDED_FILTER(local_n, scc_id);
     auto const on_scc_range     = [=](vertex_t* beg, vertex_t* end) {
       auto const id = *std::min_element(beg, end);
-      std::for_each(beg, end, [=](auto const k) { scc_id[k] = id; });
+      std::for_each(beg, end, [=](auto const k) {
+        scc_id[k] = id;
+      });
     };
 
     tarjan(part, fw_head, fw_csr, on_scc_range, undecided_filter, local_decided);
@@ -63,8 +66,8 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
       auto pivot    = pivot_selection(max);
 
       auto bitvector = make_bits_clean(local_n);
-      forward_search(part, fw_head, fw_csr, frontier, scc_id, bitvector, pivot);
-      local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, bitvector, pivot);
+      forward_search(part, fw_head, fw_csr, frontier, scc_id, static_cast<bits_accessor>(bitvector), pivot);
+      local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, static_cast<bits_accessor>(bitvector), pivot);
 
       auto const prev_global_decided = global_decided;
 
@@ -95,8 +98,8 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
       auto const prev_global_decided = global_decided;
 
       do {
-        color_scc_init_label(part, colors);
-        local_decided += color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors, active_array, active, changed, frontier, local_decided);
+        color_scc_init_label(part, colors.data());
+        local_decided += color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors.data(), active_array.data(), static_cast<bits_accessor>(active), static_cast<bits_accessor>(changed), frontier, local_decided);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
         // maybe: redistribute graph - sort vertices by color and run trim tarjan (as there is now a lot locality)
       } while (global_decided < decided_threshold);

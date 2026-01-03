@@ -108,9 +108,13 @@ csr_range(index_t const* head, vertex_t* csr, vertex_t k)
   DEBUG_ASSERT_VALID_GRAPH_LIGHT(N, M, HEAD, CSR);                                                                                                                                 \
   IF(KASPAN_DEBUG, {                                                                                                                                                               \
     std::remove_cvref_t<decltype(N)> const _n = N;                                                                                                                                 \
-    for (std::remove_cvref_t<decltype(N)> _i = 1; _i < _n; ++_i) { DEBUG_ASSERT_GE((HEAD)[_i], (HEAD)[_i - 1]); }                                                                  \
+    for (std::remove_cvref_t<decltype(N)> _i = 1; _i < _n; ++_i) {                                                                                                                 \
+      DEBUG_ASSERT_GE((HEAD)[_i], (HEAD)[_i - 1]);                                                                                                                                 \
+    }                                                                                                                                                                              \
     std::remove_cvref_t<decltype(M)> const _m = M;                                                                                                                                 \
-    for (std::remove_cvref_t<decltype(M)> _i = 1; _i < _m; ++_i) { DEBUG_ASSERT_IN_RANGE((CSR)[_i], 0, N); }                                                                       \
+    for (std::remove_cvref_t<decltype(M)> _i = 1; _i < _m; ++_i) {                                                                                                                 \
+      DEBUG_ASSERT_IN_RANGE((CSR)[_i], 0, N);                                                                                                                                      \
+    }                                                                                                                                                                              \
   });
 
 #define DEBUG_ASSERT_VALID_GRAPH_PART_LIGHT(PART, HEAD, CSR)                                                                                                                       \
@@ -124,7 +128,9 @@ csr_range(index_t const* head, vertex_t* csr, vertex_t k)
   DEBUG_ASSERT_VALID_GRAPH_PART_LIGHT(PART, HEAD, CSR);                                                                                                                            \
   IF(KASPAN_DEBUG, {                                                                                                                                                               \
     std::remove_cvref_t<decltype((PART).local_n())> const _n = (PART).local_n();                                                                                                   \
-    for (std::remove_cvref_t<decltype(_n)> _i = 1; _i < _n; ++_i) { DEBUG_ASSERT_GE((HEAD)[_i], (HEAD)[_i - 1]); }                                                                 \
+    for (std::remove_cvref_t<decltype(_n)> _i = 1; _i < _n; ++_i) {                                                                                                                \
+      DEBUG_ASSERT_GE((HEAD)[_i], (HEAD)[_i - 1]);                                                                                                                                 \
+    }                                                                                                                                                                              \
     std::remove_cvref_t<decltype((HEAD)[_n])> const _m = (HEAD)[_n];                                                                                                               \
     for (std::remove_cvref_t<decltype(_m)> _i = 1; _i < _m; ++_i) {                                                                                                                \
       DEBUG_ASSERT_GE((CSR)[_i], 0);                                                                                                                                               \

@@ -14,7 +14,9 @@ degree(index_t const* head, vertex_t u)
 inline index_t
 degree(vertex_t n, index_t const* head)
 {
-  if (n > 0) { return head[n]; }
+  if (n > 0) {
+    return head[n];
+  }
   return 0;
 }
 
@@ -34,7 +36,9 @@ degree(part_t const& part, index_t const* head)
   index_t m = 0;
 
   auto const local_n = part.local_n();
-  for (vertex_t k = 0; k < local_n; ++k) { m += degree(head, k); }
+  for (vertex_t k = 0; k < local_n; ++k) {
+    m += degree(head, k);
+  }
   return m;
 }
 

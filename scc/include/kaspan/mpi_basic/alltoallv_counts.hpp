@@ -2,9 +2,7 @@
 
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief All-to-all exchange of per-destination element counts (MPI-4 "_c" variant).
@@ -20,6 +18,4 @@ alltoallv_counts(MPI_Count const* send_counts, MPI_Count* recv_counts)
   MPI_Alltoall_c(send_counts, 1, MPI_COUNT, recv_counts, 1, MPI_COUNT, MPI_COMM_WORLD);
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

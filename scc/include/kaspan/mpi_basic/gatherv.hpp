@@ -3,9 +3,7 @@
 #include <kaspan/mpi_basic/type.hpp>
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief Gathers data with varying counts from all processes to the root process.
@@ -43,6 +41,4 @@ gatherv(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count co
   MPI_Gatherv_c(send_buffer, send_count, type<T>, recv_buffer, recv_counts, displs, type<T>, root, MPI_COMM_WORLD);
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

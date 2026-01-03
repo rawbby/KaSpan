@@ -35,15 +35,30 @@ public:
   auto operator=(stack_accessor const& rhs) noexcept -> stack_accessor& = default;
   auto operator=(stack_accessor&& rhs) noexcept -> stack_accessor&      = default;
 
-  static auto borrow(void** memory, u64 count) noexcept -> stack_accessor { return stack_accessor{ kaspan::borrow_array<T>(memory, count) }; }
+  static auto borrow(void** memory, u64 count) noexcept -> stack_accessor
+  {
+    return stack_accessor{ kaspan::borrow_array<T>(memory, count) };
+  }
 
-  [[nodiscard]] auto size() const -> u64 { return end_; }
+  [[nodiscard]] auto size() const -> u64
+  {
+    return end_;
+  }
 
-  void set_size(u64 size) { end_ = size; }
+  void set_size(u64 size)
+  {
+    end_ = size;
+  }
 
-  auto data() -> T* { return static_cast<T*>(data_); }
+  auto data() -> T*
+  {
+    return static_cast<T*>(data_);
+  }
 
-  [[nodiscard]] auto data() const -> T const* { return static_cast<T*>(data_); }
+  [[nodiscard]] auto data() const -> T const*
+  {
+    return static_cast<T*>(data_);
+  }
 
 private:
   void* data_ = nullptr;

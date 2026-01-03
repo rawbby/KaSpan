@@ -60,7 +60,9 @@ backward_complement_graph(vertex_t n, index_t const* fw_head, vertex_t const* fw
   it = 0;
   for (vertex_t u = 0; u < n; ++u) {
     auto const end = fw_head[u + 1];
-    for (; it < end; ++it) { bw_csr[bw_head[fw_csr[it] + 1]++] = u; }
+    for (; it < end; ++it) {
+      bw_csr[bw_head[fw_csr[it] + 1]++] = u;
+    }
   }
 
   DEBUG_ASSERT_VALID_GRAPH(n, bw_head[n], bw_head, bw_csr);
@@ -133,7 +135,9 @@ backward_complement_graph_part(part_t const& part, index_t local_m, index_t cons
   auto [rb, recv_counts, recv_displs] = mpi_basic::counts_and_displs();
   mpi_basic::alltoallv_counts(send_counts, recv_counts);
   auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
-  mpi_basic::inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&part](edge const& e) { return part.world_rank_of(e.u); });
+  mpi_basic::inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&part](edge const& e) {
+    return part.world_rank_of(e.u);
+  });
 
   auto  recv_buffer = make_buffer<edge>(recv_count);
   auto* recv_access = static_cast<edge*>(recv_buffer.data());

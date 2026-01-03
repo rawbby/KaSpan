@@ -77,14 +77,16 @@ init_map(fast_map* map, uint64_t init_size)
   map->arr            = (uint64_t*)malloc(init_size * 2 * sizeof(uint64_t));
   map->unique_keys    = (uint64_t*)malloc(init_size * sizeof(uint64_t));
   map->unique_indexes = (uint64_t*)malloc(init_size * sizeof(uint64_t));
-  if (map->arr == NULL || map->unique_keys == NULL || map->unique_indexes == NULL) throw_err("init_map(), unable to allocate resources\n", procid);
+  if (map->arr == NULL || map->unique_keys == NULL || map->unique_indexes == NULL)
+    throw_err("init_map(), unable to allocate resources\n", procid);
 
   map->capacity   = init_size;
   map->num_unique = 0;
   map->hashing    = true;
 
 #pragma omp parallel for
-  for (uint64_t i = 0; i < map->capacity; ++i) map->arr[i * 2] = NULL_KEY;
+  for (uint64_t i = 0; i < map->capacity; ++i)
+    map->arr[i * 2] = NULL_KEY;
 }
 
 void
@@ -93,7 +95,8 @@ init_map_nohash(fast_map* map, uint64_t init_size)
   map->arr            = (uint64_t*)malloc(init_size * 2 * sizeof(uint64_t));
   map->unique_keys    = (uint64_t*)malloc(init_size * sizeof(uint64_t));
   map->unique_indexes = (uint64_t*)malloc(init_size * sizeof(uint64_t));
-  if (map->arr == NULL || map->unique_keys == NULL || map->unique_indexes == NULL) throw_err("init_map(), unable to allocate resources\n", procid);
+  if (map->arr == NULL || map->unique_keys == NULL || map->unique_indexes == NULL)
+    throw_err("init_map(), unable to allocate resources\n", procid);
 
   map->capacity   = init_size;
   map->num_unique = init_size;
@@ -107,9 +110,11 @@ init_map_nohash(fast_map* map, uint64_t init_size)
       map->arr[2 * i + 1] = i;
     }
 #pragma omp for nowait
-    for (uint64_t i = 0; i < map->capacity; ++i) map->unique_keys[i] = i;
+    for (uint64_t i = 0; i < map->capacity; ++i)
+      map->unique_keys[i] = i;
 #pragma omp for nowait
-    for (uint64_t i = 0; i < map->capacity; ++i) map->unique_indexes[i] = i;
+    for (uint64_t i = 0; i < map->capacity; ++i)
+      map->unique_indexes[i] = i;
   } // end parallel
 }
 
@@ -127,7 +132,8 @@ clear_map(fast_map* map)
 void
 empty_map(fast_map* map)
 {
-  for (uint64_t i = 0; i < map->num_unique; ++i) map->arr[map->unique_indexes[i]] = NULL_KEY;
+  for (uint64_t i = 0; i < map->num_unique; ++i)
+    map->arr[map->unique_indexes[i]] = NULL_KEY;
 
   map->num_unique = 0;
 }

@@ -2,9 +2,7 @@
 
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 /**
  * @brief Allgather a single count from each rank.
@@ -19,6 +17,4 @@ allgatherv_counts(MPI_Count send_count, MPI_Count* counts)
   MPI_Allgather_c(&send_count, 1, MPI_COUNT, counts, 1, MPI_COUNT, MPI_COMM_WORLD);
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

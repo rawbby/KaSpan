@@ -1,9 +1,9 @@
-#include <cstdlib>
 #include <kaspan/scc/adapter/external_edgelist.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/result.hpp>
 
+#include <cstdlib>
 #include <cstdio>
 #include <print>
 

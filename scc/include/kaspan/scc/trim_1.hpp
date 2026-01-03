@@ -33,7 +33,9 @@ trim_1_first(part_t const& part, index_t const* fw_head, index_t const* bw_head,
     scc_id[k] = scc_id_undecided;
 
     auto const degree_product = out_degree * in_degree;
-    if (degree_product >= max.degree_product) { max = { degree_product, part.to_global(k) }; }
+    if (degree_product >= max.degree_product) {
+      max = { degree_product, part.to_global(k) };
+    }
   }
 
   return return_t{ decided_count, max };
@@ -45,8 +47,12 @@ trim_1(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index
 {
   auto const has_degree = [=](vertex_t k, index_t const* head, vertex_t const* csr) -> bool {
     for (auto u : csr_range(head, csr, k)) {
-      if (not part.has_local(u)) { return true; }
-      if (scc_id[part.to_local(u)] == scc_id_undecided) { return true; }
+      if (not part.has_local(u)) {
+        return true;
+      }
+      if (scc_id[part.to_local(u)] == scc_id_undecided) {
+        return true;
+      }
     }
     return false;
   };

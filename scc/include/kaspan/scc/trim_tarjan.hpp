@@ -82,14 +82,16 @@ trim_tarjan(part_t const&   part,
 
         auto const out_degree = fw_head[k + 1] - fw_head[k];
         auto const in_degree  = bw_head[k + 1] - bw_head[k];
-        if (in_degree > 0 and out_degree > 0) { return; }
+        if (in_degree > 0 and out_degree > 0) {
+          return;
+        }
         scc_id[k] = part.to_global(k);
         ++decided;
         return;
       }
 
-      index_t out_degree          = 0;
-      index_t in_degree           = 0;
+      index_t out_degree    = 0;
+      index_t in_degree     = 0;
       auto const [root, contains] = choose_contains_fn(component);
 
       for (auto const k : component) {
@@ -104,7 +106,9 @@ trim_tarjan(part_t const&   part,
             auto const u = fw_csr[it];
             if (not contains(component, u) and (not part.has_local(u) or filter(part.to_local(u)))) {
               ++out_degree;
-              if (in_degree > 0 and out_degree > 0) { return; }
+              if (in_degree > 0 and out_degree > 0) {
+                return;
+              }
             }
           }
         }
@@ -117,14 +121,18 @@ trim_tarjan(part_t const&   part,
             auto const u = bw_csr[it];
             if (not contains(component, u) and (not part.has_local(u) or filter(part.to_local(u)))) {
               ++in_degree;
-              if (in_degree > 0 and out_degree > 0) { return; }
+              if (in_degree > 0 and out_degree > 0) {
+                return;
+              }
             }
           }
         }
       }
 
       // found a global component (no external edges in one direction)
-      for (auto const k : component) { scc_id[k] = root; }
+      for (auto const k : component) {
+        scc_id[k] = root;
+      }
 
       decided += clen;
     },

@@ -3,9 +3,7 @@
 #include <kaspan/util/arithmetic.hpp>
 #include <mpi.h>
 
-namespace kaspan {
-
-namespace mpi_basic {
+namespace kaspan::mpi_basic {
 
 // clang-format off
 /**
@@ -99,6 +97,4 @@ op_free(Op* op)
   MPI_Op_free(op);
 }
 
-} // namespace mpi_basic
-
-} // namespace kaspan
+} // namespace kaspan::mpi_basic

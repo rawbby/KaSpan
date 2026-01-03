@@ -46,9 +46,15 @@ struct statistic_node
   {
   }
 
-  static timestamp now() { return std::chrono::duration_cast<unit>(clock::now().time_since_epoch()).count(); }
+  static timestamp now()
+  {
+    return std::chrono::duration_cast<unit>(clock::now().time_since_epoch()).count();
+  }
 
-  void finish() { duration = now() - duration; }
+  void finish()
+  {
+    duration = now() - duration;
+  }
 };
 
 inline auto g_kaspan_statistic_nodes = [] {
@@ -93,7 +99,9 @@ kaspan_statistic_pop()
   g_kaspan_statistic_stack.pop_back();
   auto const new_parent = g_kaspan_statistic_stack.back();
   g_kaspan_statistic_nodes[old_parent].finish();
-  if (new_parent != SIZE_MAX) { g_kaspan_statistic_nodes[new_parent].end = old_parent + 1; }
+  if (new_parent != SIZE_MAX) {
+    g_kaspan_statistic_nodes[new_parent].end = old_parent + 1;
+  }
 }
 
 inline void
@@ -129,7 +137,9 @@ kaspan_statistic_mpi_write_json(char const* file_path)
     bool   first_root = true;
     while (nit < nodes.size()) {
       DEBUG_ASSERT(nodes[nit].parent == SIZE_MAX);
-      if (not first_root) { os << ','; }
+      if (not first_root) {
+        os << ',';
+      }
       first_root = false;
 
       dfs(dfs, nit, nodes[nit].end, eit);

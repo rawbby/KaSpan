@@ -10,7 +10,8 @@ inline void
 print_time_result(kaspan::index_t run_times, double* avg_time)
 {
   if (run_times > 0) {
-    for (kaspan::index_t i = 0; i < 15; ++i) avg_time[i] = avg_time[i] / run_times * 1000;
+    for (kaspan::index_t i = 0; i < 15; ++i)
+      avg_time[i] = avg_time[i] / run_times * 1000;
     // printf("\nAverage Time Consumption for Running %d Times (ms)\n", run_times);
     // printf("Trim, %.3lf\n", avg_time[0]);
     // printf("Elephant SCC, %.3lf\n", avg_time[1]);

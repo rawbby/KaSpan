@@ -110,13 +110,17 @@ public:
 
     for (u64 i = 0; i < c64; ++i, b64 += 64) {
       u64 w = 0;
-      for (unsigned bit = 0; bit < 64; ++bit) { w |= static_cast<u64>(!!cmp(tx[b64 + bit], t)) << bit; }
+      for (unsigned bit = 0; bit < 64; ++bit) {
+        w |= static_cast<u64>(!!cmp(tx[b64 + bit], t)) << bit;
+      }
       derived()->data()[i] = w;
     }
 
     if (auto const rem = remainder<64>(count)) {
       u64 w = 0;
-      for (unsigned bit = 0; bit < rem; ++bit) { w |= static_cast<u64>(!!cmp(tx[b64 + bit], t)) << bit; }
+      for (unsigned bit = 0; bit < rem; ++bit) {
+        w |= static_cast<u64>(!!cmp(tx[b64 + bit], t)) << bit;
+      }
       auto const mask        = (static_cast<u64>(1) << rem) - 1;
       derived()->data()[c64] = (derived()->data()[c64] & ~mask) | (w & mask);
     }
@@ -126,9 +130,15 @@ protected:
   ~bits_mixin() = default;
 
 private:
-  auto derived() -> Derived* { return static_cast<Derived*>(this); }
+  auto derived() -> Derived*
+  {
+    return static_cast<Derived*>(this);
+  }
 
-  [[nodiscard]] auto derived() const -> Derived const* { return static_cast<Derived const*>(this); }
+  [[nodiscard]] auto derived() const -> Derived const*
+  {
+    return static_cast<Derived const*>(this);
+  }
 };
 
 } // namespace kaspan
