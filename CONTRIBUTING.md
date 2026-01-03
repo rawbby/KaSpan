@@ -33,7 +33,7 @@ For scripts that require a build (like `clang-tidy`, `iwyu`, `cppcheck`), you ca
 
 ## Project Structure
 
-- `scc/`: Contains the core library headers and implementation.
+- `kaspan/`: Contains the core library headers and implementation.
   - `include/kaspan/scc/`: Core SCC algorithms.
   - `include/kaspan/mpi_basic/`: MPI wrappers and communication primitives.
   - `include/kaspan/memory/`: Memory management utilities including `buffer`.
@@ -103,7 +103,7 @@ Always use the **`kaspan::mpi_basic`** wrapper instead of calling MPI functions 
 
 ### Memory Management
 
-To optimize performance and reduce allocations during execution, use **`kaspan::buffer`** (found in `scc/include/kaspan/memory/buffer.hpp`) whenever memory can be preallocated.
+To optimize performance and reduce allocations during execution, use **`kaspan::buffer`** (found in `kaspan/include/kaspan/memory/buffer.hpp`) whenever memory can be preallocated.
 
 ### Benchmarking Snapshots
 
