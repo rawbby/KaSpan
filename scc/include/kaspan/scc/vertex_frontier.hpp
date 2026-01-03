@@ -11,8 +11,8 @@ namespace kaspan {
 
 struct vertex_frontier
 {
-  std::vector<vertex_t> send_buffer{};
-  std::vector<vertex_t> recv_buffer{};
+  std::vector<vertex_t> send_buffer;
+  std::vector<vertex_t> recv_buffer;
 
   buffer     storage;
   MPI_Count* send_counts = nullptr;

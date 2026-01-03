@@ -16,6 +16,7 @@
 
 #include <cstdio>
 #include <print>
+#include <vector>
 
 void
 usage(int /* argc */, char** argv)

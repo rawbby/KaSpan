@@ -158,9 +158,9 @@ free_mpi_degree_max_op()
 
 #define KASPAN_DEFAULT_INIT()                                                                                                                                                      \
   MPI_INIT();                                                                                                                                                                      \
-  kaspan::init_mpi_edge_t();                                                                                                                                                               \
-  kaspan::init_mpi_degree_t();                                                                                                                                                             \
-  kaspan::init_mpi_degree_max_op();                                                                                                                                                        \
+  kaspan::init_mpi_edge_t();                                                                                                                                                       \
+  kaspan::init_mpi_degree_t();                                                                                                                                                     \
+  kaspan::init_mpi_degree_max_op();                                                                                                                                                \
   std::set_terminate([] {                                                                                                                                                          \
     if (auto exception_pointer = std::current_exception()) {                                                                                                                       \
       try {                                                                                                                                                                        \

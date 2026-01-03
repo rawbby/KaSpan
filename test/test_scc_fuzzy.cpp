@@ -1,13 +1,18 @@
-#include "kaspan/mpi_basic/allreduce_max_time.hpp"
-#include "kaspan/mpi_basic/allreduce_single.hpp"
-#include "kaspan/mpi_basic/world.hpp"
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/sub_process.hpp>
+#include <kaspan/memory/borrow.hpp>
+#include <kaspan/memory/buffer.hpp>
+#include <kaspan/mpi_basic/allreduce_max_time.hpp>
+#include <kaspan/mpi_basic/allreduce_single.hpp>
+#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/async/scc.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/part.hpp>
 #include <kaspan/scc/scc.hpp>
+
+#include <briefkasten/noop_indirection.hpp>
+
 #include <cmath>
 #include <iomanip>
 #include <ios>

@@ -1,4 +1,8 @@
+#include <briefkasten/grid_indirection.hpp>
+#include <briefkasten/noop_indirection.hpp>
+#include <cstdlib>
 #include <kaspan/debug/assert_lt.hpp>
+#include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/mpi_basic/allreduce_single.hpp>

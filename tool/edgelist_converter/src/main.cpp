@@ -3,8 +3,8 @@
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/result.hpp>
 
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 #include <print>
 
 using namespace kaspan;

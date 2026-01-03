@@ -90,8 +90,8 @@ trim_tarjan(part_t const&   part,
         return;
       }
 
-      index_t out_degree    = 0;
-      index_t in_degree     = 0;
+      index_t out_degree          = 0;
+      index_t in_degree           = 0;
       auto const [root, contains] = choose_contains_fn(component);
 
       for (auto const k : component) {

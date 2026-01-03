@@ -99,7 +99,18 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
 
       do {
         color_scc_init_label(part, colors.data());
-        local_decided += color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors.data(), active_array.data(), static_cast<bits_accessor>(active), static_cast<bits_accessor>(changed), frontier, local_decided);
+        local_decided += color_scc_step(part,
+                                        fw_head,
+                                        fw_csr,
+                                        bw_head,
+                                        bw_csr,
+                                        scc_id,
+                                        colors.data(),
+                                        active_array.data(),
+                                        static_cast<bits_accessor>(active),
+                                        static_cast<bits_accessor>(changed),
+                                        frontier,
+                                        local_decided);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
         // maybe: redistribute graph - sort vertices by color and run trim tarjan (as there is now a lot locality)
       } while (global_decided < decided_threshold);
