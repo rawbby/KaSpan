@@ -1,14 +1,16 @@
-#include "scc/base.hpp"
-#include "scc/graph.hpp"
-#include "debug/assert_ne.hpp"
-#include "debug/assert_ge.hpp"
-#include "debug/assert_eq.hpp"
 #include <cmath>
-#include <scc/fuzzy.hpp>
-#include <scc/tarjan.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert_ge.hpp>
+#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/fuzzy.hpp>
+#include <kaspan/scc/graph.hpp>
+#include <kaspan/scc/tarjan.hpp>
 
 #include <algorithm>
 #include <random>
+
+using namespace kaspan;
 
 void
 verify_graph(vertex_t n, index_t m, index_t const* head, vertex_t const* csr, vertex_t const* scc_id, double d)

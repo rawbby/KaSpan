@@ -1,16 +1,16 @@
 #pragma once
 
-#include <mpi_basic/mpi_basic.hpp>
-#include <scc/base.hpp>
+#include <kaspan/mpi_basic/mpi_basic.hpp>
+#include <kaspan/scc/base.hpp>
 #include <sys/stat.h>
 
-using depth_t = i16;
+using depth_t = kaspan::i16;
 
-constexpr inline auto mpi_depth_t = mpi_basic::type<depth_t>;
+constexpr inline auto mpi_depth_t = kaspan::mpi_basic::type<depth_t>;
 
 constexpr inline depth_t depth_unset = -1;
 
-constexpr inline vertex_t scc_id_largest = scc_id_undecided - 2;
+constexpr inline kaspan::vertex_t scc_id_largest = kaspan::scc_id_undecided - 2;
 
 inline off_t
 fsize(char const* filename)

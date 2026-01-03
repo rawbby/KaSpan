@@ -30,7 +30,7 @@ parting schemes (e.g., contiguous, cyclic, explicit).
 The framework provides a single, manifest-governed binary schema for forward and backward CSR graphs and a set of
 utilities to convert edge lists, load parts in MPI-like setups, and traverse adjacency efficiently. Datasets can
 exceed RAM; conversion is designed to be external-memory friendly, and loading brings in only a part of the graph
-(which must fit in RAM). All fallible operations return Result; no exceptions are thrown. Storage uses fixed-width,
+(which must fit in RAM). All fallible operations return result; no exceptions are thrown. Storage uses fixed-width,
 custom-endian integers, interpreted as raw bytes to allow compact encodings and optional in-memory widening.
 
 ## Requirements
@@ -53,7 +53,7 @@ definition. initially stores the manifest file.
 > [!NOTICE]
 > Empty lines or lines starting with “%” are ignored.
 
-### Manifest (text, key–value)
+### manifest (text, key–value)
 
 Each non‑empty line is either a comment starting with “%” or a key followed by a single space and the value. Paths are
 resolved relative to the manifest’s directory.

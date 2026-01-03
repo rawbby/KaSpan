@@ -2,14 +2,14 @@
 
 #include <ispan/util.hpp>
 
-inline index_t
-pivot_selection(vertex_t const* scc_id, index_t const* fw_head, index_t const* bw_head, vertex_t n)
+inline kaspan::index_t
+pivot_selection(kaspan::vertex_t const* scc_id, kaspan::index_t const* fw_head, kaspan::index_t const* bw_head, kaspan::vertex_t n)
 {
-  index_t  max_degree_product = 0;
-  vertex_t pivot              = 0;
+  kaspan::index_t  max_degree_product = 0;
+  kaspan::vertex_t pivot              = 0;
 
-  for (vertex_t u = 0; u < n; ++u) {
-    if (scc_id[u] == scc_id_undecided) {
+  for (kaspan::vertex_t u = 0; u < n; ++u) {
+    if (scc_id[u] == kaspan::scc_id_undecided) {
 
       auto const out_degree = fw_head[u + 1] - fw_head[u];
       auto const in_degree  = bw_head[u + 1] - bw_head[u];

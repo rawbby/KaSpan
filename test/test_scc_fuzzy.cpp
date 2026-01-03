@@ -1,21 +1,23 @@
-#include "scc/base.hpp"
-#include "mpi_basic/allgather.hpp"
-#include "debug/assert_eq.hpp"
-#include "mpi_basic/world.hpp"
-#include "mpi_basic/allreduce_single.hpp"
-#include "mpi_basic/allreduce_max_time.hpp"
-#include "memory/buffer.hpp"
-#include "memory/borrow.hpp"
 #include <briefkasten/noop_indirection.hpp>
-#include <debug/sub_process.hpp>
 #include <ios>
-#include <scc/async/scc.hpp>
-#include <scc/fuzzy.hpp>
-#include <scc/scc.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/memory/borrow.hpp>
+#include <kaspan/memory/buffer.hpp>
+#include <kaspan/mpi_basic/allgather.hpp>
+#include <kaspan/mpi_basic/allreduce_max_time.hpp>
+#include <kaspan/mpi_basic/allreduce_single.hpp>
+#include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/scc/async/scc.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/fuzzy.hpp>
+#include <kaspan/scc/scc.hpp>
 #include <sstream>
 
 #include <iomanip>
 #include <utility>
+
+using namespace kaspan;
 
 template<typename Graph>
 void
@@ -88,7 +90,7 @@ main(int argc, char** argv)
       DEBUG_ASSERT_EQ(n, mpi_basic::allreduce_single(n, MPI_MAX));
 
       auto const seed = mpi_basic::allreduce_max_time();
-      auto const part = BalancedSlicePart{ n };
+      auto const part = balanced_slice_part{ n };
 
       auto const graph = fuzzy_local_scc_id_and_graph(seed, part);
 

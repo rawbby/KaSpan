@@ -6,3 +6,4 @@ target_link_libraries(${TARGET_NAME} PRIVATE
         MPI::MPI_CXX
         OpenMP::OpenMP_CXX)
 target_compile_definitions(${TARGET_NAME} PRIVATE KASPAN_STATISTIC)
+target_include_directories(${TARGET_NAME} PRIVATE "${TARGET_DIR}/src")

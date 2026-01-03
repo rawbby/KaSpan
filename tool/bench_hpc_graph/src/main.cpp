@@ -1,27 +1,29 @@
-#include "debug/assert_lt.hpp"
-#include "kaspan_adapter.hpp"
+#include <kaspan/debug/assert_lt.hpp>
+#include <kaspan_adapter.hpp>
 
 #include <cstdint>
 #include <cstdlib>
-#include <debug/process.hpp>
-#include <debug/statistic.hpp>
-#include <debug/valgrind.hpp>
+#include <kaspan/debug/process.hpp>
+#include <kaspan/debug/statistic.hpp>
+#include <kaspan/debug/valgrind.hpp>
+#include <kaspan/scc/adapter/kagen.hpp>
+#include <kaspan/scc/adapter/manifest.hpp>
+#include <kaspan/scc/pivot_selection.hpp>
+#include <kaspan/util/arg_parse.hpp>
 #include <limits>
-#include <scc/adapter/kagen.hpp>
-#include <scc/adapter/manifest.hpp>
-#include <scc/pivot_selection.hpp>
-#include <util/arg_parse.hpp>
 
-#include "mpi_basic/world.hpp"
-#include "scc.h"
-#include "scc/base.hpp"
-#include "util/scope_guard.hpp"
+#include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/util/scope_guard.hpp>
+#include <scc.h>
 
 #include <mpi.h>
 #include <omp.h>
 
 #include <cstdio>
 #include <print>
+
+using namespace kaspan;
 
 int  procid, nprocs;
 bool verbose = false;
@@ -40,7 +42,7 @@ usage(int /* argc */, char** argv)
 void
 benchmark(auto&& graph_part)
 {
-  using Part = std::remove_cvref_t<decltype(graph_part.part)>;
+  using part_t = std::remove_cvref_t<decltype(graph_part.part)>;
 
   KASPAN_STATISTIC_ADD("n", graph_part.part.n);
   KASPAN_STATISTIC_ADD("local_n", graph_part.part.local_n());
@@ -51,9 +53,9 @@ benchmark(auto&& graph_part)
 
   // Create HPCGraph data structure from kaspan graph
   hpc_graph_data hpc_data;
-  Part         part_copy;
-  index_t      local_fw_m_copy = 0;
-  index_t      local_bw_m_copy = 0;
+  part_t         part_copy;
+  index_t        local_fw_m_copy = 0;
+  index_t        local_bw_m_copy = 0;
   {
     KASPAN_STATISTIC_PUSH("adapter");
     hpc_data = create_hpc_graph_from_graph_part(
@@ -85,7 +87,7 @@ benchmark(auto&& graph_part)
   KASPAN_STATISTIC_POP();
 
   KASPAN_STATISTIC_PUSH("pivot");
-  Degree max_degree{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
+  degree max_degree{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
   // Pivot selection using HPCGraph data (kaspan memory has been released)
   for (uint64_t k = 0; k < hpc_data.g.n_local; ++k) {
     auto const out_degree     = hpc_data.g.out_degree_list[k + 1] - hpc_data.g.out_degree_list[k];
@@ -108,10 +110,10 @@ benchmark(auto&& graph_part)
 int
 main(int argc, char** argv)
 {
-  const auto *const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
-  const auto *const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
-  const auto *const output_file         = arg_select_str(argc, argv, "--output_file", usage);
-  auto const threads             = arg_select_default_int(argc, argv, "--threads", 1);
+  auto const* const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
+  auto const* const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
+  auto const* const output_file         = arg_select_str(argc, argv, "--output_file", usage);
+  auto const        threads             = arg_select_default_int(argc, argv, "--threads", 1);
 
   if ((kagen_option_string == nullptr ^ manifest_file == nullptr) == 0) {
     usage(argc, argv);
@@ -140,9 +142,9 @@ main(int argc, char** argv)
     benchmark(std::move(kagen_graph));
   } else {
     KASPAN_STATISTIC_PUSH("load");
-    auto const manifest = Manifest::load(manifest_file);
+    auto const manifest = manifest::load(manifest_file);
     ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
-    auto const part           = BalancedSlicePart{ static_cast<vertex_t>(manifest.graph_node_count) };
+    auto const part           = balanced_slice_part{ static_cast<vertex_t>(manifest.graph_node_count) };
     auto       manifest_graph = load_graph_part_from_manifest(part, manifest);
     KASPAN_STATISTIC_POP();
     benchmark(std::move(manifest_graph));

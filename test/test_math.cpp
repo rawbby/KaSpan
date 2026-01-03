@@ -1,10 +1,12 @@
-#include "util/arithmetic.hpp"
-#include <limits>
-#include "debug/assert_eq.hpp"
 #include <cmath>
-#include <util/math.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/math.hpp>
+#include <limits>
 
 #include <random>
+
+using namespace kaspan;
 
 void
 test_fuzzy()

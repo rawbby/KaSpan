@@ -1,0 +1,210 @@
+#pragma once
+
+#include <kaspan/debug/assert.hpp>
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/pp.hpp>
+
+#include <functional>
+#include <type_traits>
+#include <utility>
+#include <variant>
+
+namespace kaspan {
+
+enum class error_code : u8
+{
+  OK    = 0,
+  ERROR = 1,
+
+  DESERIALIZE_ERROR    = 2,
+  SERIALIZE_ERROR      = 3,
+  IO_ERROR             = 4,
+  MEMORY_MAPPING_ERROR = 5,
+  ALLOCATION_ERROR     = 6,
+  ASSUMPTION_ERROR     = 7,
+  FILESYSTEM_ERROR     = 8,
+  ASSERTION_ERROR      = 9,
+  INVALID_INPUT_ERROR  = 10,
+};
+
+template<typename V>
+class result final
+{
+  std::variant<V, error_code> data;
+
+  static constexpr bool value_is_void_v = std::is_same_v<V, std::monostate>;
+
+  template<class T>
+  static constexpr bool value_convertible_v = std::convertible_to<T&&, V> and not std::convertible_to<T&&, error_code>;
+
+  template<class T>
+  static constexpr bool error_convertible_v = std::convertible_to<T&&, error_code> and not std::convertible_to<T&&, V>;
+
+public:
+  using value_type = V;
+
+  constexpr result()
+    requires(value_is_void_v)
+    : data(std::in_place_index<0>, std::monostate{})
+  {
+  }
+
+  template<typename T>
+    requires(value_convertible_v<T>)
+  constexpr result(T&& value) // NOLINT(*-explicit-constructor, *-explicit-conversions)
+    : data(std::in_place_index<0>, std::forward<T>(value))
+  {
+  }
+
+  template<typename T>
+    requires(error_convertible_v<T>)
+  constexpr result(T&& error) // NOLINT(*-explicit-constructor, *-explicit-conversions)
+    : data(std::in_place_index<1>, std::forward<T>(error))
+  {
+  }
+
+  static constexpr auto success() -> result
+    requires(value_is_void_v)
+  {
+    return result();
+  }
+
+  static constexpr auto success(V value) -> result { return result(std::move(value)); }
+
+  static constexpr auto failure() -> result { return result(error_code::ERROR); }
+
+  static constexpr auto failure(error_code error) -> result { return result(error); }
+
+  [[nodiscard]] constexpr auto has_value() const -> bool { return std::holds_alternative<V>(data); }
+
+  constexpr explicit operator bool() const { return has_value(); }
+
+  constexpr auto error() -> error_code { return std::get<error_code>(data); }
+
+  [[nodiscard]] constexpr auto error() const -> error_code { return std::get<error_code>(data); }
+
+  constexpr auto value() & -> V& { return std::get<V>(data); }
+
+  [[nodiscard]] constexpr auto value() const& -> V const& { return std::get<V>(data); }
+
+  constexpr auto value() && -> V&& { return std::move(std::get<V>(data)); }
+
+  [[nodiscard]] constexpr auto value() const&& -> V const&& { return std::move(std::get<V>(data)); }
+
+  template<class U>
+    requires(value_convertible_v<U>)
+  [[nodiscard]] constexpr auto value_or(U&& alt) const& -> V
+  {
+    return has_value() ? value() : V{ std::forward<U>(alt) };
+  }
+  template<class U>
+    requires(value_convertible_v<U>)
+  constexpr auto value_or(U&& alt) && -> V
+  {
+    return has_value() ? std::move(*this).value() : V{ std::forward<U>(alt) };
+  }
+
+  [[nodiscard]] constexpr auto error_or_ok() const -> error_code
+    requires(value_is_void_v)
+  {
+    return has_value() ? error_code::OK : error();
+  }
+
+  template<class F>
+  [[nodiscard]] constexpr auto map(F&& mapper) const
+  {
+    using R = result<std::invoke_result_t<F, V const&>>;
+    if (not has_value()) { return R::failure(error()); }
+    return R::success(std::invoke(std::forward<F>(mapper), value()));
+  }
+
+  template<class F>
+  [[nodiscard]] constexpr auto and_then(F&& consumer) const
+  {
+    using R = std::invoke_result_t<F, V const&>;
+    if (not has_value()) { return R::failure(error()); }
+    return std::invoke(std::forward<F>(consumer), value());
+  }
+
+  auto operator==(result const&) const -> bool = default;
+  auto operator!=(result const&) const -> bool = default;
+};
+
+#define RESULT_TRY_1(EXPR, TMP)                                                                                                                                                    \
+  auto && (TMP) = (EXPR);                                                                                                                                                          \
+  if (!(TMP)) { /* NOLINT(*-simplify-boolean-expr) */                                                                                                                              \
+    return (TMP).error();                                                                                                                                                          \
+  }                                                                                                                                                                                \
+  ((void)0)
+#define RESULT_TRY_2(VAR_1, EXPR, TMP)                                                                                                                                             \
+  RESULT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1 = std::move((TMP).value())
+#define RESULT_TRY_3(VAR_1, VAR_2, EXPR, TMP)                                                                                                                                      \
+  RESULT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2 = std::move((TMP).value())
+#define RESULT_TRY_4(VAR_1, VAR_2, VAR_3, EXPR, TMP)                                                                                                                               \
+  RESULT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3 = std::move((TMP).value())
+#define RESULT_TRY_5(VAR_1, VAR_2, VAR_3, VAR_4, EXPR, TMP)                                                                                                                        \
+  RESULT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3, VAR_4 = std::move((TMP).value())
+#define RESULT_TRY_6(VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, EXPR, TMP)                                                                                                                 \
+  RESULT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3, VAR_4, VAR_5 = std::move((TMP).value())
+#define RESULT_TRY_7(VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6, EXPR, TMP)                                                                                                          \
+  RESULT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6 = std::move((TMP).value())
+#define RESULT_TRY_8(VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6, VAR_7, EXPR, TMP)                                                                                                   \
+  RESULT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6, VAR_7 = std::move((TMP).value())
+#define RESULT_TRY_9(VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6, VAR_7, VAR_8, EXPR, TMP)                                                                                            \
+  RESULT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6, VAR_7, VAR_8 = std::move((TMP).value())
+#define RESULT_TRY(...) CAT(RESULT_TRY_, ARGS_SIZE(__VA_ARGS__))(__VA_ARGS__, CAT(tmp, __COUNTER__))
+
+#define RESULT_ASSERT_1(COND) RESULT_ASSERT_2(COND, ASSERTION_ERROR)
+#define RESULT_ASSERT_2(COND, ERROR_CODE)                                                                                                                                          \
+  if (not(COND)) { /* NOLINT(*-simplify-boolean-expr) */                                                                                                                           \
+    return error_code::ERROR_CODE;                                                                                                                                                 \
+  }                                                                                                                                                                                \
+  ((void)0)
+#define RESULT_ASSERT_3(COND, ERROR_CODE, ERROR_STRING)                                                                                                                            \
+  if (not(COND)) { /* NOLINT(*-simplify-boolean-expr) */                                                                                                                           \
+    perror(ERROR_STRING);                                                                                                                                                          \
+    return (error_code::ERROR_CODE);                                                                                                                                               \
+  }                                                                                                                                                                                \
+  ((void)0)
+#define RESULT_ASSERT(...) CAT(RESULT_ASSERT_, ARGS_SIZE(__VA_ARGS__))(__VA_ARGS__)
+
+#define ASSERT_TRY_1(EXPR, TMP)                                                                                                                                                    \
+  auto&& TMP = (EXPR);                                                                                                                                                             \
+  ASSERT(TMP, #EXPR)
+#define ASSERT_TRY_2(VAR_1, EXPR, TMP)                                                                                                                                             \
+  ASSERT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1 = std::move((TMP).value())
+#define ASSERT_TRY_3(VAR_1, VAR_2, EXPR, TMP)                                                                                                                                      \
+  ASSERT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2 = std::move((TMP).value())
+#define ASSERT_TRY_4(VAR_1, VAR_2, VAR_3, EXPR, TMP)                                                                                                                               \
+  ASSERT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3 = std::move((TMP).value())
+#define ASSERT_TRY_5(VAR_1, VAR_2, VAR_3, VAR_4, EXPR, TMP)                                                                                                                        \
+  ASSERT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3, VAR_4 = std::move((TMP).value())
+#define ASSERT_TRY_6(VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, EXPR, TMP)                                                                                                                 \
+  ASSERT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3, VAR_4, VAR_5 = std::move((TMP).value())
+#define ASSERT_TRY_7(VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6, EXPR, TMP)                                                                                                          \
+  ASSERT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6 = std::move((TMP).value())
+#define ASSERT_TRY_8(VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6, VAR_7, EXPR, TMP)                                                                                                   \
+  ASSERT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6, VAR_7 = std::move((TMP).value())
+#define ASSERT_TRY_9(VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6, VAR_7, VAR_8, EXPR, TMP)                                                                                            \
+  ASSERT_TRY_1(EXPR, TMP);                                                                                                                                                         \
+  VAR_1, VAR_2, VAR_3, VAR_4, VAR_5, VAR_6, VAR_7, VAR_8 = std::move((TMP).value())
+#define ASSERT_TRY(...) CAT(ASSERT_TRY_, ARGS_SIZE(__VA_ARGS__))(__VA_ARGS__, CAT(tmp, __COUNTER__))
+
+using void_result = result<std::monostate>;
+
+} // namespace kaspan

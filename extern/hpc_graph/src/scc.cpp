@@ -50,15 +50,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <debug/assert.hpp>
-#include <debug/debug.hpp>
-#include <debug/process.hpp>
-#include <debug/statistic.hpp>
-#include <util/scope_guard.hpp>
+#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/debug.hpp>
+#include <kaspan/debug/process.hpp>
+#include <kaspan/debug/statistic.hpp>
+#include <kaspan/util/scope_guard.hpp>
 
 #include "comms.h"
 #include "dist_graph.h"
 #include "util.h"
+
+using namespace kaspan;
 
 #define SCC_NOT_VISITED 18446744073709551615ull
 #define SCC_VISITED_FW 18446744073709551614ull

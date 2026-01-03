@@ -1,8 +1,10 @@
-#include <cstdint>
 #include <concepts>
+#include <cstdint>
+#include <kaspan/util/arithmetic.hpp>
 #include <type_traits>
-#include <util/arithmetic.hpp>
 #include <variant>
+
+using namespace kaspan;
 
 int
 main()
@@ -64,11 +66,11 @@ main()
   static_assert(FloatConcept<f32>);
   static_assert(FloatConcept<f64>);
 
-  static_assert(not UnsignedConcept<byte>);
-  static_assert(UnsignedConcept<u8>);
-  static_assert(UnsignedConcept<u16>);
-  static_assert(UnsignedConcept<u32>);
-  static_assert(UnsignedConcept<u64>);
+  static_assert(not unsigned_concept<byte>);
+  static_assert(unsigned_concept<u8>);
+  static_assert(unsigned_concept<u16>);
+  static_assert(unsigned_concept<u32>);
+  static_assert(unsigned_concept<u64>);
 
   static_assert(SignedConcept<i8>);
   static_assert(SignedConcept<i16>);

@@ -1,44 +1,44 @@
 #pragma once
 
 #include <ispan/util.hpp>
-#include <util/scope_guard.hpp>
+#include <kaspan/util/scope_guard.hpp>
 
 #include <algorithm>
 
 inline void
-residual_scc(index_t const*  sub_wcc_id,
-             index_t*        sub_scc_id,
-             index_t const*  sub_fw_head,
-             index_t const*  sub_bw_head,
-             vertex_t const* sub_fw_csr,
-             vertex_t const* sub_bw_csr,
-             vertex_t*       sub_fw_sa,
-             vertex_t        sub_n,
-             vertex_t const* sub_wcc_fq,
-             vertex_t        sub_wcc_fq_size,
-             vertex_t const* sub_vertices)
+residual_scc(kaspan::index_t const*  sub_wcc_id,
+             kaspan::index_t*        sub_scc_id,
+             kaspan::index_t const*  sub_fw_head,
+             kaspan::index_t const*  sub_bw_head,
+             kaspan::vertex_t const* sub_fw_csr,
+             kaspan::vertex_t const* sub_bw_csr,
+             kaspan::vertex_t*       sub_fw_sa,
+             kaspan::vertex_t        sub_n,
+             kaspan::vertex_t const* sub_wcc_fq,
+             kaspan::vertex_t        sub_wcc_fq_size,
+             kaspan::vertex_t const* sub_vertices)
 {
   KASPAN_STATISTIC_SCOPE("residual_scc");
   size_t decided_count = 0;
 
   // prepare the local slice this rank calculates
 
-  index_t const step         = (sub_wcc_fq_size + mpi_basic::world_size - 1) / mpi_basic::world_size;
-  index_t const rank_wcc_beg = mpi_basic::world_rank * step;
-  index_t const rank_wcc_end = rank_wcc_beg + step;
+  kaspan::index_t const step         = (sub_wcc_fq_size + kaspan::mpi_basic::world_size - 1) / kaspan::mpi_basic::world_size;
+  kaspan::index_t const rank_wcc_beg = kaspan::mpi_basic::world_rank * step;
+  kaspan::index_t const rank_wcc_end = rank_wcc_beg + step;
 
-  auto* q = new index_t[sub_n]{};
+  auto* q = new kaspan::index_t[sub_n]{};
   SCOPE_GUARD(delete[] q);
 
-  index_t head = 0;
-  index_t tail = 0;
+  kaspan::index_t head = 0;
+  kaspan::index_t tail = 0;
 
-  for (vertex_t sub_u = 0; sub_u < sub_n; ++sub_u) {
-    if (sub_scc_id[sub_u] == scc_id_undecided) {
+  for (kaspan::vertex_t sub_u = 0; sub_u < sub_n; ++sub_u) {
+    if (sub_scc_id[sub_u] == kaspan::scc_id_undecided) {
 
       auto const cur_wcc = sub_wcc_id[sub_u];
       bool       in_wcc  = false;
-      for (vertex_t i = rank_wcc_beg; i < rank_wcc_end; ++i) {
+      for (kaspan::vertex_t i = rank_wcc_beg; i < rank_wcc_end; ++i) {
         if (sub_wcc_fq[i] == cur_wcc) {
           in_wcc = true;
           break;
@@ -64,7 +64,7 @@ residual_scc(index_t const*  sub_wcc_id,
           for (; beg < end; ++beg) {
             auto const sub_v = sub_fw_csr[beg];
 
-            if (sub_scc_id[sub_v] != scc_id_undecided) continue;
+            if (sub_scc_id[sub_v] != kaspan::scc_id_undecided) continue;
 
             if (sub_fw_sa[sub_v] != sub_u) {
               // if sub_v was not yet reached
@@ -89,7 +89,7 @@ residual_scc(index_t const*  sub_wcc_id,
           for (; beg < end; ++beg) {
             auto const sub_v = sub_bw_csr[beg];
 
-            if (sub_scc_id[sub_v] == scc_id_undecided and sub_fw_sa[sub_v] == sub_u) {
+            if (sub_scc_id[sub_v] == kaspan::scc_id_undecided and sub_fw_sa[sub_v] == sub_u) {
               // if sub_v is undecided and reached in fw search
               // add sub_v to queue and set scc id of sub_v
 

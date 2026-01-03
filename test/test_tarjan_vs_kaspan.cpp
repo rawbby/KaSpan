@@ -1,18 +1,19 @@
-#include "memory/buffer.hpp"
-#include "memory/borrow.hpp"
-#include "scc/tarjan.hpp"
-#include "debug/assert_in_range.hpp"
-#include "debug/assert_eq.hpp"
 #include <briefkasten/noop_indirection.hpp>
-#include <debug/sub_process.hpp>
-#include <scc/adapter/kagen.hpp>
-#include <scc/allgather_graph.hpp>
-#include <scc/async/scc.hpp>
-#include <scc/base.hpp>
-#include <scc/scc.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert_in_range.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/memory/borrow.hpp>
+#include <kaspan/memory/buffer.hpp>
+#include <kaspan/scc/adapter/kagen.hpp>
+#include <kaspan/scc/allgather_graph.hpp>
+#include <kaspan/scc/async/scc.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/scc.hpp>
+#include <kaspan/scc/tarjan.hpp>
 
 #include <mpi.h>
 
+using namespace kaspan;
 
 int
 main(int argc, char** argv)

@@ -1,8 +1,10 @@
-#include "debug/assert_true.hpp"
-#include <util/scope_guard.hpp>
+#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/util/scope_guard.hpp>
 
 #include <stdexcept>
 #include <type_traits>
+
+using namespace kaspan;
 
 namespace {
 
@@ -11,7 +13,7 @@ test_basic()
 {
   bool called = false;
   {
-    auto const guard = ScopeGuard([&] { called = true; });
+    auto const guard = scope_guard([&] { called = true; });
     ASSERT(not called);
   }
   ASSERT(called);
@@ -22,7 +24,7 @@ test_exception()
 {
   bool called = false;
   try {
-    auto const guard = ScopeGuard([&] { called = true; });
+    auto const guard = scope_guard([&] { called = true; });
     throw std::runtime_error("force unwind");
   } catch (...) { // NOLINT(*-empty-catch)
     // destructor must have run
@@ -49,11 +51,11 @@ auto
 main() -> int
 {
   using Dummy = decltype([] {});
-  static_assert(not std::is_copy_constructible_v<ScopeGuard<Dummy>>, "ScopeGuard should be non-copyable");
-  static_assert(not std::is_copy_assignable_v<ScopeGuard<Dummy>>, "ScopeGuard should be non-copy-assignable");
-  static_assert(not std::is_move_constructible_v<ScopeGuard<Dummy>>, "ScopeGuard should be non-movable");
-  static_assert(not std::is_move_assignable_v<ScopeGuard<Dummy>>, "ScopeGuard should be non-move-assignable");
-  static_assert(std::is_nothrow_destructible_v<ScopeGuard<Dummy>>, "Destructor should be noexcept");
+  static_assert(not std::is_copy_constructible_v<scope_guard<Dummy>>, "scope_guard should be non-copyable");
+  static_assert(not std::is_copy_assignable_v<scope_guard<Dummy>>, "scope_guard should be non-copy-assignable");
+  static_assert(not std::is_move_constructible_v<scope_guard<Dummy>>, "scope_guard should be non-movable");
+  static_assert(not std::is_move_assignable_v<scope_guard<Dummy>>, "scope_guard should be non-move-assignable");
+  static_assert(std::is_nothrow_destructible_v<scope_guard<Dummy>>, "Destructor should be noexcept");
 
   test_basic();
   test_exception();

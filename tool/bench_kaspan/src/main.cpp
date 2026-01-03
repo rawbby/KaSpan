@@ -1,18 +1,18 @@
-#include "scc/base.hpp"
-#include "mpi_basic/allreduce_single.hpp"
 #include <cstdlib>
-#include "util/scope_guard.hpp"
-#include "debug/process.hpp"
-#include "mpi_basic/world.hpp"
-#include "debug/assert_lt.hpp"
-#include <debug/statistic.hpp>
-#include <debug/valgrind.hpp>
+#include <kaspan/debug/assert_lt.hpp>
+#include <kaspan/debug/process.hpp>
+#include <kaspan/debug/statistic.hpp>
+#include <kaspan/debug/valgrind.hpp>
+#include <kaspan/mpi_basic/allreduce_single.hpp>
+#include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/scc/adapter/kagen.hpp>
+#include <kaspan/scc/adapter/manifest.hpp>
+#include <kaspan/scc/async/scc.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/scc.hpp>
+#include <kaspan/util/arg_parse.hpp>
+#include <kaspan/util/scope_guard.hpp>
 #include <limits>
-#include <scc/adapter/kagen.hpp>
-#include <scc/adapter/manifest.hpp>
-#include <scc/async/scc.hpp>
-#include <scc/scc.hpp>
-#include <util/arg_parse.hpp>
 
 #include <briefkasten/grid_indirection.hpp>
 #include <briefkasten/noop_indirection.hpp>
@@ -21,6 +21,8 @@
 
 #include <cstdio>
 #include <print>
+
+using namespace kaspan;
 
 void
 usage(int /* argc */, char** argv)
@@ -58,9 +60,8 @@ benchmark(auto const& graph, bool use_async, bool use_async_indirect)
 #if KASPAN_STATISTIC
   vertex_t local_component_count = 0;
   for (vertex_t k = 0; k < graph.part.local_n(); ++k) {
-    if (scc_id[k] == graph.part.to_global(k)) { ++local_component_count;
-}
-}
+    if (scc_id[k] == graph.part.to_global(k)) { ++local_component_count; }
+  }
 
   auto const global_component_count = mpi_basic::allreduce_single(local_component_count, MPI_SUM);
   KASPAN_STATISTIC_ADD("local_component_count", local_component_count);
@@ -71,19 +72,18 @@ benchmark(auto const& graph, bool use_async, bool use_async_indirect)
 int
 main(int argc, char** argv)
 {
-  const auto *const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
-  const auto *const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
+  auto const* const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
+  auto const* const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
   if ((kagen_option_string == nullptr ^ manifest_file == nullptr) == 0) {
     usage(argc, argv);
     std::exit(1);
   }
 
-  const auto *const output_file = arg_select_str(argc, argv, "--output_file", usage);
+  auto const* const output_file = arg_select_str(argc, argv, "--output_file", usage);
 
   auto const use_async          = arg_select_flag(argc, argv, "--async");
   auto const use_async_indirect = arg_select_flag(argc, argv, "--async_indirect");
-  if (use_async_indirect and not use_async) { usage(argc, argv);
-}
+  if (use_async_indirect and not use_async) { usage(argc, argv); }
 
   KASPAN_DEFAULT_INIT();
   SCOPE_GUARD(KASPAN_STATISTIC_MPI_WRITE_JSON(output_file));
@@ -101,9 +101,9 @@ main(int argc, char** argv)
     benchmark(kagen_graph, use_async, use_async_indirect);
   } else {
     KASPAN_STATISTIC_PUSH("load");
-    auto const manifest = Manifest::load(manifest_file);
+    auto const manifest = manifest::load(manifest_file);
     ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
-    auto const part           = BalancedSlicePart{ static_cast<vertex_t>(manifest.graph_node_count) };
+    auto const part           = balanced_slice_part{ static_cast<vertex_t>(manifest.graph_node_count) };
     auto const manifest_graph = load_graph_part_from_manifest(part, manifest);
     KASPAN_STATISTIC_POP();
     benchmark(manifest_graph, use_async, use_async_indirect);

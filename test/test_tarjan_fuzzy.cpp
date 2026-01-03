@@ -1,24 +1,25 @@
-#include "scc/base.hpp"
-#include "util/arithmetic.hpp"
-#include "mpi_basic/allreduce_max_time.hpp"
-#include "memory/buffer.hpp"
-#include "mpi_basic/allgather.hpp"
-#include "debug/assert_eq.hpp"
-#include <debug/sub_process.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/memory/buffer.hpp>
+#include <kaspan/mpi_basic/allgather.hpp>
+#include <kaspan/mpi_basic/allreduce_max_time.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/fuzzy.hpp>
+#include <kaspan/scc/tarjan.hpp>
+#include <kaspan/util/arithmetic.hpp>
 #include <ostream>
-#include <scc/fuzzy.hpp>
-#include <scc/tarjan.hpp>
-#include <unordered_map>
 #include <span>
 #include <sstream>
+#include <unordered_map>
 
 #include <cstdio>
+
+using namespace kaspan;
 
 void
 lowest_to_compact_inplace(vertex_t n, vertex_t* scc_id)
 {
-  if (n == 0) { return;
-}
+  if (n == 0) { return; }
 
   std::unordered_map<vertex_t, vertex_t> map;
 
@@ -39,8 +40,7 @@ lowest_to_compact_inplace(vertex_t n, vertex_t* scc_id)
 void
 any_to_lowest_inplace(vertex_t n, vertex_t* scc_id)
 {
-  if (n == 0) { return;
-}
+  if (n == 0) { return; }
   std::unordered_map<vertex_t, vertex_t> map;
   for (vertex_t v = 0; v < n; ++v) {
     auto id = scc_id[v];

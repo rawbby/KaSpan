@@ -1,10 +1,10 @@
 #pragma once
 
-#include <debug/assert.hpp>
-#include <debug/debug.hpp>
-#include <debug/process.hpp>
-#include <debug/statistic.hpp>
-#include <mpi_basic/mpi_basic.hpp>
+#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/debug.hpp>
+#include <kaspan/debug/process.hpp>
+#include <kaspan/debug/statistic.hpp>
+#include <kaspan/mpi_basic/mpi_basic.hpp>
 
 #include <ispan/fw_bw_span.hpp>
 #include <ispan/get_scc_result.hpp>
@@ -16,7 +16,7 @@
 #include <ispan/trim_1_first.hpp>
 #include <ispan/trim_1_normal.hpp>
 #include <ispan/util.hpp>
-#include <scc/graph.hpp>
+#include <kaspan/scc/graph.hpp>
 
 #include <algorithm>
 #include <cstdio>
@@ -26,50 +26,57 @@
 #include <vector>
 
 inline void
-scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, int alpha, std::vector<index_t>* scc_id_out = nullptr)
+scc(kaspan::vertex_t              n,
+    kaspan::vertex_t              m,
+    kaspan::index_t const*        fw_head,
+    kaspan::vertex_t const*       fw_csr,
+    kaspan::index_t const*        bw_head,
+    kaspan::vertex_t const*       bw_csr,
+    int                           alpha,
+    std::vector<kaspan::index_t>* scc_id_out = nullptr)
 {
   KASPAN_STATISTIC_SCOPE("scc");
   KASPAN_STATISTIC_PUSH("alloc");
 
-  auto* front_comm = new index_t[mpi_basic::world_size]{};
+  auto* front_comm = new kaspan::index_t[kaspan::mpi_basic::world_size]{};
   SCOPE_GUARD(delete[] front_comm);
 
-  auto* work_comm = new int[mpi_basic::world_size]{};
+  auto* work_comm = new int[kaspan::mpi_basic::world_size]{};
   SCOPE_GUARD(delete[] work_comm);
 
-  vertex_t s = n / 32;
+  kaspan::vertex_t s = n / 32;
   if (n % 32 != 0) s += 1;
 
-  vertex_t t = s / mpi_basic::world_size;
-  if (s % mpi_basic::world_size != 0) t += 1;
+  kaspan::vertex_t t = s / kaspan::mpi_basic::world_size;
+  if (s % kaspan::mpi_basic::world_size != 0) t += 1;
 
-  vertex_t const step          = t * 32;
-  vertex_t const virtual_count = t * mpi_basic::world_size * 32;
-  vertex_t const local_beg     = std::min<index_t>(step * mpi_basic::world_rank, n);
-  vertex_t const local_end     = std::min<index_t>(step * (mpi_basic::world_rank + 1), n);
+  kaspan::vertex_t const step          = t * 32;
+  kaspan::vertex_t const virtual_count = t * kaspan::mpi_basic::world_size * 32;
+  kaspan::vertex_t const local_beg     = std::min<kaspan::index_t>(step * kaspan::mpi_basic::world_rank, n);
+  kaspan::vertex_t const local_end     = std::min<kaspan::index_t>(step * (kaspan::mpi_basic::world_rank + 1), n);
 
   auto* sa_compress = new unsigned int[s]{};
   SCOPE_GUARD(delete[] sa_compress);
 
-  auto* sub_vertices = new index_t[virtual_count]{};
+  auto* sub_vertices = new kaspan::index_t[virtual_count]{};
   SCOPE_GUARD(delete[] sub_vertices);
 
-  auto* sub_wcc_fq = new index_t[virtual_count]{};
+  auto* sub_wcc_fq = new kaspan::index_t[virtual_count]{};
   SCOPE_GUARD(delete[] sub_wcc_fq);
 
-  auto* sub_vertices_inverse = new vertex_t[n + 1]{};
+  auto* sub_vertices_inverse = new kaspan::vertex_t[n + 1]{};
   SCOPE_GUARD(delete[] sub_vertices_inverse);
 
-  auto* sub_fw_head = new vertex_t[n + 1]{};
+  auto* sub_fw_head = new kaspan::vertex_t[n + 1]{};
   SCOPE_GUARD(delete[] sub_fw_head);
 
-  auto* sub_fw_csr = new vertex_t[m + 1]{};
+  auto* sub_fw_csr = new kaspan::vertex_t[m + 1]{};
   SCOPE_GUARD(delete[] sub_fw_csr);
 
-  auto* sub_bw_head = new vertex_t[n + 1]{};
+  auto* sub_bw_head = new kaspan::vertex_t[n + 1]{};
   SCOPE_GUARD(delete[] sub_bw_head);
 
-  auto* sub_bw_csr = new vertex_t[m + 1]{};
+  auto* sub_bw_csr = new kaspan::vertex_t[m + 1]{};
   SCOPE_GUARD(delete[] sub_bw_csr);
 
 #pragma GCC diagnostic push
@@ -82,30 +89,30 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
   SCOPE_GUARD(free(bw_sa));
 #pragma GCC diagnostic pop
 
-  auto* fq_comm = new vertex_t[virtual_count + 1]{};
+  auto* fq_comm = new kaspan::vertex_t[virtual_count + 1]{};
   SCOPE_GUARD(delete[] fq_comm);
 
-  auto* scc_id = new vertex_t[virtual_count + 1]{};
+  auto* scc_id = new kaspan::vertex_t[virtual_count + 1]{};
   SCOPE_GUARD(delete[] scc_id);
 
-  auto* sub_scc_id = new vertex_t[virtual_count + 1]{};
+  auto* sub_scc_id = new kaspan::vertex_t[virtual_count + 1]{};
   SCOPE_GUARD(delete[] sub_scc_id);
 
-  auto* sub_fw_sa = new vertex_t[virtual_count + 1]{};
+  auto* sub_fw_sa = new kaspan::vertex_t[virtual_count + 1]{};
   SCOPE_GUARD(delete[] sub_fw_sa);
 
-  auto* sub_wcc_id = new vertex_t[virtual_count + 1]{};
+  auto* sub_wcc_id = new kaspan::vertex_t[virtual_count + 1]{};
   SCOPE_GUARD(delete[] sub_wcc_id);
 
   for (int i = 0; i < virtual_count + 1; ++i) {
     fw_sa[i]      = depth_unset;
     bw_sa[i]      = depth_unset;
-    scc_id[i]     = scc_id_undecided;
-    sub_scc_id[i] = scc_id_undecided;
-    sub_fw_sa[i]  = scc_id_undecided;
+    scc_id[i]     = kaspan::scc_id_undecided;
+    sub_scc_id[i] = kaspan::scc_id_undecided;
+    sub_fw_sa[i]  = kaspan::scc_id_undecided;
   }
 
-  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+  KASPAN_STATISTIC_ADD("memory", kaspan::get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
   trim_1_first(scc_id, fw_head, bw_head, local_beg, local_end, step);
@@ -123,10 +130,10 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
   KASPAN_STATISTIC_PUSH("residual");
   // clang-format off
   MPI_Allreduce(
-    MPI_IN_PLACE, scc_id, n, mpi_vertex_t,
+    MPI_IN_PLACE, scc_id, n, kaspan::mpi_vertex_t,
     MPI_MIN, MPI_COMM_WORLD);
   // clang-format on
-  index_t sub_n = 0;
+  kaspan::index_t sub_n = 0;
   gfq_origin(
     // input
     n,
@@ -147,11 +154,11 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
   KASPAN_STATISTIC_ADD("m", sub_fw_head[sub_n]);
 
   if (sub_n > 0) {
-    for (index_t i = 0; i < sub_n; ++i) sub_wcc_id[i] = i;
+    for (kaspan::index_t i = 0; i < sub_n; ++i) sub_wcc_id[i] = i;
 
     KASPAN_STATISTIC_PUSH("wcc");
     wcc(sub_wcc_id, sub_fw_head, sub_fw_csr, sub_bw_head, sub_bw_csr, sub_n);
-    vertex_t sub_wcc_fq_size = 0;
+    kaspan::vertex_t sub_wcc_fq_size = 0;
     process_wcc(sub_n, sub_wcc_fq, sub_wcc_id, sub_wcc_fq_size);
     KASPAN_STATISTIC_POP();
 
@@ -160,11 +167,11 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
     KASPAN_STATISTIC_POP();
 
     KASPAN_STATISTIC_SCOPE("post_processing");
-    MPI_Allreduce(MPI_IN_PLACE, sub_scc_id, sub_n, mpi_vertex_t, MPI_MIN, MPI_COMM_WORLD);
-    for (index_t sub_u = 0; sub_u < sub_n; ++sub_u) {
-      if (sub_scc_id[sub_u] != scc_id_undecided) scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
+    MPI_Allreduce(MPI_IN_PLACE, sub_scc_id, sub_n, kaspan::mpi_vertex_t, MPI_MIN, MPI_COMM_WORLD);
+    for (kaspan::index_t sub_u = 0; sub_u < sub_n; ++sub_u) {
+      if (sub_scc_id[sub_u] != kaspan::scc_id_undecided) scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
     }
-    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+    KASPAN_STATISTIC_ADD("memory", kaspan::get_resident_set_bytes());
   }
   KASPAN_STATISTIC_POP();
 
@@ -172,6 +179,6 @@ scc(vertex_t n, vertex_t m, index_t const* fw_head, vertex_t const* fw_csr, inde
   get_scc_result(scc_id, n);
   if (scc_id_out != nullptr) {
     scc_id_out->resize(n);
-    std::memcpy(scc_id_out->data(), scc_id, n * sizeof(index_t));
+    std::memcpy(scc_id_out->data(), scc_id, n * sizeof(kaspan::index_t));
   }
 }

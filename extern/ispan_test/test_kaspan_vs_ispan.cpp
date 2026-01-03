@@ -1,18 +1,20 @@
-#include <debug/statistic.hpp>
-#include <debug/sub_process.hpp>
 #include <ispan/scc.hpp>
-#include <memory/accessor/stack_accessor.hpp>
-#include <mpi_basic/mpi_basic.hpp>
-#include <scc/adapter/kagen.hpp>
-#include <scc/adapter/manifest.hpp>
-#include <scc/allgather_graph.hpp>
-#include <scc/base.hpp>
-#include <scc/scc.hpp>
+#include <kaspan/debug/statistic.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/memory/accessor/stack_accessor.hpp>
+#include <kaspan/mpi_basic/mpi_basic.hpp>
+#include <kaspan/scc/adapter/kagen.hpp>
+#include <kaspan/scc/adapter/manifest.hpp>
+#include <kaspan/scc/allgather_graph.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/scc.hpp>
 
 #include <mpi.h>
 
 #include <fstream>
 #include <random>
+
+using namespace kaspan;
 
 int
 main(int argc, char** argv)

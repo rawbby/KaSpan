@@ -3,14 +3,16 @@
 // ReSharper disable CppDFAUnreadVariable
 // ReSharper disable CppDFAUnreachableCode
 
-#include "debug/assert_true.hpp"
-#include "debug/assert_eq.hpp"
-#include "debug/assert_ne.hpp"
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/util/result.hpp>
 #include <type_traits>
-#include <util/result.hpp>
 
 #include <string>
 #include <utility>
+
+using namespace kaspan;
 
 namespace {
 
@@ -20,7 +22,7 @@ int_success(int v) -> result<int>
   return result<int>(v);
 }
 constexpr auto
-int_failure(ErrorCode e) -> result<int>
+int_failure(error_code e) -> result<int>
 {
   return result<int>(e);
 }
@@ -33,7 +35,7 @@ foo_success() -> result<int>
 constexpr auto
 foo_fail() -> result<int>
 {
-  return ErrorCode::IO_ERROR;
+  return error_code::IO_ERROR;
 }
 
 constexpr auto
@@ -44,7 +46,7 @@ make_string_success(std::string s) -> result<std::string>
 constexpr auto
 make_string_failure() -> result<std::string>
 {
-  return result<std::string>(ErrorCode::SERIALIZE_ERROR);
+  return result<std::string>(error_code::SERIALIZE_ERROR);
 }
 
 void
@@ -54,18 +56,18 @@ test_basic_construction_and_access()
   ASSERT(r1.has_value());
   ASSERT_EQ(r1.value(), 42);
 
-  result<int> r2 = ErrorCode::ALLOCATION_ERROR;
+  result<int> r2 = error_code::ALLOCATION_ERROR;
   ASSERT(not r2.has_value());
-  ASSERT_EQ(r2.error(), ErrorCode::ALLOCATION_ERROR);
+  ASSERT_EQ(r2.error(), error_code::ALLOCATION_ERROR);
 
-  // VoidResult tests
-  constexpr VoidResult v_ok = VoidResult::success();
+  // void_result tests
+  constexpr void_result v_ok = void_result::success();
   ASSERT(v_ok.has_value());
-  ASSERT_EQ(v_ok.error_or_ok(), ErrorCode::OK);
+  ASSERT_EQ(v_ok.error_or_ok(), error_code::OK);
 
-  constexpr VoidResult v_fail = VoidResult::failure(ErrorCode::IO_ERROR);
+  constexpr void_result v_fail = void_result::failure(error_code::IO_ERROR);
   ASSERT(not v_fail.has_value());
-  ASSERT_EQ(v_fail.error_or_ok(), ErrorCode::IO_ERROR);
+  ASSERT_EQ(v_fail.error_or_ok(), error_code::IO_ERROR);
 }
 
 void
@@ -74,7 +76,7 @@ test_value_or_and_move_accessors()
   result<std::string> const a = std::string("hello");
   ASSERT_EQ(a.value_or("alt"), "hello");
 
-  result<std::string> const b = ErrorCode::ERROR;
+  result<std::string> const b = error_code::ERROR;
   ASSERT_EQ(b.value_or(std::string("alt")), "alt");
 
   result<std::string> c = std::string("move_me");
@@ -88,31 +90,30 @@ test_map_and_and_then()
 {
   // map: int -> twice
   result<int> const r1 = 3;
-  auto        r2 = r1.map([](int x) { return x * 2; });
+  auto              r2 = r1.map([](int x) { return x * 2; });
   ASSERT((std::is_same_v<decltype(r2)::value_type, int>));
   ASSERT(r2.has_value());
   ASSERT_EQ(r2.value(), 6);
 
   // map on failure preserves error
-  result<int> const rf  = ErrorCode::DESERIALIZE_ERROR;
-  auto        rf2 = rf.map([](int) { return 1; });
+  result<int> const rf  = error_code::DESERIALIZE_ERROR;
+  auto              rf2 = rf.map([](int) { return 1; });
   ASSERT(not rf2.has_value());
-  ASSERT_EQ(rf2.error(), ErrorCode::DESERIALIZE_ERROR);
+  ASSERT_EQ(rf2.error(), error_code::DESERIALIZE_ERROR);
 
-  // and_then: consumer returns Result<std::string>
+  // and_then: consumer returns result<std::string>
   result<int> const pos  = 7;
-  auto        rstr = pos.and_then([](int x) -> result<std::string> {
-    if (x > 0) { return std::string("pos");
-}
-    return ErrorCode::ASSUMPTION_ERROR;
+  auto              rstr = pos.and_then([](int x) -> result<std::string> {
+    if (x > 0) { return std::string("pos"); }
+    return error_code::ASSUMPTION_ERROR;
   });
   ASSERT(rstr.has_value());
   ASSERT_EQ(rstr.value(), "pos");
 
-  result<int> const neg     = ErrorCode::MEMORY_MAPPING_ERROR;
-  auto        neg_res = neg.and_then([](int) -> result<std::string> { return std::string("unused"); });
+  result<int> const neg     = error_code::MEMORY_MAPPING_ERROR;
+  auto              neg_res = neg.and_then([](int) -> result<std::string> { return std::string("unused"); });
   ASSERT(not neg_res.has_value());
-  ASSERT_EQ(neg_res.error(), ErrorCode::MEMORY_MAPPING_ERROR);
+  ASSERT_EQ(neg_res.error(), error_code::MEMORY_MAPPING_ERROR);
 }
 
 void
@@ -120,10 +121,10 @@ test_equality()
 {
   constexpr result<int> ok_a  = 10;
   constexpr result<int> ok_b  = 10;
-  constexpr result<int> ok_c  = static_cast<int>(ErrorCode::ERROR);
-  constexpr result<int> err_a = ErrorCode::IO_ERROR;
-  constexpr result<int> err_b = ErrorCode::IO_ERROR;
-  constexpr result<int> err_c = ErrorCode::ERROR;
+  constexpr result<int> ok_c  = static_cast<int>(error_code::ERROR);
+  constexpr result<int> err_a = error_code::IO_ERROR;
+  constexpr result<int> err_b = error_code::IO_ERROR;
+  constexpr result<int> err_c = error_code::ERROR;
 
   ASSERT_EQ(ok_a, ok_b);
   ASSERT_NE(ok_a, ok_c);
@@ -139,57 +140,57 @@ void
 test_result_try_macro_no_var()
 {
   auto ok_fn   = []() -> result<int> { return 1; };
-  auto fail_fn = []() -> result<int> { return ErrorCode::IO_ERROR; };
+  auto fail_fn = []() -> result<int> { return error_code::IO_ERROR; };
 
-  auto wrapper_ok = [&]() -> ErrorCode {
+  auto wrapper_ok = [&]() -> error_code {
     RESULT_TRY(ok_fn());
-    return ErrorCode::OK;
+    return error_code::OK;
   };
-  auto wrapper_fail = [&]() -> ErrorCode {
+  auto wrapper_fail = [&]() -> error_code {
     RESULT_TRY(fail_fn());
-    return ErrorCode::OK;
+    return error_code::OK;
   };
 
-  ASSERT(wrapper_ok() == ErrorCode::OK);
-  ASSERT(wrapper_fail() == ErrorCode::IO_ERROR);
+  ASSERT(wrapper_ok() == error_code::OK);
+  ASSERT(wrapper_fail() == error_code::IO_ERROR);
 }
 
 void
 test_result_try_macro_with_var()
 {
   auto ok_fn   = []() -> result<int> { return 7; };
-  auto fail_fn = []() -> result<int> { return ErrorCode::SERIALIZE_ERROR; };
+  auto fail_fn = []() -> result<int> { return error_code::SERIALIZE_ERROR; };
 
   auto wrapper_ok = [&]() -> result<int> {
     RESULT_TRY(int const x, ok_fn());
     ASSERT_EQ(x, 7);
-    return ErrorCode::OK;
+    return error_code::OK;
   };
 
   auto wrapper_fail = [&]() -> result<int> {
     RESULT_TRY(int const x, fail_fn());
-    return ErrorCode::OK;
+    return error_code::OK;
   };
 
-  ASSERT_EQ(wrapper_ok(), ErrorCode::OK);
-  ASSERT_EQ(wrapper_fail(), ErrorCode::SERIALIZE_ERROR);
+  ASSERT_EQ(wrapper_ok(), error_code::OK);
+  ASSERT_EQ(wrapper_fail(), error_code::SERIALIZE_ERROR);
 }
 
 void
 test_assert_try_macro()
 {
-  auto f_ok = []() -> ErrorCode {
+  auto f_ok = []() -> error_code {
     RESULT_ASSERT(1 + 1 == 2, OK);
-    return ErrorCode::OK;
+    return error_code::OK;
   };
 
-  auto f_fail = []() -> ErrorCode {
+  auto f_fail = []() -> error_code {
     RESULT_ASSERT(2 + 2 == 5, IO_ERROR);
-    return ErrorCode::OK;
+    return error_code::OK;
   };
 
-  ASSERT(f_ok() == ErrorCode::OK);
-  ASSERT(f_fail() == ErrorCode::IO_ERROR);
+  ASSERT(f_ok() == error_code::OK);
+  ASSERT(f_fail() == error_code::IO_ERROR);
 }
 
 } // namespace

@@ -1,33 +1,31 @@
-#include "mpi_basic/world.hpp"
-#include "scc/base.hpp"
-#include "debug/assert_eq.hpp"
-#include "util/arithmetic.hpp"
-#include <debug/sub_process.hpp>
-#include <memory/buffer.hpp>
-#include <scc/part.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/memory/buffer.hpp>
+#include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/part.hpp>
+#include <kaspan/util/arithmetic.hpp>
+
+using namespace kaspan;
 
 template<bool sorted_variant>
 void
 test_explicit_continuous_world_part()
 {
-  auto  buffer = Buffer(2 * mpi_basic::world_size * sizeof(vertex_t));
-  auto* memory = buffer.data();
+  auto  storage = buffer(2 * mpi_basic::world_size * sizeof(vertex_t));
+  auto* memory  = storage.data();
 
   auto const part = [&memory] {
     if constexpr (sorted_variant) {
-      if (mpi_basic::world_root) { return ExplicitSortedContinuousWorldPart{ 10, 3, mpi_basic::world_rank, mpi_basic::world_size, &memory };
-}
-      if (mpi_basic::world_rank == 1) { return ExplicitSortedContinuousWorldPart{ 10, 9, mpi_basic::world_rank, mpi_basic::world_size, &memory };
-}
+      if (mpi_basic::world_root) { return explicit_sorted_continuous_world_part{ 10, 3, mpi_basic::world_rank, mpi_basic::world_size, &memory }; }
+      if (mpi_basic::world_rank == 1) { return explicit_sorted_continuous_world_part{ 10, 9, mpi_basic::world_rank, mpi_basic::world_size, &memory }; }
       ASSERT_EQ(mpi_basic::world_rank, 2);
-      return ExplicitSortedContinuousWorldPart{ 10, 10, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+      return explicit_sorted_continuous_world_part{ 10, 10, mpi_basic::world_rank, mpi_basic::world_size, &memory };
     } else {
-      if (mpi_basic::world_root) { return ExplicitContinuousWorldPart{ 10, 0, 3, mpi_basic::world_rank, mpi_basic::world_size, &memory };
-}
-      if (mpi_basic::world_rank == 1) { return ExplicitContinuousWorldPart{ 10, 3, 9, mpi_basic::world_rank, mpi_basic::world_size, &memory };
-}
+      if (mpi_basic::world_root) { return explicit_continuous_world_part{ 10, 0, 3, mpi_basic::world_rank, mpi_basic::world_size, &memory }; }
+      if (mpi_basic::world_rank == 1) { return explicit_continuous_world_part{ 10, 3, 9, mpi_basic::world_rank, mpi_basic::world_size, &memory }; }
       ASSERT_EQ(mpi_basic::world_rank, 2);
-      return ExplicitContinuousWorldPart{ 10, 9, 10, mpi_basic::world_rank, mpi_basic::world_size, &memory };
+      return explicit_continuous_world_part{ 10, 9, 10, mpi_basic::world_rank, mpi_basic::world_size, &memory };
     }
   }();
 
@@ -62,13 +60,13 @@ test_explicit_continuous_world_part()
 i32
 main(i32 argc, char** argv)
 {
-  static_assert(PartConcept<ExplicitContinuousPart>);
-  static_assert(WorldPartConcept<CyclicPart>);
-  static_assert(WorldPartConcept<BlockCyclicPart>);
-  static_assert(WorldPartConcept<TrivialSlicePart>);
-  static_assert(WorldPartConcept<BalancedSlicePart>);
-  static_assert(WorldPartConcept<ExplicitContinuousWorldPart>);
-  static_assert(WorldPartConcept<ExplicitSortedContinuousWorldPart>);
+  static_assert(part_concept<explicit_continuous_part>);
+  static_assert(world_part_concept<cyclic_part>);
+  static_assert(world_part_concept<block_cyclic_part>);
+  static_assert(world_part_concept<trivial_slice_part>);
+  static_assert(world_part_concept<balanced_slice_part>);
+  static_assert(world_part_concept<explicit_continuous_world_part>);
+  static_assert(world_part_concept<explicit_sorted_continuous_world_part>);
 
   constexpr i32 npc = 1;
   constexpr i32 npv[1]{ 3 };

@@ -1,20 +1,22 @@
-#include "mpi_basic/world.hpp"
-#include "debug/assert_eq.hpp"
-#include "debug/assert_false.hpp"
-#include "scc/base.hpp"
-#include "util/arithmetic.hpp"
-#include "debug/assert_true.hpp"
-#include "mpi_basic/allgather.hpp"
-#include "debug/assert_ne.hpp"
-#include "debug/assert_lt.hpp"
-#include <debug/sub_process.hpp>
-#include <scc/edge_frontier.hpp>
-#include <scc/part.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert_false.hpp>
+#include <kaspan/debug/assert_lt.hpp>
+#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/mpi_basic/allgather.hpp>
+#include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/edge_frontier.hpp>
+#include <kaspan/scc/part.hpp>
+#include <kaspan/util/arithmetic.hpp>
+
+using namespace kaspan;
 
 void
 test_trivial_hard_coded()
 {
-  auto const part = TrivialSlicePart{ mpi_basic::world_size };
+  auto const part = trivial_slice_part{ mpi_basic::world_size };
   ASSERT_EQ(part.local_n(), 1);
 
   auto front = edge_frontier::create();

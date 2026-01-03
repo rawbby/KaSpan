@@ -7,26 +7,26 @@
 #include <unordered_set>
 
 inline void
-get_scc_result(vertex_t* scc_id, vertex_t n)
+get_scc_result(kaspan::vertex_t* scc_id, kaspan::vertex_t n)
 {
-  vertex_t singular_count = 0;
-  vertex_t largest_size   = 0;
+  kaspan::vertex_t singular_count = 0;
+  kaspan::vertex_t largest_size   = 0;
 
-  std::map<vertex_t, vertex_t> component_sizes;
-  for (vertex_t i = 0; i < n; ++i) {
+  std::map<kaspan::vertex_t, kaspan::vertex_t> component_sizes;
+  for (kaspan::vertex_t i = 0; i < n; ++i) {
     if (scc_id[i] == scc_id_largest) largest_size++;
-    else if (scc_id[i] == scc_id_singular) singular_count++;
+    else if (scc_id[i] == kaspan::scc_id_singular) singular_count++;
     else component_sizes[scc_id[i]]++;
   }
 
   auto const normal_count = component_sizes.size();
 
   // map ispan scc id to normalized scc id
-  std::unordered_map<vertex_t, vertex_t> cid;
+  std::unordered_map<kaspan::vertex_t, kaspan::vertex_t> cid;
   cid.reserve(1 + normal_count);
 
-  for (vertex_t i = 0; i < n; ++i) {
-    if (scc_id[i] == scc_id_singular) scc_id[i] = i;
+  for (kaspan::vertex_t i = 0; i < n; ++i) {
+    if (scc_id[i] == kaspan::scc_id_singular) scc_id[i] = i;
 
     else {
       auto [it, inserted] = cid.try_emplace(scc_id[i], i);

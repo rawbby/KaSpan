@@ -1,13 +1,15 @@
-#include "debug/assert_in_range.hpp"
-#include "debug/assert_ge.hpp"
-#include "debug/assert_eq.hpp"
-#include "scc/base.hpp"
-#include "debug/assert_lt.hpp"
-#include "scc/graph.hpp"
-#include <debug/sub_process.hpp>
-#include <scc/allgather_graph.hpp>
-#include <scc/fuzzy.hpp>
-#include <scc/partion_graph.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert_ge.hpp>
+#include <kaspan/debug/assert_in_range.hpp>
+#include <kaspan/debug/assert_lt.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/scc/allgather_graph.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/fuzzy.hpp>
+#include <kaspan/scc/graph.hpp>
+#include <kaspan/scc/partion_graph.hpp>
+
+using namespace kaspan;
 
 void
 check_gp(auto const& gp)
@@ -184,27 +186,27 @@ check_g_g(auto const& g, auto const& g_)
 }
 
 void
-test_allgather_graph(auto const& g, auto const& p)
+test_allgather_graph(auto const& initial_g, auto const& p)
 {
   // graph -> part -> graph -> part
-  check_g(g);
+  check_g(initial_g);
 
-  DEBUG_ASSERT_VALID_GRAPH(g.n, g.m, g.fw_head, g.fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH(g.n, g.m, g.bw_head, g.bw_csr);
-  auto gp = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, p);
+  DEBUG_ASSERT_VALID_GRAPH(initial_g.n, initial_g.m, initial_g.fw_head, initial_g.fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(initial_g.n, initial_g.m, initial_g.bw_head, initial_g.bw_csr);
+  auto initial_gp = partition(initial_g.m, initial_g.fw_head, initial_g.fw_csr, initial_g.bw_head, initial_g.bw_csr, p);
+  check_gp(initial_gp);
+  check_g_gp(initial_g, initial_gp);
+
+  auto g = allgather_graph(initial_gp.part, initial_gp.m, initial_gp.local_fw_m, initial_gp.fw_head, initial_gp.fw_csr);
+  check_g(g);
+  check_g_g(initial_g, g);
+  check_g_gp(g, initial_gp);
+
+  auto gp = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, initial_gp.part);
   check_gp(gp);
   check_g_gp(g, gp);
-
-  auto g = allgather_graph(gp.part, gp.m, gp.local_fw_m, gp.fw_head, gp.fw_csr);
-  check_g(g);
-  check_g_g(g, g);
-  check_g_gp(g, gp);
-
-  auto gp = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, gp.part);
-  check_gp(gp);
-  check_g_gp(g, gp);
-  check_g_gp(g, gp);
-  check_gp_gp(gp, gp);
+  check_g_gp(initial_g, gp);
+  check_gp_gp(initial_gp, gp);
 }
 
 int

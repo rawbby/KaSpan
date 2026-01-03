@@ -1,22 +1,24 @@
-#include "util/arithmetic.hpp"
-#include "scc/base.hpp"
-#include "debug/statistic.hpp"
 #include <cstdlib>
-#include "util/scope_guard.hpp"
-#include "debug/process.hpp"
-#include "mpi_basic/world.hpp"
-#include <debug/valgrind.hpp>
 #include <ispan/scc.hpp>
-#include <scc/adapter/kagen.hpp>
-#include <scc/adapter/manifest.hpp>
-#include <scc/allgather_graph.hpp>
-#include <util/arg_parse.hpp>
+#include <kaspan/debug/process.hpp>
+#include <kaspan/debug/statistic.hpp>
+#include <kaspan/debug/valgrind.hpp>
+#include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/scc/adapter/kagen.hpp>
+#include <kaspan/scc/adapter/manifest.hpp>
+#include <kaspan/scc/allgather_graph.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/util/arg_parse.hpp>
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/scope_guard.hpp>
 
 #include <mpi.h>
 
 #include <cstdio>
 #include <print>
 #include <vector>
+
+using namespace kaspan;
 
 void
 usage(int /* argc */, char** argv)
@@ -41,15 +43,15 @@ benchmark(auto const& graph, i32 alpha)
 int
 main(int argc, char** argv)
 {
-  const auto *const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
-  const auto *const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
+  auto const* const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
+  auto const* const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
   if ((kagen_option_string == nullptr ^ manifest_file == nullptr) == 0) {
     usage(argc, argv);
     std::exit(1);
   }
 
-  const auto *const output_file = arg_select_str(argc, argv, "--output_file", usage);
-  auto const alpha       = arg_select_default_int<i32>(argc, argv, "--alpha", 14);
+  auto const* const output_file = arg_select_str(argc, argv, "--output_file", usage);
+  auto const        alpha       = arg_select_default_int<i32>(argc, argv, "--alpha", 14);
 
   KASPAN_DEFAULT_INIT();
 
@@ -74,7 +76,7 @@ main(int argc, char** argv)
     benchmark(graph, alpha);
   } else {
     KASPAN_STATISTIC_PUSH("load");
-    auto const manifest       = Manifest::load(manifest_file);
+    auto const manifest       = manifest::load(manifest_file);
     auto const manifest_graph = load_graph_from_manifest(manifest);
     KASPAN_STATISTIC_POP();
     benchmark(manifest_graph, alpha);

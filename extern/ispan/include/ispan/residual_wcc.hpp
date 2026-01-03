@@ -3,7 +3,7 @@
 #include <ispan/util.hpp>
 
 static void
-wcc(index_t* wcc_id, index_t const* fw_head, index_t const* fw_csr, index_t const* bw_head, index_t const* bw_csr, vertex_t n)
+wcc(kaspan::index_t* wcc_id, kaspan::index_t const* fw_head, kaspan::index_t const* fw_csr, kaspan::index_t const* bw_head, kaspan::index_t const* bw_csr, kaspan::vertex_t n)
 {
   // use different internal name
   auto* color = wcc_id;
@@ -13,7 +13,7 @@ wcc(index_t* wcc_id, index_t const* fw_head, index_t const* fw_csr, index_t cons
   while (true) {
     bool color_changed = false;
 
-    for (vertex_t u = 0; u < n; ++u) {
+    for (kaspan::vertex_t u = 0; u < n; ++u) {
       // bw
       {
         auto const beg = bw_head[u];
@@ -44,14 +44,14 @@ wcc(index_t* wcc_id, index_t const* fw_head, index_t const* fw_csr, index_t cons
 
     if (not color_changed) break;
 
-    for (vertex_t u = 0; u < n; ++u) {
+    for (kaspan::vertex_t u = 0; u < n; ++u) {
       if (color[u] != u) { // u is no root
-        index_t r = color[u];
+        kaspan::index_t r = color[u];
 
         // r is the root of u but maybe not a true root anymore
         // 'climb' roots till real root is found
 
-        index_t depth = 0;
+        kaspan::index_t depth = 0;
         while (color[r] != r and depth < 100) {
           r = color[r];
           depth++;

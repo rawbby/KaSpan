@@ -1,11 +1,13 @@
-#include <debug/assert.hpp>
-#include <debug/sub_process.hpp>
 #include <ispan/scc.hpp>
-#include <scc/fuzzy.hpp>
-#include <util/scope_guard.hpp>
+#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/scc/fuzzy.hpp>
+#include <kaspan/util/scope_guard.hpp>
 
 #include <iomanip>
 #include <iostream>
+
+using namespace kaspan;
 
 auto
 main(int argc, char** argv) -> int

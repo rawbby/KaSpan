@@ -1,21 +1,23 @@
-#include "util/arithmetic.hpp"
-#include "mpi_basic/allgather.hpp"
-#include "debug/assert_in_range.hpp"
-#include "mpi_basic/world.hpp"
-#include "mpi_basic/inplace_partition_by_rank.hpp"
-#include "memory/buffer.hpp"
-#include "memory/borrow.hpp"
-#include "debug/assert_true.hpp"
-#include "debug/assert_eq.hpp"
 #include <cstddef>
-#include "mpi_basic/counts_and_displs.hpp"
 #include <cstring>
-#include <debug/sub_process.hpp>
-#include <memory/accessor/stack.hpp>
-#include <scc/base.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert_in_range.hpp>
+#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/memory/accessor/stack.hpp>
+#include <kaspan/memory/borrow.hpp>
+#include <kaspan/memory/buffer.hpp>
+#include <kaspan/mpi_basic/allgather.hpp>
+#include <kaspan/mpi_basic/counts_and_displs.hpp>
+#include <kaspan/mpi_basic/inplace_partition_by_rank.hpp>
+#include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/util/arithmetic.hpp>
 
 #include <algorithm>
 #include <random>
+
+using namespace kaspan;
 
 struct item
 {
@@ -69,7 +71,7 @@ main(int argc, char** argv)
     i32 const     max_send_count = 2 * (mpi_basic::world_size - 1) + min_send_count;
 
     auto [cb, send_counts, send_displs] = mpi_basic::counts_and_displs();
-    auto send_stack                     = Stack<item>(max_send_count);
+    auto send_stack                     = stack<item>(max_send_count);
 
     for (i32 trial = 0; trial < 1024; ++trial) {
       std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
@@ -97,7 +99,7 @@ main(int argc, char** argv)
     constexpr auto send_count = 7;
 
     auto [cb, send_counts, send_displs] = mpi_basic::counts_and_displs();
-    auto send_stack                     = Stack<item>(send_count);
+    auto send_stack                     = stack<item>(send_count);
 
     std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
     send_counts[target_rank] = send_count;
@@ -110,7 +112,7 @@ main(int argc, char** argv)
   // zeros everywhere
   {
     auto [cb, send_counts, send_displs] = mpi_basic::counts_and_displs();
-    auto send_stack                     = Stack<item>{};
+    auto send_stack                     = stack<item>{};
 
     std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
     check_case(send_stack.data(), 0, send_counts, send_displs);

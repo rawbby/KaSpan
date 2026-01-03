@@ -1,17 +1,19 @@
-#include "debug/assert_ge.hpp"
-#include "mpi_basic/world.hpp"
-#include "debug/assert_lt.hpp"
-#include "debug/assert_eq.hpp"
-#include "mpi_basic/allreduce_single.hpp"
-#include "mpi_basic/allgather.hpp"
-#include "scc/graph.hpp"
-#include "memory/borrow.hpp"
-#include "scc/base.hpp"
-#include "scc/backward_complement.hpp"
-#include "scc/part.hpp"
-#include <debug/sub_process.hpp>
-#include <scc/allgather_sub_graph.hpp>
-#include <scc/partion_graph.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert_ge.hpp>
+#include <kaspan/debug/assert_lt.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/memory/borrow.hpp>
+#include <kaspan/mpi_basic/allgather.hpp>
+#include <kaspan/mpi_basic/allreduce_single.hpp>
+#include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/scc/allgather_sub_graph.hpp>
+#include <kaspan/scc/backward_complement.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/graph.hpp>
+#include <kaspan/scc/part.hpp>
+#include <kaspan/scc/partion_graph.hpp>
+
+using namespace kaspan;
 
 int
 main(int argc, char** argv)
@@ -28,16 +30,16 @@ main(int argc, char** argv)
 
   ASSERT_EQ(mpi_basic::allreduce_single(mpi_basic::world_rank, MPI_SUM), 0 + 1 + 2);
 
-  LocalGraph g;
+  local_graph g;
   g.n = 6;
   g.m = 10;
 
-  g.buffer     = make_graph_buffer(g.n, g.m);
-  auto* memory = g.buffer.data();
-  g.fw_head    = borrow_array<index_t>(&memory, g.m);
-  g.fw_csr     = borrow_array<vertex_t>(&memory, g.n + 1);
-  g.bw_head    = borrow_array<index_t>(&memory, g.m);
-  g.bw_csr     = borrow_array<vertex_t>(&memory, g.n + 1);
+  g.storage    = make_graph_buffer(g.n, g.m);
+  auto* memory = g.storage.data();
+  g.fw_head    = borrow_array<index_t>(&memory, g.n + 1);
+  g.fw_csr     = borrow_array<vertex_t>(&memory, g.m);
+  g.bw_head    = borrow_array<index_t>(&memory, g.n + 1);
+  g.bw_csr     = borrow_array<vertex_t>(&memory, g.m);
 
   g.fw_head[0]   = 0; //
   g.fw_head[1]   = 2; // *
@@ -79,7 +81,7 @@ main(int argc, char** argv)
   ASSERT_EQ(g.bw_csr[8], 1);
   ASSERT_EQ(g.bw_csr[9], 4);
 
-  auto const gp = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, BalancedSlicePart(g.n));
+  auto const gp = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, balanced_slice_part(g.n));
 
   ASSERT_EQ(gp.part.n, 6);
   ASSERT_EQ(gp.part.local_n(), 2);

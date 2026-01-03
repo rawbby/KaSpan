@@ -34,12 +34,15 @@ For scripts that require a build (like `clang-tidy`, `iwyu`, `cppcheck`), you ca
 ## Project Structure
 
 - `scc/`: Contains the core library headers and implementation.
-  - `include/scc/`: Core SCC algorithms.
-  - `include/mpi_basic/`: MPI wrappers and communication primitives.
-  - `include/memory/`: Memory management utilities including `buffer`.
+  - `include/kaspan/scc/`: Core SCC algorithms.
+  - `include/kaspan/mpi_basic/`: MPI wrappers and communication primitives.
+  - `include/kaspan/memory/`: Memory management utilities including `buffer`.
+  - `include/kaspan/util/`: General utility functions and classes.
+  - `include/kaspan/debug/`: Debugging and assertion tools.
 - `extern/`: Snapshots of external projects and competitors used for benchmarking.
   - `ispan/`: Snapshot of the iSpan project.
   - `hpc_graph/`: Snapshot of the HPC Graph project.
+  - `ispan_test/`: Integration tests for the iSpan project.
 - `tool/`: Benchmarking tools and utility executables (e.g., `bench_kaspan`, `edgelist_converter`).
 - `test/`: Unit and integration tests.
 - `script/`: Helper scripts for development tools (formatting, linting, etc.).
@@ -64,7 +67,7 @@ The project uses CMake as its build system. **It is essential to export the comp
 source /opt/intel/oneapi/setvars.sh # optional: if you are using intel oneapi this might be required
 mkdir cmake-build-release
 cd cmake-build-release
-cmake -S .. -B . -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake -S .. -B . -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build . -j 8
 ```
 
@@ -76,7 +79,7 @@ KaSpan tests are unique in how they handle MPI. You should **not** run tests dir
 source /opt/intel/oneapi/setvars.sh # optional: if you are using intel oneapi this might be required
 mkdir cmake-build-debug
 cd cmake-build-debug
-cmake -S .. -B . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake -S .. -B . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build . -j 8
 ctest # optional: run all tests
 ./bin/test_scc_fuzzy
@@ -96,11 +99,11 @@ mpirun -n 3 cmake-build-debug/bin/test_allgather_sub_graph --mpi-sub-process
 
 ### MPI Usage
 
-Always use the **`mpi_basic`** wrapper instead of calling MPI functions directly. `mpi_basic` provides a safer and more consistent interface for the project's needs.
+Always use the **`kaspan::mpi_basic`** wrapper instead of calling MPI functions directly. `kaspan::mpi_basic` provides a safer and more consistent interface for the project's needs.
 
 ### Memory Management
 
-To optimize performance and reduce allocations during execution, use **`buffer`** (found in `scc/include/memory/buffer.hpp`) whenever memory can be preallocated.
+To optimize performance and reduce allocations during execution, use **`kaspan::buffer`** (found in `scc/include/kaspan/memory/buffer.hpp`) whenever memory can be preallocated.
 
 ### Benchmarking Snapshots
 
@@ -112,7 +115,7 @@ To improve readability and facilitate manual dependency tracking, all `#include`
 
 ```cpp
 #include <vector> // std::vector
-#include <mpi_basic/world.hpp> // world_rank, world_size
+#include <kaspan/mpi_basic/world.hpp> // world_rank, world_size
 ```
 
 ## Development Tips

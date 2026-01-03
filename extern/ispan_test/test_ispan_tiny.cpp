@@ -1,12 +1,14 @@
-#include <debug/assert.hpp>
-#include <debug/sub_process.hpp>
 #include <ispan/scc.hpp>
-#include <scc/base.hpp>
-#include <util/scope_guard.hpp>
+#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/util/scope_guard.hpp>
 
 #include <cstdio>
 #include <iostream>
 #include <print>
+
+using namespace kaspan;
 
 int
 main(int argc, char** argv)
@@ -17,7 +19,7 @@ main(int argc, char** argv)
 
   KASPAN_DEFAULT_INIT();
 
-  Graph            g;
+  graph            g;
   constexpr size_t n = 7;
   constexpr size_t m = 11;
   g.n                = n;

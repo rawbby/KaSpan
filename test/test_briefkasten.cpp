@@ -1,17 +1,19 @@
-#include "util/arithmetic.hpp"
-#include "debug/assert_lt.hpp"
-#include "mpi_basic/world.hpp"
-#include "debug/assert_eq.hpp"
-#include "mpi_basic/barrier.hpp"
 #include <algorithm>
 #include <briefkasten/buffered_queue.hpp>
 #include <briefkasten/queue_builder.hpp>
 #include <chrono>
 #include <cstddef>
-#include <debug/sub_process.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert_lt.hpp>
+#include <kaspan/debug/sub_process.hpp>
+#include <kaspan/mpi_basic/barrier.hpp>
+#include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/util/arithmetic.hpp>
 #include <ranges>
-#include <scc/base.hpp>
 #include <vector>
+
+using namespace kaspan;
 
 void
 await_messages(auto& mq, auto&& on_message)
