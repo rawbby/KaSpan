@@ -105,7 +105,8 @@ def calculate_global_stats(all_metrics_raw):
                 sum_step_dur = 0
                 for s in progress:
                     if s["duration"] > 0:
-                        all_metrics["step_throughput"].append(s["decided_count"] / s["duration"])
+                        if s["decided_count"] > 0:
+                            all_metrics["step_throughput"].append(s["decided_count"] / s["duration"])
                         all_metrics["step_duration"].append(s["duration"])
                         sum_step_dur += s["duration"]
                 all_metrics["step_duration"].append(max(0, dur - sum_step_dur))
@@ -358,9 +359,9 @@ def setup_ax(ax, title, ylabel, x_min, x_max, y_min, y_max, y_scale="log10", y_f
     """
     ax.set_title(title)
     ax.set_ylabel(ylabel)
-    ax.set_xlabel("Cores")
+    ax.set_xlabel("Number of CPU-Cores")
 
-    # X-axis configuration (Cores)
+    # X-axis configuration (Number of CPU-Cores)
     ax.set_xscale("log", base=2)
     if x_ticks is not None:
         ax.set_xticks(x_ticks)
@@ -446,7 +447,7 @@ def get_plot_config(plot_type, scaling_type, graph, global_min, global_max, grap
         cfg["y_min"] = 0
         cfg["y_max"] = max_val * 1.1 if max_val > 0 else 1.0
     elif plot_type == "memory":
-        cfg["ylabel"] = f"Memory [{m_unit}/core]"
+        cfg["ylabel"] = f"Memory [{m_unit} per CPU-Core]"
         cfg["scale"] = m_scale
         cfg["y_scale"] = "linear"
         cfg["y_formatter"] = "five_digit"
@@ -468,7 +469,7 @@ def get_plot_config(plot_type, scaling_type, graph, global_min, global_max, grap
         for a in graph_data:
             for n in graph_data[a]:
                 for s in graph_data[a][n][2]:
-                    if s["duration"] > 0:
+                    if s["duration"] > 0 and s["decided_count"] > 0:
                         val = s["decided_count"] / s["duration"]
                         min_val = min(min_val, val)
                         max_val = max(max_val, val)
@@ -594,7 +595,7 @@ def plot_graph_steps(graph, graph_data, apps, global_min, global_max, stage_styl
             for n in app_nps:
                 progress = graph_data[app][n][2]
                 stage_data = next((s for s in progress if s["name"] == stage_name), None)
-                if stage_data and stage_data["duration"] > 0:
+                if stage_data and stage_data["duration"] > 0 and stage_data["decided_count"] > 0:
                     x_vals.append(n)
                     y_vals.append(stage_data["decided_count"] / stage_data["duration"])
             if x_vals:
