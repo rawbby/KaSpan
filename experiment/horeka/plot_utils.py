@@ -3,6 +3,7 @@ import numpy as np
 import re
 import json
 import pathlib
+import matplotlib.ticker as ticker
 
 CORES_PER_SOCKET = 38
 CORES_PER_NODE = 76
@@ -72,7 +73,7 @@ def load_all_data(cwd):
 def calculate_global_stats(all_metrics_raw):
     """
     Calculates global min/max for all metrics across all loaded data.
-    Ensures Y-axis consistency.
+    Ensures Y-axis (Cores) consistency.
     """
     all_metrics = {
         "duration": [],
@@ -81,11 +82,14 @@ def calculate_global_stats(all_metrics_raw):
         "speedup": [],
         "step_duration": []
     }
+    all_nps_global = []
 
     for graph in all_metrics_raw:
         graph_data = all_metrics_raw[graph]
         all_nps = sorted(list(set(n for a in graph_data for n in graph_data[a])))
         if not all_nps: continue
+        all_nps_global.extend(all_nps)
+
         min_np = min(all_nps)
         candidates = [graph_data[app][min_np][0] for app in graph_data if min_np in graph_data[app]]
         baseline_dur = min(candidates) if candidates else None
@@ -119,13 +123,8 @@ def calculate_global_stats(all_metrics_raw):
     g_max = {k: get_max_safe(v) for k, v in all_metrics.items()}
     g_min = {k: get_min_safe(v) for k, v in all_metrics.items()}
 
-    # Adjustments for better plotting as per plot.txt
-    g_max["speedup"] = max(1.1, g_max["speedup"])
-    g_min["speedup"] = 0
-    g_min["memory"] = 0
-    g_min["duration"] = 1e-9  # Fixed to 1ns
-    g_min["step_duration"] = 1e-9  # Fixed to 1ns for consistency
-    g_min["step_throughput"] = 1.0  # Ensure positive for log
+    g_min["cores"] = min(all_nps_global) if all_nps_global else 1
+    g_max["cores"] = max(all_nps_global) if all_nps_global else 128
 
     return g_min, g_max
 
@@ -318,107 +317,200 @@ def get_hpc_graph_memory(data, np_val):
 
 def get_time_info(max_s):
     if max_s >= 10: return 1, "s"
-    if max_s >= 1e-3: return 1e3, "ms"
-    if max_s >= 1e-6: return 1e6, "us"
+    if max_s >= 1e-2: return 1e3, "ms"
+    if max_s >= 1e-5: return 1e6, "us"
     return 1e9, "ns"
 
 
 def get_memory_info(max_b):
-    if max_b >= 1e9: return 1e-9, "GB"
-    if max_b >= 1e6: return 1e-6, "MB"
-    if max_b >= 1e3: return 1e-3, "KB"
+    if max_b >= 10e9: return 1e-9, "GB"
+    if max_b >= 10e6: return 1e-6, "MB"
+    if max_b >= 10e3: return 1e-3, "KB"
     return 1, "B"
 
 
-def setup_ax(ax, title, ylabel, nps, log_y=True, x_min=None, x_max=None):
+class FiveDigitFormatter(ticker.Formatter):
+    def __call__(self, x, pos=None):
+        if x == 0: return "0"
+        abs_x = abs(x)
+        if abs_x >= 1000:
+            return f"{x:.0f}"
+        if abs_x >= 100:
+            res = f"{x:.2f}"[:6]
+        elif abs_x >= 10:
+            res = f"{x:.3f}"[:6]
+        elif abs_x >= 1:
+            res = f"{x:.4f}"[:6]
+        elif abs_x >= 0.1:
+            res = f"{x:.5f}"[:6]
+        else:
+            res = f"{x:.10f}"[:7]
+
+        if "." in res:
+            res = res.rstrip('0').rstrip('.')
+        return res if res != "" else "0"
+
+
+def setup_ax(ax, title, ylabel, x_min, x_max, y_min, y_max, y_scale="log10", y_formatter=None, x_ticks=None):
     """
-    Sets up the axes with common parameters.
-    - title: Plot title.
-    - ylabel: Y-axis label.
-    - nps: List of core counts for ticks.
-    - log_y: Whether to use logarithmic scale for Y-axis.
-    - x_min, x_max: Optional limits for X-axis (in core units).
+    Sets up the axes with common parameters according to plot.txt.
+    X-axis is Cores, Y-axis is the Metric.
     """
     ax.set_title(title)
     ax.set_ylabel(ylabel)
     ax.set_xlabel("Cores")
+
+    # X-axis configuration (Cores)
     ax.set_xscale("log", base=2)
-    if log_y: ax.set_yscale("log")
-    ax.set_xticks(nps)
-    ax.set_xticklabels([str(n) for n in nps], rotation=45)
+    if x_ticks is not None:
+        ax.set_xticks(x_ticks)
+        ax.get_xaxis().set_major_formatter(ticker.ScalarFormatter())
+    else:
+        ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
+
+    ax.xaxis.get_major_formatter().set_scientific(False)
+    ax.xaxis.get_major_formatter().set_useOffset(False)
+
+    # Y-axis configuration (Metric)
+    if y_scale == "log10":
+        ax.set_yscale("log", base=10)
+        if y_formatter == "scientific":
+            ax.yaxis.set_major_formatter(ticker.LogFormatterSciNotation(base=10))
+        elif y_formatter == "five_digit":
+            ax.yaxis.set_major_formatter(FiveDigitFormatter())
+            # For log scale, we also want labels at non-power-of-10 if the range is small
+            ax.yaxis.set_major_locator(ticker.LogLocator(base=10.0, subs=(1.0, 2.0, 5.0), numticks=10))
+        else:
+            ax.yaxis.set_major_formatter(ticker.ScalarFormatter())
+    elif y_scale == "linear":
+        ax.set_yscale("linear")
+        if y_formatter == "five_digit":
+            ax.yaxis.set_major_formatter(FiveDigitFormatter())
+        else:
+            fmt = ticker.ScalarFormatter()
+            fmt.set_scientific(False)
+            ax.yaxis.set_major_formatter(fmt)
+
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
     ax.grid(True, which="both", linestyle="--", alpha=0.5)
-    if nps:
-        xmin = x_min if x_min is not None else 1
-        xmax = x_max if x_max is not None else max(nps) * 1.1
-        ax.set_xlim(xmin, xmax)
-        mark_topology(ax, xmin, xmax)
+    mark_topology(ax, x_min, x_max)
 
 
-def get_plot_config(plot_type, scaling_type, graph, global_min, global_max, app=None):
+def get_plot_config(plot_type, scaling_type, graph, global_min, global_max, graph_data, baseline_dur=None, app=None):
     """
-    Provides a consistent configuration (title, labels, scale, limits) for all plot types.
+    Provides a consistent configuration for all plot types based on plot.txt.
     """
     t_scale, t_unit = get_time_info(global_max["duration"])
     m_scale, m_unit = get_memory_info(global_max["memory"])
 
-    # scaling_type should be e.g., "Strong Scaling" or "Weak Scaling"
     prefix = f"{scaling_type} " if scaling_type else ""
     app_suffix = f" ({app})" if app else ""
 
+    cfg = {
+        "title": f"{prefix}{plot_type.replace('_', ' ').title()}: {graph}{app_suffix}",
+        "ylabel": "",
+        "y_scale": "log10",
+        "y_formatter": None,
+        "scale": 1.0,
+        "x_min": global_min["cores"],
+        "x_max": global_max["cores"],
+        "y_min": 0,
+        "y_max": 1.0
+    }
+
     if plot_type == "duration":
-        return {
-            "title": f"{prefix}Duration: {graph}{app_suffix}",
-            "ylabel": f"Time [{t_unit}]",
-            "log_y": True,
-            "ylim": (global_min["duration"] * t_scale * 0.9, global_max["duration"] * t_scale * 1.1),
-            "scale": t_scale
-        }
+        cfg["ylabel"] = f"Time [{t_unit}]"
+        cfg["scale"] = t_scale
+        cfg["y_scale"] = "log10"
+        cfg["y_formatter"] = "five_digit"
+        min_val = float('inf')
+        max_val = 0
+        for a in graph_data:
+            for n in graph_data[a]:
+                val = graph_data[a][n][0] * t_scale
+                min_val = min(min_val, val)
+                max_val = max(max_val, val)
+        cfg["y_min"] = min_val * 0.9 if min_val != float('inf') else 1e-9 * t_scale
+        cfg["y_max"] = max_val * 1.1 if max_val > 0 else 1.0
     elif plot_type == "speedup":
         label = "Speedup" if "Strong" in scaling_type else "Efficiency"
-        return {
-            "title": f"{prefix}{label}: {graph}{app_suffix}",
-            "ylabel": label,
-            "log_y": False,
-            "ylim": (global_min["speedup"] * 0.9, global_max["speedup"] * 1.1),
-            "scale": 1.0
-        }
+        cfg["title"] = f"{prefix}{label}: {graph}{app_suffix}"
+        cfg["ylabel"] = label
+        cfg["y_scale"] = "linear"
+        max_val = 0
+        if baseline_dur:
+            for a in graph_data:
+                for n in graph_data[a]:
+                    max_val = max(max_val, baseline_dur / (graph_data[a][n][0] if graph_data[a][n][0] > 0 else 1e-9))
+        cfg["y_min"] = 0
+        cfg["y_max"] = max_val * 1.1 if max_val > 0 else 1.0
     elif plot_type == "memory":
-        return {
-            "title": f"{prefix}Memory: {graph}{app_suffix}",
-            "ylabel": f"Memory [{m_unit}/core]",
-            "log_y": False,
-            "ylim": (global_min["memory"] * m_scale * 0.9, global_max["memory"] * m_scale * 1.1),
-            "scale": m_scale
-        }
+        cfg["ylabel"] = f"Memory [{m_unit}/core]"
+        cfg["scale"] = m_scale
+        cfg["y_scale"] = "linear"
+        cfg["y_formatter"] = "five_digit"
+        min_val = float('inf')
+        max_val = 0
+        for a in graph_data:
+            for n in graph_data[a]:
+                val = graph_data[a][n][1] * m_scale
+                min_val = min(min_val, val)
+                max_val = max(max_val, val)
+        cfg["y_min"] = min_val * 0.9 if min_val != float('inf') else 0
+        cfg["y_max"] = max_val * 1.1 if max_val > 0 else 1.0
     elif plot_type == "step_throughput":
-        return {
-            "title": f"{prefix}Step Throughput: {graph}{app_suffix}",
-            "ylabel": "Decisions per second",
-            "log_y": True,
-            "ylim": (global_min["step_throughput"] * 0.9, global_max["step_throughput"] * 1.1),
-            "scale": 1.0
-        }
+        cfg["ylabel"] = "Decisions per second"
+        cfg["y_scale"] = "log10"
+        cfg["y_formatter"] = "scientific"
+        min_val = float('inf')
+        max_val = 0
+        for a in graph_data:
+            for n in graph_data[a]:
+                for s in graph_data[a][n][2]:
+                    if s["duration"] > 0:
+                        val = s["decided_count"] / s["duration"]
+                        min_val = min(min_val, val)
+                        max_val = max(max_val, val)
+        cfg["y_min"] = min_val * 0.9 if min_val != float('inf') else 0.1
+        cfg["y_max"] = max_val * 1.1 if max_val > 0 else 10.0
     elif plot_type == "step_duration":
-        return {
-            "title": f"{prefix}Step Duration: {graph}{app_suffix}",
-            "ylabel": f"Time [{t_unit}]",
-            "log_y": True,  # Use log for consistency with total duration
-            "ylim": (global_min["step_duration"] * t_scale * 0.9, global_max["step_duration"] * t_scale * 1.1),
-            "scale": t_scale
-        }
-    return None
+        cfg["ylabel"] = f"Time [{t_unit}]"
+        cfg["scale"] = t_scale
+        cfg["y_scale"] = "log10"
+        cfg["y_formatter"] = "scientific"
+        min_val = float('inf')
+        max_val = 0
+        for a in graph_data:
+            for n in graph_data[a]:
+                for s in graph_data[a][n][2]:
+                    if s["duration"] > 0:
+                        val = s["duration"] * t_scale
+                        min_val = min(min_val, val)
+                        max_val = max(max_val, val)
+                dur, _, progress = graph_data[a][n]
+                other = dur - sum(s["duration"] for s in progress)
+                if other > 1e-9:
+                    val = other * t_scale
+                    min_val = min(min_val, val)
+                    max_val = max(max_val, val)
+        cfg["y_min"] = min_val * 0.9 if min_val != float('inf') else 1e-9 * t_scale
+        cfg["y_max"] = max_val * 1.1 if max_val > 0 else 1.0
+    return cfg
 
 
 def mark_topology(ax, min_n, max_n):
+    """Marks topology borders on the X (Cores) axis."""
     borders = [(1.5, "single threaded", "multithreaded"),
                (CORES_PER_SOCKET + 0.5, "single socket", "multi socket"),
                (CORES_PER_NODE + 0.5, "single node", "multi node")]
     for x, left_lab, right_lab in borders:
         if min_n < x < max_n:
             ax.axvline(x, color="black", linestyle="--", alpha=0.5)
-            ax.text(x, 0.5, left_lab, rotation=90, verticalalignment="center", horizontalalignment="right", fontsize=8,
+            # Place labels at the bottom of the plot
+            ax.text(x, 0.01, left_lab, rotation=90, verticalalignment="bottom", horizontalalignment="right", fontsize=7,
                     transform=ax.get_xaxis_transform())
-            ax.text(x, 0.5, right_lab, rotation=90, verticalalignment="center", horizontalalignment="left", fontsize=8,
+            ax.text(x, 0.01, right_lab, rotation=90, verticalalignment="bottom", horizontalalignment="left", fontsize=7,
                     transform=ax.get_xaxis_transform())
 
 
@@ -436,16 +528,17 @@ def plot_graph_summary(graph, graph_data, apps, global_min, global_max, app_styl
     for plot_type in ["duration", "speedup", "memory"]:
         fig, ax = plt.subplots(figsize=(8, 6), layout="constrained")
 
-        cfg = get_plot_config(plot_type, scaling_type, graph, global_min, global_max)
-        setup_ax(ax, cfg["title"], cfg["ylabel"], all_nps, log_y=cfg["log_y"], x_min=min_np * 0.9, x_max=max_np * 1.1)
-        ax.set_ylim(*cfg["ylim"])
+        cfg = get_plot_config(plot_type, scaling_type, graph, global_min, global_max, graph_data, baseline_dur)
+        x_ticks = all_nps
+        setup_ax(ax, cfg["title"], cfg["ylabel"], cfg["x_min"], cfg["x_max"], cfg["y_min"], cfg["y_max"],
+                 y_scale=cfg["y_scale"], y_formatter=cfg.get("y_formatter"), x_ticks=x_ticks)
         scale = cfg["scale"]
 
         if plot_type == "speedup":
             if "Strong" in scaling_type:
-                # Ideal strong scaling: speedup = np / min_np
+                # Ideal strong scaling: speedup S = n / min_np
                 ax.plot([min_np, max_np], [1.0, max_np / min_np], color="gray", linestyle="--", alpha=0.5,
-                        label="ideal")
+                        label="ideal", clip_on=True)
             else:
                 # Ideal weak scaling: efficiency = 1.0
                 ax.axhline(1.0, color="gray", linestyle="--", alpha=0.5, label="ideal")
@@ -457,13 +550,12 @@ def plot_graph_summary(graph, graph_data, apps, global_min, global_max, app_styl
             x_vals, y_vals = [], []
             for n in app_nps:
                 dur, mem, _ = graph_data[app][n]
+                x_vals.append(n)
                 if plot_type == "duration":
-                    x_vals.append(n);
                     y_vals.append(dur * scale)
                 elif plot_type == "speedup":
-                    if baseline_dur: x_vals.append(n); y_vals.append(baseline_dur / (dur if dur > 0 else 1e-9))
+                    if baseline_dur: y_vals.append(baseline_dur / (dur if dur > 0 else 1e-9))
                 elif plot_type == "memory":
-                    x_vals.append(n);
                     y_vals.append(mem * scale)
             if x_vals:
                 ax.plot(x_vals, y_vals, label=app, color=c, marker=m)
@@ -477,10 +569,6 @@ def plot_graph_summary(graph, graph_data, apps, global_min, global_max, app_styl
 
 def plot_graph_steps(graph, graph_data, apps, global_min, global_max, stage_style, scaling_type, out_dir):
     """Internal helper to plot side-by-side Step Throughput and Duration for each variant."""
-    all_nps = sorted(list(set(n for a in graph_data for n in graph_data[a])))
-    if not all_nps: return
-    min_np = min(all_nps)
-    max_np = max(all_nps)
     scaling_prefix = "strong" if "Strong" in scaling_type else "weak"
 
     for app in sorted(list(apps)):
@@ -489,13 +577,13 @@ def plot_graph_steps(graph, graph_data, apps, global_min, global_max, stage_styl
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6), layout="constrained")
 
-        cfg1 = get_plot_config("step_throughput", scaling_type, graph, global_min, global_max, app=app)
-        setup_ax(ax1, cfg1["title"], cfg1["ylabel"], all_nps, log_y=cfg1["log_y"], x_min=min_np * 0.9, x_max=max_np * 1.1)
-        ax1.set_ylim(*cfg1["ylim"])
+        cfg1 = get_plot_config("step_throughput", scaling_type, graph, global_min, global_max, graph_data, app=app)
+        setup_ax(ax1, cfg1["title"], cfg1["ylabel"], cfg1["x_min"], cfg1["x_max"], cfg1["y_min"], cfg1["y_max"],
+                 y_scale=cfg1["y_scale"], y_formatter=cfg1.get("y_formatter"), x_ticks=app_nps)
 
-        cfg2 = get_plot_config("step_duration", scaling_type, graph, global_min, global_max, app=app)
-        setup_ax(ax2, cfg2["title"], cfg2["ylabel"], all_nps, log_y=cfg2["log_y"], x_min=min_np * 0.9, x_max=max_np * 1.1)
-        ax2.set_ylim(*cfg2["ylim"])
+        cfg2 = get_plot_config("step_duration", scaling_type, graph, global_min, global_max, graph_data, app=app)
+        setup_ax(ax2, cfg2["title"], cfg2["ylabel"], cfg2["x_min"], cfg2["x_max"], cfg2["y_min"], cfg2["y_max"],
+                 y_scale=cfg2["y_scale"], y_formatter=cfg2.get("y_formatter"), x_ticks=app_nps)
         scale2 = cfg2["scale"]
 
         stages = sorted(list(set(s["name"] for n in app_nps for s in graph_data[app][n][2])))
@@ -507,7 +595,7 @@ def plot_graph_steps(graph, graph_data, apps, global_min, global_max, stage_styl
                 progress = graph_data[app][n][2]
                 stage_data = next((s for s in progress if s["name"] == stage_name), None)
                 if stage_data and stage_data["duration"] > 0:
-                    x_vals.append(n);
+                    x_vals.append(n)
                     y_vals.append(stage_data["decided_count"] / stage_data["duration"])
             if x_vals:
                 ax1.plot(x_vals, y_vals, label=stage_name, color=c, marker=m)
@@ -518,7 +606,7 @@ def plot_graph_steps(graph, graph_data, apps, global_min, global_max, stage_styl
                 progress = graph_data[app][n][2]
                 stage_data = next((s for s in progress if s["name"] == stage_name), None)
                 if stage_data:
-                    x_vals.append(n);
+                    x_vals.append(n)
                     y_vals.append(stage_data["duration"] * scale2)
             if x_vals:
                 ax2.plot(x_vals, y_vals, label=stage_name, color=c, marker=m)
@@ -528,7 +616,7 @@ def plot_graph_steps(graph, graph_data, apps, global_min, global_max, stage_styl
         for n in app_nps:
             dur, _, progress = graph_data[app][n]
             val = dur - sum(s["duration"] for s in progress)
-            x_vals.append(n);
+            x_vals.append(n)
             y_vals.append(max(0, val) * scale2)
         if x_vals:
             c, m = stage_style["Other"]
