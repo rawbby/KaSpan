@@ -67,12 +67,13 @@ main(int argc, char** argv)
   KASPAN_STATISTIC_ADD("alpha", alpha);
 
   if (kagen_option_string != nullptr) {
-    KASPAN_STATISTIC_PUSH("kagen");
-    auto const graph_part = kaspan::kagen_graph_part(kagen_option_string);
-    KASPAN_STATISTIC_POP();
-    KASPAN_STATISTIC_PUSH("preprocessing");
-    auto const graph = allgather_graph(graph_part.part, graph_part.m, graph_part.local_fw_m, graph_part.fw_head, graph_part.fw_csr);
-    KASPAN_STATISTIC_POP();
+    auto const graph = [kagen_option_string] {
+      KASPAN_STATISTIC_PUSH("kagen");
+      auto const graph_part = kaspan::kagen_graph_part(kagen_option_string);
+      KASPAN_STATISTIC_POP();
+      KASPAN_STATISTIC_SCOPE("preprocessing");
+      return allgather_graph(graph_part.part, graph_part.m, graph_part.local_fw_m, graph_part.fw_head, graph_part.fw_csr);
+    }();
     benchmark(graph, alpha);
   } else {
     KASPAN_STATISTIC_PUSH("load");

@@ -2,6 +2,7 @@ import pathlib
 import os
 import plot_utils
 
+
 def main():
     cwd = pathlib.Path(os.getcwd())
     scaling_data, all_metrics_raw, apps, all_stages, global_all_nps = plot_utils.load_all_data(cwd)
@@ -31,6 +32,7 @@ def main():
             graph_data = weak_data[graph]
             plot_utils.plot_weak_summary(graph, graph_data, apps, global_min, global_max, app_style, cwd)
             plot_utils.plot_weak_steps(graph, graph_data, apps, global_min, global_max, stage_style, cwd)
+
 
 if __name__ == "__main__":
     main()

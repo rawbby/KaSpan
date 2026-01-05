@@ -38,11 +38,13 @@ GENERICS = {
     'rmat_abc25': 'rmat;directed;n=${n};m=${m};a=0.25;b=0.25;c=0.25;seed=13'
 }
 
+
 def write_file(path, content):
     abs_path = os.path.join(SCRIPT_DIR, path)
     os.makedirs(os.path.dirname(abs_path), exist_ok=True)
     with open(abs_path, 'w') as f:
         f.write(content)
+
 
 def get_header(comp, s_name, scaling, rel_path, is_rwd=False):
     is_hpc = comp == 'hpc_graph'
@@ -78,6 +80,7 @@ source {SCRIPT_REL}/{run_script}"""
         header += f"\nshopt -s nullglob\nrwd=( {SCRIPT_REL}/rwd/*.manifest )\nshopt -u nullglob"
     header += "\nset +eu"
     return header
+
 
 def get_generic_body(comp, s_name, scaling, g_name, kagen):
     is_hpc = comp == 'hpc_graph'
@@ -128,6 +131,7 @@ def get_generic_body(comp, s_name, scaling, g_name, kagen):
             body += f'run_generic "$app" "$output_file" "$kagen_string" "$app_name" "$np" "$n" "$d" "{g_name}" "{run_args}"{" --threads 76" if is_hpc else ""}\ndone\ndone\n'
     return body
 
+
 def get_rwd_body(comp, s_name):
     is_hpc = comp == 'hpc_graph'
     cfg = CONFIGS[s_name]
@@ -151,6 +155,7 @@ def get_rwd_body(comp, s_name):
         body += f'run_rwd "$app" "$output_file" "$manifest" "$app_name" {np_val} "$manifest_name" "{run_args}"{" --threads 76" if is_hpc else ""}\ndone\n'
     return body
 
+
 def generate_generic_scaling(scaling):
     for g_name, kagen in GENERICS.items():
         for comp in APPS:
@@ -160,6 +165,7 @@ def generate_generic_scaling(scaling):
                 body = get_generic_body(comp, s_name, scaling, g_name, kagen)
                 write_file(rel_path, header + body)
 
+
 def generate_rwd_experiments():
     for comp in APPS:
         for s_name in CONFIGS:
@@ -167,6 +173,7 @@ def generate_rwd_experiments():
             header = get_header(comp, s_name, scaling='strong', rel_path=rel_path, is_rwd=True)
             body = get_rwd_body(comp, s_name)
             write_file(rel_path, header + body)
+
 
 if __name__ == '__main__':
     generate_generic_scaling('weak')

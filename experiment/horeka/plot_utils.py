@@ -130,10 +130,28 @@ def calculate_global_stats(all_metrics_raw):
     return g_min, g_max
 
 
+def get_max_recursive(node, key_name):
+    """Recursively searches for the maximum value of a specific key in a nested dictionary."""
+    max_val = -1
+    if not isinstance(node, dict):
+        return max_val
+
+    if key_name in node:
+        try:
+            max_val = int(node[key_name])
+        except (ValueError, TypeError):
+            pass
+
+    for v in node.values():
+        if isinstance(v, dict):
+            max_val = max(max_val, get_max_recursive(v, key_name))
+    return max_val
+
+
 def get_kaspan_duration(data):
     """Retrieves the maximum 'scc' duration across all ranks for KaSpan (in seconds)."""
     n = len(data)
-    dur = max(int(data[str(i)].get("benchmark", {}).get("scc", {}).get("duration", 0)) for i in range(n)) * 1e-9
+    dur = max(get_max_recursive(data[str(i)].get("benchmark", {}).get("scc", {}), "duration") for i in range(n)) * 1e-9
     assert dur > 0, f"Non-positive duration found: {dur}"
     return dur
 
@@ -141,7 +159,7 @@ def get_kaspan_duration(data):
 def get_ispan_duration(data):
     """Retrieves the maximum 'scc' duration across all ranks for iSpan (in seconds)."""
     n = len(data)
-    dur = max(int(data[str(i)].get("benchmark", {}).get("scc", {}).get("duration", 0)) for i in range(n)) * 1e-9
+    dur = max(get_max_recursive(data[str(i)].get("benchmark", {}).get("scc", {}), "duration") for i in range(n)) * 1e-9
     assert dur > 0, f"Non-positive duration found: {dur}"
     return dur
 
@@ -149,7 +167,7 @@ def get_ispan_duration(data):
 def get_hpc_graph_duration(data):
     """Retrieves the maximum 'scc' duration across all ranks for hpc_graph (in seconds)."""
     n = len(data)
-    dur = max(int(data[str(i)].get("benchmark", {}).get("scc", {}).get("duration", 0)) for i in range(n)) * 1e-9
+    dur = max(get_max_recursive(data[str(i)].get("benchmark", {}).get("scc", {}), "duration") for i in range(n)) * 1e-9
     assert dur > 0, f"Non-positive duration found: {dur}"
     return dur
 
@@ -243,76 +261,42 @@ def get_kaspan_memory(data, np_val):
     """
     Extracts peak memory usage (increase over base) for KaSpan across all ranks.
     Retrieves the maximum 'memory' (resident set size) reported in 'benchmark'
-    and nested 'scc' scopes (forward_backward_search, ecl, residual).
+    and recursively under nested 'scc' scopes.
     Returns average memory increase per core (total increase / np_val).
     """
-    n = len(data)
     mem_sum = 0
-    for i in range(n):
+    for i in range(len(data)):
         node = data[str(i)].get("benchmark", {})
         base = int(node.get("memory", 0))
-        scc = node.get("scc", {})
-        m = base
-        if "forward_backward_search" in scc and "memory" in scc["forward_backward_search"]:
-            m = max(m, int(scc["forward_backward_search"]["memory"]))
-        if "ecl" in scc and "memory" in scc["ecl"]:
-            m = max(m, int(scc["ecl"]["memory"]))
-        if "residual" in scc and "memory" in scc["residual"]:
-            m = max(m, int(scc["residual"]["memory"]))
-
-        diff = m - base
-        assert diff >= 0, f"Negative memory increase found on rank {i}: {m} - {base} = {diff}"
-        mem_sum += diff
+        mem_sum += max(base, get_max_recursive(node.get("scc", {}), "memory")) - base
     return mem_sum / np_val
 
 
 def get_ispan_memory(data, np_val):
     """
     Extracts peak memory usage (increase over base) for iSpan across all ranks.
-    Retrieves the maximum 'memory' reported in 'benchmark' and 'scc' (alloc, residual/post_processing).
+    Retrieves the maximum 'memory' reported in 'benchmark' and recursively under 'scc'.
     Returns average memory increase per core (total increase / np_val).
     """
-    n = len(data)
     mem_sum = 0
-    for i in range(n):
+    for i in range(len(data)):
         node = data[str(i)].get("benchmark", {})
         base = int(node.get("memory", 0))
-        scc = node.get("scc", {})
-        m = base
-        if "alloc" in scc and "memory" in scc["alloc"]:
-            m = max(m, int(scc["alloc"]["memory"]))
-        if "residual" in scc and "post_processing" in scc["residual"] and "memory" in scc["residual"][
-            "post_processing"]:
-            m = max(m, int(scc["residual"]["post_processing"]["memory"]))
-
-        diff = m - base
-        assert diff >= 0, f"Negative memory increase found on rank {i}: {m} - {base} = {diff}"
-        mem_sum += diff
+        mem_sum += max(base, get_max_recursive(node.get("scc", {}), "memory")) - base
     return mem_sum / np_val
 
 
 def get_hpc_graph_memory(data, np_val):
     """
     Extracts peak memory usage (increase over base) for hpc_graph across all ranks.
-    Retrieves 'memory' from benchmark, memory_after_adapter, scc, and memory_after_scc.
+    Retrieves 'memory' from benchmark and recursively under 'scc'.
     Returns average memory increase per core (total increase / np_val).
     """
-    n = len(data)
     mem_sum = 0
-    for i in range(n):
+    for i in range(len(data)):
         node = data[str(i)].get("benchmark", {})
         base = int(node.get("memory", 0))
-        m = base
-        if "memory_after_adapter" in node:
-            m = max(m, int(node["memory_after_adapter"]))
-        if "scc" in node and "scc" in node["scc"] and "memory" in node["scc"]["scc"]:
-            m = max(m, int(node["scc"]["scc"]["memory"]))
-        if "memory_after_scc" in node:
-            m = max(m, int(node["memory_after_scc"]))
-
-        diff = m - base
-        assert diff >= 0, f"Negative memory increase found on rank {i}: {m} - {base} = {diff}"
-        mem_sum += diff
+        mem_sum += max(base, get_max_recursive(node.get("scc", {}), "memory")) - base
     return mem_sum / np_val
 
 
@@ -503,8 +487,8 @@ def get_plot_config(plot_type, scaling_type, graph, global_min, global_max, grap
 def mark_topology(ax, min_n, max_n):
     """Marks topology borders on the X (Cores) axis."""
     borders = [(1.5, "single threaded", "multithreaded"),
-               (CORES_PER_SOCKET + 0.5, "single socket", "multi socket"),
-               (CORES_PER_NODE + 0.5, "single node", "multi node")]
+               (CORES_PER_SOCKET * 1.5, "single socket", "multi socket"),
+               (CORES_PER_NODE * 1.5, "single node", "multi node")]
     for x, left_lab, right_lab in borders:
         if min_n < x < max_n:
             ax.axvline(x, color="black", linestyle="--", alpha=0.5)
