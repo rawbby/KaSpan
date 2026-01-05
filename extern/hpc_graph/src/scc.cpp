@@ -120,7 +120,6 @@ scc_bfs_fw(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* scc, ui
       for (uint64_t i = 0; i < q->queue_size; ++i) {
         uint64_t vert       = q->queue[i];
         uint64_t vert_index = get_value(&g->map, vert);
-        ASSERT(vert_index < g->n_total);
         if (scc[vert_index] != SCC_NOT_VISITED && scc[vert_index] != SCC_VISITED_FW)
           continue;
         scc[vert_index] = SCC_EXPLORED_FW;
@@ -129,7 +128,6 @@ scc_bfs_fw(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* scc, ui
         uint64_t* outs       = out_vertices(g, vert_index);
         for (uint64_t j = 0; j < out_degree; ++j) {
           uint64_t out_index = outs[j];
-          ASSERT(out_index < g->n_total);
           if (scc[out_index] == SCC_NOT_VISITED) {
             scc[out_index] = SCC_VISITED_FW;
 

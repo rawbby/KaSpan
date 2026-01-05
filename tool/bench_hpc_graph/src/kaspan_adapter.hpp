@@ -209,8 +209,8 @@ initialize_ghost_cells(hpc_graph_data& data, part_t const& part, kaspan::index_t
   auto* ghost_unmap = static_cast<uint64_t*>(ghost_unmap_buf.data());
   auto* ghost_tasks = static_cast<uint64_t*>(ghost_tasks_buf.data());
 
-  KASPAN_VALGRIND_MAKE_MEM_DEFINED(ghost_unmap, std::max(n_ghost, vertex_t(1)) * sizeof(uint64_t));
-  KASPAN_VALGRIND_MAKE_MEM_DEFINED(ghost_tasks, std::max(n_ghost, vertex_t(1)) * sizeof(uint64_t));
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(ghost_unmap, std::max(n_ghost, kaspan::vertex_t(1)) * sizeof(uint64_t));
+  KASPAN_VALGRIND_MAKE_MEM_DEFINED(ghost_tasks, std::max(n_ghost, kaspan::vertex_t(1)) * sizeof(uint64_t));
 
   uint64_t ghost_idx = 0;
   for (auto global_id : ghost_set) {
