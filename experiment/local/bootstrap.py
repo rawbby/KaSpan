@@ -5,13 +5,13 @@ PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "../.."))
 
 APPS = {'kaspan': 'bench_kaspan', 'ispan': 'bench_ispan', 'hpc_graph': 'bench_hpc_graph'}
 
-WEAK_LOCAL_N = [150000, 300000, 600000]
+WEAK_LOCAL_N = [600000, 1200000, 1800000]
 WEAK_D = [90, 100, 200, 400, 1600]
-STRONG_N = [100000000, 10000000, 1000000]
+STRONG_N = [100000000, 10000000]
 
 CONFIGS = {
     'local': {
-        'nps': [1, 3, 6, 10]
+        'nps': [1, 4, 8, 12]
     }
 }
 
@@ -35,6 +35,17 @@ def get_header(comp, scaling, rel_path, is_rwd=False):
     header = f"""#!/bin/bash
 set -euo pipefail
 source {SCRIPT_DIR}/run_utils.sh
+
+# Capture extra parameters
+extra_params="$*"
+params_suffix=""
+if [[ -n "$extra_params" ]]; then
+    # replace all non [a-zA-Z0-9] character with _
+    clean_params=$(echo "$extra_params" | sed 's/[^a-zA-Z0-9]/_/g')
+    # remove consecutive _ and leading _
+    params_suffix="_$(echo "$clean_params" | sed 's/__*/_/g' | sed 's/^_//' | sed 's/_$//')"
+fi
+
 app_name={comp}
 app={PROJECT_ROOT}/cmake-build-release/bin/{app_bin}
 scaling={scaling}
@@ -60,8 +71,8 @@ def get_generic_body(comp, scaling, g_name, kagen):
         body += "n=$(( np * local_n ))\n"
         body += "m=$(( n * d / 100 ))\n"
         body += f"kagen_string=\"{kagen}\"\n"
-        body += "output_file=\"${scaling}_${app_name}_np${np}_" + g_name + "_localn${local_n}_d${d}.json\"\n"
-        body += "run_generic \"$app\" \"$output_file\" \"$kagen_string\" \"$app_name\" \"$np\" \"$n\" \"$d\" \"" + g_name + "\"\n"
+        body += "output_file=\"${scaling}_${app_name}${params_suffix}_np${np}_" + g_name + "_localn${local_n}_d${d}.json\"\n"
+        body += "run_generic \"$app\" \"$output_file\" \"$kagen_string\" \"$app_name\" \"$np\" \"$n\" \"$d\" \"" + g_name + "\" $extra_params\n"
         body += "done\ndone\ndone\n"
     else:  # strong
         body += f"for np in {' '.join(map(str, nps))}; do\n"
@@ -69,8 +80,8 @@ def get_generic_body(comp, scaling, g_name, kagen):
         body += f"for d in {d_list}; do\n"
         body += "m=$(( n * d / 100 ))\n"
         body += f"kagen_string=\"{kagen}\"\n"
-        body += "output_file=\"${scaling}_${app_name}_np${np}_" + g_name + "_n${n}_d${d}.json\"\n"
-        body += "run_generic \"$app\" \"$output_file\" \"$kagen_string\" \"$app_name\" \"$np\" \"$n\" \"$d\" \"" + g_name + "\"\n"
+        body += "output_file=\"${scaling}_${app_name}${params_suffix}_np${np}_" + g_name + "_n${n}_d${d}.json\"\n"
+        body += "run_generic \"$app\" \"$output_file\" \"$kagen_string\" \"$app_name\" \"$np\" \"$n\" \"$d\" \"" + g_name + "\" $extra_params\n"
         body += "done\ndone\ndone\n"
     return body
 
@@ -80,8 +91,8 @@ def get_rwd_body(comp):
     body = 'for manifest in "${rwd[@]}"; do\n'
     body += f"for np in {' '.join(map(str, nps))}; do\n"
     body += "manifest_name=\"$(basename \"${manifest%.manifest}\")\"\n"
-    body += "output_file=\"${scaling}_${app_name}_np${np}_${manifest_name}.json\"\n"
-    body += "run_rwd \"$app\" \"$output_file\" \"$manifest\" \"$app_name\" \"$np\" \"$manifest_name\"\n"
+    body += "output_file=\"${scaling}_${app_name}${params_suffix}_np${np}_${manifest_name}.json\"\n"
+    body += "run_rwd \"$app\" \"$output_file\" \"$manifest\" \"$app_name\" \"$np\" \"$manifest_name\" $extra_params\n"
     body += "done\ndone\n"
     return body
 
