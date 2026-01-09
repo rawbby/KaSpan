@@ -23,6 +23,62 @@ color_scc_init_label(part_t const& part, vertex_t* colors)
 
 template<world_part_concept part_t>
 auto
+color_scc_init_label_trim(part_t const& part, vertex_t* colors, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id)
+  -> vertex_t
+{
+  auto const count_degree = [=](vertex_t k, index_t const* head, vertex_t const* csr) {
+    index_t degree = 0;
+    for (auto u : csr_range(head, csr, k)) {
+      degree += static_cast<index_t>(not part.has_local(u) || scc_id[part.to_local(u)] == scc_id_undecided);
+    }
+    return degree;
+  };
+
+  auto const local_n       = part.local_n();
+  vertex_t   decided_count = 0;
+
+  index_t  max_degree_product = 0;
+  vertex_t max_degree_vertex  = local_n;
+
+  for (vertex_t k = 0; k < local_n; ++k) {
+    colors[k] = part.n;
+
+    if (scc_id[k] == scc_id_undecided) {
+      auto const out_degree = count_degree(k, fw_head, fw_csr);
+
+      if (out_degree == 0) {
+        scc_id[k] = part.to_global(k);
+        ++decided_count;
+        continue;
+      }
+
+      auto const in_degree = count_degree(k, bw_head, bw_csr);
+      if (in_degree == 0) {
+        scc_id[k] = part.to_global(k);
+        ++decided_count;
+        continue;
+      }
+
+      if (in_degree * out_degree > max_degree_product) {
+        max_degree_vertex = k;
+      }
+
+      // if (in_degree * out_degree >= threshold) {
+      //   scc_id[k] = part.to_global(k);
+      //   ++decided_count;
+      // }
+    }
+  }
+
+  if (max_degree_vertex != local_n) {
+    colors[max_degree_vertex] = part.to_global(max_degree_vertex);
+  }
+
+  return decided_count;
+}
+
+template<world_part_concept part_t>
+auto
 color_scc_step(part_t const&   part,
                index_t const*  fw_head,
                vertex_t const* fw_csr,
@@ -55,7 +111,7 @@ color_scc_step(part_t const&   part,
   // This partitions the graph into components that are supersets of SCCs.
   // Each vertex v gets the minimum ID of a vertex u that can reach it (u -> v).
   {
-    active.fill_cmp(local_n, scc_id, scc_id_undecided);
+    active.fill_cmp<std::not_equal_to<>>(local_n, colors, part.n);
     std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
     active.for_each(local_n, [&](auto&& k) {
       active_stack.push(k);
@@ -86,9 +142,9 @@ color_scc_step(part_t const&   part,
       changed.for_each(local_n, [&](auto&& k) {
         auto const label_k = colors[k];
         for (auto v : csr_range(fw_head, fw_csr, k)) {
-          if (label_k < v and not part.has_local(v)) {
+          //if (label_k < v and not part.has_local(v)) {
             frontier.push(part.world_rank_of(v), { v, label_k });
-          }
+          //}
         }
       });
       changed.clear(local_n);

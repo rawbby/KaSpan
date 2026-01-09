@@ -21,7 +21,7 @@ def load_all_data(cwd):
     - all_stages: set of all algorithmic step names found
     - global_all_nps: set of all process counts found
     """
-    pattern = re.compile(r"(weak|strong)_(kaspan|ispan|hpc_graph)_np([0-9]+)_(.*)\.json")
+    pattern = re.compile(r"(weak|strong)_([a-zA-Z0-9]+(_[a-zA-Z0-9_]+)?)_np([0-9]+)_(.*)\.json")
     files = [p for p in cwd.rglob("*.json") if p.is_file()]
 
     all_metrics_raw = {}
@@ -33,16 +33,24 @@ def load_all_data(cwd):
     for p in files:
         m = pattern.fullmatch(p.name)
         if not m: continue
-        scaling, app, np_val, graph = m.groups()
+        scaling, app, suffix, np_val, graph = m.groups()
         np_val = int(np_val)
+
+        # Base app for dynamic dispatch (kaspan, ispan, hpc_graph)
+        base_app = app
+        for b in ["kaspan", "ispan", "hpc_graph"]:
+            if app.startswith(b):
+                base_app = b
+                break
+
         try:
             with p.open("r") as f:
                 j = json.load(f)
 
                 # Dynamic dispatch to app-specific extraction functions
-                dur_func = globals().get(f"get_{app}_duration")
-                mem_func = globals().get(f"get_{app}_memory")
-                prog_func = globals().get(f"get_{app}_progress")
+                dur_func = globals().get(f"get_{base_app}_duration")
+                mem_func = globals().get(f"get_{base_app}_memory")
+                prog_func = globals().get(f"get_{base_app}_progress")
 
                 if not (dur_func and mem_func and prog_func):
                     print(f"Unknown app: {app}")

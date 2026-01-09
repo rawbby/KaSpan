@@ -98,7 +98,7 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
       auto const prev_global_decided = global_decided;
 
       do {
-        color_scc_init_label(part, colors.data());
+        local_decided += color_scc_init_label_trim(part, colors.data(), fw_head, fw_csr, bw_head, bw_csr, scc_id);
         local_decided += color_scc_step(part,
                                         fw_head,
                                         fw_csr,
