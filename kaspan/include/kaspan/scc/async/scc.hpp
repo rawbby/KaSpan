@@ -76,12 +76,16 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
   auto const n       = part.n;
   auto const local_n = part.local_n();
 
+  auto outdegree = make_array<vertex_t>(local_n);
+  auto indegree  = make_array<vertex_t>(local_n);
+  auto frontier  = vertex_frontier::create(local_n);
+
   vertex_t local_decided = 0;
 
   KASPAN_STATISTIC_PUSH("trim_1");
   // notice: trim_1_first has a side effect by initializing scc_id with scc_id undecided
   // if trim_1_first is removed one has to initialize scc_id with scc_id_undecided manually!
-  auto const [trim_1_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
+  auto const [trim_1_decided, max] = trim_1_first(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
   KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(trim_1_decided, mpi_basic::sum));
   local_decided += trim_1_decided;
   KASPAN_STATISTIC_POP();
@@ -122,12 +126,12 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
       KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_decided - prev_local_decided, mpi_basic::sum));
       KASPAN_STATISTIC_ADD("memory", kaspan::get_resident_set_bytes());
     }
-    {
-      KASPAN_STATISTIC_SCOPE("trim_1_fw_bw");
-      auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
-      local_decided += trim_1_decided;
-      KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(trim_1_decided, mpi_basic::sum));
-    }
+    // {
+    //   KASPAN_STATISTIC_SCOPE("trim_1_fw_bw");
+    //   auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
+    //   local_decided += trim_1_decided;
+    //   KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(trim_1_decided, mpi_basic::sum));
+    // }
   }
 
   if (mpi_basic::allreduce_single(local_decided, mpi_basic::sum) < decided_threshold) {

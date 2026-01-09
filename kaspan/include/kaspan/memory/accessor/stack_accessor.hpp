@@ -50,14 +50,44 @@ public:
     end_ = size;
   }
 
-  auto data() -> T*
+  auto cbegin() const -> T const*
   {
     return static_cast<T*>(data_);
   }
 
-  [[nodiscard]] auto data() const -> T const*
+  auto cend() const -> T const*
+  {
+    return static_cast<T*>(data_) + end_;
+  }
+
+  auto begin() -> T*
   {
     return static_cast<T*>(data_);
+  }
+
+  auto end() -> T*
+  {
+    return static_cast<T*>(data_) + end_;
+  }
+
+  auto begin() const -> T const*
+  {
+    return cbegin();
+  }
+
+  auto end() const -> T const*
+  {
+    return cend();
+  }
+
+  auto data() -> T*
+  {
+    return begin();
+  }
+
+  [[nodiscard]] auto data() const -> T const*
+  {
+    return begin();
   }
 
 private:

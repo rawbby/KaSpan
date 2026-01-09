@@ -106,7 +106,7 @@ main(int argc, char** argv)
     KASPAN_STATISTIC_PUSH("load");
     auto const manifest = manifest::load(manifest_file);
     ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
-    auto const part = balanced_slice_part{};
+    auto const part = balanced_slice_part{ static_cast<vertex_t>(manifest.graph_node_count) };
     {
       static_cast<vertex_t>(manifest.graph_node_count);
     };
