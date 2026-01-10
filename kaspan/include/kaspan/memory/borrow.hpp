@@ -200,7 +200,7 @@ make_array_clean(Count count) noexcept -> array<T>
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
   auto const count64 = static_cast<u64>(count);
-  auto result = array<T>{ count64 };
+  auto       result  = array<T>{ count64 };
   std::memset(result, 0x00, count64 * sizeof(T));
   return result;
 }
@@ -212,7 +212,7 @@ make_array_filled(Count count) noexcept -> array<T>
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
   auto const count64 = static_cast<u64>(count);
-  auto result = array<T>{ count64 };
+  auto       result  = array<T>{ count64 };
   std::memset(result, 0xff, count64 * sizeof(T));
   return result;
 }
@@ -224,7 +224,7 @@ make_array_filled(T const& value, Count count) noexcept -> array<T>
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
   auto const count64 = static_cast<u64>(count);
-  auto result = array<T>{ count64 };
+  auto       result  = array<T>{ count64 };
   for (u64 i = 0; i < count64; ++i) {
     std::memcpy(&result[i], &value, sizeof(T));
   }
@@ -260,7 +260,7 @@ borrow_array_clean(void** memory, Count count) noexcept -> T*
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
   auto const count64 = static_cast<u64>(count);
-  auto result = borrow_array<T>(memory, count64);
+  auto       result  = borrow_array<T>(memory, count64);
   std::memset(result, 0x00, count64 * sizeof(T));
   return result;
 }
@@ -272,7 +272,7 @@ borrow_array_filled(void** memory, Count count) noexcept -> T*
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
   auto const count64 = static_cast<u64>(count);
-  auto result = borrow_array<T>(memory, count64);
+  auto       result  = borrow_array<T>(memory, count64);
   std::memset(result, 0xff, count64 * sizeof(T));
   return result;
 }
@@ -284,7 +284,7 @@ borrow_array_filled(void** memory, T const& value, Count count) noexcept -> T*
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
   auto const count64 = static_cast<u64>(count);
-  auto result = borrow_array<T>(memory, count64);
+  auto       result  = borrow_array<T>(memory, count64);
   for (u64 i = 0; i < count64; ++i) {
     std::memcpy(&result[i], &value, sizeof(T));
   }

@@ -1,9 +1,9 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import re
 import json
-import pathlib
+import re
+
+import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import numpy as np
 
 CORES_PER_SOCKET = 38
 CORES_PER_NODE = 76

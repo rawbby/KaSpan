@@ -1,9 +1,9 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import re
 import json
-import pathlib
+import re
+
+import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import numpy as np
 
 TIME_LIMIT_S = 1200  # 20 minutes
 DPI = 200

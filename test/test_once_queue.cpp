@@ -1,8 +1,8 @@
-#include <kaspan/debug/debug.hpp>
+#include <iostream>
 #include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/debug.hpp>
 #include <kaspan/memory/accessor/once_queue.hpp>
 #include <kaspan/memory/accessor/once_queue_accessor.hpp>
-#include <iostream>
 
 using namespace kaspan;
 

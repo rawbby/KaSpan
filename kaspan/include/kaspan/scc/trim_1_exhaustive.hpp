@@ -10,14 +10,14 @@ namespace kaspan {
 template<world_part_concept part_t>
 auto
 trim_1_exhaustive_first(part_t const&    part,
-             index_t const*   fw_head,
-             index_t const*   fw_csr,
-             index_t const*   bw_head,
-             index_t const*   bw_csr,
-             vertex_t*        scc_id,
-             vertex_t*        outdegree,
-             vertex_t*        indegree,
-             vertex_frontier& frontier)
+                        index_t const*   fw_head,
+                        index_t const*   fw_csr,
+                        index_t const*   bw_head,
+                        index_t const*   bw_csr,
+                        vertex_t*        scc_id,
+                        vertex_t*        outdegree,
+                        vertex_t*        indegree,
+                        vertex_frontier& frontier)
 {
   auto const local_n       = part.local_n();
   vertex_t   decided_count = 0;
@@ -113,13 +113,13 @@ trim_1_exhaustive_first(part_t const&    part,
 template<world_part_concept part_t>
 auto
 trim_1_exhaustive(part_t const&   part,
-       index_t const*  fw_head,
-       vertex_t const* fw_csr,
-       index_t const*  bw_head,
-       vertex_t const* bw_csr,
-       vertex_t*       scc_id,
-       vertex_t*       fw_degree,
-       vertex_t*       bw_degree) -> vertex_t
+                  index_t const*  fw_head,
+                  vertex_t const* fw_csr,
+                  index_t const*  bw_head,
+                  vertex_t const* bw_csr,
+                  vertex_t*       scc_id,
+                  vertex_t*       fw_degree,
+                  vertex_t*       bw_degree) -> vertex_t
 {
   auto const local_n       = part.local_n();
   vertex_t   decided_count = 0;

@@ -154,8 +154,7 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
       first_iter = false;
 
       color_scc_init_label(part, colors.data());
-      local_decided +=
-        async::color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors.data(), active_array.data(), active.data(), local_decided);
+      local_decided += async::color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors.data(), active_array.data(), active.data(), local_decided);
     } while (mpi_basic::allreduce_single(local_decided, mpi_basic::sum) < decided_threshold);
 
     KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_decided - prev_local_decided, mpi_basic::sum));

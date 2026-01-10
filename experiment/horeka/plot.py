@@ -1,5 +1,6 @@
-import pathlib
 import os
+import pathlib
+
 import plot_utils
 
 

@@ -104,7 +104,7 @@ backward_complement_graph_part(part_t const& part, index_t local_m, index_t cons
   auto  send_stack_buffer = make_buffer<edge>(local_m);
   void* send_stack_memory = send_stack_buffer.data();
 
-  auto send_stack = view_stack<edge>(send_stack_memory, local_m);
+  auto send_stack                     = view_stack<edge>(send_stack_memory, local_m);
   auto [sb, send_counts, send_displs] = mpi_basic::counts_and_displs();
   std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
 

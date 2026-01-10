@@ -15,8 +15,7 @@ constexpr inline kaspan::vertex_t scc_id_largest = kaspan::scc_id_undecided - 2;
 inline off_t
 fsize(char const* filename)
 {
-  struct stat st
-  {};
+  struct stat st{};
   if (stat(filename, &st) == 0)
     return st.st_size;
   return -1;

@@ -14,7 +14,7 @@ backward_search(part_t const& part, index_t const* bw_head, vertex_t const* bw_c
   -> vertex_t
 {
   auto const local_n    = part.local_n();
-  auto       fw_reached = view_bits (  fw_reached_storage, local_n );
+  auto       fw_reached = view_bits(fw_reached_storage, local_n);
 
   vertex_t decided_count = 0;
   vertex_t min_u         = part.n;

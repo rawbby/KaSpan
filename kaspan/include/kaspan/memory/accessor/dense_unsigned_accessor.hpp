@@ -100,7 +100,7 @@ borrow_dense_unsigned(void** memory, Count count, u8 element_byte_size, std::end
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
   auto const count64 = static_cast<u64>(count);
-  void* data = borrow_array<byte>(memory, count64 * element_byte_size);
+  void*      data    = borrow_array<byte>(memory, count64 * element_byte_size);
   return dense_unsigned_accessor<T>{ data, count64, element_byte_size, endian };
 }
 

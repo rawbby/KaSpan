@@ -57,12 +57,7 @@ init_mpi_edge_t()
   mpi_basic::type_create_struct(2, blocklengths, displs, types, &mpi_edge_t);
   mpi_basic::type_commit(&mpi_edge_t);
 
-  IF(KASPAN_DEBUG,
-     MPI_Aint lb     = 0;
-     MPI_Aint extent = 0;
-     mpi_basic::type_get_extent(mpi_edge_t, &lb, &extent);
-     ASSERT_EQ(extent, sizeof(edge));
-  )
+  IF(KASPAN_DEBUG, MPI_Aint lb = 0; MPI_Aint extent = 0; mpi_basic::type_get_extent(mpi_edge_t, &lb, &extent); ASSERT_EQ(extent, sizeof(edge));)
 }
 
 inline void
@@ -104,12 +99,7 @@ init_mpi_degree_t()
   mpi_basic::type_create_struct(2, blocklengths, displs, types, &mpi_degree_t);
   mpi_basic::type_commit(&mpi_degree_t);
 
-  IF(KASPAN_DEBUG,
-     MPI_Aint lb     = 0;
-     MPI_Aint extent = 0;
-     mpi_basic::type_get_extent(mpi_degree_t, &lb, &extent);
-     ASSERT_EQ(extent, sizeof(degree));
-  )
+  IF(KASPAN_DEBUG, MPI_Aint lb = 0; MPI_Aint extent = 0; mpi_basic::type_get_extent(mpi_degree_t, &lb, &extent); ASSERT_EQ(extent, sizeof(degree));)
 }
 
 inline void

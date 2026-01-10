@@ -72,8 +72,8 @@ allgather_csr_degrees(part_t const&   part,
                                      line_align_up(local_sub_m_upper_bound * sizeof(vertex_t)) + line_align_up((local_sub_n + mpi_basic::world_root) * sizeof(index_t)));
 
   auto [counts, displs]  = mpi_basic::counts_and_displs(&memory);
-  auto local_sub_csr     = borrow_stack<vertex_t> (&memory, local_sub_m_upper_bound);
-  auto local_sub_degrees = borrow_stack<vertex_t> (&memory, local_sub_n + mpi_basic::world_root);
+  auto local_sub_csr     = borrow_stack<vertex_t>(&memory, local_sub_m_upper_bound);
+  auto local_sub_degrees = borrow_stack<vertex_t>(&memory, local_sub_n + mpi_basic::world_root);
   if (mpi_basic::world_root) {
     local_sub_degrees.push(0);
   }
@@ -107,13 +107,7 @@ allgather_csr_degrees(part_t const&   part,
 template<class part_t, class fn_t>
   requires(part_t::ordered and std::convertible_to<std::invoke_result_t<fn_t, kaspan::vertex_t>, bool>)
 auto
-allgather_sub_graph(part_t const&           part,
-                    vertex_t        local_sub_n,
-                    index_t const*  fw_head,
-                    vertex_t const* fw_csr,
-                    index_t const*  bw_head,
-                    vertex_t const* bw_csr,
-                    fn_t&&                  in_sub_graph)
+allgather_sub_graph(part_t const& part, vertex_t local_sub_n, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, fn_t&& in_sub_graph)
 {
   struct result // NOLINT(*-pro-type-member-init)
   {

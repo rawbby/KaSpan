@@ -101,9 +101,9 @@ main(int argc, char** argv)
       // Test sync version
       {
         auto const local_n = part.local_n();
-        auto  buffer = make_buffer<vertex_t>(std::max<vertex_t>(local_n, 1));
-        auto* memory = buffer.data();
-        auto* scc_id = borrow_array<vertex_t>(&memory, local_n > 0 ? local_n : 1);
+        auto       buffer  = make_buffer<vertex_t>(std::max<vertex_t>(local_n, 1));
+        auto*      memory  = buffer.data();
+        auto*      scc_id  = borrow_array<vertex_t>(&memory, local_n > 0 ? local_n : 1);
         scc(part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
         if (local_n > 0) {
           verify_scc_id(graph, graph.scc_id_part, scc_id);
@@ -115,9 +115,9 @@ main(int argc, char** argv)
       // Test async version with NoopIndirectionScheme
       {
         auto const local_n = part.local_n();
-        auto  buffer = make_buffer<vertex_t>(std::max<vertex_t>(local_n, 1));
-        auto* memory = buffer.data();
-        auto* scc_id = borrow_array<vertex_t>(&memory, local_n > 0 ? local_n : 1);
+        auto       buffer  = make_buffer<vertex_t>(std::max<vertex_t>(local_n, 1));
+        auto*      memory  = buffer.data();
+        auto*      scc_id  = borrow_array<vertex_t>(&memory, local_n > 0 ? local_n : 1);
         async::scc<briefkasten::NoopIndirectionScheme>(part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
         if (local_n > 0) {
           verify_scc_id(graph, graph.scc_id_part, scc_id);

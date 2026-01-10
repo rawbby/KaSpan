@@ -14,7 +14,7 @@ namespace kaspan {
 template<typename Val, typename Beg, typename End, formattable_concept... Args>
   requires(not formattable_concept<Val, Beg, End>)
 void
-assert_in_range( Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
   if (val < beg or val >= end) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));

@@ -105,8 +105,8 @@ struct bits_ops
     DEBUG_ASSERT_NE(data, nullptr);
 
     auto const end64 = static_cast<u64>(end);
-    auto const c64 = floordiv<64>(end64);
-    u64        b64 = 0;
+    auto const c64   = floordiv<64>(end64);
+    u64        b64   = 0;
 
     for (u64 i = 0; i < c64; ++i, b64 += 64) {
       u64 w = 0;

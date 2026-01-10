@@ -89,7 +89,7 @@ find_package(kassert REQUIRED CONFIG PATHS "${BriefKAsten_INSTALL_DIR}")
 
 add_library(BriefKAsten INTERFACE IMPORTED GLOBAL)
 set_target_properties(BriefKAsten PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
-    "${BriefKAsten_SOURCE_DIR}/src;${BriefKAsten_BUILD_DIR}/_deps/kamping-src/include")
+        "${BriefKAsten_SOURCE_DIR}/src;${BriefKAsten_BUILD_DIR}/_deps/kamping-src/include")
 target_compile_definitions(BriefKAsten INTERFACE KASSERT_ASSERTION_LEVEL=10 KAMPING_ASSERT_ASSERTION_LEVEL=10)
 target_link_libraries(BriefKAsten INTERFACE MPI::MPI_CXX kassert::kassert)
 add_library(BriefKAsten::BriefKAsten ALIAS BriefKAsten)

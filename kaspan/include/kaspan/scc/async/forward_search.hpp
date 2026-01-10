@@ -19,7 +19,7 @@ forward_search(part_t const&   part,
                vertex_t        root) -> vertex_t
 {
   auto const local_n      = part.local_n();
-  auto       fw_reached   = view_bits( fw_reached_storage, local_n );
+  auto       fw_reached   = view_bits(fw_reached_storage, local_n);
   auto       active_stack = view_stack<vertex_t>(active_array, local_n);
 
   auto on_message = [&](auto env) {

@@ -145,7 +145,7 @@ make_bits_clean(Size size) noexcept -> bits
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
   auto const size64 = static_cast<u64>(size);
-  bits res{ size64 };
+  bits       res{ size64 };
   res.clear(round_up<64>(size64));
 
   if constexpr (KASPAN_DEBUG) {
@@ -167,7 +167,7 @@ make_bits_filled(Size size) noexcept -> bits
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
   auto const size64 = static_cast<u64>(size);
-  bits res{ size64 };
+  bits       res{ size64 };
   res.fill(round_up<64>(size64));
 
   if constexpr (KASPAN_DEBUG) {

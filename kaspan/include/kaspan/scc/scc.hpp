@@ -115,32 +115,10 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
 
       do {
 
-        local_decided += color_scc_step(part,
-                                        fw_head,
-                                        fw_csr,
-                                        bw_head,
-                                        bw_csr,
-                                        scc_id,
-                                        colors.data(),
-                                        active_array.data(),
-                                        active.data(),
-                                        changed.data(),
-                                        frontier,
-                                        local_decided);
+        local_decided += color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier, local_decided);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
-        local_decided += color_scc_step(part,
-                                        bw_head,
-                                        bw_csr,
-                                        fw_head,
-                                        fw_csr,
-                                        scc_id,
-                                        colors.data(),
-                                        active_array.data(),
-                                        active.data(),
-                                        changed.data(),
-                                        frontier,
-                                        local_decided);
+        local_decided += color_scc_step(part, bw_head, bw_csr, fw_head, fw_csr, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier, local_decided);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
       } while (global_decided < decided_threshold);
