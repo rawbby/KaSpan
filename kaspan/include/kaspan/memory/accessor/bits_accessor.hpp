@@ -11,8 +11,9 @@ class bits_accessor final
 {
 public:
   explicit bits_accessor(void* data, u64 size)
-    : data_(data)
+    : data_(size == 0 ? nullptr : data)
   {
+    DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
     IF(KASPAN_DEBUG, size_ = size);
   }
 

@@ -64,6 +64,9 @@ inline auto line_align_up(void* data){return std::bit_cast<void*>(line_align_up(
 line_alloc(u64 size) noexcept(false) -> void*
 {
   DEBUG_ASSERT_GE(size, 0);
+  if (size == 0) {
+    return nullptr;
+  }
   auto const line = linesize();
   auto const mask = line - 1;
   void*      data = std::aligned_alloc(line, (size + mask) & ~mask);

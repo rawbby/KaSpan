@@ -14,12 +14,12 @@ class dense_unsigned_accessor final
 {
 public:
   explicit dense_unsigned_accessor(void* data, u64 size, u8 element_byte_size, std::endian endian = std::endian::native)
-    : data_(data)
+    : data_(size == 0 ? nullptr : data)
     , element_byte_size_(element_byte_size)
     , endian_(endian)
   {
     IF(KASPAN_DEBUG, size_ = size);
-    DEBUG_ASSERT_NE(data, nullptr);
+    DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
     DEBUG_ASSERT_GE(element_byte_size, 1);
     DEBUG_ASSERT_LE(element_byte_size, sizeof(T));
   }

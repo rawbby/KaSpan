@@ -38,6 +38,9 @@ public:
     if (size != 0U) {
       data_ = line_alloc(size);
       DEBUG_ASSERT(is_line_aligned(data_));
+      DEBUG_ASSERT_NE(data_, nullptr);
+    } else {
+      DEBUG_ASSERT_EQ(data_, nullptr);
     }
   }
 

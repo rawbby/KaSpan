@@ -223,6 +223,9 @@ borrow_array(void** memory, u64 count) noexcept -> T*
 {
   DEBUG_ASSERT_NE(memory, nullptr);
   DEBUG_ASSERT_GE(count, 0);
+  if (count == 0) {
+    return nullptr;
+  }
   DEBUG_ASSERT_NE(*memory, nullptr);
   DEBUG_ASSERT_EQ(linesize() % alignof(T), 0);
   DEBUG_ASSERT(is_line_aligned(*memory));

@@ -64,6 +64,9 @@ inline auto page_align_up(void* data){return std::bit_cast<void*>(page_align_up(
 page_alloc(u64 size) noexcept(false) -> void*
 {
   DEBUG_ASSERT_GE(size, 0);
+  if (size == 0) {
+    return nullptr;
+  }
   auto const page = pagesize();
   auto const mask = page - 1;
   void*      data = std::aligned_alloc(page, (size + mask) & ~mask);
