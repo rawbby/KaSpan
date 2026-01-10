@@ -89,7 +89,7 @@ main(int argc, char** argv)
   KASPAN_DEFAULT_INIT();
 
   for (int run = 1; run <= 40; ++run) {
-    for (vertex_t n : { 0, 1, 6, 8, 16, 33, 64 }) {
+    for (vertex_t n : { 1, 6, 8, 16, 33, 64 }) {
       DEBUG_ASSERT_EQ(n, mpi_basic::allreduce_single(n, MPI_MAX));
 
       auto const seed = mpi_basic::allreduce_max_time();

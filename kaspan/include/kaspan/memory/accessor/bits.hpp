@@ -1,40 +1,42 @@
 #pragma once
 
-#include <kaspan/memory/accessor/bits_accessor.hpp>
-#include <kaspan/memory/accessor/bits_mixin.hpp>
+#include <kaspan/debug/assert.hpp>
+#include <kaspan/memory/accessor/bits_ops.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/math.hpp>
 
-#include <cstdlib>
 #include <cstring>
 #include <utility>
 
 namespace kaspan {
 
-class bits final
-  : public buffer
-  , public bits_mixin<bits>
+class bits final : public buffer
 {
 public:
   bits() noexcept = default;
   ~bits()         = default;
 
   explicit bits(u64 size) noexcept(false)
-    : buffer(((size + 63) / 64) * sizeof(u64))
+    : buffer(ceildiv<64>(size) * sizeof(u64))
   {
+    IF(KASPAN_DEBUG, size_ = round_up<64>(size));
   }
 
   bits(bits const&) = delete;
   bits(bits&& rhs) noexcept
     : buffer(std::move(rhs))
   {
+    IF(KASPAN_DEBUG, size_ = rhs.size_);
+    IF(KASPAN_DEBUG, rhs.size_ = 0);
   }
 
   auto operator=(bits const&) -> bits& = delete;
   auto operator=(bits&& rhs) noexcept -> bits&
   {
     buffer::operator=(std::move(rhs));
+    IF(KASPAN_DEBUG, size_ = rhs.size_);
+    IF(KASPAN_DEBUG, rhs.size_ = 0);
     return *this;
   }
 
@@ -48,15 +50,58 @@ public:
     return static_cast<u64 const*>(buffer::data());
   }
 
-  [[nodiscard]] explicit operator bits_accessor() noexcept
+  void clear(u64 end)
   {
-    return bits_accessor{ data() };
+    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, 0, size_);
+    bits_ops::clear(data(), end);
   }
 
-  [[nodiscard]] explicit operator bits_accessor() const noexcept
+  void fill(u64 end)
   {
-    return bits_accessor{ const_cast<u64*>(data()) };
+    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, 0, size_);
+    bits_ops::fill(data(), end);
   }
+
+  [[nodiscard]] auto get(u64 index) const -> bool
+  {
+    DEBUG_ASSERT_IN_RANGE(index, 0, size_);
+    return bits_ops::get(data(), index);
+  }
+
+  void set(u64 index, bool value)
+  {
+    DEBUG_ASSERT_IN_RANGE(index, 0, size_);
+    bits_ops::set(data(), index, value);
+  }
+
+  void set(u64 index)
+  {
+    DEBUG_ASSERT_IN_RANGE(index, 0, size_);
+    bits_ops::set(data(), index);
+  }
+
+  void unset(u64 index)
+  {
+    DEBUG_ASSERT_IN_RANGE(index, 0, size_);
+    bits_ops::unset(data(), index);
+  }
+
+  template<ArithmeticConcept Index = size_t>
+  void for_each(Index end, std::invocable<Index> auto&& fn) const
+  {
+    DEBUG_ASSERT_LE(end, size_);
+    bits_ops::for_each<Index>(data(), end, std::forward<decltype(fn)>(fn));
+  }
+
+  template<ArithmeticConcept Index = size_t>
+  void set_each(Index end, std::invocable<Index> auto&& fn)
+  {
+    DEBUG_ASSERT_LE(end, size_);
+    bits_ops::set_each<Index>(data(), end, std::forward<decltype(fn)>(fn));
+  }
+
+private:
+  IF(KASPAN_DEBUG, u64 size_);
 };
 
 inline auto
@@ -68,30 +113,37 @@ make_bits(u64 size) noexcept -> bits
 inline auto
 make_bits_clean(u64 size) noexcept -> bits
 {
-  auto res       = bits{ size };
-  auto byte_size = ceildiv<64>(size) * sizeof(u64);
-  KASPAN_VALGRIND_MAKE_MEM_DEFINED(res.data(), byte_size);
-  std::memset(res.data(), 0x00, byte_size);
-#ifdef KASPAN_DEBUG
-  for (u64 i = 0; i < size; ++i) {
-    ASSERT_EQ(res.get(i), false);
+  bits res{ size };
+  res.clear(round_up<64>(size));
+
+  if constexpr (KASPAN_DEBUG) {
+    bits_ops::for_each(res.data(), size, [](u64 /* i */) {
+      ASSERT(false, "this code should be unreachable");
+    });
+    for (u64 i = 0; i < size; ++i) {
+      ASSERT_EQ(res.get(i), false);
+    }
   }
-#endif
+
   return res;
 }
 
 inline auto
 make_bits_filled(u64 size) noexcept -> bits
 {
-  auto res       = bits{ size };
-  auto byte_size = ceildiv<64>(size) * sizeof(u64);
-  KASPAN_VALGRIND_MAKE_MEM_DEFINED(res.data(), byte_size);
-  std::memset(res.data(), 0xff, byte_size);
-#ifdef KASPAN_DEBUG
-  for (u64 i = 0; i < size; ++i) {
-    ASSERT_EQ(res.get(i), true);
+  bits res{ size };
+  res.fill(round_up<64>(size));
+
+  if constexpr (KASPAN_DEBUG) {
+    u64 c = 0;
+    bits_ops::for_each(res.data(), size, [&c](u64 i) {
+      ASSERT_EQ(i, c++);
+    });
+    for (u64 i = 0; i < size; ++i) {
+      ASSERT_EQ(res.get(i), true);
+    }
   }
-#endif
+
   return res;
 }
 

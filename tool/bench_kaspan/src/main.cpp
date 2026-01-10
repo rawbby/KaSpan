@@ -95,7 +95,7 @@ main(int argc, char** argv)
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_ADD("world_rank", mpi_basic::world_rank);
   KASPAN_STATISTIC_ADD("world_size", mpi_basic::world_size);
-  KASPAN_STATISTIC_ADD("valgrind", KASPAN_VALGRIND_RUNNING_ON_VALGRIND);
+  KASPAN_STATISTIC_ADD("valgrind", KASPAN_VALGRIND);
 
   if (kagen_option_string != nullptr) {
     KASPAN_STATISTIC_PUSH("kagen");
@@ -106,7 +106,7 @@ main(int argc, char** argv)
     KASPAN_STATISTIC_PUSH("load");
     auto const manifest = manifest::load(manifest_file);
     ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
-    auto const part = balanced_slice_part{};
+    auto const part = balanced_slice_part{ static_cast<vertex_t>(manifest.graph_node_count) };
     {
       static_cast<vertex_t>(manifest.graph_node_count);
     };

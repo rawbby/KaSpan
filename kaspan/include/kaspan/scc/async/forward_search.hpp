@@ -14,12 +14,13 @@ forward_search(part_t const&   part,
                vertex_t const* fw_csr,
                brief_queue_t&  mq,
                vertex_t const* scc_id,
-               bits_accessor   fw_reached,
+               u64*            fw_reached_storage,
                vertex_t*       active_array,
                vertex_t        root) -> vertex_t
 {
   auto const local_n      = part.local_n();
-  auto       active_stack = stack_accessor<vertex_t>{ active_array };
+  auto       fw_reached   = view_bits( fw_reached_storage, local_n );
+  auto       active_stack = view_stack<vertex_t>(active_array, local_n);
 
   auto on_message = [&](auto env) {
     for (auto v : env.message) {

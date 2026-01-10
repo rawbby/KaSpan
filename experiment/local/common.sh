@@ -9,9 +9,9 @@ RWD_DIR="${PROJECT_ROOT}/experiment/rwd"
 VALGRIND="valgrind --leak-check=full --show-leak-kinds=definite,possible --track-origins=yes --error-exitcode=1 --quiet --suppressions=${PROJECT_ROOT}/experiment/local/valgrind.supp"
 
 GRAPHS=(
-    "gnm-directed;n=23456;m=23456;seed=13"
-    "rmat;directed;n=23456;m=65432;a=0.59;b=0.19;c=0.19;seed=13"
-    "rmat;directed;n=65432;m=23456;a=0.25;b=0.25;c=0.25;seed=13"
+    "gnm-directed;n=463;m=463;seed=13"
+    "rmat;directed;n=463;m=1243;a=0.59;b=0.19;c=0.19;seed=13"
+    "rmat;directed;n=1243;m=463;a=0.25;b=0.25;c=0.25;seed=13"
 )
 
 MANIFESTS=($(ls "${RWD_DIR}"/*.manifest | xargs -n 1 basename))

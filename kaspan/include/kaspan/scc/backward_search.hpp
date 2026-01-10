@@ -10,10 +10,11 @@ namespace kaspan {
 
 template<world_part_concept part_t>
 auto
-backward_search(part_t const& part, index_t const* bw_head, vertex_t const* bw_csr, vertex_frontier& frontier, vertex_t* scc_id, bits_accessor fw_reached, vertex_t pivot)
+backward_search(part_t const& part, index_t const* bw_head, vertex_t const* bw_csr, vertex_frontier& frontier, vertex_t* scc_id, u64* fw_reached_storage, vertex_t pivot)
   -> vertex_t
 {
-  auto const local_n = part.local_n();
+  auto const local_n    = part.local_n();
+  auto       fw_reached = view_bits (  fw_reached_storage, local_n );
 
   vertex_t decided_count = 0;
   vertex_t min_u         = part.n;

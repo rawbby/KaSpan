@@ -42,8 +42,8 @@ ecl_scc_step(part_t const&   part,
 {
   auto const local_n = part.local_n();
 
-  auto fw_active_stack = stack_accessor<vertex_t>{ fw_active_array };
-  auto bw_active_stack = stack_accessor<vertex_t>{ bw_active_array };
+  auto fw_active_stack = view_stack<vertex_t>(fw_active_array, local_n);
+  auto bw_active_stack = view_stack<vertex_t>(bw_active_array, local_n);
 
   auto on_fw_message = [&](auto env) {
     for (auto edge : env.message) {
@@ -79,13 +79,13 @@ ecl_scc_step(part_t const&   part,
     }
   };
 
-  fw_active.fill_cmp(local_n, scc_id, scc_id_undecided);
+  fw_active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
   std::memcpy(fw_changed.data(), fw_active.data(), (local_n + 7) >> 3);
   fw_active.for_each(local_n, [&](auto k) {
     fw_active_stack.push(k);
   });
 
-  bw_active.fill_cmp(local_n, scc_id, scc_id_undecided);
+  bw_active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
   std::memcpy(bw_changed.data(), bw_active.data(), (local_n + 7) >> 3);
   bw_active.for_each(local_n, [&](auto k) {
     bw_active_stack.push(k);
@@ -194,7 +194,7 @@ ecl_scc_step(part_t const&   part,
   mq.reactivate();
 
   vertex_t local_decided_count = 0;
-  fw_active.fill_cmp(local_n, scc_id, scc_id_undecided);
+  fw_active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
   fw_active.for_each(local_n, [&](auto k) {
     if (ecl_fw_label[k] == ecl_bw_label[k]) {
       scc_id[k] = ecl_fw_label[k];

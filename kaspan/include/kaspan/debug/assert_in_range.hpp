@@ -14,7 +14,7 @@ namespace kaspan {
 template<typename Val, typename Beg, typename End, formattable_concept... Args>
   requires(not formattable_concept<Val, Beg, End>)
 void
-assert_in_range(Val&& val, Beg&& beg, End&& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_in_range( Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
   if (val < beg or val >= end) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -26,7 +26,7 @@ assert_in_range(Val&& val, Beg&& beg, End&& end, std::string_view head, std::for
 template<typename Val, typename Beg, typename End>
   requires(not formattable_concept<Val, Beg, End>)
 void
-assert_in_range(Val&& val, Beg&& beg, End&& end, std::string_view head)
+assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head)
 {
   if (val < beg or val >= end) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -37,7 +37,7 @@ assert_in_range(Val&& val, Beg&& beg, End&& end, std::string_view head)
 
 template<formattable_concept Val, formattable_concept Beg, formattable_concept End, formattable_concept... Args>
 void
-assert_in_range(Val&& val, Beg&& beg, End&& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
   if (val < beg or val >= end) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {})\n{}", head, val, beg, end, std::format(fmt, std::forward<Args>(args)...));
@@ -48,7 +48,7 @@ assert_in_range(Val&& val, Beg&& beg, End&& end, std::string_view head, std::for
 
 template<formattable_concept Val, formattable_concept Beg, formattable_concept End>
 void
-assert_in_range(Val&& val, Beg&& beg, End&& end, std::string_view head)
+assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head)
 {
   if (val < beg or val >= end) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {})", head, val, beg, end);
@@ -60,7 +60,7 @@ assert_in_range(Val&& val, Beg&& beg, End&& end, std::string_view head)
 template<typename Val, typename Beg, typename End, formattable_concept... Args>
   requires(not formattable_concept<Val, Beg, End>)
 void
-assert_in_range_inclusive(Val&& val, Beg&& beg, End&& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
   if (val < beg or val > end) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -72,7 +72,7 @@ assert_in_range_inclusive(Val&& val, Beg&& beg, End&& end, std::string_view head
 template<typename Val, typename Beg, typename End>
   requires(not formattable_concept<Val, Beg, End>)
 void
-assert_in_range_inclusive(Val&& val, Beg&& beg, End&& end, std::string_view head)
+assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head)
 {
   if (val < beg or val > end) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -83,7 +83,7 @@ assert_in_range_inclusive(Val&& val, Beg&& beg, End&& end, std::string_view head
 
 template<formattable_concept Val, formattable_concept Beg, formattable_concept End, formattable_concept... Args>
 void
-assert_in_range_inclusive(Val&& val, Beg&& beg, End&& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
   if (val < beg or val > end) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {}]\n{}", head, val, beg, end, std::format(fmt, std::forward<Args>(args)...));
@@ -94,7 +94,7 @@ assert_in_range_inclusive(Val&& val, Beg&& beg, End&& end, std::string_view head
 
 template<formattable_concept Val, formattable_concept Beg, formattable_concept End>
 void
-assert_in_range_inclusive(Val&& val, Beg&& beg, End&& end, std::string_view head)
+assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head)
 {
   if (val < beg or val > end) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {}]", head, val, beg, end);

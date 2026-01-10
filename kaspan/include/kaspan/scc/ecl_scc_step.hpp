@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kaspan/memory/accessor/stack_accessor.hpp"
+
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/edge_frontier.hpp>
@@ -43,8 +45,8 @@ ecl_scc_step(part_t const&   part,
              vertex_t*       ecl_fw_label,
              vertex_t*       ecl_bw_label,
              vertex_t*       active_array,
-             bits_accessor   active,
-             bits_accessor   changed,
+             u64*            active_storage,
+             u64*            changed_storage,
              edge_frontier&  frontier,
              vertex_t        decided_count = 0) -> vertex_t
 {
@@ -54,7 +56,10 @@ ecl_scc_step(part_t const&   part,
   // (csr stores global vertex ids)
   // (head is accessed by local vertex ids)
 
-  auto const local_n = part.local_n();
+  auto const local_n      = part.local_n();
+  auto       active       = view_bits(active_storage, local_n);
+  auto       changed      = view_bits(changed_storage, local_n);
+  auto       active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
 
 #if KASPAN_DEBUG
   // Validate decided_count is consistent with scc_id
@@ -67,13 +72,11 @@ ecl_scc_step(part_t const&   part,
   DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
 #endif
 
-  auto active_stack = stack_accessor<vertex_t>{ active_array };
-
   auto const saturate_direction = [&](index_t const* head, vertex_t const* csr, vertex_t* ecl_lable) {
     DEBUG_ASSERT(active_stack.empty());
     DEBUG_ASSERT(not frontier.has_next());
 
-    active.fill_cmp(local_n, scc_id, scc_id_undecided);
+    active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
     std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
     active.for_each(local_n, [&](auto&& k) {
       active_stack.push(k);

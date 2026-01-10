@@ -19,18 +19,17 @@ namespace kaspan {
 inline auto
 fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double d = -1.0, void* temp_memory = nullptr)
 {
-  DEBUG_ASSERT_GE(n, 0);
+  DEBUG_ASSERT_GT(n, 0);
   DEBUG_ASSERT(d == -1.0 or d >= 0.0);
 
   auto rng = std::mt19937{ seed };
 
-  // clang-format off
   // normalize degree
   d = [&rng, n, d] {
-
     // corner cases
-    if (n < 2) { return -1.0;
-}
+    if (n < 2) {
+      return -1.0;
+    }
 
     auto const min_d = std::log(std::max(1.0, std::log(static_cast<double>(n))));
     auto const max_d = static_cast<double>(n - 1) / 2.0; // this is not the upper bound, but a reasonable limit performance wise
@@ -41,14 +40,14 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double d = -1.0, void* temp_memor
     }
 
     // logical clamping
-    if (d < min_d) { return min_d;
-}
-    if (d > max_d) { return max_d;
-}
+    if (d < min_d) {
+      return min_d;
+    }
+    if (d > max_d) {
+      return max_d;
+    }
     return d;
-
   }();
-  // clang-format on
 
   struct local_scc_graph : local_graph
   {
@@ -72,7 +71,7 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double d = -1.0, void* temp_memor
   auto* bw_degree = borrow_array_clean<vertex_t>(&temp_memory, n);
 
   auto comps = std::map<u64, std::vector<u64>>{};
-  auto reps  = stack_accessor<vertex_t>::borrow(&temp_memory, n);
+  auto reps  = borrow_stack<vertex_t>(&temp_memory, n);
   for (u64 v = 0; v < n; ++v) {
     if (v == 0 or start_new(rng)) {
 
@@ -83,10 +82,10 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double d = -1.0, void* temp_memor
 
     } else {
 
-      auto       pick = std::uniform_int_distribution<size_t>{ 0, reps.size() - 1 };
+      auto       pick = std::uniform_int_distribution<size_t>(0, reps.size() - 1);
       auto const p    = pick(rng);
 
-      auto const root = reps[p];
+      auto const root = reps.data()[p];
 
       result.scc_id[v] = root;
       comps[root].push_back(v);

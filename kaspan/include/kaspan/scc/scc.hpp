@@ -8,7 +8,7 @@
 #include <kaspan/scc/color_scc_step.hpp>
 #include <kaspan/scc/forward_search.hpp>
 #include <kaspan/scc/pivot_selection.hpp>
-#include <kaspan/scc/trim_1.hpp>
+#include <kaspan/scc/trim_1_exhaustive.hpp>
 #include <kaspan/scc/trim_tarjan.hpp>
 #include <kaspan/util/return_pack.hpp>
 
@@ -27,14 +27,18 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
   auto const n       = part.n;
   auto const local_n = part.local_n();
 
+  auto outdegree = make_array<vertex_t>(local_n);
+  auto indegree  = make_array<vertex_t>(local_n);
+  auto frontier  = vertex_frontier::create(local_n);
+
   vertex_t local_decided  = 0;
   vertex_t global_decided = 0;
 
-  // notice: trim_1_first has a side effect by initializing scc_id with scc_id undecided
-  // if trim_1_first is removed one has to initialize scc_id with scc_id_undecided manually!
+  // notice: trim_1_exhaustive_first has a side effect by initializing scc_id with scc_id undecided
+  // if trim_1_exhaustive_first is removed one has to initialize scc_id with scc_id_undecided manually!
   auto const max = [&] {
-    KASPAN_STATISTIC_SCOPE("trim_1_first");
-    auto const [trim_1_decided, trim_1_max] = trim_1_first(part, fw_head, bw_head, scc_id);
+    KASPAN_STATISTIC_SCOPE("trim_1_exhaustive_first");
+    auto const [trim_1_decided, trim_1_max] = trim_1_exhaustive_first(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
     local_decided += trim_1_decided;
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     KASPAN_STATISTIC_ADD("decided_count", global_decided);
@@ -50,7 +54,6 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
         scc_id[k] = id;
       });
     };
-
     tarjan(part, fw_head, fw_csr, on_scc_range, undecided_filter, local_decided);
     return;
   }
@@ -62,12 +65,11 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
     {
       KASPAN_STATISTIC_SCOPE("forward_backward_search");
 
-      auto frontier = vertex_frontier::create(local_n);
-      auto pivot    = pivot_selection(max);
+      auto pivot = pivot_selection(max);
 
       auto bitvector = make_bits_clean(local_n);
-      forward_search(part, fw_head, fw_csr, frontier, scc_id, static_cast<bits_accessor>(bitvector), pivot);
-      local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, static_cast<bits_accessor>(bitvector), pivot);
+      forward_search(part, fw_head, fw_csr, frontier, scc_id, bitvector.data(), pivot);
+      local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, bitvector.data(), pivot);
 
       auto const prev_global_decided = global_decided;
 
@@ -75,14 +77,14 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
       KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
       KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     }
-    {
-      KASPAN_STATISTIC_SCOPE("trim_1_fw_bw");
-      auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
-      local_decided += trim_1_decided;
-      auto const prev_global_decided = global_decided;
-      global_decided                 = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-      KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
-    }
+    // {
+    //   KASPAN_STATISTIC_SCOPE("trim_1_fw_bw");
+    //   auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
+    //   local_decided += trim_1_decided;
+    //   auto const prev_global_decided = global_decided;
+    //   global_decided                 = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+    //   KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
+    // }
   }
 
   if (global_decided < decided_threshold) {
@@ -97,8 +99,22 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
 
       auto const prev_global_decided = global_decided;
 
+      // local_decided += color_scc_step_multi(part,
+      //                                       fw_head,
+      //                                       fw_csr,
+      //                                       bw_head,
+      //                                       bw_csr,
+      //                                       scc_id,
+      //                                       colors.data(),
+      //                                       active_array.data(),
+      //                                       active.data(),
+      //                                       changed.data(),
+      //                                       frontier,
+      //                                       local_decided);
+      // global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+
       do {
-        color_scc_init_label(part, colors.data());
+
         local_decided += color_scc_step(part,
                                         fw_head,
                                         fw_csr,
@@ -107,25 +123,39 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
                                         scc_id,
                                         colors.data(),
                                         active_array.data(),
-                                        static_cast<bits_accessor>(active),
-                                        static_cast<bits_accessor>(changed),
+                                        active.data(),
+                                        changed.data(),
                                         frontier,
                                         local_decided);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-        // maybe: redistribute graph - sort vertices by color and run trim tarjan (as there is now a lot locality)
+
+        local_decided += color_scc_step(part,
+                                        bw_head,
+                                        bw_csr,
+                                        fw_head,
+                                        fw_csr,
+                                        scc_id,
+                                        colors.data(),
+                                        active_array.data(),
+                                        active.data(),
+                                        changed.data(),
+                                        frontier,
+                                        local_decided);
+        global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+
       } while (global_decided < decided_threshold);
 
       KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
       KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     }
-    {
-      KASPAN_STATISTIC_SCOPE("trim_1_color");
-      auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
-      local_decided += trim_1_decided;
-      auto const prev_global_decided = global_decided;
-      global_decided                 = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-      KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
-    }
+    // {
+    //   KASPAN_STATISTIC_SCOPE("trim_1_color");
+    //   auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
+    //   local_decided += trim_1_decided;
+    //   auto const prev_global_decided = global_decided;
+    //   global_decided                 = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+    //   KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
+    // }
   }
 
   {

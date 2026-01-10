@@ -17,7 +17,7 @@
 namespace kaspan {
 namespace sub_graph {
 
-template<class part_t, class fn_t>
+template<world_part_concept part_t, class fn_t>
 auto
 allgather_sub_ids(part_t const& part, vertex_t local_sub_n, fn_t&& in_sub_graph)
 {
@@ -72,8 +72,8 @@ allgather_csr_degrees(part_t const&   part,
                                      line_align_up(local_sub_m_upper_bound * sizeof(vertex_t)) + line_align_up((local_sub_n + mpi_basic::world_root) * sizeof(index_t)));
 
   auto [counts, displs]  = mpi_basic::counts_and_displs(&memory);
-  auto local_sub_csr     = stack_accessor<vertex_t>::borrow(&memory, local_sub_m_upper_bound);
-  auto local_sub_degrees = stack_accessor<index_t>::borrow(&memory, local_sub_n + mpi_basic::world_root);
+  auto local_sub_csr     = borrow_stack<vertex_t> (&memory, local_sub_m_upper_bound);
+  auto local_sub_degrees = borrow_stack<vertex_t> (&memory, local_sub_n + mpi_basic::world_root);
   if (mpi_basic::world_root) {
     local_sub_degrees.push(0);
   }
@@ -108,25 +108,25 @@ template<class part_t, class fn_t>
   requires(part_t::ordered and std::convertible_to<std::invoke_result_t<fn_t, kaspan::vertex_t>, bool>)
 auto
 allgather_sub_graph(part_t const&           part,
-                    kaspan::vertex_t        local_sub_n,
-                    kaspan::index_t const*  fw_head,
-                    kaspan::vertex_t const* fw_csr,
-                    kaspan::index_t const*  bw_head,
-                    kaspan::vertex_t const* bw_csr,
+                    vertex_t        local_sub_n,
+                    index_t const*  fw_head,
+                    vertex_t const* fw_csr,
+                    index_t const*  bw_head,
+                    vertex_t const* bw_csr,
                     fn_t&&                  in_sub_graph)
 {
   struct result // NOLINT(*-pro-type-member-init)
   {
-    kaspan::buffer    ids_inverse_storage;
-    kaspan::vertex_t* ids_inverse{};
+    buffer    ids_inverse_storage;
+    vertex_t* ids_inverse{};
 
-    kaspan::buffer    storage;
-    kaspan::vertex_t  n{};
-    kaspan::index_t   m{};
-    kaspan::index_t*  fw_head{};
-    kaspan::vertex_t* fw_csr{};
-    kaspan::index_t*  bw_head{};
-    kaspan::vertex_t* bw_csr{};
+    buffer    storage;
+    vertex_t  n{};
+    index_t   m{};
+    index_t*  fw_head{};
+    vertex_t* fw_csr{};
+    index_t*  bw_head{};
+    vertex_t* bw_csr{};
   } sub;
 
   DEBUG_ASSERT_VALID_GRAPH_PART(part, fw_head, fw_csr);
@@ -141,7 +141,7 @@ allgather_sub_graph(part_t const&           part,
   // communicate forward graph
   {
     auto [TMP(), sub_m, counts, displs, local_sub_fw_csr, local_sub_fw_degrees] =
-      kaspan::sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_n, ids_inverse);
+      sub_graph::allgather_csr_degrees(part, local_sub_n, fw_head, fw_csr, local_ids_inverse, sub_n, ids_inverse);
 
     DEBUG_ASSERT_GE(sub_m, 0);
     sub.m        = sub_m;

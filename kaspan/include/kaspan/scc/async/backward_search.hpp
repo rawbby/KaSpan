@@ -15,13 +15,14 @@ backward_search(part_t const&   part,
                 vertex_t const* bw_csr,
                 brief_queue_t&  mq,
                 vertex_t*       scc_id,
-                bits_accessor   fw_reached,
-                vertex_t*       active_array,
+                u64*            fw_reached_storage,
+                vertex_t*       active_storage,
                 vertex_t        root,
                 vertex_t        id) -> vertex_t
 {
   auto const local_n       = part.local_n();
-  auto       active_stack  = stack_accessor<vertex_t>{ active_array };
+  auto       fw_reached    = view_bits(fw_reached_storage, local_n);
+  auto       active_stack  = view_stack<vertex_t>(active_storage, local_n);
   vertex_t   decided_count = 0;
   vertex_t   min_u         = part.n;
 

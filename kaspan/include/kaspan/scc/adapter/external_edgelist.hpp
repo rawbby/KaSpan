@@ -233,8 +233,8 @@ convert_graph(std::string const& input_file, u64 mem_bytes, std::string const& g
     auto csr_buffer  = file_buffer::create_w<true>(fw_csr_path.c_str(), m * csr_bytes);
     std::println("files open");
 
-    auto head = dense_unsigned_accessor<>::view(head_buffer.data(), head_bytes);
-    auto csr  = dense_unsigned_accessor<>::view(csr_buffer.data(), csr_bytes);
+    auto head = view_dense_unsigned(head_buffer.data(), n + 1, head_bytes);
+    auto csr  = view_dense_unsigned(csr_buffer.data(), m, csr_bytes);
 
     size_t i = 0;
     size_t j = 0;
@@ -297,8 +297,8 @@ convert_graph(std::string const& input_file, u64 mem_bytes, std::string const& g
     auto csr_buffer  = file_buffer::create_w<true>(bw_csr_path.c_str(), m * csr_bytes);
     std::println("files open");
 
-    auto head = dense_unsigned_accessor<>::view(head_buffer.data(), head_bytes);
-    auto csr  = dense_unsigned_accessor<>::view(csr_buffer.data(), csr_bytes);
+    auto head = view_dense_unsigned(head_buffer.data(), n + 1, head_bytes);
+    auto csr  = view_dense_unsigned(csr_buffer.data(), m, csr_bytes);
 
     size_t i = 0;
     size_t j = 0;

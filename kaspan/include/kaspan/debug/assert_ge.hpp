@@ -14,7 +14,7 @@ namespace kaspan {
 template<typename Lhs, typename Rhs, formattable_concept... Args>
   requires(not formattable_concept<Lhs, Rhs>)
 void
-assert_ge(Lhs&& lhs, Rhs&& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
   if (lhs < rhs) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -26,7 +26,7 @@ assert_ge(Lhs&& lhs, Rhs&& rhs, std::string_view head, std::format_string<Args..
 template<typename Lhs, typename Rhs>
   requires(not formattable_concept<Lhs, Rhs>)
 void
-assert_ge(Lhs&& lhs, Rhs&& rhs, std::string_view head)
+assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head)
 {
   if (lhs < rhs) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -37,7 +37,7 @@ assert_ge(Lhs&& lhs, Rhs&& rhs, std::string_view head)
 
 template<formattable_concept Lhs, formattable_concept Rhs, formattable_concept... Args>
 void
-assert_ge(Lhs&& lhs, Rhs&& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
   if (lhs < rhs) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} < {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
@@ -48,7 +48,7 @@ assert_ge(Lhs&& lhs, Rhs&& rhs, std::string_view head, std::format_string<Args..
 
 template<formattable_concept Lhs, formattable_concept Rhs>
 void
-assert_ge(Lhs&& lhs, Rhs&& rhs, std::string_view head)
+assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head)
 {
   if (lhs < rhs) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} < {}", head, lhs, rhs);

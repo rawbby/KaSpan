@@ -18,10 +18,12 @@ color_scc_step(part_t const&   part,
                vertex_t*       scc_id,
                vertex_t*       colors,
                vertex_t*       active_array,
-               bits_accessor   active,
+               u64*            active_storage,
                vertex_t        decided_count = 0) -> vertex_t
 {
-  auto const local_n = part.local_n();
+  auto const local_n      = part.local_n();
+  auto       active       = view_bits(active_storage, local_n);
+  auto       active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
 
 #if KASPAN_DEBUG
   // Validate decided_count is consistent with scc_id
@@ -33,8 +35,6 @@ color_scc_step(part_t const&   part,
   }
   DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
 #endif
-
-  auto active_stack = stack_accessor<vertex_t>{ active_array };
 
   // Phase 1: Forward Color Propagation
   {
@@ -54,7 +54,7 @@ color_scc_step(part_t const&   part,
       }
     };
 
-    active.fill_cmp(local_n, scc_id, scc_id_undecided);
+    active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
     active.for_each(local_n, [&](auto&& k) {
       active_stack.push(k);
     });
@@ -114,7 +114,7 @@ color_scc_step(part_t const&   part,
     };
 
     DEBUG_ASSERT(active_stack.empty());
-    active.fill_cmp(local_n, scc_id, scc_id_undecided);
+    active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
     active.for_each(local_n, [&](auto k) {
       if (colors[k] == part.to_global(k)) {
         scc_id[k] = colors[k];

@@ -38,7 +38,6 @@ public:
     if (size != 0U) {
       data_ = line_alloc(size);
       DEBUG_ASSERT(is_line_aligned(data_));
-      KASPAN_VALGRIND_MAKE_MEM_NOACCESS(data_, size);
     }
   }
 
@@ -46,7 +45,6 @@ public:
   buffer(buffer&& rhs) noexcept
     : data_(rhs.data_)
   {
-
     rhs.data_ = nullptr;
   }
 

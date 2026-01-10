@@ -1,0 +1,43 @@
+#include <kaspan/debug/debug.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/memory/accessor/once_queue.hpp>
+#include <kaspan/memory/accessor/once_queue_accessor.hpp>
+#include <iostream>
+
+using namespace kaspan;
+
+int
+main()
+{
+  std::cout << "Starting test_once_queue..." << std::endl;
+  auto queue = make_once_queue<int>(10);
+  ASSERT_EQ(queue.size(), 0);
+  ASSERT_EQ(queue.empty(), true);
+
+  queue.push_back(1);
+  ASSERT_EQ(queue.size(), 1);
+  ASSERT_EQ(queue.data()[0], 1);
+
+  queue.push_back(2);
+  ASSERT_EQ(queue.size(), 2);
+  ASSERT_EQ(queue.data()[1], 2);
+
+  queue.push_back(3);
+  ASSERT_EQ(queue.size(), 3);
+  ASSERT_EQ(queue.data()[2], 3);
+
+  int data[10];
+#if KASPAN_DEBUG
+  once_queue_accessor<int> oqa(data, 10);
+  oqa.push_back(42);
+  ASSERT_EQ(oqa.size(), 1);
+  ASSERT_EQ(oqa.data()[0], 42);
+#endif
+
+  queue.clear();
+  ASSERT_EQ(queue.size(), 0);
+  ASSERT_EQ(queue.empty(), true);
+
+  std::cout << "test_once_queue passed!" << std::endl;
+  return 0;
+}

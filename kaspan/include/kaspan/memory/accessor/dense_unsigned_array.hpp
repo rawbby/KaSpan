@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kaspan/memory/accessor/dense_unsigned_mixin.hpp>
+#include <kaspan/memory/accessor/dense_unsigned_ops.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/util/arithmetic.hpp>
 
@@ -11,19 +11,18 @@
 namespace kaspan {
 
 template<unsigned_concept T = u64>
-class dense_unsigned_array final
-  : public buffer
-  , public dense_unsigned_mixin<dense_unsigned_array<T>, T>
+class dense_unsigned_array final : public buffer
 {
 public:
   dense_unsigned_array() noexcept = default;
   ~dense_unsigned_array()         = default;
 
-  explicit dense_unsigned_array(u64 count, u8 element_byte_size, std::endian endian = std::endian::native) noexcept(false)
-    : buffer(count * element_byte_size)
+  explicit dense_unsigned_array(u64 size, u8 element_byte_size, std::endian endian = std::endian::native) noexcept(false)
+    : buffer(size * element_byte_size)
     , element_byte_size_(element_byte_size)
     , endian_(endian)
   {
+    IF(KASPAN_DEBUG, size_ = size);
     DEBUG_ASSERT_GE(element_byte_size, 1);
     DEBUG_ASSERT_LE(element_byte_size, sizeof(T));
   }
@@ -34,6 +33,8 @@ public:
     , element_byte_size_(rhs.element_byte_size_)
     , endian_(rhs.endian_)
   {
+    IF(KASPAN_DEBUG, size_ = rhs.size_);
+    IF(KASPAN_DEBUG, rhs.size_ = 0;)
   }
 
   auto operator=(dense_unsigned_array const&) -> dense_unsigned_array& = delete;
@@ -42,12 +43,9 @@ public:
     buffer::operator=(std::move(rhs));
     element_byte_size_ = rhs.element_byte_size_;
     endian_            = rhs.endian_;
+    IF(KASPAN_DEBUG, size_ = rhs.size_);
+    IF(KASPAN_DEBUG, rhs.size_ = 0;)
     return *this;
-  }
-
-  static auto create(u64 count, u8 element_byte_size, std::endian endian = std::endian::native) noexcept(false) -> dense_unsigned_array
-  {
-    return dense_unsigned_array{ count, element_byte_size, endian };
   }
 
   [[nodiscard]] auto data() -> std::byte*
@@ -70,9 +68,35 @@ public:
     return endian_;
   }
 
+  void fill(T value, u64 n)
+  {
+    DEBUG_ASSERT_LE(n, size_);
+    dense_unsigned_ops::fill<T>(data(), n, element_bytes(), endian(), value);
+  }
+
+  [[nodiscard]] auto get(u64 index) const -> T
+  {
+    DEBUG_ASSERT_LT(index, size_);
+    return dense_unsigned_ops::get<T>(data(), index, element_bytes(), endian());
+  }
+
+  void set(u64 index, T val)
+  {
+    DEBUG_ASSERT_LT(index, size_);
+    dense_unsigned_ops::set<T>(data(), index, element_bytes(), endian(), val);
+  }
+
 private:
   u8          element_byte_size_ = 0;
   std::endian endian_            = std::endian::native;
+  IF(KASPAN_DEBUG, u64 size_ = 0);
 };
+
+template<unsigned_concept T = u64>
+auto
+make_dense_unsigned_array(u64 count, u8 element_byte_size, std::endian endian = std::endian::native) -> dense_unsigned_array<T>
+{
+  return dense_unsigned_array<T>{ count, element_byte_size, endian };
+}
 
 } // namespace kaspan

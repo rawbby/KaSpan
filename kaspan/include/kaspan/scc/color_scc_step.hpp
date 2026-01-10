@@ -31,12 +31,15 @@ color_scc_step_multi(part_t const&   part,
                      vertex_t*       scc_id,
                      vertex_t*       colors,
                      vertex_t*       active_array,
-                     bits_accessor   active,
-                     bits_accessor   changed,
+                     u64*            active_storage,
+                     u64*            changed_storage,
                      edge_frontier&  frontier,
                      vertex_t        local_pivot) -> vertex_t
 {
-  auto const local_n = part.local_n();
+  auto const local_n      = part.local_n();
+  auto       active       = view_bits(active_storage, local_n);
+  auto       changed      = view_bits(changed_storage, local_n);
+  auto       active_stack = view_stack<vertex_t>(active_array, local_n);
 
   auto const count_degree = [=](vertex_t k, index_t const* head, vertex_t const* csr) {
     index_t degree = 0;
@@ -45,8 +48,6 @@ color_scc_step_multi(part_t const&   part,
     }
     return degree;
   };
-
-  auto active_stack = stack_accessor<vertex_t>{ active_array };
 
   // Phase 1: Forward Color Propagation (inspired by HPCGraph scc_color)
   // This partitions the graph into components that are supersets of SCCs.
@@ -194,11 +195,13 @@ color_scc_step_multi(part_t const&   part,
                      vertex_t*       scc_id,
                      vertex_t*       colors,
                      vertex_t*       active_array,
-                     bits_accessor   active,
-                     bits_accessor   changed,
+                     u64*            active_storage,
+                     u64*            changed_storage,
                      edge_frontier&  frontier) -> vertex_t
 {
   auto const local_n = part.local_n();
+  auto       active  = view_bits(active_storage, local_n);
+  auto       changed = view_bits(changed_storage, local_n);
 
   auto const count_degree = [=](vertex_t k, index_t const* head, vertex_t const* csr) {
     index_t degree = 0;
@@ -258,12 +261,15 @@ color_scc_step(part_t const&   part,
                vertex_t*       scc_id,
                vertex_t*       colors,
                vertex_t*       active_array,
-               bits_accessor   active,
-               bits_accessor   changed,
+               u64*            active_storage,
+               u64*            changed_storage,
                edge_frontier&  frontier,
                vertex_t        decided_count = 0) -> vertex_t
 {
-  auto const local_n = part.local_n();
+  auto const local_n      = part.local_n();
+  auto       active       = view_bits(active_storage, local_n - decided_count);
+  auto       changed      = view_bits(changed_storage, local_n - decided_count);
+  auto       active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
 
 #if KASPAN_DEBUG
   // Validate decided_count is consistent with scc_id
@@ -280,13 +286,11 @@ color_scc_step(part_t const&   part,
     colors[k] = part.to_global(k);
   }
 
-  auto active_stack = stack_accessor<vertex_t>{ active_array };
-
   // Phase 1: Forward Color Propagation (inspired by HPCGraph scc_color)
   // This partitions the graph into components that are supersets of SCCs.
   // Each vertex v gets the minimum ID of a vertex u that can reach it (u -> v).
   {
-    active.fill_cmp(local_n, scc_id, scc_id_undecided);
+    active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
     std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
     active.for_each(local_n, [&](auto&& k) {
       active_stack.push(k);
@@ -350,7 +354,7 @@ color_scc_step(part_t const&   part,
   vertex_t local_decided_count = 0;
   {
     DEBUG_ASSERT(active_stack.empty());
-    active.fill_cmp(local_n, scc_id, scc_id_undecided);
+    active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
     changed.clear(local_n);
     active.for_each(local_n, [&](auto k) {
       if (colors[k] == part.to_global(k)) {

@@ -13,7 +13,7 @@ namespace kaspan {
 
 template<formattable_concept... Args>
 void
-assert_false(auto&& cond, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_false(auto const& cond, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
   if (cond) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));

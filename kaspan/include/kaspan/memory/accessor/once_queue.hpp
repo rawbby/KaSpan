@@ -1,7 +1,7 @@
 #pragma once
 
 #include <kaspan/debug/valgrind.hpp>
-#include <kaspan/memory/accessor/stack_accessor.hpp>
+#include <kaspan/memory/accessor/once_queue_accessor.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/util/arithmetic.hpp>
 
@@ -13,35 +13,39 @@ namespace kaspan {
 
 template<typename T>
   requires(std::is_trivially_copyable_v<T> and std::is_trivially_constructible_v<T> and std::is_trivially_destructible_v<T>)
-class stack final : public buffer
+class once_queue final : public buffer
 {
 public:
-  stack() noexcept = default;
-  ~stack()         = default;
+  once_queue() noexcept = default;
+  ~once_queue()         = default;
 
-  explicit stack(u64 size) noexcept(false)
+  explicit once_queue(u64 size) noexcept(false)
     : buffer(size * sizeof(T))
   {
     IF(KASPAN_DEBUG, size_ = size);
   }
 
-  stack(stack const&) = delete;
-  stack(stack&& rhs) noexcept
+  once_queue(once_queue const&) = delete;
+  once_queue(once_queue&& rhs) noexcept
     : buffer(std::move(rhs))
+    , beg_(rhs.beg_)
     , end_(rhs.end_)
   {
     IF(KASPAN_DEBUG, size_ = rhs.size_);
-    IF(KASPAN_DEBUG, rhs.size_ = 0;)
+    IF(KASPAN_DEBUG, rhs.size_ = 0);
+    rhs.beg_ = 0;
     rhs.end_ = 0;
   }
 
-  auto operator=(stack const&) -> stack& = delete;
-  auto operator=(stack&& rhs) noexcept -> stack&
+  auto operator=(once_queue const&) -> once_queue& = delete;
+  auto operator=(once_queue&& rhs) noexcept -> once_queue&
   {
     buffer::operator=(std::move(rhs));
+    beg_ = rhs.beg_;
     end_ = rhs.end_;
-    IF(KASPAN_DEBUG, size_ = rhs.size_;)
+    IF(KASPAN_DEBUG, size_ = rhs.size_);
     IF(KASPAN_DEBUG, rhs.size_ = 0;)
+    rhs.beg_ = 0;
     rhs.end_ = 0;
     return *this;
   }
@@ -58,57 +62,45 @@ public:
 
   [[nodiscard]] auto size() const -> u64
   {
-    return end_;
+    return end_ - beg_;
   }
 
   [[nodiscard]] auto empty() const -> bool
   {
-    return end_ == 0;
+    return end_ == beg_;
   }
 
   void clear()
   {
-    KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(data(), end_ * sizeof(T));
+    KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(data() + beg_, size() * sizeof(T));
+    beg_ = 0;
     end_ = 0;
   }
 
-  void push(T item) noexcept
+  void push_back(T t) noexcept
   {
-    DEBUG_ASSERT_LT(end_, size_);
-    data()[end_] = item;
-    ++end_;
+    data()[end_++] = t;
   }
 
-  auto back() -> T&
+  void pop_front() noexcept
   {
-    DEBUG_ASSERT_GT(end_, 0);
-    return data()[end_ - 1];
-  }
-
-  void pop()
-  {
-    DEBUG_ASSERT_GT(end_, 0);
-    --end_;
-    KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(data() + end_, sizeof(T));
-  }
-
-  T pop_back()
-  {
-    T item = back();
-    pop();
-    return item;
+    DEBUG_ASSERT_LT(beg_, end_);
+    T item = data()[beg_];
+    KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(data() + beg_, sizeof(T));
+    ++beg_;
   }
 
 private:
+  u64 beg_ = 0;
   u64 end_ = 0;
   IF(KASPAN_DEBUG, u64 size_ = 0);
 };
 
 template<typename T>
 auto
-make_stack(u64 size) -> stack<T>
+make_once_queue(u64 size) -> once_queue<T>
 {
-  return stack<T>{ size };
+  return once_queue<T>{ size };
 }
 
 } // namespace kaspan

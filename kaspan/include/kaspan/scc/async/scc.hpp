@@ -19,7 +19,7 @@
 #include <kaspan/scc/color_scc_step.hpp>
 #include <kaspan/scc/pivot_selection.hpp>
 #include <kaspan/scc/tarjan.hpp>
-#include <kaspan/scc/trim_1.hpp>
+#include <kaspan/scc/trim_1_exhaustive.hpp>
 #include <kaspan/util/return_pack.hpp>
 
 #include <algorithm>
@@ -76,12 +76,16 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
   auto const n       = part.n;
   auto const local_n = part.local_n();
 
+  auto outdegree = make_array<vertex_t>(local_n);
+  auto indegree  = make_array<vertex_t>(local_n);
+  auto frontier  = vertex_frontier::create(local_n);
+
   vertex_t local_decided = 0;
 
   KASPAN_STATISTIC_PUSH("trim_1");
-  // notice: trim_1_first has a side effect by initializing scc_id with scc_id undecided
-  // if trim_1_first is removed one has to initialize scc_id with scc_id_undecided manually!
-  auto const [trim_1_decided, max] = trim_1_first(part, fw_head, bw_head, scc_id);
+  // notice: trim_1_exhaustive_first has a side effect by initializing scc_id with scc_id undecided
+  // if trim_1_exhaustive_first is removed one has to initialize scc_id with scc_id_undecided manually!
+  auto const [trim_1_decided, max] = trim_1_exhaustive_first(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
   KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(trim_1_decided, mpi_basic::sum));
   local_decided += trim_1_decided;
   KASPAN_STATISTIC_POP();
@@ -116,18 +120,18 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
       auto active_array = make_array<vertex_t>(local_n);
       auto vertex_queue = make_briefkasten_vertex<indirection_scheme_t>();
 
-      async::forward_search(part, fw_head, fw_csr, vertex_queue, scc_id, static_cast<bits_accessor>(bitvector), active_array.data(), pivot);
-      local_decided += async::backward_search(part, bw_head, bw_csr, vertex_queue, scc_id, static_cast<bits_accessor>(bitvector), active_array.data(), pivot, pivot);
+      async::forward_search(part, fw_head, fw_csr, vertex_queue, scc_id, bitvector.data(), active_array.data(), pivot);
+      local_decided += async::backward_search(part, bw_head, bw_csr, vertex_queue, scc_id, bitvector.data(), active_array.data(), pivot, pivot);
 
       KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_decided - prev_local_decided, mpi_basic::sum));
       KASPAN_STATISTIC_ADD("memory", kaspan::get_resident_set_bytes());
     }
-    {
-      KASPAN_STATISTIC_SCOPE("trim_1_fw_bw");
-      auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
-      local_decided += trim_1_decided;
-      KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(trim_1_decided, mpi_basic::sum));
-    }
+    // {
+    //   KASPAN_STATISTIC_SCOPE("trim_1_fw_bw");
+    //   auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
+    //   local_decided += trim_1_decided;
+    //   KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(trim_1_decided, mpi_basic::sum));
+    // }
   }
 
   if (mpi_basic::allreduce_single(local_decided, mpi_basic::sum) < decided_threshold) {
@@ -151,7 +155,7 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
 
       color_scc_init_label(part, colors.data());
       local_decided +=
-        async::color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors.data(), active_array.data(), static_cast<bits_accessor>(active), local_decided);
+        async::color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors.data(), active_array.data(), active.data(), local_decided);
     } while (mpi_basic::allreduce_single(local_decided, mpi_basic::sum) < decided_threshold);
 
     KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_decided - prev_local_decided, mpi_basic::sum));

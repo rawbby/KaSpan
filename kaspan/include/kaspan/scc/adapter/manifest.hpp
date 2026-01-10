@@ -213,10 +213,10 @@ load_graph_from_manifest(manifest const& manifest) -> local_graph
   auto bw_head_buffer = file_buffer::create_r(bw_head_file, (n + 1) * head_bytes);
   auto bw_csr_buffer  = file_buffer::create_r(bw_csr_file, m * csr_bytes);
 
-  auto const fw_head_access = dense_unsigned_accessor<>::view(fw_head_buffer.data(), head_bytes, load_endian);
-  auto const fw_csr_access  = dense_unsigned_accessor<>::view(fw_csr_buffer.data(), csr_bytes, load_endian);
-  auto const bw_head_access = dense_unsigned_accessor<>::view(bw_head_buffer.data(), head_bytes, load_endian);
-  auto const bw_csr_access  = dense_unsigned_accessor<>::view(bw_csr_buffer.data(), csr_bytes, load_endian);
+  auto const fw_head_access = view_dense_unsigned(fw_head_buffer.data(), n + 1, head_bytes, load_endian);
+  auto const fw_csr_access  = view_dense_unsigned(fw_csr_buffer.data(), m, csr_bytes, load_endian);
+  auto const bw_head_access = view_dense_unsigned(bw_head_buffer.data(), n + 1, head_bytes, load_endian);
+  auto const bw_csr_access  = view_dense_unsigned(bw_csr_buffer.data(), m, csr_bytes, load_endian);
 
   auto g = local_graph{};
 
@@ -291,10 +291,10 @@ load_graph_part_from_manifest(part_t const& part, manifest const& manifest) -> l
   auto bw_head_buffer = file_buffer::create_r(bw_head_file, (n + 1) * head_bytes);
   auto bw_csr_buffer  = file_buffer::create_r(bw_csr_file, m * csr_bytes);
 
-  auto fw_head_access = dense_unsigned_accessor<>::view(fw_head_buffer.data(), head_bytes, load_endian);
-  auto fw_csr_access  = dense_unsigned_accessor<>::view(fw_csr_buffer.data(), csr_bytes, load_endian);
-  auto bw_head_access = dense_unsigned_accessor<>::view(bw_head_buffer.data(), head_bytes, load_endian);
-  auto bw_csr_access  = dense_unsigned_accessor<>::view(bw_csr_buffer.data(), csr_bytes, load_endian);
+  auto fw_head_access = view_dense_unsigned(fw_head_buffer.data(), n + 1, head_bytes, load_endian);
+  auto fw_csr_access  = view_dense_unsigned(fw_csr_buffer.data(), m, csr_bytes, load_endian);
+  auto bw_head_access = view_dense_unsigned(bw_head_buffer.data(), n + 1, head_bytes, load_endian);
+  auto bw_csr_access  = view_dense_unsigned(bw_csr_buffer.data(), m, csr_bytes, load_endian);
 
   auto const local_m = [=, &part](dense_unsigned_accessor<> const& head) -> index_t {
     if constexpr (part_t::continuous) {

@@ -38,7 +38,6 @@ public:
     : data_(rhs.data_)
     , size_(rhs.size_)
   {
-
     rhs.data_ = nullptr;
     rhs.size_ = 0;
   }
@@ -65,17 +64,16 @@ public:
     }
 
     auto const fd = open(file, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
-    ASSERT(fd != -1);
+    ASSERT_NE(fd, -1, "{}", file);
     SCOPE_GUARD(close(fd));
 
-    struct stat st
-    {};
-    ASSERT(fstat(fd, &st) == 0);
-    ASSERT(S_ISREG(st.st_mode));
-    ASSERT(st.st_size == byte_size);
+    struct stat st{};
+    ASSERT_EQ(fstat(fd, &st), 0, "{}", file);
+    ASSERT(S_ISREG(st.st_mode), "{}", file);
+    ASSERT_EQ(st.st_size, byte_size, "{}", file);
 
     auto* data = mmap(nullptr, byte_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    ASSERT(data != MAP_FAILED);
+    ASSERT_NE(data, MAP_FAILED, "{}", file);
     return file_buffer{ data, byte_size };
   }
 
@@ -92,21 +90,20 @@ public:
       }
       return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
     }();
-    ASSERT(fd != -1);
+    ASSERT_NE(fd, -1, "{}", file);
     SCOPE_GUARD(close(fd));
 
     if (allocate) {
-      ASSERT(ftruncate(fd, static_cast<off_t>(size)) == 0);
+      ASSERT_EQ(ftruncate(fd, static_cast<off_t>(size)), 0, "{}", file);
     } else {
-      struct stat st
-      {};
-      ASSERT(fstat(fd, &st) == 0);
-      ASSERT(S_ISREG(st.st_mode));
-      ASSERT(st.st_size == size);
+      struct stat st{};
+      ASSERT_EQ(fstat(fd, &st), 0, "{}", file);
+      ASSERT(S_ISREG(st.st_mode), "{}", file);
+      ASSERT_EQ(st.st_size, size, "{}", file);
     }
 
     auto* data = mmap(nullptr, size, PROT_WRITE, MAP_SHARED, fd, 0);
-    ASSERT(data != MAP_FAILED);
+    ASSERT_NE(data, MAP_FAILED, "{}", file);
     return file_buffer{ data, size };
   }
 
@@ -123,21 +120,20 @@ public:
       }
       return open(file, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
     }();
-    ASSERT(fd != -1);
+    ASSERT_NE(fd, -1, "{}", file);
     SCOPE_GUARD(close(fd));
 
     if (allocate) {
-      ASSERT(ftruncate(fd, static_cast<off_t>(byte_size)) == 0);
+      ASSERT_EQ(ftruncate(fd, static_cast<off_t>(byte_size)), 0, "{}", file);
     } else {
-      struct stat st
-      {};
-      ASSERT(fstat(fd, &st) == 0);
-      ASSERT(S_ISREG(st.st_mode));
-      ASSERT(st.st_size == byte_size);
+      struct stat st{};
+      ASSERT_EQ(fstat(fd, &st), 0, "{}", file);
+      ASSERT(S_ISREG(st.st_mode), "{}", file);
+      ASSERT_EQ(st.st_size, byte_size, "{}", file);
     }
 
     auto* data = mmap(nullptr, byte_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    ASSERT(data != MAP_FAILED);
+    ASSERT_NE(data, MAP_FAILED, "{}", file);
     return file_buffer{ data, byte_size };
   }
 
