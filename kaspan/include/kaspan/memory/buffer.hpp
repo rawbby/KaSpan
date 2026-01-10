@@ -33,10 +33,14 @@ public:
     }
   }
 
-  explicit buffer(u64 size) noexcept(false)
+  template<ArithmeticConcept Size>
+  explicit buffer(Size size) noexcept(false)
   {
-    if (size != 0U) {
-      data_ = line_alloc(size);
+    DEBUG_ASSERT_GE(size, 0);
+    DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
+    auto const size64 = static_cast<u64>(size);
+    if (size64 != 0U) {
+      data_ = line_alloc(size64);
       DEBUG_ASSERT(is_line_aligned(data_));
       DEBUG_ASSERT_NE(data_, nullptr);
     } else {

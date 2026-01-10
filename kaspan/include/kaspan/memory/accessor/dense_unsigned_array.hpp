@@ -17,12 +17,15 @@ public:
   dense_unsigned_array() noexcept = default;
   ~dense_unsigned_array()         = default;
 
-  explicit dense_unsigned_array(u64 size, u8 element_byte_size, std::endian endian = std::endian::native) noexcept(false)
-    : buffer(size * element_byte_size)
+  template<ArithmeticConcept Size>
+  explicit dense_unsigned_array(Size size, u8 element_byte_size, std::endian endian = std::endian::native) noexcept(false)
+    : buffer(static_cast<u64>(size) * element_byte_size)
     , element_byte_size_(element_byte_size)
     , endian_(endian)
   {
-    IF(KASPAN_DEBUG, size_ = size);
+    DEBUG_ASSERT_GE(size, 0);
+    DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
+    IF(KASPAN_DEBUG, size_ = static_cast<u64>(size));
     DEBUG_ASSERT_GE(element_byte_size, 1);
     DEBUG_ASSERT_LE(element_byte_size, sizeof(T));
   }
@@ -68,22 +71,34 @@ public:
     return endian_;
   }
 
-  void fill(T value, u64 n)
+  template<ArithmeticConcept Count>
+  void fill(T value, Count n)
   {
-    DEBUG_ASSERT_LE(n, size_);
-    dense_unsigned_ops::fill<T>(data(), n, element_bytes(), endian(), value);
+    DEBUG_ASSERT_GE(n, 0);
+    DEBUG_ASSERT_LE(n, std::numeric_limits<u64>::max());
+    auto const n64 = static_cast<u64>(n);
+    DEBUG_ASSERT_LE(n64, size_);
+    dense_unsigned_ops::fill<T>(data(), n64, element_bytes(), endian(), value);
   }
 
-  [[nodiscard]] auto get(u64 index) const -> T
+  template<ArithmeticConcept Index>
+  [[nodiscard]] auto get(Index index) const -> T
   {
-    DEBUG_ASSERT_LT(index, size_);
-    return dense_unsigned_ops::get<T>(data(), index, element_bytes(), endian());
+    DEBUG_ASSERT_GE(index, 0);
+    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
+    auto const index64 = static_cast<u64>(index);
+    DEBUG_ASSERT_LT(index64, size_);
+    return dense_unsigned_ops::get<T>(data(), index64, element_bytes(), endian());
   }
 
-  void set(u64 index, T val)
+  template<ArithmeticConcept Index>
+  void set(Index index, T val)
   {
-    DEBUG_ASSERT_LT(index, size_);
-    dense_unsigned_ops::set<T>(data(), index, element_bytes(), endian(), val);
+    DEBUG_ASSERT_GE(index, 0);
+    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
+    auto const index64 = static_cast<u64>(index);
+    DEBUG_ASSERT_LT(index64, size_);
+    dense_unsigned_ops::set<T>(data(), index64, element_bytes(), endian(), val);
   }
 
 private:
@@ -92,9 +107,9 @@ private:
   IF(KASPAN_DEBUG, u64 size_ = 0);
 };
 
-template<unsigned_concept T = u64>
+template<unsigned_concept T = u64, ArithmeticConcept Count>
 auto
-make_dense_unsigned_array(u64 count, u8 element_byte_size, std::endian endian = std::endian::native) -> dense_unsigned_array<T>
+make_dense_unsigned_array(Count count, u8 element_byte_size, std::endian endian = std::endian::native) -> dense_unsigned_array<T>
 {
   return dense_unsigned_array<T>{ count, element_byte_size, endian };
 }

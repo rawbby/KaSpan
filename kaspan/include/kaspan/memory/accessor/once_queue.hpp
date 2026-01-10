@@ -19,10 +19,13 @@ public:
   once_queue() noexcept = default;
   ~once_queue()         = default;
 
-  explicit once_queue(u64 size) noexcept(false)
-    : buffer(size * sizeof(T))
+  template<ArithmeticConcept Size>
+  explicit once_queue(Size size) noexcept(false)
+    : buffer(static_cast<u64>(size) * sizeof(T))
   {
-    IF(KASPAN_DEBUG, size_ = size);
+    DEBUG_ASSERT_GE(size, 0);
+    DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
+    IF(KASPAN_DEBUG, size_ = static_cast<u64>(size));
   }
 
   once_queue(once_queue const&) = delete;
@@ -96,9 +99,9 @@ private:
   IF(KASPAN_DEBUG, u64 size_ = 0);
 };
 
-template<typename T>
+template<typename T, ArithmeticConcept Size>
 auto
-make_once_queue(u64 size) -> once_queue<T>
+make_once_queue(Size size) -> once_queue<T>
 {
   return once_queue<T>{ size };
 }

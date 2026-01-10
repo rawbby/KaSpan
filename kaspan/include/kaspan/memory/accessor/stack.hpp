@@ -19,10 +19,13 @@ public:
   stack() noexcept = default;
   ~stack()         = default;
 
-  explicit stack(u64 size) noexcept(false)
-    : buffer(size * sizeof(T))
+  template<ArithmeticConcept Size>
+  explicit stack(Size size) noexcept(false)
+    : buffer(static_cast<u64>(size) * sizeof(T))
   {
-    IF(KASPAN_DEBUG, size_ = size);
+    DEBUG_ASSERT_GE(size, 0);
+    DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
+    IF(KASPAN_DEBUG, size_ = static_cast<u64>(size));
   }
 
   stack(stack const&) = delete;
@@ -104,9 +107,9 @@ private:
   IF(KASPAN_DEBUG, u64 size_ = 0);
 };
 
-template<typename T>
+template<typename T, ArithmeticConcept Size>
 auto
-make_stack(u64 size) -> stack<T>
+make_stack(Size size) -> stack<T>
 {
   return stack<T>{ size };
 }

@@ -30,25 +30,37 @@ linesize() -> u64
   return detail::linesize;
 }
 
-inline auto
-line_align_down(u64 size)
+template<ArithmeticConcept Size>
+auto
+line_align_down(Size size)
 {
+  DEBUG_ASSERT_GE(size, 0);
+  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
+  auto const size64 = static_cast<u64>(size);
   auto const mask = linesize() - 1;
-  return size & ~mask;
+  return size64 & ~mask;
 }
 
-inline auto
-line_align_up(u64 size)
+template<ArithmeticConcept Size>
+auto
+line_align_up(Size size)
 {
+  DEBUG_ASSERT_GE(size, 0);
+  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
+  auto const size64 = static_cast<u64>(size);
   auto const mask = linesize() - 1;
-  return (size + mask) & ~mask;
+  return (size64 + mask) & ~mask;
 }
 
-inline auto
-is_line_aligned(u64 size)
+template<ArithmeticConcept Size>
+auto
+is_line_aligned(Size size)
 {
+  DEBUG_ASSERT_GE(size, 0);
+  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
+  auto const size64 = static_cast<u64>(size);
   auto const mask = linesize() - 1;
-  return (size & mask) == 0;
+  return (size64 & mask) == 0;
 }
 
 // clang-format off
@@ -60,20 +72,23 @@ inline auto line_align_down(void* data){return std::bit_cast<void*>(line_align_d
 inline auto line_align_up(void* data){return std::bit_cast<void*>(line_align_up(std::bit_cast<u64>(data)));}
 // clang-format on
 
-[[nodiscard]] inline auto
-line_alloc(u64 size) noexcept(false) -> void*
+template<ArithmeticConcept Size>
+[[nodiscard]] auto
+line_alloc(Size size) noexcept(false) -> void*
 {
   DEBUG_ASSERT_GE(size, 0);
-  if (size == 0) {
+  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
+  auto const size64 = static_cast<u64>(size);
+  if (size64 == 0) {
     return nullptr;
   }
   auto const line = linesize();
   auto const mask = line - 1;
-  void*      data = std::aligned_alloc(line, (size + mask) & ~mask);
+  void*      data = std::aligned_alloc(line, (size64 + mask) & ~mask);
   if (data == nullptr) [[unlikely]] {
     throw std::bad_alloc{};
   }
-  KASPAN_VALGRIND_MALLOCLIKE_BLOCK(data, size, 0, 0);
+  KASPAN_VALGRIND_MALLOCLIKE_BLOCK(data, size64, 0, 0);
   return data;
 }
 

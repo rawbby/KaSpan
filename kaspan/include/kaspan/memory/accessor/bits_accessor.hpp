@@ -10,11 +10,14 @@ namespace kaspan {
 class bits_accessor final
 {
 public:
-  explicit bits_accessor(void* data, u64 size)
+  template<ArithmeticConcept Size>
+  explicit bits_accessor(void* data, Size size)
     : data_(size == 0 ? nullptr : data)
   {
+    DEBUG_ASSERT_GE(size, 0);
+    DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
     DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
-    IF(KASPAN_DEBUG, size_ = size);
+    IF(KASPAN_DEBUG, size_ = static_cast<u64>(size));
   }
 
   bits_accessor()  = default;
@@ -36,40 +39,64 @@ public:
     return static_cast<u64 const*>(data_);
   }
 
-  void clear(u64 end)
+  template<ArithmeticConcept Size>
+  void clear(Size end)
   {
-    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, 0, size_);
-    bits_ops::clear(data(), end);
+    DEBUG_ASSERT_GE(end, 0);
+    DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
+    auto const end64 = static_cast<u64>(end);
+    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end64, 0, size_);
+    bits_ops::clear(data(), end64);
   }
 
-  void fill(u64 end)
+  template<ArithmeticConcept Size>
+  void fill(Size end)
   {
-    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, 0, size_);
-    bits_ops::fill(data(), end);
+    DEBUG_ASSERT_GE(end, 0);
+    DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
+    auto const end64 = static_cast<u64>(end);
+    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end64, 0, size_);
+    bits_ops::fill(data(), end64);
   }
 
-  [[nodiscard]] auto get(u64 index) const -> bool
+  template<ArithmeticConcept Index>
+  [[nodiscard]] auto get(Index index) const -> bool
   {
-    DEBUG_ASSERT_LT(index, size_);
-    return bits_ops::get(data(), index);
+    DEBUG_ASSERT_GE(index, 0);
+    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
+    auto const index64 = static_cast<u64>(index);
+    DEBUG_ASSERT_LT(index64, size_);
+    return bits_ops::get(data(), index64);
   }
 
-  void set(u64 index, bool value)
+  template<ArithmeticConcept Index>
+  void set(Index index, bool value)
   {
-    DEBUG_ASSERT_LT(index, size_);
-    bits_ops::set(data(), index, value);
+    DEBUG_ASSERT_GE(index, 0);
+    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
+    auto const index64 = static_cast<u64>(index);
+    DEBUG_ASSERT_LT(index64, size_);
+    bits_ops::set(data(), index64, value);
   }
 
-  void set(u64 index)
+  template<ArithmeticConcept Index>
+  void set(Index index)
   {
-    DEBUG_ASSERT_LT(index, size_);
-    bits_ops::set(data(), index);
+    DEBUG_ASSERT_GE(index, 0);
+    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
+    auto const index64 = static_cast<u64>(index);
+    DEBUG_ASSERT_LT(index64, size_);
+    bits_ops::set(data(), index64);
   }
 
-  void unset(u64 index)
+  template<ArithmeticConcept Index>
+  void unset(Index index)
   {
-    DEBUG_ASSERT_LT(index, size_);
-    bits_ops::unset(data(), index);
+    DEBUG_ASSERT_GE(index, 0);
+    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
+    auto const index64 = static_cast<u64>(index);
+    DEBUG_ASSERT_LT(index64, size_);
+    bits_ops::unset(data(), index64);
   }
 
   template<ArithmeticConcept Index = size_t>
@@ -91,26 +118,39 @@ private:
   IF(KASPAN_DEBUG, u64 size_ = 0);
 };
 
-inline auto
-borrow_bits(void** memory, u64 size) noexcept -> bits_accessor
+template<ArithmeticConcept Size>
+auto
+borrow_bits(void** memory, Size size) noexcept -> bits_accessor
 {
-  return bits_accessor{ borrow_array<u64>(memory, ceildiv<64>(size)), size };
+  DEBUG_ASSERT_GE(size, 0);
+  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
+  auto const size64 = static_cast<u64>(size);
+  return bits_accessor{ borrow_array<u64>(memory, ceildiv<64>(size64)), size64 };
 }
 
-inline auto
-borrow_bits_clean(void** memory, u64 size) noexcept -> bits_accessor
+template<ArithmeticConcept Size>
+auto
+borrow_bits_clean(void** memory, Size size) noexcept -> bits_accessor
 {
-  return bits_accessor{ borrow_array_clean<u64>(memory, ceildiv<64>(size)), size };
+  DEBUG_ASSERT_GE(size, 0);
+  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
+  auto const size64 = static_cast<u64>(size);
+  return bits_accessor{ borrow_array_clean<u64>(memory, ceildiv<64>(size64)), size64 };
 }
 
-inline auto
-borrow_bits_filled(void** memory, u64 size) noexcept -> bits_accessor
+template<ArithmeticConcept Size>
+auto
+borrow_bits_filled(void** memory, Size size) noexcept -> bits_accessor
 {
-  return bits_accessor{ borrow_array_filled<u64>(memory, ceildiv<64>(size)), size };
+  DEBUG_ASSERT_GE(size, 0);
+  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
+  auto const size64 = static_cast<u64>(size);
+  return bits_accessor{ borrow_array_filled<u64>(memory, ceildiv<64>(size64)), size64 };
 }
 
-inline auto
-view_bits(void* data, u64 size) noexcept -> bits_accessor
+template<ArithmeticConcept Size>
+auto
+view_bits(void* data, Size size) noexcept -> bits_accessor
 {
   return bits_accessor{ data, size };
 }

@@ -20,9 +20,12 @@ class array : public buffer
 public:
   array() noexcept = default;
 
-  explicit array(u64 count) noexcept(false)
-    : buffer(count * sizeof(T))
+  template<ArithmeticConcept Count>
+  explicit array(Count count) noexcept(false)
+    : buffer(static_cast<u64>(count) * sizeof(T))
   {
+    DEBUG_ASSERT_GE(count, 0);
+    DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
   }
 
   array(array const&) = delete;
@@ -50,9 +53,12 @@ public:
     return data();
   }
 
-  [[nodiscard]] auto operator[](u64 idx) const noexcept -> T&
+  template<ArithmeticConcept Index>
+  [[nodiscard]] auto operator[](Index idx) const noexcept -> T&
   {
-    return data()[idx];
+    DEBUG_ASSERT_GE(idx, 0);
+    DEBUG_ASSERT_LE(idx, std::numeric_limits<u64>::max());
+    return data()[static_cast<u64>(idx)];
   }
 
   [[nodiscard]] auto operator+(std::ptrdiff_t offset) const noexcept -> T*
@@ -179,87 +185,107 @@ public:
   }
 };
 
-template<typename T = byte>
+template<typename T = byte, ArithmeticConcept Count>
 static auto
-make_array(u64 count) noexcept -> array<T>
+make_array(Count count) noexcept -> array<T>
 {
   auto result = array<T>{ count };
   return result;
 }
 
-template<typename T = byte>
+template<typename T = byte, ArithmeticConcept Count>
 static auto
-make_array_clean(u64 count) noexcept -> array<T>
+make_array_clean(Count count) noexcept -> array<T>
 {
-  auto result = array<T>{ count };
-  std::memset(result, 0x00, count * sizeof(T));
+  DEBUG_ASSERT_GE(count, 0);
+  DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
+  auto const count64 = static_cast<u64>(count);
+  auto result = array<T>{ count64 };
+  std::memset(result, 0x00, count64 * sizeof(T));
   return result;
 }
 
-template<typename T = byte>
+template<typename T = byte, ArithmeticConcept Count>
 static auto
-make_array_filled(u64 count) noexcept -> array<T>
+make_array_filled(Count count) noexcept -> array<T>
 {
-  auto result = array<T>{ count };
-  std::memset(result, 0xff, count * sizeof(T));
+  DEBUG_ASSERT_GE(count, 0);
+  DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
+  auto const count64 = static_cast<u64>(count);
+  auto result = array<T>{ count64 };
+  std::memset(result, 0xff, count64 * sizeof(T));
   return result;
 }
 
-template<typename T = byte>
+template<typename T = byte, ArithmeticConcept Count>
 static auto
-make_array_filled(T const& value, u64 count) noexcept -> array<T>
+make_array_filled(T const& value, Count count) noexcept -> array<T>
 {
-  auto result = array<T>{ count };
-  for (u64 i = 0; i < count; ++i) {
+  DEBUG_ASSERT_GE(count, 0);
+  DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
+  auto const count64 = static_cast<u64>(count);
+  auto result = array<T>{ count64 };
+  for (u64 i = 0; i < count64; ++i) {
     std::memcpy(&result[i], &value, sizeof(T));
   }
   return result;
 }
 
-template<typename T = byte>
+template<typename T = byte, ArithmeticConcept Count>
   requires(std::is_trivially_copyable_v<T> and std::is_trivially_constructible_v<T> and std::is_trivially_destructible_v<T>)
 static auto
-borrow_array(void** memory, u64 count) noexcept -> T*
+borrow_array(void** memory, Count count) noexcept -> T*
 {
   DEBUG_ASSERT_NE(memory, nullptr);
   DEBUG_ASSERT_GE(count, 0);
-  if (count == 0) {
+  DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
+  auto const count64 = static_cast<u64>(count);
+  if (count64 == 0) {
     return nullptr;
   }
   DEBUG_ASSERT_NE(*memory, nullptr);
   DEBUG_ASSERT_EQ(linesize() % alignof(T), 0);
   DEBUG_ASSERT(is_line_aligned(*memory));
   auto const result    = static_cast<T*>(*memory);
-  auto const byte_size = line_align_up(count * sizeof(T));
+  auto const byte_size = line_align_up(count64 * sizeof(T));
   KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(*memory, byte_size);
   *memory = static_cast<void*>(static_cast<std::byte*>(*memory) + byte_size);
   return result;
 }
 
-template<typename T = byte>
+template<typename T = byte, ArithmeticConcept Count>
 static auto
-borrow_array_clean(void** memory, u64 count) noexcept -> T*
+borrow_array_clean(void** memory, Count count) noexcept -> T*
 {
-  auto result = borrow_array<T>(memory, count);
-  std::memset(result, 0x00, count * sizeof(T));
+  DEBUG_ASSERT_GE(count, 0);
+  DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
+  auto const count64 = static_cast<u64>(count);
+  auto result = borrow_array<T>(memory, count64);
+  std::memset(result, 0x00, count64 * sizeof(T));
   return result;
 }
 
-template<typename T = byte>
+template<typename T = byte, ArithmeticConcept Count>
 static auto
-borrow_array_filled(void** memory, u64 count) noexcept -> T*
+borrow_array_filled(void** memory, Count count) noexcept -> T*
 {
-  auto result = borrow_array<T>(memory, count);
-  std::memset(result, 0xff, count * sizeof(T));
+  DEBUG_ASSERT_GE(count, 0);
+  DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
+  auto const count64 = static_cast<u64>(count);
+  auto result = borrow_array<T>(memory, count64);
+  std::memset(result, 0xff, count64 * sizeof(T));
   return result;
 }
 
-template<typename T = byte>
+template<typename T = byte, ArithmeticConcept Count>
 static auto
-borrow_array_filled(void** memory, T const& value, u64 count) noexcept -> T*
+borrow_array_filled(void** memory, T const& value, Count count) noexcept -> T*
 {
-  auto result = borrow_array<T>(memory, count);
-  for (u64 i = 0; i < count; ++i) {
+  DEBUG_ASSERT_GE(count, 0);
+  DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
+  auto const count64 = static_cast<u64>(count);
+  auto result = borrow_array<T>(memory, count64);
+  for (u64 i = 0; i < count64; ++i) {
     std::memcpy(&result[i], &value, sizeof(T));
   }
   return result;
