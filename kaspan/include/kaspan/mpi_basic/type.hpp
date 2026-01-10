@@ -11,25 +11,25 @@ namespace kaspan::mpi_basic {
  */
 template<typename T>
 constexpr inline auto type =
-  ByteConcept<T> ? MPI_BYTE     :
-  I8Concept<T>   ? MPI_INT8_T   :
-  I16Concept<T>  ? MPI_INT16_T  :
-  I32Concept<T>  ? MPI_INT32_T  :
-  I64Concept<T>  ? MPI_INT64_T  :
-  U8Concept<T>   ? MPI_UINT8_T  :
-  U16Concept<T>  ? MPI_UINT16_T :
-  U32Concept<T>  ? MPI_UINT32_T :
-  U64Concept<T>  ? MPI_UINT64_T :
-  F32Concept<T>  ? MPI_FLOAT    :
-  F64Concept<T>  ? MPI_DOUBLE   :
+  byte_concept<T> ? MPI_BYTE     :
+  i8_concept<T>   ? MPI_INT8_T   :
+  i16_concept<T>  ? MPI_INT16_T  :
+  i32_concept<T>  ? MPI_INT32_T  :
+  i64_concept<T>  ? MPI_INT64_T  :
+  u8_concept<T>   ? MPI_UINT8_T  :
+  u16_concept<T>  ? MPI_UINT16_T :
+  u32_concept<T>  ? MPI_UINT32_T :
+  u64_concept<T>  ? MPI_UINT64_T :
+  f32_concept<T>  ? MPI_FLOAT    :
+  f64_concept<T>  ? MPI_DOUBLE   :
   MPI_DATATYPE_NULL;
 // clang-format on
 
 /**
- * @brief Concept for types that have a corresponding MPI datatype.
+ * @brief mpi_type_concept for types that have a corresponding MPI datatype.
  */
 template<typename T>
-concept Concept = type<T> != MPI_DATATYPE_NULL;
+concept mpi_type_concept = type<T> != MPI_DATATYPE_NULL;
 
 constexpr inline auto byte_t = MPI_BYTE;
 constexpr inline auto i8_t   = MPI_INT8_T;

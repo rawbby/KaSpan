@@ -18,7 +18,7 @@ public:
   once_queue_accessor()  = default;
   ~once_queue_accessor() = default;
 
-  template<ArithmeticConcept Size>
+  template<arithmetic_concept Size>
   explicit once_queue_accessor(void* data, Size size)
     : data_(size == 0 ? nullptr : data)
   {
@@ -81,7 +81,7 @@ private:
   IF(KASPAN_DEBUG, u64 size_ = 0);
 };
 
-template<typename T, ArithmeticConcept Size>
+template<typename T, arithmetic_concept Size>
 auto
 borrow_once_queue(void** memory, Size size) -> once_queue_accessor<T>
 {
@@ -91,7 +91,7 @@ borrow_once_queue(void** memory, Size size) -> once_queue_accessor<T>
   return once_queue_accessor<T>{ borrow_array<T>(memory, size64), size64 };
 }
 
-template<typename T, ArithmeticConcept Size>
+template<typename T, arithmetic_concept Size>
 auto
 view_once_queue(void* data, Size size) -> once_queue_accessor<T>
 {

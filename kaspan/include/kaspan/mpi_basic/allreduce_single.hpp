@@ -9,7 +9,7 @@ namespace kaspan::mpi_basic {
 /**
  * @brief All-reduce for a single typed value.
  */
-template<Concept T>
+template<mpi_type_concept T>
 auto
 allreduce_single(T const& send_value, MPI_Op op) -> T
 {

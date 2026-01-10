@@ -20,7 +20,7 @@ class array : public buffer
 public:
   array() noexcept = default;
 
-  template<ArithmeticConcept Count>
+  template<arithmetic_concept Count>
   explicit array(Count count) noexcept(false)
     : buffer(static_cast<u64>(count) * sizeof(T))
   {
@@ -53,7 +53,7 @@ public:
     return data();
   }
 
-  template<ArithmeticConcept Index>
+  template<arithmetic_concept Index>
   [[nodiscard]] auto operator[](Index idx) const noexcept -> T&
   {
     DEBUG_ASSERT_GE(idx, 0);
@@ -185,7 +185,7 @@ public:
   }
 };
 
-template<typename T = byte, ArithmeticConcept Count>
+template<typename T = byte, arithmetic_concept Count>
 static auto
 make_array(Count count) noexcept -> array<T>
 {
@@ -193,7 +193,7 @@ make_array(Count count) noexcept -> array<T>
   return result;
 }
 
-template<typename T = byte, ArithmeticConcept Count>
+template<typename T = byte, arithmetic_concept Count>
 static auto
 make_array_clean(Count count) noexcept -> array<T>
 {
@@ -205,7 +205,7 @@ make_array_clean(Count count) noexcept -> array<T>
   return result;
 }
 
-template<typename T = byte, ArithmeticConcept Count>
+template<typename T = byte, arithmetic_concept Count>
 static auto
 make_array_filled(Count count) noexcept -> array<T>
 {
@@ -217,7 +217,7 @@ make_array_filled(Count count) noexcept -> array<T>
   return result;
 }
 
-template<typename T = byte, ArithmeticConcept Count>
+template<typename T = byte, arithmetic_concept Count>
 static auto
 make_array_filled(T const& value, Count count) noexcept -> array<T>
 {
@@ -231,7 +231,7 @@ make_array_filled(T const& value, Count count) noexcept -> array<T>
   return result;
 }
 
-template<typename T = byte, ArithmeticConcept Count>
+template<typename T = byte, arithmetic_concept Count>
   requires(std::is_trivially_copyable_v<T> and std::is_trivially_constructible_v<T> and std::is_trivially_destructible_v<T>)
 static auto
 borrow_array(void** memory, Count count) noexcept -> T*
@@ -253,7 +253,7 @@ borrow_array(void** memory, Count count) noexcept -> T*
   return result;
 }
 
-template<typename T = byte, ArithmeticConcept Count>
+template<typename T = byte, arithmetic_concept Count>
 static auto
 borrow_array_clean(void** memory, Count count) noexcept -> T*
 {
@@ -265,7 +265,7 @@ borrow_array_clean(void** memory, Count count) noexcept -> T*
   return result;
 }
 
-template<typename T = byte, ArithmeticConcept Count>
+template<typename T = byte, arithmetic_concept Count>
 static auto
 borrow_array_filled(void** memory, Count count) noexcept -> T*
 {
@@ -277,7 +277,7 @@ borrow_array_filled(void** memory, Count count) noexcept -> T*
   return result;
 }
 
-template<typename T = byte, ArithmeticConcept Count>
+template<typename T = byte, arithmetic_concept Count>
 static auto
 borrow_array_filled(void** memory, T const& value, Count count) noexcept -> T*
 {

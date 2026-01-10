@@ -52,7 +52,7 @@ arg_select_default_str(int argc, char** argv, char const* flag, char const* defa
   return default_value;
 }
 
-template<IntConcept Int>
+template<integral_concept Int>
 auto
 arg_select_int(int argc, char** argv, char const* flag, void*(usage)(int, char**)) -> Int
 {
@@ -68,7 +68,7 @@ arg_select_int(int argc, char** argv, char const* flag, void*(usage)(int, char**
   std::exit(1);
 }
 
-template<IntConcept Int>
+template<integral_concept Int>
 auto
 arg_select_optional_int(int argc, char** argv, char const* flag) -> std::optional<Int>
 {
@@ -83,7 +83,7 @@ arg_select_optional_int(int argc, char** argv, char const* flag) -> std::optiona
   return std::nullopt;
 }
 
-template<IntConcept Int>
+template<integral_concept Int>
 auto
 arg_select_default_int(int argc, char** argv, char const* flag, Int default_value) -> Int
 {

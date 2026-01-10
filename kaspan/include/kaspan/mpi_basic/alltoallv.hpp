@@ -9,7 +9,7 @@ namespace kaspan::mpi_basic {
 /**
  * @brief Typed wrapper for MPI_Alltoallv_c.
  */
-template<Concept T>
+template<mpi_type_concept T>
 void
 alltoallv(T const* send_buffer, MPI_Count const* send_counts, MPI_Aint const* send_displs, T* recv_buffer, MPI_Count const* recv_counts, MPI_Aint const* recv_displs)
 {

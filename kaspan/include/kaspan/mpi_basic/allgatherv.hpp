@@ -19,7 +19,7 @@ namespace kaspan::mpi_basic {
  * @param recv_counts Per-rank element counts (MPI_Count[world_size]).
  * @param recv_displs Per-rank displacements (MPI_Aint[world_size]).
  */
-template<Concept T>
+template<mpi_type_concept T>
 void
 allgatherv(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count const* recv_counts, MPI_Aint const* recv_displs)
 {
@@ -60,7 +60,7 @@ allgatherv(void const* send_buffer, MPI_Count send_count, void* recv_buffer, MPI
  *         - recv points into buffer,
  *         - count is the total number of received elements.
  */
-template<Concept T>
+template<mpi_type_concept T>
 auto
 allgatherv(T const* send_buffer, MPI_Count send_count)
 {

@@ -73,7 +73,7 @@ struct bits_ops
     data[idx] &= ~msk;
   }
 
-  template<ArithmeticConcept Index = size_t, std::invocable<Index> fn_t>
+  template<arithmetic_concept Index = size_t, std::invocable<Index> fn_t>
   static void for_each(u64 const* data, Index end, fn_t&& fn)
   {
     DEBUG_ASSERT_NE(data, nullptr);
@@ -98,7 +98,7 @@ struct bits_ops
     }
   }
 
-  template<ArithmeticConcept Index = size_t, std::invocable<Index> fn_t>
+  template<arithmetic_concept Index = size_t, std::invocable<Index> fn_t>
   static void set_each(u64* data, Index end, fn_t&& fn)
   {
     DEBUG_ASSERT_GE(end, 0);

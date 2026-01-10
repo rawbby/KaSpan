@@ -19,7 +19,7 @@ public:
   stack() noexcept = default;
   ~stack()         = default;
 
-  template<ArithmeticConcept Size>
+  template<arithmetic_concept Size>
   explicit stack(Size size) noexcept(false)
     : buffer(static_cast<u64>(size) * sizeof(T))
   {
@@ -107,7 +107,7 @@ private:
   IF(KASPAN_DEBUG, u64 size_ = 0);
 };
 
-template<typename T, ArithmeticConcept Size>
+template<typename T, arithmetic_concept Size>
 auto
 make_stack(Size size) -> stack<T>
 {

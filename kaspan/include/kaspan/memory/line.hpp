@@ -9,58 +9,50 @@
 namespace kaspan {
 
 namespace detail {
-constexpr auto linesize_default     = static_cast<u64>(64);
+constexpr auto linesize_default     = static_cast<u32>(64);
 inline bool    linesize_initialized = false;
-inline auto    linesize             = linesize_default;
+inline auto    linesize_value       = linesize_default;
 }
 
-inline auto
-linesize() -> u64
+template<unsigned_concept Size = u32>
+auto
+linesize() -> Size
 {
-  if (detail::linesize_initialized) [[likely]] {
-    return detail::linesize;
+  if (!detail::linesize_initialized) [[unlikely]] {
+    if (auto const sys_linesize = sysconf(_SC_LEVEL1_DCACHE_LINESIZE); sys_linesize > 0) [[likely]] {
+      DEBUG_ASSERT_IN_RANGE_INCLUSIVE(sys_linesize, std::numeric_limits<u32>::min(), std::numeric_limits<u32>::max());
+      detail::linesize_value = static_cast<u32>(sys_linesize);
+    }
+    DEBUG_ASSERT_EQ(std::popcount(detail::linesize_value), 1, "the cacheline size is assumed to be a power of two");
+    detail::linesize_initialized = true;
   }
 
-  if (auto const sys_linesize = sysconf(_SC_LEVEL1_DCACHE_LINESIZE); sys_linesize > 0) [[likely]] {
-    detail::linesize = static_cast<u64>(sys_linesize);
-  }
-
-  DEBUG_ASSERT_EQ(std::popcount(detail::linesize), 1, "the cacheline size is assumed to be a power of two");
-  detail::linesize_initialized = true;
-  return detail::linesize;
+  DEBUG_ASSERT_LE(detail::linesize_value, std::numeric_limits<Size>::max());
+  return static_cast<Size>(detail::linesize_value);
 }
 
-template<ArithmeticConcept Size>
+template<unsigned_concept Size>
 auto
-line_align_down(Size size)
+line_align_down(Size size) -> Size
 {
-  DEBUG_ASSERT_GE(size, 0);
-  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = static_cast<u64>(size);
-  auto const mask = linesize() - 1;
-  return size64 & ~mask;
+  auto const mask = linesize<Size>() - 1;
+  return size & ~mask;
 }
 
-template<ArithmeticConcept Size>
+template<unsigned_concept Size>
 auto
-line_align_up(Size size)
+line_align_up(Size size) -> Size
 {
-  DEBUG_ASSERT_GE(size, 0);
-  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = static_cast<u64>(size);
-  auto const mask = linesize() - 1;
-  return (size64 + mask) & ~mask;
+  auto const mask = linesize<Size>() - 1;
+  return (size + mask) & ~mask;
 }
 
-template<ArithmeticConcept Size>
+template<unsigned_concept Size>
 auto
-is_line_aligned(Size size)
+is_line_aligned(Size size) -> bool
 {
-  DEBUG_ASSERT_GE(size, 0);
-  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = static_cast<u64>(size);
-  auto const mask = linesize() - 1;
-  return (size64 & mask) == 0;
+  auto const mask = linesize<Size>() - 1;
+  return (size & mask) == 0;
 }
 
 // clang-format off
@@ -72,7 +64,7 @@ inline auto line_align_down(void* data){return std::bit_cast<void*>(line_align_d
 inline auto line_align_up(void* data){return std::bit_cast<void*>(line_align_up(std::bit_cast<u64>(data)));}
 // clang-format on
 
-template<ArithmeticConcept Size>
+template<arithmetic_concept Size>
 [[nodiscard]] auto
 line_alloc(Size size) noexcept(false) -> void*
 {

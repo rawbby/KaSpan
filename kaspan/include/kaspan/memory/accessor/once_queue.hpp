@@ -19,7 +19,7 @@ public:
   once_queue() noexcept = default;
   ~once_queue()         = default;
 
-  template<ArithmeticConcept Size>
+  template<arithmetic_concept Size>
   explicit once_queue(Size size) noexcept(false)
     : buffer(static_cast<u64>(size) * sizeof(T))
   {
@@ -99,7 +99,7 @@ private:
   IF(KASPAN_DEBUG, u64 size_ = 0);
 };
 
-template<typename T, ArithmeticConcept Size>
+template<typename T, arithmetic_concept Size>
 auto
 make_once_queue(Size size) -> once_queue<T>
 {

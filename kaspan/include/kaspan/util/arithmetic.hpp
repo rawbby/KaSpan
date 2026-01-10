@@ -51,36 +51,36 @@ inline constexpr bool has_int128_t  = false;
 #endif
 
 // clang-format off
-template<typename T> concept ByteConcept = std::same_as<std::remove_cvref_t<T>, byte>;
+template<typename T> concept byte_concept = std::same_as<std::remove_cvref_t<T>, byte>;
 
 template<typename T> concept unsigned_concept = not std::is_enum_v<T> and (
   (std::unsigned_integral<std::remove_cvref_t<T>>) or
   (has_uint128_t and std::same_as<std::remove_cvref_t<T>, u128>));
-template<typename T> concept SignedConcept = not std::is_enum_v<T> and (
+template<typename T> concept signed_concept = not std::is_enum_v<T> and (
   (std::signed_integral<std::remove_cvref_t<T>>) or
   (has_int128_t and std::same_as<std::remove_cvref_t<T>, i128>));
 
-template<typename T> concept IntConcept  = unsigned_concept<T> or SignedConcept<T>;
-template<typename T> concept U128Concept = unsigned_concept<T> and (sizeof(T) == 16);
-template<typename T> concept U64Concept  = unsigned_concept<T> and (sizeof(T) ==  8);
-template<typename T> concept U32Concept  = unsigned_concept<T> and (sizeof(T) ==  4);
-template<typename T> concept U16Concept  = unsigned_concept<T> and (sizeof(T) ==  2);
-template<typename T> concept U8Concept   = unsigned_concept<T> and (sizeof(T) ==  1);
-template<typename T> concept I128Concept = SignedConcept<T>   and (sizeof(T) == 16);
-template<typename T> concept I64Concept  = SignedConcept<T>   and (sizeof(T) ==  8);
-template<typename T> concept I32Concept  = SignedConcept<T>   and (sizeof(T) ==  4);
-template<typename T> concept I16Concept  = SignedConcept<T>   and (sizeof(T) ==  2);
-template<typename T> concept I8Concept   = SignedConcept<T>   and (sizeof(T) ==  1);
+template<typename T> concept integral_concept  = unsigned_concept<T> or signed_concept<T>;
+template<typename T> concept u128_concept = unsigned_concept<T> and (sizeof(T) == 16);
+template<typename T> concept u64_concept  = unsigned_concept<T> and (sizeof(T) ==  8);
+template<typename T> concept u32_concept  = unsigned_concept<T> and (sizeof(T) ==  4);
+template<typename T> concept u16_concept  = unsigned_concept<T> and (sizeof(T) ==  2);
+template<typename T> concept u8_concept   = unsigned_concept<T> and (sizeof(T) ==  1);
+template<typename T> concept i128_concept = signed_concept<T>   and (sizeof(T) == 16);
+template<typename T> concept i64_concept  = signed_concept<T>   and (sizeof(T) ==  8);
+template<typename T> concept i32_concept  = signed_concept<T>   and (sizeof(T) ==  4);
+template<typename T> concept i16_concept  = signed_concept<T>   and (sizeof(T) ==  2);
+template<typename T> concept i8_concept   = signed_concept<T>   and (sizeof(T) ==  1);
 
-template<typename T> concept FloatConcept = not std::is_enum_v<T> and (
+template<typename T> concept float_concept = not std::is_enum_v<T> and (
   std::same_as<std::remove_cvref_t<T>, float>  or
   std::same_as<std::remove_cvref_t<T>, double> or
   std::same_as<std::remove_cvref_t<T>, long double>);
 
-template<typename T> concept F32Concept = FloatConcept<T> and (sizeof(T) == 4);
-template<typename T> concept F64Concept = FloatConcept<T> and (sizeof(T) == 8);
+template<typename T> concept f32_concept = float_concept<T> and (sizeof(T) == 4);
+template<typename T> concept f64_concept = float_concept<T> and (sizeof(T) == 8);
 
-template<typename T> concept ArithmeticConcept  = IntConcept<T> or FloatConcept<T>;
+template<typename T> concept arithmetic_concept  = integral_concept<T> or float_concept<T>;
 // clang-format on
 
 } // namespace kaspan

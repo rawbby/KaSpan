@@ -9,7 +9,7 @@ namespace kaspan::mpi_basic {
 /**
  * @brief In-place all-reduce for a buffer of typed elements.
  */
-template<Concept T>
+template<mpi_type_concept T>
 void
 allreduce_inplace(T* send_buffer, MPI_Count send_count, MPI_Op op)
 {
@@ -22,7 +22,7 @@ allreduce_inplace(T* send_buffer, MPI_Count send_count, MPI_Op op)
 /**
  * @brief In-place all-reduce for a single typed value.
  */
-template<Concept T>
+template<mpi_type_concept T>
 void
 allreduce_inplace(T& send_value, MPI_Count send_count, MPI_Op op)
 {

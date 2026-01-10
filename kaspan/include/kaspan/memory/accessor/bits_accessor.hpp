@@ -10,7 +10,7 @@ namespace kaspan {
 class bits_accessor final
 {
 public:
-  template<ArithmeticConcept Size>
+  template<arithmetic_concept Size>
   explicit bits_accessor(void* data, Size size)
     : data_(size == 0 ? nullptr : data)
   {
@@ -39,7 +39,7 @@ public:
     return static_cast<u64 const*>(data_);
   }
 
-  template<ArithmeticConcept Size>
+  template<arithmetic_concept Size>
   void clear(Size end)
   {
     DEBUG_ASSERT_GE(end, 0);
@@ -49,7 +49,7 @@ public:
     bits_ops::clear(data(), end64);
   }
 
-  template<ArithmeticConcept Size>
+  template<arithmetic_concept Size>
   void fill(Size end)
   {
     DEBUG_ASSERT_GE(end, 0);
@@ -59,7 +59,7 @@ public:
     bits_ops::fill(data(), end64);
   }
 
-  template<ArithmeticConcept Index>
+  template<arithmetic_concept Index>
   [[nodiscard]] auto get(Index index) const -> bool
   {
     DEBUG_ASSERT_GE(index, 0);
@@ -69,7 +69,7 @@ public:
     return bits_ops::get(data(), index64);
   }
 
-  template<ArithmeticConcept Index>
+  template<arithmetic_concept Index>
   void set(Index index, bool value)
   {
     DEBUG_ASSERT_GE(index, 0);
@@ -79,7 +79,7 @@ public:
     bits_ops::set(data(), index64, value);
   }
 
-  template<ArithmeticConcept Index>
+  template<arithmetic_concept Index>
   void set(Index index)
   {
     DEBUG_ASSERT_GE(index, 0);
@@ -89,7 +89,7 @@ public:
     bits_ops::set(data(), index64);
   }
 
-  template<ArithmeticConcept Index>
+  template<arithmetic_concept Index>
   void unset(Index index)
   {
     DEBUG_ASSERT_GE(index, 0);
@@ -99,14 +99,14 @@ public:
     bits_ops::unset(data(), index64);
   }
 
-  template<ArithmeticConcept Index = size_t>
+  template<arithmetic_concept Index = size_t>
   void for_each(Index end, std::invocable<Index> auto&& fn) const
   {
     DEBUG_ASSERT_LE(end, size_);
     bits_ops::for_each<Index>(data(), end, std::forward<decltype(fn)>(fn));
   }
 
-  template<ArithmeticConcept Index = size_t>
+  template<arithmetic_concept Index = size_t>
   void set_each(Index end, std::invocable<Index> auto&& fn)
   {
     DEBUG_ASSERT_LE(end, size_);
@@ -118,7 +118,7 @@ private:
   IF(KASPAN_DEBUG, u64 size_ = 0);
 };
 
-template<ArithmeticConcept Size>
+template<arithmetic_concept Size>
 auto
 borrow_bits(void** memory, Size size) noexcept -> bits_accessor
 {
@@ -128,7 +128,7 @@ borrow_bits(void** memory, Size size) noexcept -> bits_accessor
   return bits_accessor{ borrow_array<u64>(memory, ceildiv<64>(size64)), size64 };
 }
 
-template<ArithmeticConcept Size>
+template<arithmetic_concept Size>
 auto
 borrow_bits_clean(void** memory, Size size) noexcept -> bits_accessor
 {
@@ -138,7 +138,7 @@ borrow_bits_clean(void** memory, Size size) noexcept -> bits_accessor
   return bits_accessor{ borrow_array_clean<u64>(memory, ceildiv<64>(size64)), size64 };
 }
 
-template<ArithmeticConcept Size>
+template<arithmetic_concept Size>
 auto
 borrow_bits_filled(void** memory, Size size) noexcept -> bits_accessor
 {
@@ -148,7 +148,7 @@ borrow_bits_filled(void** memory, Size size) noexcept -> bits_accessor
   return bits_accessor{ borrow_array_filled<u64>(memory, ceildiv<64>(size64)), size64 };
 }
 
-template<ArithmeticConcept Size>
+template<arithmetic_concept Size>
 auto
 view_bits(void* data, Size size) noexcept -> bits_accessor
 {

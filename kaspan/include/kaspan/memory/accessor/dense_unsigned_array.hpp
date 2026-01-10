@@ -17,7 +17,7 @@ public:
   dense_unsigned_array() noexcept = default;
   ~dense_unsigned_array()         = default;
 
-  template<ArithmeticConcept Size>
+  template<arithmetic_concept Size>
   explicit dense_unsigned_array(Size size, u8 element_byte_size, std::endian endian = std::endian::native) noexcept(false)
     : buffer(static_cast<u64>(size) * element_byte_size)
     , element_byte_size_(element_byte_size)
@@ -71,7 +71,7 @@ public:
     return endian_;
   }
 
-  template<ArithmeticConcept Count>
+  template<arithmetic_concept Count>
   void fill(T value, Count n)
   {
     DEBUG_ASSERT_GE(n, 0);
@@ -81,7 +81,7 @@ public:
     dense_unsigned_ops::fill<T>(data(), n64, element_bytes(), endian(), value);
   }
 
-  template<ArithmeticConcept Index>
+  template<arithmetic_concept Index>
   [[nodiscard]] auto get(Index index) const -> T
   {
     DEBUG_ASSERT_GE(index, 0);
@@ -91,7 +91,7 @@ public:
     return dense_unsigned_ops::get<T>(data(), index64, element_bytes(), endian());
   }
 
-  template<ArithmeticConcept Index>
+  template<arithmetic_concept Index>
   void set(Index index, T val)
   {
     DEBUG_ASSERT_GE(index, 0);
@@ -107,7 +107,7 @@ private:
   IF(KASPAN_DEBUG, u64 size_ = 0);
 };
 
-template<unsigned_concept T = u64, ArithmeticConcept Count>
+template<unsigned_concept T = u64, arithmetic_concept Count>
 auto
 make_dense_unsigned_array(Count count, u8 element_byte_size, std::endian endian = std::endian::native) -> dense_unsigned_array<T>
 {

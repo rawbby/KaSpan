@@ -17,7 +17,7 @@ public:
   bits() noexcept = default;
   ~bits()         = default;
 
-  template<ArithmeticConcept Size>
+  template<arithmetic_concept Size>
   explicit bits(Size size) noexcept(false)
     : buffer(ceildiv<64>(static_cast<u64>(size)) * sizeof(u64))
   {
@@ -53,7 +53,7 @@ public:
     return static_cast<u64 const*>(buffer::data());
   }
 
-  template<ArithmeticConcept Size>
+  template<arithmetic_concept Size>
   void clear(Size end)
   {
     DEBUG_ASSERT_GE(end, 0);
@@ -63,7 +63,7 @@ public:
     bits_ops::clear(data(), end64);
   }
 
-  template<ArithmeticConcept Size>
+  template<arithmetic_concept Size>
   void fill(Size end)
   {
     DEBUG_ASSERT_GE(end, 0);
@@ -73,7 +73,7 @@ public:
     bits_ops::fill(data(), end64);
   }
 
-  template<ArithmeticConcept Index>
+  template<arithmetic_concept Index>
   [[nodiscard]] auto get(Index index) const -> bool
   {
     DEBUG_ASSERT_GE(index, 0);
@@ -83,7 +83,7 @@ public:
     return bits_ops::get(data(), index64);
   }
 
-  template<ArithmeticConcept Index>
+  template<arithmetic_concept Index>
   void set(Index index, bool value)
   {
     DEBUG_ASSERT_GE(index, 0);
@@ -93,7 +93,7 @@ public:
     bits_ops::set(data(), index64, value);
   }
 
-  template<ArithmeticConcept Index>
+  template<arithmetic_concept Index>
   void set(Index index)
   {
     DEBUG_ASSERT_GE(index, 0);
@@ -103,7 +103,7 @@ public:
     bits_ops::set(data(), index64);
   }
 
-  template<ArithmeticConcept Index>
+  template<arithmetic_concept Index>
   void unset(Index index)
   {
     DEBUG_ASSERT_GE(index, 0);
@@ -113,14 +113,14 @@ public:
     bits_ops::unset(data(), index64);
   }
 
-  template<ArithmeticConcept Index = size_t>
+  template<arithmetic_concept Index = size_t>
   void for_each(Index end, std::invocable<Index> auto&& fn) const
   {
     DEBUG_ASSERT_LE(end, size_);
     bits_ops::for_each<Index>(data(), end, std::forward<decltype(fn)>(fn));
   }
 
-  template<ArithmeticConcept Index = size_t>
+  template<arithmetic_concept Index = size_t>
   void set_each(Index end, std::invocable<Index> auto&& fn)
   {
     DEBUG_ASSERT_LE(end, size_);
@@ -131,14 +131,14 @@ private:
   IF(KASPAN_DEBUG, u64 size_);
 };
 
-template<ArithmeticConcept Size>
+template<arithmetic_concept Size>
 auto
 make_bits(Size size) noexcept -> bits
 {
   return bits{ size };
 }
 
-template<ArithmeticConcept Size>
+template<arithmetic_concept Size>
 auto
 make_bits_clean(Size size) noexcept -> bits
 {
@@ -160,7 +160,7 @@ make_bits_clean(Size size) noexcept -> bits
   return res;
 }
 
-template<ArithmeticConcept Size>
+template<arithmetic_concept Size>
 auto
 make_bits_filled(Size size) noexcept -> bits
 {
