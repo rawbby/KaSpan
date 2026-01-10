@@ -81,7 +81,8 @@ tarjan(part_t const& part, index_t const* head, vertex_t const* csr, callback_t 
 
       auto [local_u, it] = dfs.back();
       if (it < head[local_u + 1]) {
-        auto const v = csr[it++];
+        auto const v = csr[it];
+        dfs.back().it += 1; // Update stack frame iterator
 
         if (part.has_local(v)) { // ignore non local edges
           auto const local_v = part.to_local(v);
