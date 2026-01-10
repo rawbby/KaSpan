@@ -557,7 +557,7 @@ struct explicit_continuous_world_part final : explicit_continuous_part
   explicit_continuous_world_part(vertex_t n, vertex_t begin, vertex_t end, i32 world_rank, i32 world_size, void** memory)
     : world_rank(world_rank)
     , world_size(world_size)
-    , part(kaspan::borrow_array<vertex_t>(memory, 2 * world_size))
+    , part(borrow_array<vertex_t>(memory, 2 * world_size))
   {
 
     auto const local_range = std::array{ begin, end };
@@ -612,7 +612,7 @@ struct explicit_sorted_continuous_world_part final : explicit_continuous_part
   explicit_sorted_continuous_world_part(vertex_t n, vertex_t end, i32 world_rank, i32 world_size, void** memory)
     : world_rank(world_rank)
     , world_size(world_size)
-    , part(kaspan::borrow_array<vertex_t>(memory, world_size))
+    , part(borrow_array<vertex_t>(memory, world_size))
   {
     vertex_t const local_end = end;
     mpi_basic::allgather(local_end, part);

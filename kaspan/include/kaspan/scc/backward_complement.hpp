@@ -30,7 +30,9 @@ backward_complement_graph(vertex_t n, index_t const* fw_head, vertex_t const* fw
 
   // === zero bw_head and count indegrees in-place ===
   // after this loop: bw_head[0] == 0 and for every vertex v, bw_head[v + 1] == indegree(v)
-  std::memset(bw_head, 0, (n + 1) * sizeof(index_t));
+  if (n > 0) {
+    std::memset(bw_head, 0, (n + 1) * sizeof(index_t));
+  }
   index_t it = 0;
   DEBUG_ASSERT(n == 0 or fw_head[0] == 0);
   for (vertex_t u = 0; u < n; ++u) {

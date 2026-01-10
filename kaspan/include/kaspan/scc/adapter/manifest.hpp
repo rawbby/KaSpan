@@ -225,9 +225,9 @@ load_graph_from_manifest(manifest const& manifest) -> local_graph
 
   g.n       = static_cast<vertex_t>(n);
   g.m       = static_cast<index_t>(m);
-  g.fw_head = borrow_array<index_t>(&memory, n + 1);
+  g.fw_head = (n > 0) ? borrow_array<index_t>(&memory, n + 1) : nullptr;
   g.fw_csr  = borrow_array<vertex_t>(&memory, m);
-  g.bw_head = borrow_array<index_t>(&memory, n + 1);
+  g.bw_head = (n > 0) ? borrow_array<index_t>(&memory, n + 1) : nullptr;
   g.bw_csr  = borrow_array<vertex_t>(&memory, m);
 
   for (vertex_t i = 0; i < n + 1; ++i) {
@@ -342,8 +342,8 @@ load_graph_part_from_manifest(part_t const& part, manifest const& manifest) -> l
   result.storage     = make_graph_buffer(local_n, result.local_fw_m, result.local_bw_m);
   auto* graph_memory = result.storage.data();
 
-  result.fw_head = borrow_array<index_t>(&graph_memory, local_n + 1);
-  result.bw_head = borrow_array<index_t>(&graph_memory, local_n + 1);
+  result.fw_head = (local_n > 0) ? borrow_array<index_t>(&graph_memory, local_n + 1) : nullptr;
+  result.bw_head = (local_n > 0) ? borrow_array<index_t>(&graph_memory, local_n + 1) : nullptr;
   result.fw_csr  = borrow_array<vertex_t>(&graph_memory, result.local_fw_m);
   result.bw_csr  = borrow_array<vertex_t>(&graph_memory, result.local_bw_m);
 

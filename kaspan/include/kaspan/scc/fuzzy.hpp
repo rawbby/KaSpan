@@ -19,7 +19,7 @@ namespace kaspan {
 inline auto
 fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double d = -1.0, void* temp_memory = nullptr)
 {
-  DEBUG_ASSERT_GT(n, 0);
+  DEBUG_ASSERT_GE(n, 0);
   DEBUG_ASSERT(d == -1.0 or d >= 0.0);
 
   auto rng = std::mt19937{ seed };
@@ -113,6 +113,9 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double d = -1.0, void* temp_memor
   }
 
   auto avg_degree = [&] {
+    if (n == 0) {
+      return 0.0;
+    }
     auto const dn = static_cast<double>(n);
     auto const dm = static_cast<double>(edges.size());
     return dm / dn;
@@ -152,12 +155,12 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double d = -1.0, void* temp_memor
 
   result.n       = n;
   result.m       = m;
-  result.fw_head = borrow_array<index_t>(&graph_memory, n + 1);
-  result.bw_head = borrow_array<index_t>(&graph_memory, n + 1);
+  result.fw_head = (n > 0) ? borrow_array<index_t>(&graph_memory, n + 1) : nullptr;
+  result.bw_head = (n > 0) ? borrow_array<index_t>(&graph_memory, n + 1) : nullptr;
   result.fw_csr  = borrow_array<vertex_t>(&graph_memory, m);
   result.bw_csr  = borrow_array<vertex_t>(&graph_memory, m);
 
-  {
+  if (n > 0) {
     u64 pos           = 0;
     result.fw_head[0] = pos;
     for (u64 i = 0; i < n; ++i) {

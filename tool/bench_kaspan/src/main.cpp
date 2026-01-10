@@ -51,9 +51,9 @@ benchmark(auto const& graph, bool use_async, bool use_async_indirect)
   if (not use_async) {
     scc(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
   } else if (use_async_indirect) {
-    kaspan::async::scc<briefkasten::GridIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+    async::scc<briefkasten::GridIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
   } else {
-    kaspan::async::scc<briefkasten::NoopIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+    async::scc<briefkasten::NoopIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
   }
 
 #if KASPAN_STATISTIC
