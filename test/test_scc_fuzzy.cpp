@@ -92,12 +92,8 @@ main(int argc, char** argv)
     for (vertex_t n : { 1, 6, 8, 16, 33, 64 }) {
       DEBUG_ASSERT_EQ(n, mpi_basic::allreduce_single(n, MPI_MAX));
 
-      auto const seed = mpi_basic::allreduce_max_time();
-      auto const part = balanced_slice_part{ n };
-      {
-        n;
-      };
-
+      auto const seed  = mpi_basic::allreduce_max_time();
+      auto const part  = balanced_slice_part{ n };
       auto const graph = fuzzy_local_scc_id_and_graph(seed, part);
 
       // Test sync version
