@@ -97,12 +97,12 @@ csr_range(index_t const* head, vertex_t* csr, vertex_t k)
 }
 
 #define DEBUG_ASSERT_VALID_GRAPH_LIGHT(N, M, HEAD, CSR)                                                                                                                            \
-  DEBUG_ASSERT_NE(HEAD, nullptr);                                                                                                                                                  \
-  DEBUG_ASSERT_NE(CSR, nullptr);                                                                                                                                                   \
   DEBUG_ASSERT_GE(N, 0);                                                                                                                                                           \
   DEBUG_ASSERT_GE(M, 0);                                                                                                                                                           \
-  DEBUG_ASSERT_EQ((HEAD)[0], 0);                                                                                                                                                   \
-  DEBUG_ASSERT_EQ((HEAD)[N], M);
+  DEBUG_ASSERT((N) == 0 || (HEAD) != nullptr);                                                                                                                                     \
+  DEBUG_ASSERT((M) == 0 || (CSR) != nullptr);                                                                                                                                      \
+  DEBUG_ASSERT((N) == 0 || (HEAD)[0] == 0);                                                                                                                                        \
+  DEBUG_ASSERT((N) == 0 || (HEAD)[N] == (M));
 
 #define DEBUG_ASSERT_VALID_GRAPH(N, M, HEAD, CSR)                                                                                                                                  \
   DEBUG_ASSERT_VALID_GRAPH_LIGHT(N, M, HEAD, CSR);                                                                                                                                 \
@@ -112,29 +112,31 @@ csr_range(index_t const* head, vertex_t* csr, vertex_t k)
       DEBUG_ASSERT_GE((HEAD)[_i], (HEAD)[_i - 1]);                                                                                                                                 \
     }                                                                                                                                                                              \
     std::remove_cvref_t<decltype(M)> const _m = M;                                                                                                                                 \
-    for (std::remove_cvref_t<decltype(M)> _i = 1; _i < _m; ++_i) {                                                                                                                 \
+    for (std::remove_cvref_t<decltype(M)> _i = 0; _i < _m; ++_i) {                                                                                                                 \
       DEBUG_ASSERT_IN_RANGE((CSR)[_i], 0, N);                                                                                                                                      \
     }                                                                                                                                                                              \
   });
 
 #define DEBUG_ASSERT_VALID_GRAPH_PART_LIGHT(PART, HEAD, CSR)                                                                                                                       \
-  DEBUG_ASSERT_NE(HEAD, nullptr);                                                                                                                                                  \
-  DEBUG_ASSERT_NE(CSR, nullptr);                                                                                                                                                   \
   DEBUG_ASSERT_GE((PART).n, 0);                                                                                                                                                    \
   DEBUG_ASSERT_GE((PART).local_n(), 0);                                                                                                                                            \
-  DEBUG_ASSERT_EQ((HEAD)[0], 0);
+  DEBUG_ASSERT((PART).local_n() == 0 || (HEAD) != nullptr);                                                                                                                        \
+  DEBUG_ASSERT((PART).local_n() == 0 || (HEAD)[0] == 0);
 
 #define DEBUG_ASSERT_VALID_GRAPH_PART(PART, HEAD, CSR)                                                                                                                             \
   DEBUG_ASSERT_VALID_GRAPH_PART_LIGHT(PART, HEAD, CSR);                                                                                                                            \
   IF(KASPAN_DEBUG, {                                                                                                                                                               \
     std::remove_cvref_t<decltype((PART).local_n())> const _n = (PART).local_n();                                                                                                   \
-    for (std::remove_cvref_t<decltype(_n)> _i = 1; _i < _n; ++_i) {                                                                                                                \
-      DEBUG_ASSERT_GE((HEAD)[_i], (HEAD)[_i - 1]);                                                                                                                                 \
-    }                                                                                                                                                                              \
-    std::remove_cvref_t<decltype((HEAD)[_n])> const _m = (HEAD)[_n];                                                                                                               \
-    for (std::remove_cvref_t<decltype(_m)> _i = 1; _i < _m; ++_i) {                                                                                                                \
-      DEBUG_ASSERT_GE((CSR)[_i], 0);                                                                                                                                               \
-      DEBUG_ASSERT_LT((CSR)[_i], (PART).n);                                                                                                                                        \
+    if (_n > 0) {                                                                                                                                                                  \
+      for (std::remove_cvref_t<decltype(_n)> _i = 1; _i < _n; ++_i) {                                                                                                              \
+        DEBUG_ASSERT_GE((HEAD)[_i], (HEAD)[_i - 1]);                                                                                                                               \
+      }                                                                                                                                                                            \
+      std::remove_cvref_t<decltype((HEAD)[_n])> const _m = (HEAD)[_n];                                                                                                             \
+      DEBUG_ASSERT(_m == 0 || (CSR) != nullptr);                                                                                                                                   \
+      for (std::remove_cvref_t<decltype(_m)> _i = 0; _i < _m; ++_i) {                                                                                                              \
+        DEBUG_ASSERT_GE((CSR)[_i], 0);                                                                                                                                             \
+        DEBUG_ASSERT_LT((CSR)[_i], (PART).n);                                                                                                                                      \
+      }                                                                                                                                                                            \
     }                                                                                                                                                                              \
   });
 

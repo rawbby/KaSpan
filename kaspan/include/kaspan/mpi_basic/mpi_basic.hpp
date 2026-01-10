@@ -13,11 +13,9 @@
 #include <kaspan/mpi_basic/displs.hpp>
 #include <kaspan/mpi_basic/gather.hpp>
 #include <kaspan/mpi_basic/gatherv.hpp>
-#include <kaspan/mpi_basic/ialltoallv.hpp>
 #include <kaspan/mpi_basic/init.hpp>
 #include <kaspan/mpi_basic/inplace_partition_by_rank.hpp>
 #include <kaspan/mpi_basic/type.hpp>
-#include <kaspan/mpi_basic/wait.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 
 namespace kaspan {

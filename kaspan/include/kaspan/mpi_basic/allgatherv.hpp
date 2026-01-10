@@ -27,10 +27,13 @@ allgatherv(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count
   DEBUG_ASSERT(send_count == 0 or send_buffer != nullptr);
   DEBUG_ASSERT_NE(recv_counts, nullptr);
   DEBUG_ASSERT_NE(recv_displs, nullptr);
-  if (recv_buffer == nullptr) {
-    DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0);
-  }
-  MPI_Allgatherv_c(send_buffer, send_count, type<T>, recv_buffer, recv_counts, recv_displs, type<T>, MPI_COMM_WORLD);
+  // Some MPI implementations (e.g., Intel MPI) do not accept nullptr buffer pointers,
+  // even when the count is 0. Provide a properly aligned stack-local dummy buffer.
+  alignas(T) char dummy_storage[sizeof(T)];
+  T*       dummy_ptr          = reinterpret_cast<T*>(dummy_storage);
+  T const* actual_send_buffer = (send_buffer == nullptr && send_count == 0) ? dummy_ptr : send_buffer;
+  T*       actual_recv_buffer = (recv_buffer == nullptr) ? dummy_ptr : recv_buffer;
+  MPI_Allgatherv_c(actual_send_buffer, send_count, type<T>, actual_recv_buffer, recv_counts, recv_displs, type<T>, MPI_COMM_WORLD);
 }
 
 /**
@@ -44,10 +47,13 @@ allgatherv(void const* send_buffer, MPI_Count send_count, void* recv_buffer, MPI
   DEBUG_ASSERT_NE(recv_counts, nullptr);
   DEBUG_ASSERT_NE(recv_displs, nullptr);
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
-  if (recv_buffer == nullptr) {
-    DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0);
-  }
-  MPI_Allgatherv_c(send_buffer, send_count, datatype, recv_buffer, recv_counts, recv_displs, datatype, MPI_COMM_WORLD);
+  // Some MPI implementations (e.g., Intel MPI) do not accept nullptr buffer pointers,
+  // even when the count is 0. Provide a properly aligned stack-local dummy buffer.
+  alignas(std::max_align_t) char dummy_storage[64];
+  void*       dummy_ptr          = static_cast<void*>(dummy_storage);
+  void const* actual_send_buffer = (send_buffer == nullptr && send_count == 0) ? dummy_ptr : send_buffer;
+  void*       actual_recv_buffer = (recv_buffer == nullptr) ? dummy_ptr : recv_buffer;
+  MPI_Allgatherv_c(actual_send_buffer, send_count, datatype, actual_recv_buffer, recv_counts, recv_displs, datatype, MPI_COMM_WORLD);
 }
 
 /**

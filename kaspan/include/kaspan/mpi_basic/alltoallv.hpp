@@ -17,13 +17,13 @@ alltoallv(T const* send_buffer, MPI_Count const* send_counts, MPI_Aint const* se
   DEBUG_ASSERT_NE(send_displs, nullptr);
   DEBUG_ASSERT_NE(recv_counts, nullptr);
   DEBUG_ASSERT_NE(recv_displs, nullptr);
-  if (send_buffer == nullptr) {
-    DEBUG_ASSERT_EQ(std::accumulate(send_counts, send_counts + world_size, static_cast<MPI_Count>(0)), 0);
-  }
-  if (recv_buffer == nullptr) {
-    DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0);
-  }
-  MPI_Alltoallv_c(send_buffer, send_counts, send_displs, type<T>, recv_buffer, recv_counts, recv_displs, type<T>, MPI_COMM_WORLD);
+  // Some MPI implementations (e.g., Intel MPI) do not accept nullptr buffer pointers.
+  // Provide a properly aligned stack-local dummy buffer.
+  alignas(T) char dummy_storage[sizeof(T)];
+  T*       dummy_ptr          = reinterpret_cast<T*>(dummy_storage);
+  T const* actual_send_buffer = (send_buffer == nullptr) ? dummy_ptr : send_buffer;
+  T*       actual_recv_buffer = (recv_buffer == nullptr) ? dummy_ptr : recv_buffer;
+  MPI_Alltoallv_c(actual_send_buffer, send_counts, send_displs, type<T>, actual_recv_buffer, recv_counts, recv_displs, type<T>, MPI_COMM_WORLD);
 }
 
 /**
@@ -42,14 +42,14 @@ alltoallv(void const*      send_buffer,
   DEBUG_ASSERT_NE(send_displs, nullptr);
   DEBUG_ASSERT_NE(recv_counts, nullptr);
   DEBUG_ASSERT_NE(recv_displs, nullptr);
-  if (send_buffer == nullptr) {
-    DEBUG_ASSERT_EQ(std::accumulate(send_counts, send_counts + world_size, static_cast<MPI_Count>(0)), 0);
-  }
-  if (recv_buffer == nullptr) {
-    DEBUG_ASSERT_EQ(std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)), 0);
-  }
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
-  MPI_Alltoallv_c(send_buffer, send_counts, send_displs, datatype, recv_buffer, recv_counts, recv_displs, datatype, MPI_COMM_WORLD);
+  // Some MPI implementations (e.g., Intel MPI) do not accept nullptr buffer pointers.
+  // Provide a properly aligned stack-local dummy buffer.
+  alignas(std::max_align_t) char dummy_storage[64];
+  void*       dummy_ptr          = static_cast<void*>(dummy_storage);
+  void const* actual_send_buffer = (send_buffer == nullptr) ? dummy_ptr : send_buffer;
+  void*       actual_recv_buffer = (recv_buffer == nullptr) ? dummy_ptr : recv_buffer;
+  MPI_Alltoallv_c(actual_send_buffer, send_counts, send_displs, datatype, actual_recv_buffer, recv_counts, recv_displs, datatype, MPI_COMM_WORLD);
 }
 
 } // namespace kaspan::mpi_basic
