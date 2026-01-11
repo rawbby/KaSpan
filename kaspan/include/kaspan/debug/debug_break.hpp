@@ -9,7 +9,7 @@ namespace kaspan {
 inline void
 debug_break() noexcept
 {
-  KASPAN_VALGRIND_PRINTF_BACKTRACE("[BREAK] break point triggered - backtrace requested");
+  KASPAN_MEMCHECK_PRINTF_BACKTRACE("[BREAK] break point triggered - backtrace requested");
 
 #if KASPAN_DEBUG
 #if defined(_MSC_VER)

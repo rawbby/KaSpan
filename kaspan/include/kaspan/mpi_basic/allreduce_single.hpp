@@ -17,15 +17,15 @@ allreduce_single(T const& send_value, MPI_Datatype datatype, MPI_Op op) -> T
 {
   DEBUG_ASSERT_NE(op, MPI_OP_NULL);
 
-  KASPAN_VALGRIND_CHECK_VALUE_IS_DEFINED(send_value);
+  KASPAN_MEMCHECK_CHECK_VALUE_IS_DEFINED(send_value);
 
   T recv_value;
-  KASPAN_VALGRIND_MAKE_VALUE_UNDEFINED(recv_value);
+  KASPAN_MEMCHECK_MAKE_VALUE_UNDEFINED(recv_value);
 
   [[maybe_unused]] auto const rc = MPI_Allreduce_c(&send_value, &recv_value, 1, datatype, op, comm_world);
   DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
 
-  KASPAN_VALGRIND_CHECK_VALUE_IS_DEFINED(recv_value);
+  KASPAN_MEMCHECK_CHECK_VALUE_IS_DEFINED(recv_value);
 
   return recv_value;
 }

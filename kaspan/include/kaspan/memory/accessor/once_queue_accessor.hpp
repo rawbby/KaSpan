@@ -26,7 +26,7 @@ public:
     DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
     DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
     IF(KASPAN_DEBUG, size_ = static_cast<u64>(size));
-    KASPAN_VALGRIND_CHECK_MEM_IS_ADDRESSABLE(data, size * sizeof(T));
+    KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(data, size * sizeof(T));
   }
 
   once_queue_accessor(once_queue_accessor const& rhs) noexcept = default;
@@ -57,7 +57,7 @@ public:
 
   void clear()
   {
-    KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(data() + beg_, size() * sizeof(T));
+    KASPAN_MEMCHECK_MAKE_MEM_UNDEFINED(data() + beg_, size() * sizeof(T));
     beg_ = 0;
     end_ = 0;
   }
@@ -71,7 +71,7 @@ public:
   {
     DEBUG_ASSERT_LT(beg_, end_);
     T item = data()[beg_];
-    KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(data() + beg_, sizeof(T));
+    KASPAN_MEMCHECK_MAKE_MEM_UNDEFINED(data() + beg_, sizeof(T));
     ++beg_;
   }
 

@@ -1,27 +1,24 @@
-#include <kaspan/debug/assert_lt.hpp>
 #include <kaspan_adapter.hpp>
+#include <scc.h>
 
-#include <cstdint>
-#include <cstdlib>
+#include <kaspan/debug/assert_lt.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/valgrind.hpp>
+#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
+#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/pivot_selection.hpp>
 #include <kaspan/util/arg_parse.hpp>
-#include <limits>
-
-#include <kaspan/mpi_basic/world.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/util/scope_guard.hpp>
-#include <scc.h>
+
+#include <cstdio>
+#include <limits>
+#include <print>
 
 #include <mpi.h>
 #include <omp.h>
-
-#include <cstdio>
-#include <print>
 
 using namespace kaspan;
 
@@ -133,7 +130,8 @@ main(int argc, char** argv)
   KASPAN_STATISTIC_SCOPE("benchmark");
   KASPAN_STATISTIC_ADD("world_rank", mpi_basic::world_rank);
   KASPAN_STATISTIC_ADD("world_size", mpi_basic::world_size);
-  KASPAN_STATISTIC_ADD("valgrind", KASPAN_VALGRIND);
+  KASPAN_STATISTIC_ADD("memcheck", KASPAN_MEMCHECK);
+  KASPAN_STATISTIC_ADD("callgrind", KASPAN_CALLGRIND);
 
   if (kagen_option_string != nullptr) {
     KASPAN_STATISTIC_PUSH("kagen");

@@ -17,10 +17,10 @@ public:
     : data_(size == 0 ? nullptr : data)
   {
     DEBUG_ASSERT_IN_RANGE_INCLUSIVE(size, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
-    IF(OR(KASPAN_DEBUG, KASPAN_VALGRIND), auto const size64 = static_cast<u64>(size));
+    IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const size64 = static_cast<u64>(size));
     DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
     IF(KASPAN_DEBUG, size_ = size64);
-    KASPAN_VALGRIND_CHECK_MEM_IS_ADDRESSABLE(data, round_up<64>(size64) / 8);
+    KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(data, round_up<64>(size64) / 8);
   }
 
   bits_accessor()  = default;

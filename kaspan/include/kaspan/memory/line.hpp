@@ -80,7 +80,6 @@ line_alloc(Size size) noexcept(false) -> void*
   if (data == nullptr) [[unlikely]] {
     throw std::bad_alloc{};
   }
-  // KASPAN_VALGRIND_MALLOCLIKE_BLOCK(data, size64, 0, 0);
   return data;
 }
 
@@ -89,7 +88,6 @@ line_free(void* data)
 {
   DEBUG_ASSERT_NE(data, nullptr);
   DEBUG_ASSERT(is_line_aligned(data));
-  // KASPAN_VALGRIND_FREELIKE_BLOCK(data, 0);
   std::free(data);
 }
 

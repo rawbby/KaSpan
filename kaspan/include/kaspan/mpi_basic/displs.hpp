@@ -21,8 +21,8 @@ displs(MPI_Count const* counts, MPI_Aint* displs) -> MPI_Count
   DEBUG_ASSERT_NE(counts, nullptr);
   DEBUG_ASSERT_NE(displs, nullptr);
 
-  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(counts, world_size * sizeof(MPI_Count));
-  KASPAN_VALGRIND_CHECK_MEM_IS_ADDRESSABLE(displs, world_size * sizeof(MPI_Aint));
+  KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(counts, world_size * sizeof(MPI_Count));
+  KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(displs, world_size * sizeof(MPI_Aint));
 
   MPI_Count count = 0;
   for (i32 i = 0; i < world_size; ++i) {
@@ -31,7 +31,7 @@ displs(MPI_Count const* counts, MPI_Aint* displs) -> MPI_Count
     count += counts[i];
   }
 
-  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(displs, world_size * sizeof(MPI_Aint));
+  KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(displs, world_size * sizeof(MPI_Aint));
 
   return count;
 }

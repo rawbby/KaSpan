@@ -27,7 +27,7 @@ public:
     DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
     DEBUG_ASSERT_GE(element_byte_size, 1);
     DEBUG_ASSERT_LE(element_byte_size, sizeof(T));
-    KASPAN_VALGRIND_CHECK_MEM_IS_ADDRESSABLE(data, size * element_byte_size);
+    KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(data, size * element_byte_size);
   }
 
   dense_unsigned_accessor()  = delete;

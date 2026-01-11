@@ -1,7 +1,7 @@
 target_link_libraries(${TARGET_NAME} PRIVATE kaspan)
 target_compile_definitions(${TARGET_NAME} PRIVATE KASPAN_NORMALIZE)
 
-if (KASPAN_VALGRIND)
+if (KASPAN_MEMCHECK)
     set(TARGET_BASE_COMMAND valgrind
             --leak-check=full
             --show-leak-kinds=definite,possible

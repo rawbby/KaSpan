@@ -19,13 +19,13 @@ allreduce_inplace(void* send_buffer, MPI_Count send_count, MPI_Datatype datatype
   DEBUG_ASSERT_GE(send_count, 0);
   DEBUG_ASSERT(send_count == 0 || send_buffer != nullptr);
 
-  IF(KASPAN_VALGRIND, auto const extent = extent_of(datatype));
-  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(send_buffer, send_count * extent);
+  IF(KASPAN_MEMCHECK, auto const extent = extent_of(datatype));
+  KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(send_buffer, send_count * extent);
 
   [[maybe_unused]] auto const rc = MPI_Allreduce_c(MPI_IN_PLACE, send_buffer, send_count, datatype, op, comm_world);
   DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
 
-  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(send_buffer, send_count * extent);
+  KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(send_buffer, send_count * extent);
 }
 
 /**

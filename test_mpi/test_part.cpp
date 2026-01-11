@@ -79,6 +79,8 @@ main(i32 argc, char** argv)
   mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();
 
-  test_explicit_continuous_world_part<false>();
-  test_explicit_continuous_world_part<true>();
+  if (mpi_basic::world_size == 3) {
+    test_explicit_continuous_world_part<false>();
+    test_explicit_continuous_world_part<true>();
+  }
 }

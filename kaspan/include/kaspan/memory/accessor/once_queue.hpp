@@ -75,7 +75,7 @@ public:
 
   void clear()
   {
-    KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(data() + beg_, size() * sizeof(T));
+    KASPAN_MEMCHECK_MAKE_MEM_UNDEFINED(data() + beg_, size() * sizeof(T));
     beg_ = 0;
     end_ = 0;
   }
@@ -89,7 +89,7 @@ public:
   {
     DEBUG_ASSERT_LT(beg_, end_);
     T item = data()[beg_];
-    KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(data() + beg_, sizeof(T));
+    KASPAN_MEMCHECK_MAKE_MEM_UNDEFINED(data() + beg_, sizeof(T));
     ++beg_;
   }
 

@@ -28,14 +28,14 @@ alltoallv(void const*      send_buffer,
   DEBUG_ASSERT_NE(recv_counts, nullptr);
   DEBUG_ASSERT_NE(recv_displs, nullptr);
 
-  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(send_counts, world_size * sizeof(MPI_Count));
-  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(send_displs, world_size * sizeof(MPI_Aint));
-  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(recv_counts, world_size * sizeof(MPI_Count));
-  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(recv_displs, world_size * sizeof(MPI_Aint));
+  KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(send_counts, world_size * sizeof(MPI_Count));
+  KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(send_displs, world_size * sizeof(MPI_Aint));
+  KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_counts, world_size * sizeof(MPI_Count));
+  KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_displs, world_size * sizeof(MPI_Aint));
 
-  IF(OR(KASPAN_DEBUG, KASPAN_VALGRIND), auto const send_count = std::accumulate(send_counts, send_counts + world_size, static_cast<MPI_Count>(0)));
-  IF(OR(KASPAN_DEBUG, KASPAN_VALGRIND), auto const recv_count = std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)));
-  IF(OR(KASPAN_DEBUG, KASPAN_VALGRIND), auto const data_extent = extent_of(datatype));
+  IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const send_count = std::accumulate(send_counts, send_counts + world_size, static_cast<MPI_Count>(0)));
+  IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const recv_count = std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)));
+  IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const data_extent = extent_of(datatype));
 
   DEBUG_ASSERT_GE(send_count, 0);
   DEBUG_ASSERT(send_count == 0 || send_buffer != nullptr);
@@ -43,14 +43,14 @@ alltoallv(void const*      send_buffer,
   DEBUG_ASSERT_GE(recv_count, 0);
   DEBUG_ASSERT(recv_count == 0 || recv_buffer != nullptr);
 
-  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(send_buffer, send_count * data_extent);
-  KASPAN_VALGRIND_CHECK_MEM_IS_ADDRESSABLE(recv_buffer, recv_count * data_extent);
-  KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(recv_buffer, recv_count * data_extent);
+  KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(send_buffer, send_count * data_extent);
+  KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(recv_buffer, recv_count * data_extent);
+  KASPAN_MEMCHECK_MAKE_MEM_UNDEFINED(recv_buffer, recv_count * data_extent);
 
   [[maybe_unused]] auto const rc = MPI_Alltoallv_c(send_buffer, send_counts, send_displs, datatype, recv_buffer, recv_counts, recv_displs, datatype, comm_world);
   DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
 
-  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(recv_buffer, recv_count * data_extent);
+  KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_buffer, recv_count * data_extent);
 }
 
 /**

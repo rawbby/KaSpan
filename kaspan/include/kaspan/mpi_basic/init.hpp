@@ -27,7 +27,7 @@ namespace kaspan {
     DEBUG_ASSERT_EQ(rc2, MPI_SUCCESS);                                                                                                                                             \
     kaspan::mpi_basic::world_root = kaspan::mpi_basic::world_rank == 0;                                                                                                            \
   }                                                                                                                                                                                \
-  KASPAN_VALGRIND_PRINTF("[INIT] rank %d initialized\n", kaspan::mpi_basic::world_rank); /* this print should help to map the rank to the pid in valgrind logs */                  \
+  KASPAN_MEMCHECK_PRINTF("[INIT] rank %d initialized\n", kaspan::mpi_basic::world_rank); /* this print should help to map the rank to the pid in valgrind logs */                  \
   ((void)0)
 
 } // namespace kaspan

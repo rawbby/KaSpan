@@ -123,9 +123,9 @@ tarjan(part_t const& part, index_t const* head, vertex_t const* csr, callback_t 
 
         // notice: this is kind of a dirty trick, but it works
         // we use the poped part of the stack to call the callback
-        KASPAN_VALGRIND_MAKE_MEM_DEFINED(st.data() + begin, (end - begin) * sizeof(vertex_t));
+        KASPAN_MEMCHECK_MAKE_MEM_DEFINED(st.data() + begin, (end - begin) * sizeof(vertex_t));
         callback(st.data() + begin, st.data() + end);
-        KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(st.data() + begin, (end - begin) * sizeof(vertex_t));
+        KASPAN_MEMCHECK_MAKE_MEM_UNDEFINED(st.data() + begin, (end - begin) * sizeof(vertex_t));
       }
 
       dfs.pop();

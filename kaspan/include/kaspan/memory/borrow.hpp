@@ -248,8 +248,8 @@ borrow_array(void** memory, Count count) noexcept -> T*
   DEBUG_ASSERT(is_line_aligned(*memory));
   auto const result    = static_cast<T*>(*memory);
   auto const byte_size = line_align_up(count64 * sizeof(T));
-  KASPAN_VALGRIND_CHECK_MEM_IS_ADDRESSABLE(*memory, byte_size);
-  KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(*memory, byte_size);
+  KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(*memory, byte_size);
+  KASPAN_MEMCHECK_MAKE_MEM_UNDEFINED(*memory, byte_size);
   *memory = static_cast<void*>(static_cast<std::byte*>(*memory) + byte_size);
   return result;
 }

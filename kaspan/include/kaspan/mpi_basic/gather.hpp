@@ -28,24 +28,24 @@ gather(void const*  send_buffer,
   DEBUG_ASSERT_GE(send_count, 0);
   DEBUG_ASSERT(send_count == 0 || send_buffer != nullptr);
 
-  IF(KASPAN_VALGRIND, auto const send_extent = extent_of(send_type));
-  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(send_buffer, send_count * send_extent);
+  IF(KASPAN_MEMCHECK, auto const send_extent = extent_of(send_type));
+  KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(send_buffer, send_count * send_extent);
 
-  IF(KASPAN_VALGRIND, auto const recv_extent = extent_of(recv_type));
+  IF(KASPAN_MEMCHECK, auto const recv_extent = extent_of(recv_type));
 
   if (world_rank == root) {
     DEBUG_ASSERT_GE(recv_count, 0);
     DEBUG_ASSERT(recv_count == 0 || recv_buffer != nullptr);
 
-    KASPAN_VALGRIND_CHECK_MEM_IS_ADDRESSABLE(recv_buffer, recv_count * world_size * recv_extent);
-    KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(recv_buffer, recv_count * world_size * recv_extent);
+    KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(recv_buffer, recv_count * world_size * recv_extent);
+    KASPAN_MEMCHECK_MAKE_MEM_UNDEFINED(recv_buffer, recv_count * world_size * recv_extent);
   }
 
   [[maybe_unused]] auto const rc = MPI_Gather_c(send_buffer, send_count, send_type, recv_buffer, recv_count, recv_type, root, comm_world);
   DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
 
   if (world_rank == root) {
-    KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(recv_buffer, recv_count * world_size * recv_extent);
+    KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_buffer, recv_count * world_size * recv_extent);
   }
 }
 

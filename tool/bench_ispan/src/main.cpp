@@ -63,7 +63,8 @@ main(int argc, char** argv)
 
   KASPAN_STATISTIC_ADD("world_rank", kaspan::mpi_basic::world_rank);
   KASPAN_STATISTIC_ADD("world_size", kaspan::mpi_basic::world_size);
-  KASPAN_STATISTIC_ADD("valgrind", KASPAN_VALGRIND);
+  KASPAN_STATISTIC_ADD("memcheck", KASPAN_MEMCHECK);
+  KASPAN_STATISTIC_ADD("callgrind", KASPAN_CALLGRIND);
   KASPAN_STATISTIC_ADD("alpha", alpha);
 
   if (kagen_option_string != nullptr) {
