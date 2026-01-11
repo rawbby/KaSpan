@@ -3,14 +3,13 @@
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/memory/buffer.hpp>
+#include <kaspan/mpi_basic/allgather_counts.hpp>
 #include <kaspan/mpi_basic/allgatherv.hpp>
-#include <kaspan/mpi_basic/allgatherv_counts.hpp>
 #include <kaspan/mpi_basic/counts_and_displs.hpp>
 #include <kaspan/mpi_basic/displs.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/part.hpp>
-#include <kaspan/util/return_pack.hpp>
 
 #include <unordered_map>
 
@@ -33,12 +32,12 @@ allgather_sub_ids(part_t const& part, vertex_t local_sub_n, fn_t&& in_sub_graph)
 
   auto [TMP(), counts, displs] = mpi_basic::counts_and_displs();
 
-  mpi_basic::allgatherv_counts(local_ids_inverse_stack.size(), counts);
+  mpi_basic::allgather_counts(local_ids_inverse_stack.size(), counts);
   auto const sub_n = static_cast<vertex_t>(mpi_basic::displs(counts, displs));
 
   auto  ids_inverse_buffer = make_buffer<vertex_t>(sub_n);
   auto* ids_inverse        = static_cast<vertex_t*>(ids_inverse_buffer.data());
-  KASPAN_VALGRIND_MAKE_MEM_DEFINED(ids_inverse, sub_n * sizeof(vertex_t));
+
   mpi_basic::allgatherv<vertex_t>(local_ids_inverse_stack.data(), local_ids_inverse_stack.size(), ids_inverse, counts, displs);
 
   auto* local_ids_inverse = ids_inverse + displs[mpi_basic::world_rank];
@@ -67,13 +66,10 @@ allgather_csr_degrees(part_t const&   part,
 
   auto  buffer = make_buffer<MPI_Count, MPI_Aint, vertex_t, index_t>(mpi_basic::world_size, mpi_basic::world_size, local_sub_m_upper_bound, mpi_basic::world_root + local_sub_n);
   void* memory = buffer.data();
-  KASPAN_VALGRIND_MAKE_MEM_DEFINED(memory,
-                                   line_align_up(mpi_basic::world_size * sizeof(MPI_Count)) + line_align_up(mpi_basic::world_size * sizeof(MPI_Aint)) +
-                                     line_align_up(local_sub_m_upper_bound * sizeof(vertex_t)) + line_align_up((local_sub_n + mpi_basic::world_root) * sizeof(index_t)));
 
   auto [counts, displs]  = mpi_basic::counts_and_displs(&memory);
   auto local_sub_csr     = borrow_stack<vertex_t>(&memory, local_sub_m_upper_bound);
-  auto local_sub_degrees = borrow_stack<vertex_t>(&memory, local_sub_n + mpi_basic::world_root);
+  auto local_sub_degrees = borrow_stack<index_t>(&memory, local_sub_n + mpi_basic::world_root);
   if (mpi_basic::world_root) {
     local_sub_degrees.push(0);
   }
@@ -96,7 +92,7 @@ allgather_csr_degrees(part_t const&   part,
     local_sub_degrees.push(deg);
   }
 
-  mpi_basic::allgatherv_counts(local_sub_csr.size(), counts);
+  mpi_basic::allgather_counts(local_sub_csr.size(), counts);
   auto const sub_m = mpi_basic::displs(counts, displs);
 
   return PACK(buffer, sub_m, counts, displs, local_sub_csr, local_sub_degrees);
@@ -149,7 +145,7 @@ allgather_sub_graph(part_t const& part, vertex_t local_sub_n, index_t const* fw_
 
     mpi_basic::allgatherv<vertex_t>(local_sub_fw_csr.data(), local_sub_fw_csr.size(), sub.fw_csr, counts, displs);
     auto const send_count = local_sub_fw_degrees.size();
-    mpi_basic::allgatherv_counts(send_count, counts);
+    mpi_basic::allgather_counts(send_count, counts);
     auto const recv_count = mpi_basic::displs(counts, displs);
     DEBUG_ASSERT_EQ(sub.n + 1, recv_count);
     mpi_basic::allgatherv<index_t>(local_sub_fw_degrees.data(), send_count, sub.fw_head, counts, displs);
@@ -167,7 +163,7 @@ allgather_sub_graph(part_t const& part, vertex_t local_sub_n, index_t const* fw_
 
     mpi_basic::allgatherv<vertex_t>(local_sub_bw_csr.data(), local_sub_bw_csr.size(), sub.bw_csr, counts, displs);
     auto const send_count = local_sub_bw_degrees.size();
-    mpi_basic::allgatherv_counts(send_count, counts);
+    mpi_basic::allgather_counts(send_count, counts);
     auto const recv_count = mpi_basic::displs(counts, displs);
     DEBUG_ASSERT_EQ(sub.n + 1, recv_count);
     mpi_basic::allgatherv<index_t>(local_sub_bw_degrees.data(), send_count, sub.bw_head, counts, displs);
@@ -176,8 +172,8 @@ allgather_sub_graph(part_t const& part, vertex_t local_sub_n, index_t const* fw_
     }
   }
 
-  DEBUG_ASSERT_VALID_GRAPH(sub.n, sub.fw_head[sub.n], sub.fw_head, sub.fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH(sub.n, sub.bw_head[sub.n], sub.bw_head, sub.bw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(sub.n, sub.fw_head, sub.fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(sub.n, sub.bw_head, sub.bw_csr);
   return sub;
 }
 
@@ -201,6 +197,10 @@ allgather_fw_sub_graph(part_t const& part, vertex_t local_sub_n, index_t const* 
   DEBUG_ASSERT_VALID_GRAPH_PART(part, fw_head, fw_csr);
 
   auto [sub_n, ids_inverse_buffer, local_ids_inverse, ids_inverse] = sub_graph::allgather_sub_ids(part, local_sub_n, in_sub_graph);
+  DEBUG_ASSERT_EQ(sub_n, mpi_basic::allreduce_single(sub_n, mpi_basic::max)); // ensure all processes take the eary return
+  if (sub_n == 0) {
+    return result{ .ids_inverse_storage = {}, .ids_inverse = nullptr, .storage = {}, .n = 0, .m = 0, .fw_head = nullptr, .fw_csr = nullptr };
+  }
 
   sub.ids_inverse_storage = std::move(ids_inverse_buffer);
   sub.ids_inverse         = ids_inverse;
@@ -219,8 +219,9 @@ allgather_fw_sub_graph(part_t const& part, vertex_t local_sub_n, index_t const* 
 
     mpi_basic::allgatherv<vertex_t>(local_sub_fw_csr.data(), local_sub_fw_csr.size(), sub.fw_csr, counts, displs);
     auto const send_count = local_sub_fw_degrees.size();
-    mpi_basic::allgatherv_counts(send_count, counts);
+    mpi_basic::allgather_counts(send_count, counts);
     auto const recv_count = mpi_basic::displs(counts, displs);
+    DEBUG_ASSERT(recv_count == 0 || sub.fw_head != nullptr);
     DEBUG_ASSERT_EQ(sub.n + 1, recv_count);
     mpi_basic::allgatherv<index_t>(local_sub_fw_degrees.data(), send_count, sub.fw_head, counts, displs);
     for (vertex_t u = 0; u < sub_n; ++u) {
@@ -228,7 +229,7 @@ allgather_fw_sub_graph(part_t const& part, vertex_t local_sub_n, index_t const* 
     }
   }
 
-  DEBUG_ASSERT_VALID_GRAPH(sub.n, sub.fw_head[sub.n], sub.fw_head, sub.fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(sub.n, sub.fw_head, sub.fw_csr);
   return sub;
 }
 }

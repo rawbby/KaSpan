@@ -1,14 +1,56 @@
 #pragma once
 
+#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/valgrind.hpp>
 #include <kaspan/memory/borrow.hpp>
-#include <kaspan/mpi_basic/allgatherv_counts.hpp>
+#include <kaspan/mpi_basic/allgather_counts.hpp>
 #include <kaspan/mpi_basic/counts_and_displs.hpp>
 #include <kaspan/mpi_basic/displs.hpp>
+#include <kaspan/mpi_basic/extent_of.hpp>
 #include <kaspan/mpi_basic/type.hpp>
+#include <kaspan/mpi_basic/world.hpp>
+
 #include <mpi.h>
 #include <numeric> // std::accumulate
 
 namespace kaspan::mpi_basic {
+
+/**
+ * @brief Untyped wrapper for MPI_Allgatherv_c.
+ */
+inline void
+allgatherv(void const*      send_buffer,
+           MPI_Count        send_count,
+           void*            recv_buffer,
+           MPI_Count const* recv_counts,
+           MPI_Aint const*  recv_displs,
+           MPI_Datatype     datatype)
+{
+  DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
+  DEBUG_ASSERT_NE(recv_counts, nullptr);
+  DEBUG_ASSERT_NE(recv_displs, nullptr);
+
+  DEBUG_ASSERT_GE(send_count, 0);
+  DEBUG_ASSERT(send_count == 0 || send_buffer != nullptr);
+
+  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(recv_counts, world_size * sizeof(MPI_Count));
+  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(recv_displs, world_size * sizeof(MPI_Aint));
+
+  IF(OR(KASPAN_DEBUG, KASPAN_VALGRIND), auto const recv_count = std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)));
+  IF(OR(KASPAN_DEBUG, KASPAN_VALGRIND), auto const extent = extent_of(datatype));
+
+  DEBUG_ASSERT_GE(recv_count, 0);
+  DEBUG_ASSERT(recv_count == 0 || recv_buffer != nullptr);
+
+  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(send_buffer, send_count * extent);
+  KASPAN_VALGRIND_CHECK_MEM_IS_ADDRESSABLE(recv_buffer, recv_count * extent);
+  KASPAN_VALGRIND_MAKE_MEM_UNDEFINED(recv_buffer, recv_count * extent);
+
+  [[maybe_unused]] auto const rc = MPI_Allgatherv_c(send_buffer, send_count, datatype, recv_buffer, recv_counts, recv_displs, datatype, comm_world);
+  DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
+
+  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(recv_buffer, recv_count * extent);
+}
 
 /**
  * @brief Typed wrapper for MPI_Allgatherv_c with element counts and displacements.
@@ -23,37 +65,7 @@ template<mpi_type_concept T>
 void
 allgatherv(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count const* recv_counts, MPI_Aint const* recv_displs)
 {
-  DEBUG_ASSERT_GE(send_count, 0);
-  DEBUG_ASSERT(send_count == 0 or send_buffer != nullptr);
-  DEBUG_ASSERT_NE(recv_counts, nullptr);
-  DEBUG_ASSERT_NE(recv_displs, nullptr);
-  // Some MPI implementations (e.g., Intel MPI) do not accept nullptr buffer pointers,
-  // even when the count is 0. Provide a properly aligned stack-local dummy buffer.
-  alignas(T) char dummy_storage[sizeof(T)];
-  T*       dummy_ptr          = reinterpret_cast<T*>(dummy_storage);
-  T const* actual_send_buffer = (send_buffer == nullptr && send_count == 0) ? dummy_ptr : send_buffer;
-  T*       actual_recv_buffer = (recv_buffer == nullptr) ? dummy_ptr : recv_buffer;
-  MPI_Allgatherv_c(actual_send_buffer, send_count, type<T>, actual_recv_buffer, recv_counts, recv_displs, type<T>, MPI_COMM_WORLD);
-}
-
-/**
- * @brief Untyped wrapper for MPI_Allgatherv_c.
- */
-inline void
-allgatherv(void const* send_buffer, MPI_Count send_count, void* recv_buffer, MPI_Count const* recv_counts, MPI_Aint const* recv_displs, MPI_Datatype datatype)
-{
-  DEBUG_ASSERT_GE(send_count, 0);
-  DEBUG_ASSERT(send_count == 0 or send_buffer != nullptr);
-  DEBUG_ASSERT_NE(recv_counts, nullptr);
-  DEBUG_ASSERT_NE(recv_displs, nullptr);
-  DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
-  // Some MPI implementations (e.g., Intel MPI) do not accept nullptr buffer pointers,
-  // even when the count is 0. Provide a properly aligned stack-local dummy buffer.
-  alignas(std::max_align_t) char dummy_storage[64];
-  void*       dummy_ptr          = static_cast<void*>(dummy_storage);
-  void const* actual_send_buffer = (send_buffer == nullptr && send_count == 0) ? dummy_ptr : send_buffer;
-  void*       actual_recv_buffer = (recv_buffer == nullptr) ? dummy_ptr : recv_buffer;
-  MPI_Allgatherv_c(actual_send_buffer, send_count, datatype, actual_recv_buffer, recv_counts, recv_displs, datatype, MPI_COMM_WORLD);
+  allgatherv(send_buffer, send_count, recv_buffer, recv_counts, recv_displs, type<T>);
 }
 
 /**
@@ -71,25 +83,16 @@ auto
 allgatherv(T const* send_buffer, MPI_Count send_count)
 {
   DEBUG_ASSERT_GE(send_count, 0);
-  DEBUG_ASSERT(send_count == 0 or send_buffer != nullptr);
+  DEBUG_ASSERT(send_count == 0 || send_buffer != nullptr);
 
-  struct result
-  {
-    buffer    storage;
-    T*        recv;
-    MPI_Count count{};
-  };
+  auto [buffer, c, d] = counts_and_displs();
+  allgather_counts(send_count, c);
 
-  result res;
-  auto [buffer, counts, d] = counts_and_displs();
-  allgatherv_counts(send_count, counts);
+  auto const count = displs(c, d);
+  auto       recv  = make_array<T>(count);
 
-  res.count   = displs(counts, d);
-  res.storage = make_buffer<T>(res.count);
-  res.recv    = static_cast<T*>(res.storage.data());
-
-  allgatherv<T>(send_buffer, send_count, res.recv, counts, d);
-  return res;
+  allgatherv<T>(send_buffer, send_count, recv.data(), c, d);
+  return PACK(recv, count);
 }
 
 } // namespace kaspan::mpi_basic

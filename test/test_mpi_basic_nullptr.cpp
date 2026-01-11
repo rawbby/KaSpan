@@ -30,7 +30,7 @@ test_allgatherv_nullptr()
 
   // Gather counts from all ranks
   auto [b1, recv_counts, recv_displs] = mpi_basic::counts_and_displs();
-  mpi_basic::allgatherv_counts(send_count, recv_counts);
+  mpi_basic::allgather_counts(send_count, recv_counts);
   auto recv_count = mpi_basic::displs(recv_counts, recv_displs);
 
   auto recv_buffer = make_buffer<vertex_t>(recv_count);
@@ -59,7 +59,7 @@ test_allgatherv_all_zero()
   vertex_t* send_ptr   = nullptr; // nullptr is valid when count is 0
 
   auto [b1, recv_counts, recv_displs] = mpi_basic::counts_and_displs();
-  mpi_basic::allgatherv_counts(send_count, recv_counts);
+  mpi_basic::allgather_counts(send_count, recv_counts);
   auto recv_count = mpi_basic::displs(recv_counts, recv_displs);
 
   ASSERT_EQ(recv_count, 0, "Expected total recv_count to be 0");

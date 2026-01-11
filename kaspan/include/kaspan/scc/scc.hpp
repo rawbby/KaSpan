@@ -114,7 +114,6 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
       // global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
       do {
-
         local_decided += color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier, local_decided);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 

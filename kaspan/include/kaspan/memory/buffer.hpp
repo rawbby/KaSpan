@@ -61,7 +61,6 @@ public:
     if (this != &rhs) {
       if (data_ != nullptr) {
         DEBUG_ASSERT(is_line_aligned(data_));
-        KASPAN_VALGRIND_FREELIKE_BLOCK(data_, 0);
         line_free(data_);
       }
       data_     = rhs.data_;

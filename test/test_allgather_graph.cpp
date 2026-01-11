@@ -201,8 +201,8 @@ test_allgather_graph(auto const& initial_g, auto const& p)
   // graph -> part -> graph -> part
   check_g(initial_g);
 
-  DEBUG_ASSERT_VALID_GRAPH(initial_g.n, initial_g.m, initial_g.fw_head, initial_g.fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH(initial_g.n, initial_g.m, initial_g.bw_head, initial_g.bw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(initial_g.n, initial_g.fw_head, initial_g.fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(initial_g.n, initial_g.bw_head, initial_g.bw_csr);
   auto initial_gp = partition(initial_g.m, initial_g.fw_head, initial_g.fw_csr, initial_g.bw_head, initial_g.bw_csr, p);
   check_gp(initial_gp);
   check_g_gp(initial_g, initial_gp);

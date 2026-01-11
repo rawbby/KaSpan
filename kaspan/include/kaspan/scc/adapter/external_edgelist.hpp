@@ -12,7 +12,6 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
-#include <print>
 #include <string>
 
 namespace kaspan {
@@ -228,10 +227,8 @@ convert_graph(std::string const& input_file, u64 mem_bytes, std::string const& g
     head_bytes = representing_bytes(m);
     csr_bytes  = representing_bytes(max_node);
 
-    std::println("opening files ...");
     auto head_buffer = file_buffer::create_w<true>(fw_head_path.c_str(), (n + 1) * head_bytes);
     auto csr_buffer  = file_buffer::create_w<true>(fw_csr_path.c_str(), m * csr_bytes);
-    std::println("files open");
 
     auto head = view_dense_unsigned(head_buffer.data(), n + 1, head_bytes);
     auto csr  = view_dense_unsigned(csr_buffer.data(), m, csr_bytes);
@@ -292,10 +289,8 @@ convert_graph(std::string const& input_file, u64 mem_bytes, std::string const& g
     ASSERT(not in.bad());
     sort();
 
-    std::println("opening files ...");
     auto head_buffer = file_buffer::create_w<true>(bw_head_path.c_str(), (n + 1) * head_bytes);
     auto csr_buffer  = file_buffer::create_w<true>(bw_csr_path.c_str(), m * csr_bytes);
-    std::println("files open");
 
     auto head = view_dense_unsigned(head_buffer.data(), n + 1, head_bytes);
     auto csr  = view_dense_unsigned(csr_buffer.data(), m, csr_bytes);

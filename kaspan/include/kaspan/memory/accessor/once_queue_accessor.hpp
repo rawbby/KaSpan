@@ -26,6 +26,7 @@ public:
     DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
     DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
     IF(KASPAN_DEBUG, size_ = static_cast<u64>(size));
+    KASPAN_VALGRIND_CHECK_MEM_IS_ADDRESSABLE(data, size * sizeof(T));
   }
 
   once_queue_accessor(once_queue_accessor const& rhs) noexcept = default;

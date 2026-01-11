@@ -76,8 +76,8 @@ struct bits_ops
   template<arithmetic_concept Index = size_t, std::invocable<Index> fn_t>
   static void for_each(u64 const* data, Index end, fn_t&& fn)
   {
-    DEBUG_ASSERT_NE(data, nullptr);
-    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, 0, std::numeric_limits<u64>::max());
+    DEBUG_ASSERT(end == 0 || data != nullptr);
+    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
 
     auto const c64 = floordiv<64>(static_cast<u64>(end));
     auto const rem = remainder<64>(static_cast<u64>(end));
@@ -101,8 +101,8 @@ struct bits_ops
   template<arithmetic_concept Index = size_t, std::invocable<Index> fn_t>
   static void set_each(u64* data, Index end, fn_t&& fn)
   {
-    DEBUG_ASSERT_GE(end, 0);
-    DEBUG_ASSERT_NE(data, nullptr);
+    DEBUG_ASSERT(end == 0 || data != nullptr);
+    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
 
     auto const end64 = static_cast<u64>(end);
     auto const c64   = floordiv<64>(end64);

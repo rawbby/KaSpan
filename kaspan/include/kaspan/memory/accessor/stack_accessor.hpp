@@ -74,10 +74,8 @@ public:
 
   void push(T t) noexcept
   {
-    IF(KASPAN_DEBUG, DEBUG_ASSERT_LT(end_, size_);)
-    KASPAN_VALGRIND_MAKE_MEM_DEFINED(&data()[end_], sizeof(T));
-    std::memcpy(&data()[end_], &t, sizeof(T));
-    ++end_;
+    DEBUG_ASSERT_LT(end_, size_);
+    data()[end_++] = t;
   }
 
   auto back() -> T&

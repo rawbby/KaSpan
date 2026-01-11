@@ -15,7 +15,7 @@ using namespace kaspan;
 void
 verify_graph(vertex_t n, index_t m, index_t const* head, vertex_t const* csr, vertex_t const* scc_id, double d)
 {
-  DEBUG_ASSERT_VALID_GRAPH(n, m, head, csr);
+  DEBUG_ASSERT_VALID_GRAPH(n, head, csr);
   for (vertex_t u = 0; u < n; ++u) {
     for (auto v : csr_range(head, csr, u)) {
       ASSERT_NE(u, v, "fuzzy generator is not supposed to generate self loops");

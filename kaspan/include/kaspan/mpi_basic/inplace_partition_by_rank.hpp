@@ -2,6 +2,7 @@
 
 #include <concepts>
 #include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/valgrind.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <mpi.h>
@@ -22,7 +23,14 @@ inplace_partition_by_rank(T* send_buffer, MPI_Count const* send_counts, MPI_Aint
 {
   DEBUG_ASSERT_NE(send_counts, nullptr);
   DEBUG_ASSERT_NE(send_displs, nullptr);
-  DEBUG_ASSERT(send_buffer != nullptr || std::accumulate(send_counts, send_counts + world_size, static_cast<MPI_Count>(0)) == 0);
+
+  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(send_counts, world_size * sizeof(MPI_Count));
+  KASPAN_VALGRIND_CHECK_MEM_IS_ADDRESSABLE(send_displs, world_size * sizeof(MPI_Aint));
+
+  IF(OR(KASPAN_DEBUG, KASPAN_VALGRIND), auto const sned_count = std::accumulate(send_counts, send_counts + world_size, static_cast<MPI_Count>(0)));
+
+  DEBUG_ASSERT(sned_count == 0 || send_buffer != nullptr);
+  KASPAN_VALGRIND_CHECK_MEM_IS_DEFINED(send_buffer, sned_count * sizeof(T));
 
   // Initialize send_displs as element-index prefix sums.
   send_displs[0] = 0;

@@ -267,8 +267,8 @@ color_scc_step(part_t const&   part,
                vertex_t        decided_count = 0) -> vertex_t
 {
   auto const local_n      = part.local_n();
-  auto       active       = view_bits(active_storage, local_n - decided_count);
-  auto       changed      = view_bits(changed_storage, local_n - decided_count);
+  auto       active       = view_bits(active_storage, local_n);
+  auto       changed      = view_bits(changed_storage, local_n);
   auto       active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
 
 #if KASPAN_DEBUG

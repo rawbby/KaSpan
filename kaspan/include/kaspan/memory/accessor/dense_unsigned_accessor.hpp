@@ -3,6 +3,8 @@
 #include <kaspan/memory/accessor/dense_unsigned_ops.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/valgrind.hpp>
 
 #include <bit>
 #include <cstddef>
@@ -25,6 +27,7 @@ public:
     DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
     DEBUG_ASSERT_GE(element_byte_size, 1);
     DEBUG_ASSERT_LE(element_byte_size, sizeof(T));
+    KASPAN_VALGRIND_CHECK_MEM_IS_ADDRESSABLE(data, size * element_byte_size);
   }
 
   dense_unsigned_accessor()  = delete;

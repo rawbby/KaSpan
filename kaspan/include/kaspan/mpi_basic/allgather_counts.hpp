@@ -1,5 +1,7 @@
 #pragma once
 
+#include <kaspan/mpi_basic/allgather.hpp>
+
 #include <mpi.h>
 
 namespace kaspan::mpi_basic {
@@ -11,10 +13,9 @@ namespace kaspan::mpi_basic {
  * @param counts Out array of length world_size receiving one MPI_Count per rank.
  */
 inline void
-allgatherv_counts(MPI_Count send_count, MPI_Count* counts)
+allgather_counts(MPI_Count send_count, MPI_Count* counts)
 {
-  DEBUG_ASSERT_NE(counts, nullptr);
-  MPI_Allgather_c(&send_count, 1, MPI_COUNT, counts, 1, MPI_COUNT, MPI_COMM_WORLD);
+  allgather(&send_count, 1, MPI_COUNT, counts, 1, MPI_COUNT);
 }
 
 } // namespace kaspan::mpi_basic

@@ -166,7 +166,7 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
 
     auto [TMP(), sub_ids_inverse, TMP(), sub_n, sub_m, sub_head, sub_csr] =
       allgather_fw_sub_graph(part, local_n - local_decided, fw_head, fw_csr, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
-    DEBUG_ASSERT_VALID_GRAPH(sub_n, sub_m, sub_head, sub_csr);
+    DEBUG_ASSERT_VALID_GRAPH(sub_n, sub_head, sub_csr);
 
     if (sub_n) {
       tarjan(sub_n, sub_head, sub_csr, [&](auto const* beg, auto const* end) {

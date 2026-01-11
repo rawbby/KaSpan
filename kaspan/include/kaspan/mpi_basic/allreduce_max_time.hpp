@@ -1,9 +1,10 @@
 #pragma once
 
-#include <chrono>
 #include <kaspan/mpi_basic/allreduce_single.hpp>
+#include <kaspan/mpi_basic/type.hpp>
 #include <kaspan/util/arithmetic.hpp>
-#include <mpi.h>
+
+#include <chrono>
 
 namespace kaspan::mpi_basic {
 
@@ -17,7 +18,7 @@ allreduce_max_time() -> u64
   auto const now          = steady_clock::now();
   auto const timestamp    = now.time_since_epoch();
   auto const timestamp_ns = duration_cast<nanoseconds>(timestamp);
-  return allreduce_single(static_cast<u64>(timestamp_ns.count()), MPI_MAX);
+  return allreduce_single(static_cast<u64>(timestamp_ns.count()), max);
 }
 
 } // namespace kaspan::mpi_basic

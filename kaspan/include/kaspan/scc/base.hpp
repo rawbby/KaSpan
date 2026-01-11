@@ -150,17 +150,6 @@ free_mpi_degree_max_op()
   MPI_INIT();                                                                                                                                                                      \
   kaspan::init_mpi_edge_t();                                                                                                                                                       \
   kaspan::init_mpi_degree_t();                                                                                                                                                     \
-  kaspan::init_mpi_degree_max_op();                                                                                                                                                \
-  std::set_terminate([] {                                                                                                                                                          \
-    if (auto exception_pointer = std::current_exception()) {                                                                                                                       \
-      try {                                                                                                                                                                        \
-        std::rethrow_exception(exception_pointer);                                                                                                                                 \
-      } catch (const std::exception& e) {                                                                                                                                          \
-        std::println(stderr, "{}", e.what());                                                                                                                                      \
-      } catch (...) {                                                                                                                                                              \
-      }                                                                                                                                                                            \
-    }                                                                                                                                                                              \
-    std::abort();                                                                                                                                                                  \
-  });
+  kaspan::init_mpi_degree_max_op();
 
 } // namespace kaspan

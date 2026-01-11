@@ -185,8 +185,8 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double d = -1.0, void* temp_memor
     }
   }
 
-  DEBUG_ASSERT_VALID_GRAPH(result.n, result.m, result.fw_head, result.fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH(result.n, result.m, result.bw_head, result.bw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(result.n, result.fw_head, result.fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(result.n, result.bw_head, result.bw_csr);
   return result;
 }
 

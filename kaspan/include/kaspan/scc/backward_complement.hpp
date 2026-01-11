@@ -26,7 +26,7 @@ namespace kaspan {
 inline void
 backward_complement_graph(vertex_t n, index_t const* fw_head, vertex_t const* fw_csr, index_t* bw_head, vertex_t* bw_csr)
 {
-  DEBUG_ASSERT_VALID_GRAPH(n, fw_head[n], fw_head, fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(n, fw_head, fw_csr);
 
   // === zero bw_head and count indegrees in-place ===
   // after this loop: bw_head[0] == 0 and for every vertex v, bw_head[v + 1] == indegree(v)
@@ -66,7 +66,7 @@ backward_complement_graph(vertex_t n, index_t const* fw_head, vertex_t const* fw
     }
   }
 
-  DEBUG_ASSERT_VALID_GRAPH(n, bw_head[n], bw_head, bw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(n, bw_head, bw_csr);
 }
 
 /**
@@ -142,7 +142,7 @@ backward_complement_graph_part(part_t const& part, index_t local_m, index_t cons
 
   auto  recv_buffer = make_buffer<edge>(recv_count);
   auto* recv_access = static_cast<edge*>(recv_buffer.data());
-  KASPAN_VALGRIND_MAKE_MEM_DEFINED(recv_access, recv_count * sizeof(edge));
+
   mpi_basic::alltoallv(send_stack.data(), send_counts, send_displs, recv_access, recv_counts, recv_displs, mpi_edge_t);
 
   result.local_m = recv_count;

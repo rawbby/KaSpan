@@ -5,10 +5,10 @@
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/pp.hpp>
 #include <kaspan/util/scope_guard.hpp>
+#include <kaspan/mpi_basic/mpi_basic.hpp>
 
 #include <chrono>
 #include <fstream>
-#include <kaspan/mpi_basic/mpi_basic.hpp>
 #include <ostream>
 #include <vector>
 
@@ -158,25 +158,19 @@ kaspan_statistic_mpi_write_json(char const* file_path)
     std::ofstream os{ file_path };
     os << '{' << '"' << '0' << '"' << ':';
     kaspan_statistic_write_json(os);
-    constexpr int local_size = 0;
+    constexpr auto local_size = static_cast<MPI_Count>(0);
 
-    std::vector recvcounts(size, 0);
-    std::vector displs(size, 0);
-    mpi_basic::gather(local_size, recvcounts.data(), 0);
+    auto [TMP(), recvcounts, recvdispls] = mpi_basic::counts_and_displs();
+    mpi_basic::gather(local_size, recvcounts, 0);
+    auto const total_count = mpi_basic::displs(recvcounts, recvdispls);
+    auto const recv_buffer = make_array<char>(total_count);
+    mpi_basic::gatherv<char>(nullptr, 0, recv_buffer.data(), recvcounts, recvdispls, 0);
 
-    size_t total_bytes = 0;
-    for (int r = 0; r < size; ++r) {
-      displs[r] = static_cast<int>(total_bytes);
-      total_bytes += recvcounts[r];
-    }
-
-    std::vector<char> recvbuf(total_bytes);
-    mpi_basic::gatherv<char>(nullptr, 0, recvbuf.data(), recvcounts.data(), displs.data(), 0);
     for (int r = 1; r < size; ++r) {
-      auto const offset = static_cast<size_t>(displs[r]);
+      auto const offset = static_cast<size_t>(recvdispls[r]);
       auto const count  = static_cast<size_t>(recvcounts[r]);
       if (count != 0) {
-        auto const json_obj = std::string_view{ recvbuf.data() + offset, count };
+        auto const json_obj = std::string_view{ recv_buffer.data() + offset, count };
         os << ',' << '"' << r << '"' << ':' << json_obj;
       }
     }
@@ -185,9 +179,10 @@ kaspan_statistic_mpi_write_json(char const* file_path)
   } else {
     std::ostringstream ss;
     kaspan_statistic_write_json(ss);
-    auto const json        = ss.str();
-    auto const buffer_size = static_cast<int>(json.size());
-    mpi_basic::gather<int>(buffer_size, nullptr, 0);
+    auto const json = ss.str();
+
+    auto const buffer_size = static_cast<MPI_Count>(json.size());
+    mpi_basic::gather<MPI_Count>(buffer_size, nullptr, 0);
     mpi_basic::gatherv<char>(json.data(), buffer_size, nullptr, nullptr, nullptr, 0);
   }
 }

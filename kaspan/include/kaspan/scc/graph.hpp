@@ -96,24 +96,24 @@ csr_range(index_t const* head, vertex_t* csr, vertex_t k)
   return { csr + head[k], csr + head[k + 1] };
 }
 
-#define DEBUG_ASSERT_VALID_GRAPH_LIGHT(N, M, HEAD, CSR)                                                                                                                            \
+#define DEBUG_ASSERT_VALID_GRAPH_LIGHT(N, HEAD, CSR)                                                                                                                               \
   DEBUG_ASSERT_GE(N, 0);                                                                                                                                                           \
-  DEBUG_ASSERT_GE(M, 0);                                                                                                                                                           \
   DEBUG_ASSERT((N) == 0 || (HEAD) != nullptr);                                                                                                                                     \
-  DEBUG_ASSERT((M) == 0 || (CSR) != nullptr);                                                                                                                                      \
-  DEBUG_ASSERT((N) == 0 || (HEAD)[0] == 0);                                                                                                                                        \
-  DEBUG_ASSERT((N) == 0 || (HEAD)[N] == (M));
+  DEBUG_ASSERT((N) == 0 || (HEAD)[N] == 0 || (CSR) != nullptr);                                                                                                                    \
+  DEBUG_ASSERT((N) == 0 || (HEAD)[0] == 0);
 
-#define DEBUG_ASSERT_VALID_GRAPH(N, M, HEAD, CSR)                                                                                                                                  \
-  DEBUG_ASSERT_VALID_GRAPH_LIGHT(N, M, HEAD, CSR);                                                                                                                                 \
+#define DEBUG_ASSERT_VALID_GRAPH(N, HEAD, CSR)                                                                                                                                     \
+  DEBUG_ASSERT_VALID_GRAPH_LIGHT(N, HEAD, CSR);                                                                                                                                    \
   IF(KASPAN_DEBUG, {                                                                                                                                                               \
     std::remove_cvref_t<decltype(N)> const _n = N;                                                                                                                                 \
     for (std::remove_cvref_t<decltype(N)> _i = 1; _i < _n; ++_i) {                                                                                                                 \
       DEBUG_ASSERT_GE((HEAD)[_i], (HEAD)[_i - 1]);                                                                                                                                 \
     }                                                                                                                                                                              \
-    std::remove_cvref_t<decltype(M)> const _m = M;                                                                                                                                 \
-    for (std::remove_cvref_t<decltype(M)> _i = 0; _i < _m; ++_i) {                                                                                                                 \
-      DEBUG_ASSERT_IN_RANGE((CSR)[_i], 0, N);                                                                                                                                      \
+    if (N > 0) {                                                                                                                                                                   \
+      std::remove_cvref_t<decltype(*(HEAD))> _m = (HEAD)[N];                                                                                                                       \
+      for (std::remove_cvref_t<decltype(*(HEAD))> _i = 0; _i < _m; ++_i) {                                                                                                         \
+        DEBUG_ASSERT_IN_RANGE((CSR)[_i], 0, N);                                                                                                                                    \
+      }                                                                                                                                                                            \
     }                                                                                                                                                                              \
   });
 

@@ -39,11 +39,11 @@ auto
 partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, part_t const& part) -> local_graph_part<part_t>
 {
   auto const local_n = part.local_n();
-  DEBUG_ASSERT_VALID_GRAPH(part.n, m, fw_head, fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH(part.n, m, bw_head, bw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(part.n, fw_head, fw_csr);
+  DEBUG_ASSERT_VALID_GRAPH(part.n, bw_head, bw_csr);
 
   auto partition_direction = [&part, local_n, m](index_t const* head, vertex_t const* csr, index_t* out_head, vertex_t* out_csr) {
-    DEBUG_ASSERT_VALID_GRAPH(part.n, m, head, csr);
+    DEBUG_ASSERT_VALID_GRAPH(part.n, head, csr);
 
     vertex_t pos = 0;
     for (vertex_t k = 0; k < local_n; ++k) {
