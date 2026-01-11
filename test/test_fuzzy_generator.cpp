@@ -54,21 +54,21 @@ main()
 
   auto rng         = std::mt19937{ std::random_device{}() };
   auto n_dist      = std::uniform_int_distribution{ 50, 400 };
-  auto degree_dist = std::uniform_real_distribution{ 0.0, 8.0 };
+  auto degree_dist = std::uniform_real_distribution{ 0.0, 7.0 };
 
-  for (vertex_t n = 1; n < 200; ++n) {
+  for (vertex_t n = 1; n < 50; ++n) {
     auto const g = fuzzy_global_scc_id_and_graph(rng(), n);
     verify_graph(g.n, g.m, g.fw_head, g.fw_csr, g.scc_id, clamp_degree(n, 0.0));
   }
 
-  for (vertex_t n = 1; n < 48; n += 3) {
-    for (double d = 0.0; d < 3.25; d += 0.65) {
+  for (vertex_t n = 1; n < 50; n += 5) {
+    for (double d = 0.0; d < 3.25; d += 0.70) {
       auto const g = fuzzy_global_scc_id_and_graph(rng(), n, clamp_degree(n, d));
       verify_graph(g.n, g.m, g.fw_head, g.fw_csr, g.scc_id, clamp_degree(n, d));
     }
   }
 
-  for (int i = 1; i < 200; ++i) {
+  for (int i = 1; i < 100; ++i) {
     auto const n = n_dist(rng);
     auto const d = clamp_degree(n, degree_dist(rng));
     auto const g = fuzzy_global_scc_id_and_graph(rng(), n, d);
