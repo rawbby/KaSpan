@@ -13,9 +13,7 @@ using namespace kaspan;
 int
 main(int argc, char** argv)
 {
-  constexpr int npc      = 3;
-  constexpr int npv[npc] = { 1, 2, 4 };
-  mpi_sub_process(argc, argv, npc, npv);
+  mpi_sub_process(argc, argv);
 
   KASPAN_DEFAULT_INIT();
 

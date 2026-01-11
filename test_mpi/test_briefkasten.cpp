@@ -202,9 +202,7 @@ test_single_self_message()
 int
 main(int argc, char** argv)
 {
-  constexpr i32 npc = 8;
-  constexpr i32 npv[npc]{ 1, 2, 3, 4, 6, 8, 12, 16 };
-  mpi_sub_process(argc, argv, npc, npv);
+  mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();
 
   for (i32 i = 0; i < 32; ++i) {

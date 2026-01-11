@@ -222,9 +222,7 @@ test_allgather_graph(auto const& initial_g, auto const& p)
 int
 main(int argc, char** argv)
 {
-  constexpr int npc = 1;
-  constexpr int npv[1]{ 3 };
-  mpi_sub_process(argc, argv, npc, npv);
+  mpi_sub_process(argc, argv);
 
   KASPAN_DEFAULT_INIT();
 

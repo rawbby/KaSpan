@@ -60,8 +60,7 @@ any_to_lowest_inplace(vertex_t n, vertex_t* scc_id)
 int
 main(int argc, char** argv)
 {
-  constexpr i32 np = 1;
-  mpi_sub_process(argc, argv, np, &np);
+  mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();
 
   for (vertex_t n = 32; n < 128; n += 8) {

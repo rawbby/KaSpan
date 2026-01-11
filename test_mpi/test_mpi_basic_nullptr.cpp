@@ -146,11 +146,7 @@ test_alltoallv_all_zero()
 int
 main(int argc, char** argv)
 {
-  // Test with 1, 3, and 8 processes
-  constexpr int npc      = 3;
-  constexpr int npv[npc] = { 1, 3, 8 };
-  mpi_sub_process(argc, argv, npc, npv);
-
+  mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();
 
   test_allgatherv_nullptr();

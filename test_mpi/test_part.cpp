@@ -76,10 +76,7 @@ main(i32 argc, char** argv)
   static_assert(world_part_concept<explicit_continuous_world_part>);
   static_assert(world_part_concept<explicit_sorted_continuous_world_part>);
 
-  constexpr i32 npc = 1;
-  constexpr i32 npv[1]{ 3 };
-  mpi_sub_process(argc, argv, npc, npv);
-
+  mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();
 
   test_explicit_continuous_world_part<false>();

@@ -94,7 +94,7 @@ inline void
 mpi_sub_process(int argc, char** argv)
 {
   constexpr int npc      = 3;
-  constexpr int npv[npc] = { 3, 1, 8 };
+  constexpr int npv[npc] = { 3, 1, 7 };
   mpi_sub_process(argc, argv, npc, npv);
 }
 
