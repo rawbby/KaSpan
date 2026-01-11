@@ -23,6 +23,7 @@ namespace kaspan::mpi_basic {
 inline void
 allgather(void const* send_buffer, MPI_Count send_count, MPI_Datatype send_type, void* recv_buffer, MPI_Count recv_count, MPI_Datatype recv_type)
 {
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(send_type, MPI_DATATYPE_NULL);
   DEBUG_ASSERT_NE(recv_type, MPI_DATATYPE_NULL);
 
@@ -42,6 +43,7 @@ allgather(void const* send_buffer, MPI_Count send_count, MPI_Datatype send_type,
   DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
 
   KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_buffer, recv_count * world_size * recv_extent);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 /**

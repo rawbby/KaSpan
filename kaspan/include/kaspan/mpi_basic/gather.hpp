@@ -22,6 +22,7 @@ gather(void const*  send_buffer,
        MPI_Datatype recv_type,
        int          root = 0)
 {
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(send_type, MPI_DATATYPE_NULL);
   DEBUG_ASSERT_NE(recv_type, MPI_DATATYPE_NULL);
 
@@ -47,6 +48,7 @@ gather(void const*  send_buffer,
   if (world_rank == root) {
     KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_buffer, recv_count * world_size * recv_extent);
   }
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 /**

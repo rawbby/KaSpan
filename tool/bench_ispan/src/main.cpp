@@ -29,7 +29,9 @@ benchmark(auto const& graph, kaspan::i32 alpha)
 {
   std::vector<kaspan::vertex_t> scc_id;
 
+  KASPAN_CALLGRIND_START_INSTRUMENTATION();
   scc(graph.n, graph.m, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, alpha, &scc_id);
+  KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
 
   IF_KASPAN_STATISTIC(size_t global_component_count = 0;)
   for (kaspan::vertex_t u = 0; u < graph.n; ++u) {

@@ -17,6 +17,7 @@ namespace kaspan::mpi_basic {
 inline void
 alltoallv_counts(MPI_Count const* send_counts, MPI_Count* recv_counts)
 {
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(send_counts, nullptr);
   DEBUG_ASSERT_NE(recv_counts, nullptr);
 
@@ -28,6 +29,7 @@ alltoallv_counts(MPI_Count const* send_counts, MPI_Count* recv_counts)
   DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
 
   KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_counts, world_size * sizeof(MPI_Count));
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 } // namespace kaspan::mpi_basic

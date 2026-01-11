@@ -15,6 +15,7 @@ template<typename T>
 auto
 allreduce_single(T const& send_value, MPI_Datatype datatype, MPI_Op op) -> T
 {
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(op, MPI_OP_NULL);
 
   KASPAN_MEMCHECK_CHECK_VALUE_IS_DEFINED(send_value);
@@ -27,6 +28,7 @@ allreduce_single(T const& send_value, MPI_Datatype datatype, MPI_Op op) -> T
 
   KASPAN_MEMCHECK_CHECK_VALUE_IS_DEFINED(recv_value);
 
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   return recv_value;
 }
 

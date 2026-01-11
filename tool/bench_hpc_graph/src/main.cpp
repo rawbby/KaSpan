@@ -5,6 +5,7 @@
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/valgrind.hpp>
+#include <kaspan/mpi_basic/barrier.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
@@ -73,8 +74,9 @@ benchmark(auto&& graph_part)
 
   KASPAN_STATISTIC_ADD("memory_after_release", get_resident_set_bytes());
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  mpi_basic::barrier();
 
+  KASPAN_CALLGRIND_START_INSTRUMENTATION();
   KASPAN_STATISTIC_PUSH("scc");
 
   // Initialize ghost cells as part of SCC benchmark
@@ -100,6 +102,8 @@ benchmark(auto&& graph_part)
   char output_file[] = "hpc_scc_output.txt";
   scc_dist(&hpc_data.g, &hpc_data.comm, &hpc_data.q, static_cast<uint64_t>(pivot), output_file);
   KASPAN_STATISTIC_POP();
+  KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
+
   KASPAN_STATISTIC_ADD("memory_after_scc", get_resident_set_bytes());
   destroy_hpc_graph_data(&hpc_data);
 }

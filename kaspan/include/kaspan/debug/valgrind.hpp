@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kaspan/util/pp.hpp>
+#include <valgrind/callgrind.h>
 
 #if defined(KASPAN_MEMCHECK)
 #if KASPAN_MEMCHECK != 0
@@ -21,9 +22,9 @@
 #endif
 
 #if OR(KASPAN_MEMCHECK, KASPAN_CALLGRIND)
-#include <valgrind/valgrind.h>
 #include <valgrind/callgrind.h>
 #include <valgrind/memcheck.h>
+#include <valgrind/valgrind.h>
 #endif
 
 // clang-format off
@@ -49,5 +50,6 @@
 
 #define KASPAN_CALLGRIND_START_INSTRUMENTATION() IF(KASPAN_CALLGRIND, CALLGRIND_START_INSTRUMENTATION)
 #define KASPAN_CALLGRIND_STOP_INSTRUMENTATION()  IF(KASPAN_CALLGRIND, CALLGRIND_STOP_INSTRUMENTATION)
+#define KASPAN_CALLGRIND_TOGGLE_COLLECT()        IF(KASPAN_CALLGRIND, CALLGRIND_TOGGLE_COLLECT)
 
 // clang-format on

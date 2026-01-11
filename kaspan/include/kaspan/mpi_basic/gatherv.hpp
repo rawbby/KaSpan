@@ -24,6 +24,7 @@ gatherv(void const*      send_buffer,
         MPI_Datatype     recv_type,
         int              root = 0)
 {
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(send_type, MPI_DATATYPE_NULL);
   DEBUG_ASSERT_NE(recv_type, MPI_DATATYPE_NULL);
 
@@ -58,6 +59,7 @@ gatherv(void const*      send_buffer,
     [[maybe_unused]] auto const rc = MPI_Gatherv_c(send_buffer, send_count, send_type, nullptr, nullptr, nullptr, recv_type, root, comm_world);
     DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
   }
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 /**

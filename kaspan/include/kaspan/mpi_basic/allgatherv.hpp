@@ -26,6 +26,7 @@ allgatherv(void const*      send_buffer,
            MPI_Aint const*  recv_displs,
            MPI_Datatype     datatype)
 {
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
   DEBUG_ASSERT_NE(recv_counts, nullptr);
   DEBUG_ASSERT_NE(recv_displs, nullptr);
@@ -50,6 +51,7 @@ allgatherv(void const*      send_buffer,
   DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
 
   KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_buffer, recv_count * extent);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 /**

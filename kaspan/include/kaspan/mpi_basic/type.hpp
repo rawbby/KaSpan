@@ -1,6 +1,9 @@
 #pragma once
 
+#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/valgrind.hpp>
 #include <kaspan/util/arithmetic.hpp>
+
 #include <mpi.h>
 
 namespace kaspan::mpi_basic {
@@ -58,43 +61,64 @@ constexpr inline Op land = MPI_LAND;
 inline void
 get_address(void const* location, MPI_Aint* address)
 {
-  MPI_Get_address(location, address);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
+  [[maybe_unused]] auto const rc = MPI_Get_address(location, address);
+  DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 inline void
 type_create_struct(int count, int const* blocklengths, MPI_Aint const* displs, Datatype const* types, Datatype* newtype)
 {
-  MPI_Type_create_struct(count, blocklengths, displs, types, newtype);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
+  [[maybe_unused]] auto const rc = MPI_Type_create_struct(count, blocklengths, displs, types, newtype);
+  DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 inline void
 type_commit(Datatype* type)
 {
-  MPI_Type_commit(type);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
+  [[maybe_unused]] auto const rc = MPI_Type_commit(type);
+  DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 inline void
 type_free(Datatype* type)
 {
-  MPI_Type_free(type);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
+  [[maybe_unused]] auto const rc = MPI_Type_free(type);
+  DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 inline void
 type_get_extent(Datatype type, MPI_Aint* lb, MPI_Aint* extent)
 {
-  MPI_Type_get_extent(type, lb, extent);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
+  [[maybe_unused]] auto const rc = MPI_Type_get_extent(type, lb, extent);
+  DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 inline void
 op_create(MPI_User_function* user_fn, int commute, Op* op)
 {
-  MPI_Op_create(user_fn, commute, op);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
+  [[maybe_unused]] auto const rc = MPI_Op_create(user_fn, commute, op);
+  DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 inline void
 op_free(Op* op)
 {
-  MPI_Op_free(op);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
+  [[maybe_unused]] auto const rc = MPI_Op_free(op);
+  DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 } // namespace kaspan::mpi_basic

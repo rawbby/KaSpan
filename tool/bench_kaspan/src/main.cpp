@@ -49,11 +49,17 @@ benchmark(auto const& graph, bool use_async, bool use_async_indirect)
 
   MPI_Barrier(MPI_COMM_WORLD);
   if (not use_async) {
+    KASPAN_CALLGRIND_START_INSTRUMENTATION();
     scc(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+    KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
   } else if (use_async_indirect) {
+    KASPAN_CALLGRIND_START_INSTRUMENTATION();
     async::scc<briefkasten::GridIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+    KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
   } else {
+    KASPAN_CALLGRIND_START_INSTRUMENTATION();
     async::scc<briefkasten::NoopIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+    KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
   }
 
 #if KASPAN_STATISTIC

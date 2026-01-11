@@ -11,6 +11,7 @@ namespace kaspan::mpi_basic {
 inline auto
 extent_of(MPI_Datatype datatype) -> MPI_Aint
 {
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   MPI_Aint lb;
   MPI_Aint extent;
 
@@ -36,6 +37,7 @@ extent_of(MPI_Datatype datatype) -> MPI_Aint
     ASSERT_EQ(type_size, extent);
   }
 
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   return extent;
 }
 

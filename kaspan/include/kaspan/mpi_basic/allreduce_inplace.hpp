@@ -13,6 +13,7 @@ namespace kaspan::mpi_basic {
 inline void
 allreduce_inplace(void* send_buffer, MPI_Count send_count, MPI_Datatype datatype, MPI_Op op)
 {
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
   DEBUG_ASSERT_NE(op, MPI_OP_NULL);
 
@@ -26,6 +27,7 @@ allreduce_inplace(void* send_buffer, MPI_Count send_count, MPI_Datatype datatype
   DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
 
   KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(send_buffer, send_count * extent);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 /**

@@ -21,6 +21,7 @@ alltoallv(void const*      send_buffer,
           MPI_Aint const*  recv_displs,
           MPI_Datatype     datatype)
 {
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
 
   DEBUG_ASSERT_NE(send_counts, nullptr);
@@ -51,6 +52,7 @@ alltoallv(void const*      send_buffer,
   DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
 
   KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_buffer, recv_count * data_extent);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 /**

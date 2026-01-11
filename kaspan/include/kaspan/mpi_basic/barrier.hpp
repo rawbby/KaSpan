@@ -13,8 +13,10 @@ namespace kaspan::mpi_basic {
 inline void
 barrier()
 {
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
   [[maybe_unused]] auto const rc = MPI_Barrier(comm_world);
   DEBUG_ASSERT_EQ(rc, MPI_SUCCESS);
+  KASPAN_CALLGRIND_TOGGLE_COLLECT();
 }
 
 } // namespace kaspan::mpi_basic
