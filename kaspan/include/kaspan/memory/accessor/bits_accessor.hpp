@@ -1,11 +1,12 @@
 #pragma once
 
-#include <kaspan/memory/accessor/bits_ops.hpp>
-#include <kaspan/memory/borrow.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/valgrind.hpp>
+#include <kaspan/memory/accessor/bits_ops.hpp>
+#include <kaspan/memory/borrow.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/math.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 namespace kaspan {
 
@@ -17,7 +18,7 @@ public:
     : data_(size == 0 ? nullptr : data)
   {
     DEBUG_ASSERT_IN_RANGE_INCLUSIVE(size, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
-    IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const size64 = static_cast<u64>(size));
+    IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const size64 = integral_cast<u64>(size));
     DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
     IF(KASPAN_DEBUG, size_ = size64);
     KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(data, round_up<64>(size64) / 8);
@@ -47,7 +48,7 @@ public:
   {
     DEBUG_ASSERT_GE(end, 0);
     DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
-    auto const end64 = static_cast<u64>(end);
+    auto const end64 = integral_cast<u64>(end);
     DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end64, 0, size_);
     bits_ops::clear(data(), end64);
   }
@@ -57,7 +58,7 @@ public:
   {
     DEBUG_ASSERT_GE(end, 0);
     DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
-    auto const end64 = static_cast<u64>(end);
+    auto const end64 = integral_cast<u64>(end);
     DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end64, 0, size_);
     bits_ops::fill(data(), end64);
   }
@@ -67,7 +68,7 @@ public:
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = static_cast<u64>(index);
+    auto const index64 = integral_cast<u64>(index);
     DEBUG_ASSERT_LT(index64, size_);
     return bits_ops::get(data(), index64);
   }
@@ -77,7 +78,7 @@ public:
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = static_cast<u64>(index);
+    auto const index64 = integral_cast<u64>(index);
     DEBUG_ASSERT_LT(index64, size_);
     bits_ops::set(data(), index64, value);
   }
@@ -87,7 +88,7 @@ public:
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = static_cast<u64>(index);
+    auto const index64 = integral_cast<u64>(index);
     DEBUG_ASSERT_LT(index64, size_);
     bits_ops::set(data(), index64);
   }
@@ -97,7 +98,7 @@ public:
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = static_cast<u64>(index);
+    auto const index64 = integral_cast<u64>(index);
     DEBUG_ASSERT_LT(index64, size_);
     bits_ops::unset(data(), index64);
   }
@@ -127,7 +128,7 @@ borrow_bits(void** memory, Size size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = static_cast<u64>(size);
+  auto const size64 = integral_cast<u64>(size);
   return bits_accessor{ borrow_array<u64>(memory, ceildiv<64>(size64)), size64 };
 }
 
@@ -137,7 +138,7 @@ borrow_bits_clean(void** memory, Size size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = static_cast<u64>(size);
+  auto const size64 = integral_cast<u64>(size);
   return bits_accessor{ borrow_array_clean<u64>(memory, ceildiv<64>(size64)), size64 };
 }
 
@@ -147,7 +148,7 @@ borrow_bits_filled(void** memory, Size size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = static_cast<u64>(size);
+  auto const size64 = integral_cast<u64>(size);
   return bits_accessor{ borrow_array_filled<u64>(memory, ceildiv<64>(size64)), size64 };
 }
 

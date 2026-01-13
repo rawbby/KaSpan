@@ -2,6 +2,7 @@
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <bit>
 
@@ -81,7 +82,7 @@ floordiv(T x) noexcept -> T
     constexpr auto rshift = std::countr_zero(base);
     return x >> rshift;
   } else {
-    return x / static_cast<T>(base);
+    return x / integral_cast<T>(base);
   }
 }
 
@@ -96,7 +97,7 @@ ceildiv(T x) noexcept -> T
   if constexpr (base == 1) {
     return x;
   } else {
-    return floordiv<base>(static_cast<T>(base - 1) + x);
+    return floordiv<base>(integral_cast<T>(base - 1) + x);
   }
 }
 
@@ -111,7 +112,7 @@ remainder(T x) noexcept -> T
     constexpr auto mask = base - 1;
     return x & mask;
   } else {
-    return x % static_cast<T>(base);
+    return x % integral_cast<T>(base);
   }
 }
 
@@ -126,7 +127,7 @@ round_down(T x) noexcept -> T
     constexpr auto mask = ~(base - 1);
     return x & mask;
   } else {
-    T const r = x % static_cast<T>(base);
+    T const r = x % integral_cast<T>(base);
     return x - r;
   }
 }
@@ -147,7 +148,7 @@ round_up(T x) noexcept -> T
     return x & lo_mask ? (x & hi_mask) + base : x & hi_mask;
   } else {
     auto const r = remainder<base>(x);
-    return r ? x + (static_cast<T>(base) - r) : x;
+    return r ? x + (integral_cast<T>(base) - r) : x;
   }
 }
 
@@ -156,7 +157,7 @@ constexpr T
 clip(T x) noexcept
 {
   static_assert(lo <= hi);
-  return x < lo ? static_cast<T>(lo) : (x > hi ? static_cast<T>(hi) : x);
+  return x < lo ? integral_cast<T>(lo) : (x > hi ? integral_cast<T>(hi) : x);
 }
 
 } // namespace kaspan

@@ -1,6 +1,4 @@
-#include "kaspan/mpi_basic/type.hpp"
-#include <cstddef>
-#include <cstring>
+#include <kaspan/mpi_basic/type.hpp>
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/assert_in_range.hpp>
 #include <kaspan/debug/assert_true.hpp>
@@ -13,7 +11,10 @@
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
+#include <cstddef>
+#include <cstring>
 #include <algorithm>
 #include <random>
 
@@ -46,7 +47,7 @@ check_case(item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts
   auto* end = borrow_array<MPI_Count>(&memory, mpi_basic::world_size);
 
   for (i32 r = 0; r < mpi_basic::world_size; ++r) {
-    beg[r] = static_cast<MPI_Count>(send_displs[r]);
+    beg[r] = integral_cast<MPI_Count>(send_displs[r]);
     end[r] = beg[r] + send_counts[r];
   }
 

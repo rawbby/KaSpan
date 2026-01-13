@@ -10,6 +10,7 @@
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 #include <ranges>
 #include <vector>
 
@@ -18,7 +19,7 @@ using namespace kaspan;
 void
 await_messages(auto& mq, auto&& on_message)
 {
-  constexpr auto timeout_8s = static_cast<i64>(8'000'000'000LL);
+  constexpr auto timeout_8s = integral_cast<i64>(8'000'000'000LL);
 
   auto const now_ns = [] {
     using clock = std::chrono::steady_clock;
@@ -107,7 +108,7 @@ test_reactivation()
       }
     }
     await_messages(mq, on_message);
-    ASSERT_EQ(received.size(), static_cast<size_t>(mpi_basic::world_size - 1));
+    ASSERT_EQ(received.size(), integral_cast<size_t>(mpi_basic::world_size - 1));
     mpi_basic::barrier();
     mq.reactivate();
     received.clear();
@@ -157,7 +158,7 @@ test_neighbour_multiple()
   await_messages(mq, on_message);
 
   std::ranges::sort(received);
-  ASSERT_EQ(received.size(), static_cast<size_t>(num_messages));
+  ASSERT_EQ(received.size(), integral_cast<size_t>(num_messages));
   for (auto [a, b] : std::views::zip(received, expected)) {
     ASSERT_EQ(a, b);
   }

@@ -1,14 +1,9 @@
-// ReSharper disable CppUnusedIncludeDirective
-// ReSharper disable CppRedundantBooleanExpressionArgument
-
 #pragma once
 
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <tuple>
 #include <type_traits>
-#include <utility>
 #include <variant>
 #include <version>
 
@@ -81,6 +76,7 @@ template<typename T> concept f32_concept = float_concept<T> and (sizeof(T) == 4)
 template<typename T> concept f64_concept = float_concept<T> and (sizeof(T) == 8);
 
 template<typename T> concept arithmetic_concept  = integral_concept<T> or float_concept<T>;
+
 // clang-format on
 
 } // namespace kaspan

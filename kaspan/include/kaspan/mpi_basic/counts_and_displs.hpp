@@ -4,6 +4,7 @@
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/return_pack.hpp>
+#include <kaspan/util/integral_cast.hpp>
 #include <mpi.h>
 
 namespace kaspan::mpi_basic {

@@ -4,6 +4,7 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/part.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <algorithm>
 

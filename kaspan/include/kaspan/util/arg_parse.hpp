@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <cstring>
 #include <string>
@@ -61,7 +62,7 @@ arg_select_int(int argc, char** argv, char const* flag, void*(usage)(int, char**
       auto const value = std::stoll(argv[i + 1]);
       DEBUG_ASSERT_LE(value, std::numeric_limits<Int>::max());
       DEBUG_ASSERT_GE(value, std::numeric_limits<Int>::min());
-      return static_cast<Int>(value);
+      return integral_cast<Int>(value);
     }
   }
   usage(argc, argv);
@@ -77,7 +78,7 @@ arg_select_optional_int(int argc, char** argv, char const* flag) -> std::optiona
       auto const value = std::stoll(argv[i + 1]);
       DEBUG_ASSERT_LE(value, std::numeric_limits<Int>::max());
       DEBUG_ASSERT_GE(value, std::numeric_limits<Int>::min());
-      return static_cast<Int>(value);
+      return integral_cast<Int>(value);
     }
   }
   return std::nullopt;
@@ -92,7 +93,7 @@ arg_select_default_int(int argc, char** argv, char const* flag, Int default_valu
       auto const value = std::stoll(argv[i + 1]);
       DEBUG_ASSERT_LE(value, std::numeric_limits<Int>::max());
       DEBUG_ASSERT_GE(value, std::numeric_limits<Int>::min());
-      return static_cast<Int>(value);
+      return integral_cast<Int>(value);
     }
   }
   return default_value;

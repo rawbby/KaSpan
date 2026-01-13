@@ -7,6 +7,7 @@
 #include <kaspan/debug/assert_ne.hpp>
 #include <kaspan/debug/assert_true.hpp>
 #include <kaspan/util/result.hpp>
+#include <kaspan/util/integral_cast.hpp>
 #include <type_traits>
 
 #include <string>
@@ -129,7 +130,7 @@ test_equality()
 {
   constexpr result<int> ok_a  = 10;
   constexpr result<int> ok_b  = 10;
-  constexpr result<int> ok_c  = static_cast<int>(error_code::ERROR);
+  constexpr result<int> ok_c  = integral_cast<int>(error_code::ERROR);
   constexpr result<int> err_a = error_code::IO_ERROR;
   constexpr result<int> err_b = error_code::IO_ERROR;
   constexpr result<int> err_c = error_code::ERROR;

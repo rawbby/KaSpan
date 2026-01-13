@@ -3,6 +3,7 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/pp.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <functional>
 #include <type_traits>

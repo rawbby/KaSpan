@@ -2,8 +2,10 @@
 
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/debug/debug_break.hpp>
+#include <kaspan/util/comparable.hpp>
 #include <kaspan/util/formatable.hpp>
 #include <kaspan/util/pp.hpp>
+#include <kaspan/util/cmp.hpp>
 
 #include <cstdio>
 #include <format>
@@ -16,7 +18,22 @@ template<typename Val, typename Beg, typename End, formattable_concept... Args>
 void
 assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
-  if (val < beg or val >= end) [[unlikely]] {
+  bool const cond = [&] {
+    bool fail = false;
+    if constexpr (comparable_concept<Val, Beg>) {
+      fail = fail or cmp_less(val, beg);
+    } else {
+      fail = fail or (val < beg);
+    }
+    if constexpr (comparable_concept<Val, End>) {
+      fail = fail or cmp_greater_equal(val, end);
+    } else {
+      fail = fail or (val >= end);
+    }
+    return fail;
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
     debug_break();
     std::abort();
@@ -28,7 +45,22 @@ template<typename Val, typename Beg, typename End>
 void
 assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head)
 {
-  if (val < beg or val >= end) [[unlikely]] {
+  bool const cond = [&] {
+    bool fail = false;
+    if constexpr (comparable_concept<Val, Beg>) {
+      fail = fail or cmp_less(val, beg);
+    } else {
+      fail = fail or (val < beg);
+    }
+    if constexpr (comparable_concept<Val, End>) {
+      fail = fail or cmp_greater_equal(val, end);
+    } else {
+      fail = fail or (val >= end);
+    }
+    return fail;
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}", head);
     debug_break();
     std::abort();
@@ -39,7 +71,22 @@ template<formattable_concept Val, formattable_concept Beg, formattable_concept E
 void
 assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
-  if (val < beg or val >= end) [[unlikely]] {
+  bool const cond = [&] {
+    bool fail = false;
+    if constexpr (comparable_concept<Val, Beg>) {
+      fail = fail or cmp_less(val, beg);
+    } else {
+      fail = fail or (val < beg);
+    }
+    if constexpr (comparable_concept<Val, End>) {
+      fail = fail or cmp_greater_equal(val, end);
+    } else {
+      fail = fail or (val >= end);
+    }
+    return fail;
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {})\n{}", head, val, beg, end, std::format(fmt, std::forward<Args>(args)...));
     debug_break();
     std::abort();
@@ -50,7 +97,22 @@ template<formattable_concept Val, formattable_concept Beg, formattable_concept E
 void
 assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head)
 {
-  if (val < beg or val >= end) [[unlikely]] {
+  bool const cond = [&] {
+    bool fail = false;
+    if constexpr (comparable_concept<Val, Beg>) {
+      fail = fail or cmp_less(val, beg);
+    } else {
+      fail = fail or (val < beg);
+    }
+    if constexpr (comparable_concept<Val, End>) {
+      fail = fail or cmp_greater_equal(val, end);
+    } else {
+      fail = fail or (val >= end);
+    }
+    return fail;
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {})", head, val, beg, end);
     debug_break();
     std::abort();
@@ -62,7 +124,22 @@ template<typename Val, typename Beg, typename End, formattable_concept... Args>
 void
 assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
-  if (val < beg or val > end) [[unlikely]] {
+  bool const cond = [&] {
+    bool fail = false;
+    if constexpr (comparable_concept<Val, Beg>) {
+      fail = fail or cmp_less(val, beg);
+    } else {
+      fail = fail or (val < beg);
+    }
+    if constexpr (comparable_concept<Val, End>) {
+      fail = fail or cmp_greater(val, end);
+    } else {
+      fail = fail or (val > end);
+    }
+    return fail;
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
     debug_break();
     std::abort();
@@ -74,7 +151,22 @@ template<typename Val, typename Beg, typename End>
 void
 assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head)
 {
-  if (val < beg or val > end) [[unlikely]] {
+  bool const cond = [&] {
+    bool fail = false;
+    if constexpr (comparable_concept<Val, Beg>) {
+      fail = fail or cmp_less(val, beg);
+    } else {
+      fail = fail or (val < beg);
+    }
+    if constexpr (comparable_concept<Val, End>) {
+      fail = fail or cmp_greater(val, end);
+    } else {
+      fail = fail or (val > end);
+    }
+    return fail;
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}", head);
     debug_break();
     std::abort();
@@ -85,7 +177,22 @@ template<formattable_concept Val, formattable_concept Beg, formattable_concept E
 void
 assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
-  if (val < beg or val > end) [[unlikely]] {
+  bool const cond = [&] {
+    bool fail = false;
+    if constexpr (comparable_concept<Val, Beg>) {
+      fail = fail or cmp_less(val, beg);
+    } else {
+      fail = fail or (val < beg);
+    }
+    if constexpr (comparable_concept<Val, End>) {
+      fail = fail or cmp_greater(val, end);
+    } else {
+      fail = fail or (val > end);
+    }
+    return fail;
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {}]\n{}", head, val, beg, end, std::format(fmt, std::forward<Args>(args)...));
     debug_break();
     std::abort();
@@ -96,7 +203,22 @@ template<formattable_concept Val, formattable_concept Beg, formattable_concept E
 void
 assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head)
 {
-  if (val < beg or val > end) [[unlikely]] {
+  bool const cond = [&] {
+    bool fail = false;
+    if constexpr (comparable_concept<Val, Beg>) {
+      fail = fail or cmp_less(val, beg);
+    } else {
+      fail = fail or (val < beg);
+    }
+    if constexpr (comparable_concept<Val, End>) {
+      fail = fail or cmp_greater(val, end);
+    } else {
+      fail = fail or (val > end);
+    }
+    return fail;
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {}]", head, val, beg, end);
     debug_break();
     std::abort();

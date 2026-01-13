@@ -5,6 +5,8 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/part.hpp>
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 namespace kaspan {
 
@@ -67,13 +69,13 @@ allgather_graph(part_t const& part, index_t m, index_t local_fw_m, index_t const
   {
     auto const root_part = part.world_part_of(0);
     DEBUG_ASSERT_EQ(0, root_part.begin);
-    counts[0] = static_cast<MPI_Count>(root_part.end + 1);
-    displs[0] = static_cast<MPI_Aint>(0);
+    counts[0] = integral_cast<MPI_Count>(root_part.end + 1);
+    displs[0] = integral_cast<MPI_Aint>(0);
 
     for (i32 rank = 1; rank < mpi_basic::world_size; ++rank) {
       auto const rank_part = part.world_part_of(rank);
-      counts[rank]         = static_cast<MPI_Count>(rank_part.end - rank_part.begin);
-      displs[rank]         = static_cast<MPI_Aint>(rank_part.begin + 1);
+      counts[rank]         = integral_cast<MPI_Count>(rank_part.end - rank_part.begin);
+      displs[rank]         = integral_cast<MPI_Aint>(rank_part.begin + 1);
     }
 
     auto const* send_buffer = fw_head + (mpi_basic::world_root ? 0 : 1);
@@ -85,24 +87,24 @@ allgather_graph(part_t const& part, index_t m, index_t local_fw_m, index_t const
   // and compute CSR recv counts/displs on the fly (reusing arrays).
   {
     // rank 0: edges count = fw_head[end0], displ = 0
-    auto vertex_it = static_cast<vertex_t>(counts[0]); // start at first vertex of rank 1
-    auto offset    = result.fw_head[vertex_it - 1];    // head at boundary (rank 0 end)
-    counts[0]      = static_cast<MPI_Count>(offset);   // edge elements of rank 0
-    displs[0]      = static_cast<MPI_Aint>(0);
+    auto vertex_it = integral_cast<vertex_t>(counts[0]); // start at first vertex of rank 1
+    auto offset    = result.fw_head[vertex_it - 1];      // head at boundary (rank 0 end)
+    counts[0]      = integral_cast<MPI_Count>(offset);   // edge elements of rank 0
+    displs[0]      = integral_cast<MPI_Aint>(0);
 
     for (i32 rank = 1; rank < mpi_basic::world_size; ++rank) {
       for (MPI_Count k = 0; k < counts[rank]; ++k) {
         result.fw_head[vertex_it++] += offset; // shift to global
       }
       auto const last = result.fw_head[vertex_it - 1]; // global head at end of rank
-      displs[rank]    = static_cast<MPI_Aint>(offset);
-      counts[rank]    = static_cast<MPI_Count>(last - offset); // elements
-      offset          = last;                                  // next rank base
+      displs[rank]    = integral_cast<MPI_Aint>(offset);
+      counts[rank]    = integral_cast<MPI_Count>(last - offset); // elements
+      offset          = last;                                    // next rank base
     }
   }
 
   // 2) Gather forward CSR edges (reuse counts/displs computed above).
-  mpi_basic::allgatherv<vertex_t>(fw_csr, static_cast<MPI_Count>(local_fw_m), result.fw_csr, counts, displs);
+  mpi_basic::allgatherv<vertex_t>(fw_csr, integral_cast<MPI_Count>(local_fw_m), result.fw_csr, counts, displs);
 
   // 3) Build backward graph locally from forward graph (no communication).
   backward_complement_graph(result.n, result.fw_head, result.fw_csr, result.bw_head, result.bw_csr);

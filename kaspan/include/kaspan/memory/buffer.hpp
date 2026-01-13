@@ -5,13 +5,14 @@
 #include <kaspan/memory/line.hpp>
 #include <kaspan/memory/page.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 namespace kaspan {
 
 constexpr auto
 representing_bytes(u64 max_val) -> u8
 {
-  constexpr auto one = static_cast<u64>(1);
+  constexpr auto one = integral_cast<u64>(1);
   for (u8 bytes = 1; bytes < 8; ++bytes) {
     if (max_val < one << (bytes * 8)) {
       return bytes;
@@ -38,7 +39,7 @@ public:
   {
     DEBUG_ASSERT_GE(size, 0);
     DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-    auto const size64 = static_cast<u64>(size);
+    auto const size64 = integral_cast<u64>(size);
     if (size64 != 0U) {
       data_ = line_alloc(size64);
       DEBUG_ASSERT(is_line_aligned(data_));

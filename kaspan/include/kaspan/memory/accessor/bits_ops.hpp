@@ -3,6 +3,7 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/math.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <bit>
 #include <cstring>
@@ -17,7 +18,7 @@ struct bits_ops
     auto const idx = floordiv<64>(count);
     std::memset(data, 0, idx * sizeof(u64));
     if (auto const rem = remainder<64>(count)) {
-      auto const msk = static_cast<u64>(1) << rem;
+      auto const msk = integral_cast<u64>(1) << rem;
       data[idx] &= ~(msk - 1);
     }
   }
@@ -27,7 +28,7 @@ struct bits_ops
     auto const idx = floordiv<64>(count);
     std::memset(data, ~0, idx * sizeof(u64));
     if (auto const rem = remainder<64>(count)) {
-      auto const msk = static_cast<u64>(1) << rem;
+      auto const msk = integral_cast<u64>(1) << rem;
       data[idx] |= msk - 1;
     }
   }
@@ -37,17 +38,17 @@ struct bits_ops
     DEBUG_ASSERT_NE(data, nullptr);
     auto const idx = floordiv<64>(bit_index);
     auto const rem = remainder<64>(bit_index);
-    auto const msk = static_cast<u64>(1) << rem;
+    auto const msk = integral_cast<u64>(1) << rem;
     return (data[idx] & msk) != 0;
   }
 
   static void set(u64* data, u64 bit_index, bool bit_value)
   {
     DEBUG_ASSERT_NE(data, nullptr);
-    auto const val_msk = -static_cast<u64>(bit_value);
+    auto const val_msk = -integral_cast<u64>(bit_value);
     auto const idx     = floordiv<64>(bit_index);
     auto const rem     = remainder<64>(bit_index);
-    auto const msk     = static_cast<u64>(1) << rem;
+    auto const msk     = integral_cast<u64>(1) << rem;
 
     auto field = data[idx];
     field &= ~msk;
@@ -60,7 +61,7 @@ struct bits_ops
     DEBUG_ASSERT_NE(data, nullptr);
     auto const idx = floordiv<64>(bit_index);
     auto const rem = remainder<64>(bit_index);
-    auto const msk = static_cast<u64>(1) << rem;
+    auto const msk = integral_cast<u64>(1) << rem;
     data[idx] |= msk;
   }
 
@@ -69,7 +70,7 @@ struct bits_ops
     DEBUG_ASSERT_NE(data, nullptr);
     auto const idx = floordiv<64>(bit_index);
     auto const rem = remainder<64>(bit_index);
-    auto const msk = static_cast<u64>(1) << rem;
+    auto const msk = integral_cast<u64>(1) << rem;
     data[idx] &= ~msk;
   }
 
@@ -79,20 +80,20 @@ struct bits_ops
     DEBUG_ASSERT(end == 0 || data != nullptr);
     DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
 
-    auto const c64 = floordiv<64>(static_cast<u64>(end));
-    auto const rem = remainder<64>(static_cast<u64>(end));
+    auto const c64 = floordiv<64>(integral_cast<u64>(end));
+    auto const rem = remainder<64>(integral_cast<u64>(end));
 
     for (u64 i = 0; i < c64; ++i) {
       u64 word = data[i];
       while (word) {
-        fn(static_cast<Index>((i << 6) + std::countr_zero(word)));
+        fn(integral_cast<Index>((i << 6) + std::countr_zero(word)));
         word &= word - 1;
       }
     }
     if (rem) {
-      auto word = data[c64] & ((static_cast<u64>(1) << rem) - 1);
+      auto word = data[c64] & ((integral_cast<u64>(1) << rem) - 1);
       while (word) {
-        fn(static_cast<Index>((c64 << 6) + std::countr_zero(word)));
+        fn(integral_cast<Index>((c64 << 6) + std::countr_zero(word)));
         word &= word - 1;
       }
     }
@@ -104,14 +105,14 @@ struct bits_ops
     DEBUG_ASSERT(end == 0 || data != nullptr);
     DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
 
-    auto const end64 = static_cast<u64>(end);
+    auto const end64 = integral_cast<u64>(end);
     auto const c64   = floordiv<64>(end64);
     u64        b64   = 0;
 
     for (u64 i = 0; i < c64; ++i, b64 += 64) {
       u64 w = 0;
       for (unsigned bit = 0; bit < 64; ++bit) {
-        w |= static_cast<u64>(!!fn(b64 + bit)) << bit;
+        w |= integral_cast<u64>(!!fn(b64 + bit)) << bit;
       }
       data[i] = w;
     }
@@ -119,9 +120,9 @@ struct bits_ops
     if (auto const rem = remainder<64>(end64)) {
       u64 w = 0;
       for (unsigned bit = 0; bit < rem; ++bit) {
-        w |= static_cast<u64>(!!fn(b64 + bit)) << bit;
+        w |= integral_cast<u64>(!!fn(b64 + bit)) << bit;
       }
-      auto const mask = (static_cast<u64>(1) << rem) - 1;
+      auto const mask = (integral_cast<u64>(1) << rem) - 1;
       data[c64]       = (data[c64] & ~mask) | (w & mask);
     }
   }

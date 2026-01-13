@@ -1,11 +1,13 @@
 #pragma once
 
 #include <kaspan/memory/accessor/stack_accessor.hpp>
-
+#include <kaspan/util/integral_cast.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/partion_graph.hpp>
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <algorithm>
 #include <map>
@@ -207,8 +209,8 @@ fuzzy_local_scc_id_and_graph(u64 seed, part_t const& part, double degree = -1.0,
 
   local_scc_graph_part gp;
   static_cast<local_graph_part<part_t>&>(gp) = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, part);
-  gp.scc_id_part_buffer                      = make_buffer<vertex_t>(local_n);
-  gp.scc_id_part                             = static_cast<vertex_t*>(gp.scc_id_part_buffer.data());
+  gp.scc_id_part_buffer                        = make_buffer<vertex_t>(local_n);
+  gp.scc_id_part                               = static_cast<vertex_t*>(gp.scc_id_part_buffer.data());
   for (vertex_t k = 0; k < local_n; ++k) {
     gp.scc_id_part[k] = g.scc_id[part.to_global(k)];
   }

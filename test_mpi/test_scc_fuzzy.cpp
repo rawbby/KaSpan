@@ -45,7 +45,7 @@ verify_scc_id(Graph const& graph, vertex_t const* scc_id_orig, vertex_t* scc_id)
         }
       }();
 
-      auto const w = static_cast<vertex_t>(std::log10(std::max(2, part.to_global(end)) - 1) + 1);
+      auto const w = integral_cast<vertex_t>(std::log10(std::max(2, part.to_global(end)) - 1) + 1);
       auto const p = std::string{ " " } + std::string(w, ' ');
       auto const m = std::string{ " " } + std::string(w, '^');
 

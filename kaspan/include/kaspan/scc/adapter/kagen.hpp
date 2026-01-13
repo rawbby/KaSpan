@@ -4,6 +4,8 @@
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/backward_complement.hpp>
 #include <kaspan/scc/part.hpp>
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 namespace kaspan {
 
@@ -25,11 +27,11 @@ kagen_forward_graph_part(char const* generator_args)
   graph_generator.UseCSRRepresentation();
 
   auto const ka_graph   = graph_generator.GenerateFromOptionString(generator_args);
-  auto const global_n   = static_cast<vertex_t>(ka_graph.NumberOfGlobalVertices());
-  auto const global_m   = static_cast<index_t>(ka_graph.NumberOfGlobalEdges());
-  auto const local_n    = static_cast<vertex_t>(ka_graph.NumberOfLocalVertices());
-  auto const local_fw_m = static_cast<index_t>(ka_graph.NumberOfLocalEdges());
-  auto const vertex_end = static_cast<vertex_t>(ka_graph.vertex_range.second);
+  auto const global_n   = integral_cast<vertex_t>(ka_graph.NumberOfGlobalVertices());
+  auto const global_m   = integral_cast<index_t>(ka_graph.NumberOfGlobalEdges());
+  auto const local_n    = integral_cast<vertex_t>(ka_graph.NumberOfLocalVertices());
+  auto const local_fw_m = integral_cast<index_t>(ka_graph.NumberOfLocalEdges());
+  auto const vertex_end = integral_cast<vertex_t>(ka_graph.vertex_range.second);
 
   result.storage = make_buffer<i32, index_t, vertex_t>(mpi_basic::world_size, local_n + 1, local_fw_m);
   void* memory   = result.storage.data();
@@ -45,12 +47,12 @@ kagen_forward_graph_part(char const* generator_args)
 
   for (vertex_t k = 0; k <= local_n; ++k) {
     DEBUG_ASSERT_IN_RANGE(ka_graph.xadj[k], 0, local_fw_m + 1, "k={}", k);
-    result.head[k] = static_cast<index_t>(ka_graph.xadj[k]);
+    result.head[k] = integral_cast<index_t>(ka_graph.xadj[k]);
     DEBUG_ASSERT_IN_RANGE(result.head[k], 0, local_fw_m + 1, "k={}", k);
   }
   for (index_t it = 0; it < local_fw_m; ++it) {
     DEBUG_ASSERT_IN_RANGE(ka_graph.adjncy[it], 0, global_n);
-    result.csr[it] = static_cast<vertex_t>(ka_graph.adjncy[it]);
+    result.csr[it] = integral_cast<vertex_t>(ka_graph.adjncy[it]);
     DEBUG_ASSERT_IN_RANGE(result.csr[it], 0, global_n);
   }
 

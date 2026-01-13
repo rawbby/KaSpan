@@ -2,7 +2,9 @@
 
 #include <kaspan/memory/accessor/dense_unsigned_accessor.hpp>
 #include <kaspan/scc/graph.hpp>
+#include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/result.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <charconv>
 #include <filesystem>
@@ -223,8 +225,8 @@ load_graph_from_manifest(manifest const& manifest) -> local_graph
   g.storage    = make_graph_buffer(n, m);
   auto* memory = g.storage.data();
 
-  g.n       = static_cast<vertex_t>(n);
-  g.m       = static_cast<index_t>(m);
+  g.n       = integral_cast<vertex_t>(n);
+  g.m       = integral_cast<index_t>(m);
   g.fw_head = (n > 0) ? borrow_array<index_t>(&memory, n + 1) : nullptr;
   g.fw_csr  = borrow_array<vertex_t>(&memory, m);
   g.bw_head = (n > 0) ? borrow_array<index_t>(&memory, n + 1) : nullptr;
@@ -232,22 +234,22 @@ load_graph_from_manifest(manifest const& manifest) -> local_graph
 
   for (vertex_t i = 0; i < n + 1; ++i) {
     DEBUG_ASSERT_IN_RANGE(fw_head_access.get(i), 0, m + 1);
-    g.fw_head[i] = static_cast<index_t>(fw_head_access.get(i));
+    g.fw_head[i] = integral_cast<index_t>(fw_head_access.get(i));
   }
 
   for (index_t i = 0; i < m; ++i) {
     DEBUG_ASSERT_IN_RANGE(fw_csr_access.get(i), 0, n);
-    g.fw_csr[i] = static_cast<vertex_t>(fw_csr_access.get(i));
+    g.fw_csr[i] = integral_cast<vertex_t>(fw_csr_access.get(i));
   }
 
   for (vertex_t i = 0; i < n + 1; ++i) {
     DEBUG_ASSERT_IN_RANGE(bw_head_access.get(i), 0, m + 1);
-    g.bw_head[i] = static_cast<index_t>(bw_head_access.get(i));
+    g.bw_head[i] = integral_cast<index_t>(bw_head_access.get(i));
   }
 
   for (index_t i = 0; i < m; ++i) {
     DEBUG_ASSERT_IN_RANGE(bw_csr_access.get(i), 0, n);
-    g.bw_csr[i] = static_cast<vertex_t>(bw_csr_access.get(i));
+    g.bw_csr[i] = integral_cast<vertex_t>(bw_csr_access.get(i));
   }
 
   return g;

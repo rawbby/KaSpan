@@ -13,6 +13,8 @@
 #include <kaspan/scc/pivot_selection.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/scope_guard.hpp>
+#include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <cstdio>
 #include <limits>
@@ -92,15 +94,15 @@ benchmark(auto&& graph_part)
     auto const out_degree     = hpc_data.g.out_degree_list[k + 1] - hpc_data.g.out_degree_list[k];
     auto const in_degree      = hpc_data.g.in_degree_list[k + 1] - hpc_data.g.in_degree_list[k];
     auto const degree_product = out_degree * in_degree;
-    if (static_cast<index_t>(degree_product) > max_degree.degree_product) {
-      max_degree.degree_product = static_cast<index_t>(degree_product);
-      max_degree.u              = static_cast<vertex_t>(hpc_data.g.local_unmap[k]);
+    if (kaspan::integral_cast<index_t>(degree_product) > max_degree.degree_product) {
+      max_degree.degree_product = kaspan::integral_cast<index_t>(degree_product);
+      max_degree.u              = kaspan::integral_cast<vertex_t>(hpc_data.g.local_unmap[k]);
     }
   }
   auto const pivot = pivot_selection(max_degree);
   KASPAN_STATISTIC_POP();
   char output_file[] = "hpc_scc_output.txt";
-  scc_dist(&hpc_data.g, &hpc_data.comm, &hpc_data.q, static_cast<uint64_t>(pivot), output_file);
+  scc_dist(&hpc_data.g, &hpc_data.comm, &hpc_data.q, kaspan::integral_cast<uint64_t>(pivot), output_file);
   KASPAN_STATISTIC_POP();
   KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
 
@@ -146,7 +148,7 @@ main(int argc, char** argv)
     KASPAN_STATISTIC_PUSH("load");
     auto const manifest = manifest::load(manifest_file);
     ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
-    auto const part           = balanced_slice_part{ static_cast<vertex_t>(manifest.graph_node_count) };
+    auto const part           = balanced_slice_part{ kaspan::integral_cast<vertex_t>(manifest.graph_node_count) };
     auto       manifest_graph = load_graph_part_from_manifest(part, manifest);
     KASPAN_STATISTIC_POP();
     benchmark(std::move(manifest_graph));

@@ -5,6 +5,10 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/graph.hpp>
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <comms.h>
 #include <dist_graph.h>
@@ -40,53 +44,53 @@ create_hpc_graph_from_graph_part(part_t const&           part,
   kaspan::vertex_t const n       = part.n;
 
   // Initialize dist_graph_t structure
-  data.g.n           = static_cast<uint64_t>(n);
-  data.g.m           = static_cast<uint64_t>(m);
-  data.g.n_local     = static_cast<uint64_t>(local_n);
-  data.g.n_offset    = static_cast<uint64_t>(part.begin); // Use begin instead of local_start()
+  data.g.n           = kaspan::integral_cast<uint64_t>(n);
+  data.g.m           = kaspan::integral_cast<uint64_t>(m);
+  data.g.n_local     = kaspan::integral_cast<uint64_t>(local_n);
+  data.g.n_offset    = kaspan::integral_cast<uint64_t>(part.begin); // Use begin instead of local_start()
   data.g.n_ghost     = 0;
   data.g.n_total     = data.g.n_local; // no ghost vertices for now
-  data.g.m_local_out = static_cast<uint64_t>(local_fw_m);
-  data.g.m_local_in  = static_cast<uint64_t>(local_bw_m);
+  data.g.m_local_out = kaspan::integral_cast<uint64_t>(local_fw_m);
+  data.g.m_local_in  = kaspan::integral_cast<uint64_t>(local_bw_m);
 
   // Allocate and convert forward edges (out_edges)
   auto out_degree_list_buf = kaspan::make_buffer<uint64_t>(local_n + 1);
-  auto out_edges_buf = kaspan::make_buffer<uint64_t>(local_fw_m);
+  auto out_edges_buf       = kaspan::make_buffer<uint64_t>(local_fw_m);
 
   auto* out_degree_list = static_cast<uint64_t*>(out_degree_list_buf.data());
   auto* out_edges       = static_cast<uint64_t*>(out_edges_buf.data());
 
   // Convert forward CSR
   for (kaspan::vertex_t i = 0; i <= local_n; ++i) {
-    out_degree_list[i] = static_cast<uint64_t>(fw_head[i]);
+    out_degree_list[i] = kaspan::integral_cast<uint64_t>(fw_head[i]);
   }
 
   for (kaspan::index_t i = 0; i < local_fw_m; ++i) {
-    out_edges[i] = static_cast<uint64_t>(fw_csr[i]);
+    out_edges[i] = kaspan::integral_cast<uint64_t>(fw_csr[i]);
   }
 
   // Allocate and convert backward edges (in_edges)
   auto in_degree_list_buf = kaspan::make_buffer<uint64_t>(local_n + 1);
-  auto in_edges_buf = kaspan::make_buffer<uint64_t>(local_bw_m);
+  auto in_edges_buf       = kaspan::make_buffer<uint64_t>(local_bw_m);
 
   auto* in_degree_list = static_cast<uint64_t*>(in_degree_list_buf.data());
   auto* in_edges       = static_cast<uint64_t*>(in_edges_buf.data());
 
   // Convert backward CSR
   for (kaspan::vertex_t i = 0; i <= local_n; ++i) {
-    in_degree_list[i] = static_cast<uint64_t>(bw_head[i]);
+    in_degree_list[i] = kaspan::integral_cast<uint64_t>(bw_head[i]);
   }
 
   for (kaspan::index_t i = 0; i < local_bw_m; ++i) {
-    in_edges[i] = static_cast<uint64_t>(bw_csr[i]);
+    in_edges[i] = kaspan::integral_cast<uint64_t>(bw_csr[i]);
   }
 
   // Create local_unmap (maps local index to global vertex id)
-  auto local_unmap_buf = kaspan::make_buffer<uint64_t>(local_n);
-  auto* local_unmap = static_cast<uint64_t*>(local_unmap_buf.data());
+  auto  local_unmap_buf = kaspan::make_buffer<uint64_t>(local_n);
+  auto* local_unmap     = static_cast<uint64_t*>(local_unmap_buf.data());
 
   for (kaspan::vertex_t i = 0; i < local_n; ++i) {
-    local_unmap[i] = static_cast<uint64_t>(part.to_global(i));
+    local_unmap[i] = kaspan::integral_cast<uint64_t>(part.to_global(i));
   }
 
   // Temporarily assign pointers
@@ -128,7 +132,7 @@ create_hpc_graph_from_graph_part(part_t const&           part,
                       + local_n * sizeof(uint64_t);      // local_unmap
 
   // Create a single combined buffer to hold all data
-  data.storage = kaspan::make_buffer<uint64_t>(total_size / sizeof(uint64_t));
+  data.storage         = kaspan::make_buffer<uint64_t>(total_size / sizeof(uint64_t));
   char*  combined_data = static_cast<char*>(data.storage.data());
   size_t offset        = 0;
 
@@ -186,7 +190,7 @@ initialize_ghost_cells(hpc_graph_data& data, part_t const& part, kaspan::index_t
   }
 
   // Create ghost_unmap and ghost_tasks arrays
-  auto n_ghost         = static_cast<kaspan::vertex_t>(ghost_set.size());
+  auto n_ghost         = kaspan::integral_cast<kaspan::vertex_t>(ghost_set.size());
   auto ghost_unmap_buf = kaspan::make_buffer<uint64_t>(std::max(n_ghost, kaspan::vertex_t(1)));
   auto ghost_tasks_buf = kaspan::make_buffer<uint64_t>(std::max(n_ghost, kaspan::vertex_t(1)));
 
@@ -196,12 +200,12 @@ initialize_ghost_cells(hpc_graph_data& data, part_t const& part, kaspan::index_t
   uint64_t ghost_idx = 0;
   for (auto global_id : ghost_set) {
     ghost_unmap[ghost_idx] = global_id;
-    ghost_tasks[ghost_idx] = static_cast<uint64_t>(part.world_rank_of(static_cast<kaspan::vertex_t>(global_id)));
+    ghost_tasks[ghost_idx] = kaspan::integral_cast<uint64_t>(part.world_rank_of(kaspan::integral_cast<kaspan::vertex_t>(global_id)));
     ++ghost_idx;
   }
 
   // Update graph structure with ghost information
-  data.g.n_ghost = static_cast<uint64_t>(n_ghost);
+  data.g.n_ghost = kaspan::integral_cast<uint64_t>(n_ghost);
   data.g.n_total = data.g.n_local + data.g.n_ghost;
 
   // Need to extend the buffer to include ghost arrays

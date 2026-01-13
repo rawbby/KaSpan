@@ -3,6 +3,7 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <mpi.h>
 

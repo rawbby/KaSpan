@@ -9,6 +9,7 @@
 #include <kaspan/mpi_basic/extent_of.hpp>
 #include <kaspan/mpi_basic/type.hpp>
 #include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <mpi.h>
 #include <numeric> // std::accumulate
@@ -19,12 +20,7 @@ namespace kaspan::mpi_basic {
  * @brief Untyped wrapper for MPI_Allgatherv_c.
  */
 inline void
-allgatherv(void const*      send_buffer,
-           MPI_Count        send_count,
-           void*            recv_buffer,
-           MPI_Count const* recv_counts,
-           MPI_Aint const*  recv_displs,
-           MPI_Datatype     datatype)
+allgatherv(void const* send_buffer, MPI_Count send_count, void* recv_buffer, MPI_Count const* recv_counts, MPI_Aint const* recv_displs, MPI_Datatype datatype)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
@@ -37,7 +33,7 @@ allgatherv(void const*      send_buffer,
   KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_counts, world_size * sizeof(MPI_Count));
   KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_displs, world_size * sizeof(MPI_Aint));
 
-  IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const recv_count = std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)));
+  IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const recv_count = std::accumulate(recv_counts, recv_counts + world_size, integral_cast<MPI_Count>(0)));
   IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const extent = extent_of(datatype));
 
   DEBUG_ASSERT_GE(recv_count, 0);

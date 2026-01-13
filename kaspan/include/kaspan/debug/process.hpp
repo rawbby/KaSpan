@@ -1,5 +1,9 @@
 #pragma once
 
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/cmp.hpp>
+
 #include <fstream>
 #include <unistd.h>
 
@@ -13,7 +17,7 @@ get_resident_set_bytes() -> size_t
   size_t program_pages      = 0;
   size_t resident_set_pages = 0;
   if (f >> program_pages >> resident_set_pages) {
-    return resident_set_pages * static_cast<size_t>(sysconf(_SC_PAGESIZE));
+    return resident_set_pages * integral_cast<size_t>(sysconf(_SC_PAGESIZE));
   }
   return 0;
 }

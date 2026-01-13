@@ -4,6 +4,7 @@
 #include <kaspan/memory/accessor/once_queue_accessor.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <cstring>
 #include <type_traits>
@@ -21,11 +22,11 @@ public:
 
   template<arithmetic_concept Size>
   explicit once_queue(Size size) noexcept(false)
-    : buffer(static_cast<u64>(size) * sizeof(T))
+    : buffer(integral_cast<u64>(size) * sizeof(T))
   {
     DEBUG_ASSERT_GE(size, 0);
     DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-    IF(KASPAN_DEBUG, size_ = static_cast<u64>(size));
+    IF(KASPAN_DEBUG, size_ = integral_cast<u64>(size));
   }
 
   once_queue(once_queue const&) = delete;

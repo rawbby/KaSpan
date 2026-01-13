@@ -5,6 +5,7 @@
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/memory/line.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <cstddef>
 #include <cstdlib>
@@ -22,7 +23,7 @@ public:
 
   template<arithmetic_concept Count>
   explicit array(Count count) noexcept(false)
-    : buffer(static_cast<u64>(count) * sizeof(T))
+    : buffer(integral_cast<u64>(count) * sizeof(T))
   {
     DEBUG_ASSERT_GE(count, 0);
     DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
@@ -58,7 +59,7 @@ public:
   {
     DEBUG_ASSERT_GE(idx, 0);
     DEBUG_ASSERT_LE(idx, std::numeric_limits<u64>::max());
-    return data()[static_cast<u64>(idx)];
+    return data()[integral_cast<u64>(idx)];
   }
 
   [[nodiscard]] auto operator+(std::ptrdiff_t offset) const noexcept -> T*
@@ -199,7 +200,7 @@ make_array_clean(Count count) noexcept -> array<T>
 {
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
-  auto const count64 = static_cast<u64>(count);
+  auto const count64 = integral_cast<u64>(count);
   auto       result  = array<T>{ count64 };
   std::memset(result, 0x00, count64 * sizeof(T));
   return result;
@@ -211,7 +212,7 @@ make_array_filled(Count count) noexcept -> array<T>
 {
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
-  auto const count64 = static_cast<u64>(count);
+  auto const count64 = integral_cast<u64>(count);
   auto       result  = array<T>{ count64 };
   std::memset(result, 0xff, count64 * sizeof(T));
   return result;
@@ -223,7 +224,7 @@ make_array_filled(T const& value, Count count) noexcept -> array<T>
 {
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
-  auto const count64 = static_cast<u64>(count);
+  auto const count64 = integral_cast<u64>(count);
   auto       result  = array<T>{ count64 };
   for (u64 i = 0; i < count64; ++i) {
     std::memcpy(&result[i], &value, sizeof(T));
@@ -239,7 +240,7 @@ borrow_array(void** memory, Count count) noexcept -> T*
   DEBUG_ASSERT_NE(memory, nullptr);
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
-  auto const count64 = static_cast<u64>(count);
+  auto const count64 = integral_cast<u64>(count);
   if (count64 == 0) {
     return nullptr;
   }
@@ -260,7 +261,7 @@ borrow_array_clean(void** memory, Count count) noexcept -> T*
 {
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
-  auto const count64 = static_cast<u64>(count);
+  auto const count64 = integral_cast<u64>(count);
   auto       result  = borrow_array<T>(memory, count64);
   std::memset(result, 0x00, count64 * sizeof(T));
   return result;
@@ -272,7 +273,7 @@ borrow_array_filled(void** memory, Count count) noexcept -> T*
 {
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
-  auto const count64 = static_cast<u64>(count);
+  auto const count64 = integral_cast<u64>(count);
   auto       result  = borrow_array<T>(memory, count64);
   std::memset(result, 0xff, count64 * sizeof(T));
   return result;
@@ -284,7 +285,7 @@ borrow_array_filled(void** memory, T const& value, Count count) noexcept -> T*
 {
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
-  auto const count64 = static_cast<u64>(count);
+  auto const count64 = integral_cast<u64>(count);
   auto       result  = borrow_array<T>(memory, count64);
   for (u64 i = 0; i < count64; ++i) {
     std::memcpy(&result[i], &value, sizeof(T));

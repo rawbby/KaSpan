@@ -1,6 +1,9 @@
 #pragma once
 
+#include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/pp.hpp>
+#include <kaspan/util/integral_cast.hpp>
+
 #include <type_traits>
 
 namespace kaspan {
@@ -9,7 +12,7 @@ namespace kaspan {
 
 #define PACK_TYPE_ALIAS_KERNEL(X) using CAT(X, _t) = std::remove_cvref_t<decltype(X)>;
 #define PACK_MEMBER_DECLARATION_KERNEL(X) CAT(X, _t)(X);
-#define PACK_FORWARD_KERNEL(X) static_cast<decltype(X)&&>(X)
+#define PACK_FORWARD_KERNEL(X) std::forward<decltype(X)>(X)
 #define PACK(...)                                                                                                                                                                  \
   [&]() {                                                                                                                                                                          \
     ARGS_FOREACH(PACK_TYPE_ALIAS_KERNEL, __VA_ARGS__)                                                                                                                              \

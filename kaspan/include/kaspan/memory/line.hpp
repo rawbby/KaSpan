@@ -2,6 +2,7 @@
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <bit>
 #include <unistd.h>
@@ -9,7 +10,7 @@
 namespace kaspan {
 
 namespace detail {
-constexpr auto linesize_default     = static_cast<u32>(64);
+constexpr auto linesize_default     = integral_cast<u32>(64);
 inline bool    linesize_initialized = false;
 inline auto    linesize_value       = linesize_default;
 }
@@ -21,14 +22,14 @@ linesize() -> Size
   if (!detail::linesize_initialized) [[unlikely]] {
     if (auto const sys_linesize = sysconf(_SC_LEVEL1_DCACHE_LINESIZE); sys_linesize > 0) [[likely]] {
       DEBUG_ASSERT_IN_RANGE_INCLUSIVE(sys_linesize, std::numeric_limits<u32>::min(), std::numeric_limits<u32>::max());
-      detail::linesize_value = static_cast<u32>(sys_linesize);
+      detail::linesize_value = integral_cast<u32>(sys_linesize);
     }
     DEBUG_ASSERT_EQ(std::popcount(detail::linesize_value), 1, "the cacheline size is assumed to be a power of two");
     detail::linesize_initialized = true;
   }
 
   DEBUG_ASSERT_LE(detail::linesize_value, std::numeric_limits<Size>::max());
-  return static_cast<Size>(detail::linesize_value);
+  return integral_cast<Size>(detail::linesize_value);
 }
 
 template<unsigned_concept Size>
@@ -70,7 +71,7 @@ line_alloc(Size size) noexcept(false) -> void*
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = static_cast<u64>(size);
+  auto const size64 = integral_cast<u64>(size);
   if (size64 == 0) {
     return nullptr;
   }

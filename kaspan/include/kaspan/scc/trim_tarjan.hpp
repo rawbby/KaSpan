@@ -2,6 +2,8 @@
 
 #include <kaspan/scc/part.hpp>
 #include <kaspan/scc/tarjan.hpp>
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -75,7 +77,7 @@ trim_tarjan(part_t const&   part,
 
       DEBUG_ASSERT_GT(component.size(), 0);
       DEBUG_ASSERT_LE(component.size(), part.local_n());
-      [[maybe_unused]] auto const clen = static_cast<vertex_t>(component.size());
+      [[maybe_unused]] auto const clen = integral_cast<vertex_t>(component.size());
 
       if (clen == 1) {
         auto const k = component[0];

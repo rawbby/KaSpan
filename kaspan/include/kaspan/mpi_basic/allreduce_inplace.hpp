@@ -2,6 +2,7 @@
 
 #include <kaspan/mpi_basic/extent_of.hpp>
 #include <kaspan/mpi_basic/type.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <mpi.h>
 

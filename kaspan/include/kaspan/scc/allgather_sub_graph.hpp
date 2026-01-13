@@ -10,6 +10,8 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/part.hpp>
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <unordered_map>
 
@@ -33,7 +35,7 @@ allgather_sub_ids(part_t const& part, vertex_t local_sub_n, fn_t&& in_sub_graph)
   auto [TMP(), counts, displs] = mpi_basic::counts_and_displs();
 
   mpi_basic::allgather_counts(local_ids_inverse_stack.size(), counts);
-  auto const sub_n = static_cast<vertex_t>(mpi_basic::displs(counts, displs));
+  auto const sub_n = integral_cast<vertex_t>(mpi_basic::displs(counts, displs));
 
   auto  ids_inverse_buffer = make_buffer<vertex_t>(sub_n);
   auto* ids_inverse        = static_cast<vertex_t*>(ids_inverse_buffer.data());
@@ -85,7 +87,7 @@ allgather_csr_degrees(part_t const&   part,
       auto const        v  = csr[it];
       auto const* const jt = std::lower_bound(ids_inverse, ids_inverse + sub_n, v);
       if (jt != ids_inverse + sub_n and *jt == v) {
-        local_sub_csr.push(static_cast<vertex_t>(std::distance(ids_inverse, jt)));
+        local_sub_csr.push(integral_cast<vertex_t>(std::distance(ids_inverse, jt)));
         ++deg;
       }
     }

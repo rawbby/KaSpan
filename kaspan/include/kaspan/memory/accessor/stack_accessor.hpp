@@ -4,6 +4,7 @@
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <cstring>
 #include <type_traits>
@@ -25,20 +26,20 @@ public:
     DEBUG_ASSERT_GE(size, 0);
     DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
     DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
-    IF(KASPAN_DEBUG, size_ = static_cast<u64>(size));
+    IF(KASPAN_DEBUG, size_ = integral_cast<u64>(size));
   }
 
   template<arithmetic_concept End, arithmetic_concept Size>
   stack_accessor(void* data, End end, Size size)
     : data_(size == 0 ? nullptr : data)
-    , end_(static_cast<u64>(end))
+    , end_(integral_cast<u64>(end))
   {
     DEBUG_ASSERT_GE(end, 0);
     DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
     DEBUG_ASSERT_GE(size, 0);
     DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
     DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
-    IF(KASPAN_DEBUG, size_ = static_cast<u64>(size));
+    IF(KASPAN_DEBUG, size_ = integral_cast<u64>(size));
   }
 
   stack_accessor(stack_accessor const& rhs) noexcept = default;
@@ -109,7 +110,7 @@ borrow_stack(void** memory, Size size) -> stack_accessor<T>
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = static_cast<u64>(size);
+  auto const size64 = integral_cast<u64>(size);
   return stack_accessor<T>{ borrow_array<T>(memory, size64), size64 };
 }
 

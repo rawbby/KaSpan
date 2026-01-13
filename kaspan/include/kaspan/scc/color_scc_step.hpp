@@ -6,6 +6,8 @@
 #include <kaspan/scc/edge_frontier.hpp>
 #include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/part.hpp>
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <functional>
 
@@ -44,7 +46,7 @@ color_scc_step_multi(part_t const&   part,
   auto const count_degree = [=](vertex_t k, index_t const* head, vertex_t const* csr) {
     index_t degree = 0;
     for (auto u : csr_range(head, csr, k)) {
-      degree += static_cast<index_t>(not part.has_local(u) || scc_id[part.to_local(u)] == scc_id_undecided);
+      degree += integral_cast<index_t>(not part.has_local(u) || scc_id[part.to_local(u)] == scc_id_undecided);
     }
     return degree;
   };
@@ -206,7 +208,7 @@ color_scc_step_multi(part_t const&   part,
   auto const count_degree = [=](vertex_t k, index_t const* head, vertex_t const* csr) {
     index_t degree = 0;
     for (auto u : csr_range(head, csr, k)) {
-      degree += static_cast<index_t>(not part.has_local(u) || scc_id[part.to_local(u)] == scc_id_undecided);
+      degree += integral_cast<index_t>(not part.has_local(u) || scc_id[part.to_local(u)] == scc_id_undecided);
     }
     return degree;
   };

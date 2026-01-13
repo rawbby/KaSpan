@@ -3,6 +3,7 @@
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <concepts>
 #include <mpi.h>
@@ -421,7 +422,7 @@ struct trivial_slice_part final : explicit_continuous_part
     }
 
     auto const base  = n / world_size;
-    auto const start = static_cast<vertex_t>(world_rank) * base;
+    auto const start = integral_cast<vertex_t>(world_rank) * base;
     begin            = start;
     if (world_rank + 1 == world_size) {
       end = n;
@@ -452,9 +453,9 @@ struct trivial_slice_part final : explicit_continuous_part
       return world_size - 1;
     }
 
-    vertex_t const cutoff = base * static_cast<vertex_t>(world_size - 1);
+    vertex_t const cutoff = base * integral_cast<vertex_t>(world_size - 1);
     if (global < cutoff) {
-      return static_cast<i32>(global / base);
+      return integral_cast<i32>(global / base);
     }
 
     return world_size - 1;
@@ -496,10 +497,10 @@ struct balanced_slice_part final : explicit_continuous_part
     i32 const      rem  = n % world_size;
 
     if (world_rank < rem) {
-      begin = static_cast<vertex_t>(world_rank) * (base + 1);
+      begin = integral_cast<vertex_t>(world_rank) * (base + 1);
       end   = begin + (base + 1);
     } else {
-      begin = static_cast<vertex_t>(rem) * (base + 1) + static_cast<vertex_t>(world_rank - rem) * base;
+      begin = integral_cast<vertex_t>(rem) * (base + 1) + integral_cast<vertex_t>(world_rank - rem) * base;
       end   = begin + base;
     }
   }
@@ -530,10 +531,10 @@ struct balanced_slice_part final : explicit_continuous_part
 
     vertex_t const split = (base + 1) * rem;
     if (i < split) {
-      return static_cast<i32>(i / (base + 1));
+      return integral_cast<i32>(i / (base + 1));
     }
 
-    return rem + static_cast<i32>((i - split) / base);
+    return rem + integral_cast<i32>((i - split) / base);
   }
 
   [[nodiscard]] auto world_part_of(i32 r) const -> balanced_slice_part
@@ -630,7 +631,7 @@ struct explicit_sorted_continuous_world_part final : explicit_continuous_part
 
   [[nodiscard]] auto world_rank_of(vertex_t i) const -> i32
   {
-    auto r = i * static_cast<u64>(world_size) / static_cast<u64>(n);
+    auto r = i * integral_cast<u64>(world_size) / integral_cast<u64>(n);
     while (r > 0 and i < part[r - 1]) {
       --r;
     }

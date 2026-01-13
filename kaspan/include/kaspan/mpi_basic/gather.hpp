@@ -5,6 +5,7 @@
 #include <kaspan/mpi_basic/extent_of.hpp>
 #include <kaspan/mpi_basic/type.hpp>
 #include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <mpi.h>
 
@@ -14,13 +15,7 @@ namespace kaspan::mpi_basic {
  * @brief Gathers data from all processes to the root process (untyped).
  */
 inline void
-gather(void const*  send_buffer,
-       MPI_Count    send_count,
-       MPI_Datatype send_type,
-       void*        recv_buffer,
-       MPI_Count    recv_count,
-       MPI_Datatype recv_type,
-       int          root = 0)
+gather(void const* send_buffer, MPI_Count send_count, MPI_Datatype send_type, void* recv_buffer, MPI_Count recv_count, MPI_Datatype recv_type, int root = 0)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(send_type, MPI_DATATYPE_NULL);

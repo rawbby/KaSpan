@@ -14,6 +14,8 @@
 #include <kaspan/scc/scc.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/scope_guard.hpp>
+#include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <mpi.h>
 
@@ -113,9 +115,9 @@ main(int argc, char** argv)
     KASPAN_STATISTIC_PUSH("load");
     auto const manifest = manifest::load(manifest_file);
     ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
-    auto const part = balanced_slice_part{ static_cast<vertex_t>(manifest.graph_node_count) };
+    auto const part = balanced_slice_part{ integral_cast<vertex_t>(manifest.graph_node_count) };
     {
-      static_cast<vertex_t>(manifest.graph_node_count);
+      integral_cast<vertex_t>(manifest.graph_node_count);
     };
     auto const manifest_graph = load_graph_part_from_manifest(part, manifest);
     KASPAN_STATISTIC_POP();

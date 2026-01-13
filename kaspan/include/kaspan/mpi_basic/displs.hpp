@@ -4,6 +4,7 @@
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 #include <mpi.h>
 
 namespace kaspan::mpi_basic {
@@ -27,7 +28,7 @@ displs(MPI_Count const* counts, MPI_Aint* displs) -> MPI_Count
   MPI_Count count = 0;
   for (i32 i = 0; i < world_size; ++i) {
     DEBUG_ASSERT_GE(counts[i], 0);
-    displs[i] = static_cast<MPI_Aint>(count);
+    displs[i] = integral_cast<MPI_Aint>(count);
     count += counts[i];
   }
 

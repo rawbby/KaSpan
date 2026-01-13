@@ -6,6 +6,7 @@
 #include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/tarjan.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <algorithm>
 #include <random>

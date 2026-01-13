@@ -3,6 +3,7 @@
 #include <kaspan/mpi_basic/extent_of.hpp>
 #include <kaspan/mpi_basic/type.hpp>
 #include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <mpi.h>
 #include <numeric> // std::accumulate
@@ -34,8 +35,8 @@ alltoallv(void const*      send_buffer,
   KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_counts, world_size * sizeof(MPI_Count));
   KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_displs, world_size * sizeof(MPI_Aint));
 
-  IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const send_count = std::accumulate(send_counts, send_counts + world_size, static_cast<MPI_Count>(0)));
-  IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const recv_count = std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)));
+  IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const send_count = std::accumulate(send_counts, send_counts + world_size, integral_cast<MPI_Count>(0)));
+  IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const recv_count = std::accumulate(recv_counts, recv_counts + world_size, integral_cast<MPI_Count>(0)));
   IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const data_extent = extent_of(datatype));
 
   DEBUG_ASSERT_GE(send_count, 0);

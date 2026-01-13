@@ -3,6 +3,7 @@
 #include <kaspan/memory/accessor/dense_unsigned_ops.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <bit>
 #include <cstddef>
@@ -19,13 +20,13 @@ public:
 
   template<arithmetic_concept Size>
   explicit dense_unsigned_array(Size size, u8 element_byte_size, std::endian endian = std::endian::native) noexcept(false)
-    : buffer(static_cast<u64>(size) * element_byte_size)
+    : buffer(integral_cast<u64>(size) * element_byte_size)
     , element_byte_size_(element_byte_size)
     , endian_(endian)
   {
     DEBUG_ASSERT_GE(size, 0);
     DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-    IF(KASPAN_DEBUG, size_ = static_cast<u64>(size));
+    IF(KASPAN_DEBUG, size_ = integral_cast<u64>(size));
     DEBUG_ASSERT_GE(element_byte_size, 1);
     DEBUG_ASSERT_LE(element_byte_size, sizeof(T));
   }
@@ -76,7 +77,7 @@ public:
   {
     DEBUG_ASSERT_GE(n, 0);
     DEBUG_ASSERT_LE(n, std::numeric_limits<u64>::max());
-    auto const n64 = static_cast<u64>(n);
+    auto const n64 = integral_cast<u64>(n);
     DEBUG_ASSERT_LE(n64, size_);
     dense_unsigned_ops::fill<T>(data(), n64, element_bytes(), endian(), value);
   }
@@ -86,7 +87,7 @@ public:
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = static_cast<u64>(index);
+    auto const index64 = integral_cast<u64>(index);
     DEBUG_ASSERT_LT(index64, size_);
     return dense_unsigned_ops::get<T>(data(), index64, element_bytes(), endian());
   }
@@ -96,7 +97,7 @@ public:
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = static_cast<u64>(index);
+    auto const index64 = integral_cast<u64>(index);
     DEBUG_ASSERT_LT(index64, size_);
     dense_unsigned_ops::set<T>(data(), index64, element_bytes(), endian(), val);
   }

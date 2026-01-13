@@ -4,6 +4,7 @@
 #include <kaspan/debug/debug_break.hpp>
 #include <kaspan/util/formatable.hpp> // formattable_concept
 #include <kaspan/util/pp.hpp>
+#include <kaspan/util/cmp.hpp>
 
 #include <cstdio>
 #include <format>

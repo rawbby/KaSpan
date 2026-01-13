@@ -1,5 +1,6 @@
 #pragma once
 
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/scc/allgather_sub_graph.hpp>

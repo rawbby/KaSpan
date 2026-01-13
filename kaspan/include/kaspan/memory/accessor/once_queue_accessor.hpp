@@ -4,6 +4,7 @@
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <cstdlib>
 #include <type_traits>
@@ -25,7 +26,7 @@ public:
     DEBUG_ASSERT_GE(size, 0);
     DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
     DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
-    IF(KASPAN_DEBUG, size_ = static_cast<u64>(size));
+    IF(KASPAN_DEBUG, size_ = integral_cast<u64>(size));
     KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(data, size * sizeof(T));
   }
 
@@ -88,7 +89,7 @@ borrow_once_queue(void** memory, Size size) -> once_queue_accessor<T>
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = static_cast<u64>(size);
+  auto const size64 = integral_cast<u64>(size);
   return once_queue_accessor<T>{ borrow_array<T>(memory, size64), size64 };
 }
 

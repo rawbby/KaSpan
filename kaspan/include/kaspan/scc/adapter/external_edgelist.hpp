@@ -4,7 +4,9 @@
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/adapter/stxxl_wrapper.hpp>
 #include <kaspan/scc/base.hpp>
+#include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/result.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <algorithm>
 #include <cctype>
@@ -66,7 +68,7 @@ parse_uv(std::string const& s) -> edge64
   u64 pos = 0;
 
   auto skip_ws = [&] {
-    while (pos < s.size() && (std::isspace(static_cast<unsigned char>(s[pos])) != 0)) {
+    while (pos < s.size() && (std::isspace(integral_cast<unsigned char>(s[pos])) != 0)) {
       ++pos;
     }
   };
@@ -78,7 +80,7 @@ parse_uv(std::string const& s) -> edge64
     auto const [ptr, ec] = std::from_chars(begin, end, val, 10);
     ASSERT(ec == std::errc(), "failed to parse '%s'", s.c_str());
     ASSERT(ptr != begin, "failed to parse '%s'", s.c_str());
-    pos = static_cast<u64>(ptr - s.data());
+    pos = integral_cast<u64>(ptr - s.data());
     return val;
   };
 
@@ -336,8 +338,8 @@ convert_graph(std::string const& input_file, u64 mem_bytes, std::string const& g
   manifest_file << "graph.edge_count " << m << '\n';
   manifest_file << "graph.contains_self_loops " << (has_self_loops ? "true" : "false") << '\n';
   manifest_file << "graph.contains_duplicate_edges " << (has_duplicates ? "true" : "false") << '\n';
-  manifest_file << "graph.head.bytes " << static_cast<unsigned>(head_bytes) << '\n';
-  manifest_file << "graph.csr.bytes " << static_cast<unsigned>(csr_bytes) << '\n';
+  manifest_file << "graph.head.bytes " << integral_cast<unsigned>(head_bytes) << '\n';
+  manifest_file << "graph.csr.bytes " << integral_cast<unsigned>(csr_bytes) << '\n';
   manifest_file << "fw.head.path " << fw_head_path << '\n';
   manifest_file << "fw.csr.path " << fw_csr_path << '\n';
   manifest_file << "bw.head.path " << bw_head_path << '\n';

@@ -2,10 +2,11 @@
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/debug.hpp>
+#include <kaspan/mpi_basic/mpi_basic.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/pp.hpp>
 #include <kaspan/util/scope_guard.hpp>
-#include <kaspan/mpi_basic/mpi_basic.hpp>
 
 #include <chrono>
 #include <fstream>
@@ -158,7 +159,7 @@ kaspan_statistic_mpi_write_json(char const* file_path)
     std::ofstream os{ file_path };
     os << '{' << '"' << '0' << '"' << ':';
     kaspan_statistic_write_json(os);
-    constexpr auto local_size = static_cast<MPI_Count>(0);
+    constexpr auto local_size = integral_cast<MPI_Count>(0);
 
     auto [TMP(), recvcounts, recvdispls] = mpi_basic::counts_and_displs();
     mpi_basic::gather(local_size, recvcounts, 0);
@@ -167,8 +168,8 @@ kaspan_statistic_mpi_write_json(char const* file_path)
     mpi_basic::gatherv<char>(nullptr, 0, recv_buffer.data(), recvcounts, recvdispls, 0);
 
     for (int r = 1; r < size; ++r) {
-      auto const offset = static_cast<size_t>(recvdispls[r]);
-      auto const count  = static_cast<size_t>(recvcounts[r]);
+      auto const offset = integral_cast<size_t>(recvdispls[r]);
+      auto const count  = integral_cast<size_t>(recvcounts[r]);
       if (count != 0) {
         auto const json_obj = std::string_view{ recv_buffer.data() + offset, count };
         os << ',' << '"' << r << '"' << ':' << json_obj;
@@ -181,7 +182,7 @@ kaspan_statistic_mpi_write_json(char const* file_path)
     kaspan_statistic_write_json(ss);
     auto const json = ss.str();
 
-    auto const buffer_size = static_cast<MPI_Count>(json.size());
+    auto const buffer_size = integral_cast<MPI_Count>(json.size());
     mpi_basic::gather<MPI_Count>(buffer_size, nullptr, 0);
     mpi_basic::gatherv<char>(json.data(), buffer_size, nullptr, nullptr, nullptr, 0);
   }

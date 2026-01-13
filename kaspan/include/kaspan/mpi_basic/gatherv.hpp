@@ -5,6 +5,7 @@
 #include <kaspan/mpi_basic/extent_of.hpp>
 #include <kaspan/mpi_basic/type.hpp>
 #include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <mpi.h>
 #include <numeric> // std::accumulate
@@ -43,7 +44,7 @@ gatherv(void const*      send_buffer,
     KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(recv_counts, world_size * sizeof(MPI_Count));
     KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(displs, world_size * sizeof(MPI_Aint));
 
-    IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const recv_count = std::accumulate(recv_counts, recv_counts + world_size, static_cast<MPI_Count>(0)));
+    IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const recv_count = std::accumulate(recv_counts, recv_counts + world_size, integral_cast<MPI_Count>(0)));
 
     DEBUG_ASSERT_GE(recv_count, 0);
     DEBUG_ASSERT(recv_count == 0 || recv_buffer != nullptr);

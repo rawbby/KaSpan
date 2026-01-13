@@ -2,6 +2,7 @@
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <bit>
 #include <unistd.h>
@@ -9,7 +10,7 @@
 namespace kaspan {
 
 namespace detail {
-constexpr auto pagesize_default     = static_cast<u32>(4096);
+constexpr auto pagesize_default     = integral_cast<u32>(4096);
 inline bool    pagesize_initialized = false;
 inline auto    pagesize_value       = pagesize_default;
 }
@@ -21,14 +22,14 @@ pagesize() -> Size
   if (!detail::pagesize_initialized) [[unlikely]] {
     if (auto const sys_pagesize = sysconf(_SC_PAGESIZE); sys_pagesize > 0) [[likely]] {
       DEBUG_ASSERT_IN_RANGE_INCLUSIVE(sys_pagesize, std::numeric_limits<u32>::min(), std::numeric_limits<u32>::max());
-      detail::pagesize_value = static_cast<u32>(sys_pagesize);
+      detail::pagesize_value = integral_cast<u32>(sys_pagesize);
     }
     DEBUG_ASSERT_EQ(std::popcount(detail::pagesize_value), 1, "the page size is assumed to be a power of two");
     detail::pagesize_initialized = true;
   }
 
   DEBUG_ASSERT_LE(detail::pagesize_value, std::numeric_limits<Size>::max());
-  return static_cast<Size>(detail::pagesize_value);
+  return integral_cast<Size>(detail::pagesize_value);
 }
 
 template<unsigned_concept Size>
@@ -70,7 +71,7 @@ page_alloc(Size size) noexcept(false) -> void*
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = static_cast<u64>(size);
+  auto const size64 = integral_cast<u64>(size);
   if (size64 == 0) {
     return nullptr;
   }

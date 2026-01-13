@@ -4,6 +4,8 @@
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/scope_guard.hpp>
+#include <kaspan/util/integral_cast.hpp>
+
 #include <mpi.h>
 
 namespace kaspan {

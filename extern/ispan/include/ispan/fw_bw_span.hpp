@@ -5,6 +5,7 @@
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/mpi_basic/mpi_basic.hpp>
 #include <kaspan/util/scope_guard.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <cstring>
 #include <mpi.h>
@@ -49,8 +50,8 @@ fw_span(kaspan::vertex_t const* scc_id,
             auto const v = fw_csr[it];
 
             if (scc_id[v] == kaspan::scc_id_undecided && fw_sa[v] == depth_unset) {
-              fw_sa[v] = static_cast<depth_t>(level + 1);
-              sa_compress[v / 32] |= static_cast<kaspan::index_t>(1) << (v % 32);
+              fw_sa[v] = kaspan::integral_cast<depth_t>(level + 1);
+              sa_compress[v / 32] |= kaspan::integral_cast<kaspan::index_t>(1) << (v % 32);
               next_work += fw_head[v + 1] - fw_head[v];
               fq_comm[front_count] = v;
               ++front_count;
@@ -71,7 +72,7 @@ fw_span(kaspan::vertex_t const* scc_id,
             auto const v = bw_csr[it];
 
             if (scc_id[u] == kaspan::scc_id_undecided && fw_sa[v] != depth_unset) {
-              fw_sa[u]             = static_cast<depth_t>(level + 1);
+              fw_sa[u]             = kaspan::integral_cast<depth_t>(level + 1);
               fq_comm[front_count] = u;
               sa_compress[u / 32] |= 1 << (u % 32);
               front_count++;
@@ -107,7 +108,7 @@ fw_span(kaspan::vertex_t const* scc_id,
             q[tail++] = w;
             if (tail == queue_size)
               tail = 0;
-            fw_sa[w] = static_cast<depth_t>(level + 1);
+            fw_sa[w] = kaspan::integral_cast<depth_t>(level + 1);
           }
         }
       }
@@ -176,7 +177,7 @@ fw_span(kaspan::vertex_t const* scc_id,
         kaspan::vertex_t num_sa = 0;
         for (kaspan::index_t i = 0; i < n; ++i) {
           if (scc_id[i] == kaspan::scc_id_undecided && fw_sa[i] == depth_unset && (sa_compress[i / 32] & 1 << (i % 32)) != 0) {
-            fw_sa[i] = static_cast<depth_t>(level + 1);
+            fw_sa[i] = kaspan::integral_cast<depth_t>(level + 1);
             num_sa += 1;
           }
         }
@@ -227,7 +228,7 @@ fw_span(kaspan::vertex_t const* scc_id,
         for (int i = front_comm[kaspan::mpi_basic::world_rank]; i < front_count; ++i) {
           auto const v = fq_comm[i];
           if (fw_sa[v] == depth_unset) {
-            fw_sa[v] = static_cast<depth_t>(level + 1);
+            fw_sa[v] = kaspan::integral_cast<depth_t>(level + 1);
           }
         }
       }
@@ -282,7 +283,7 @@ bw_span(kaspan::vertex_t*       scc_id,
             auto const v = bw_csr[it];
 
             if (bw_sa[v] == depth_unset && fw_sa[v] != depth_unset) {
-              bw_sa[v] = static_cast<depth_t>(level + 1);
+              bw_sa[v] = kaspan::integral_cast<depth_t>(level + 1);
               next_work += bw_head[v + 1] - bw_head[v];
               fq_comm[front_count] = v;
               front_count++;
@@ -305,7 +306,7 @@ bw_span(kaspan::vertex_t*       scc_id,
             auto const v = fw_csr[it];
 
             if (bw_sa[v] != depth_unset) {
-              bw_sa[u]             = static_cast<depth_t>(level + 1);
+              bw_sa[u]             = kaspan::integral_cast<depth_t>(level + 1);
               fq_comm[front_count] = u;
               front_count++;
               sa_compress[u / 32] |= 1 << (u % 32);
@@ -344,7 +345,7 @@ bw_span(kaspan::vertex_t*       scc_id,
               tail = 0;
             scc_id[v] = scc_id_largest;
             ++decided_count;
-            bw_sa[v] = static_cast<depth_t>(level + 1);
+            bw_sa[v] = kaspan::integral_cast<depth_t>(level + 1);
           }
         }
       }
@@ -413,7 +414,7 @@ bw_span(kaspan::vertex_t*       scc_id,
         kaspan::vertex_t num_sa = 0;
         for (kaspan::vertex_t i = 0; i < n; ++i) {
           if (fw_sa[i] != depth_unset and bw_sa[i] == depth_unset and (sa_compress[i / 32] & 1 << (i % 32)) != 0) {
-            bw_sa[i] = static_cast<depth_t>(level + 1);
+            bw_sa[i] = kaspan::integral_cast<depth_t>(level + 1);
             num_sa += 1;
           }
         }
@@ -464,7 +465,7 @@ bw_span(kaspan::vertex_t*       scc_id,
         for (int i = 0; i < front_count; ++i) {
           auto const v_new = fq_comm[i];
           if (bw_sa[v_new] == depth_unset) {
-            bw_sa[v_new] = static_cast<depth_t>(level + 1);
+            bw_sa[v_new] = kaspan::integral_cast<depth_t>(level + 1);
           }
         }
       }

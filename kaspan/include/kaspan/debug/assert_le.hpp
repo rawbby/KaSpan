@@ -2,8 +2,10 @@
 
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/debug/debug_break.hpp>
+#include <kaspan/util/comparable.hpp>
 #include <kaspan/util/formatable.hpp>
 #include <kaspan/util/pp.hpp>
+#include <kaspan/util/cmp.hpp>
 
 #include <cstdio>
 #include <format>
@@ -16,7 +18,15 @@ template<typename Lhs, typename Rhs, formattable_concept... Args>
 void
 assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
-  if (lhs > rhs) [[unlikely]] {
+  bool const cond = [&] {
+    if constexpr (comparable_concept<Lhs, Rhs>) {
+      return cmp_greater(lhs, rhs);
+    } else {
+      return lhs > rhs;
+    }
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
     debug_break();
     std::abort();
@@ -28,7 +38,15 @@ template<typename Lhs, typename Rhs>
 void
 assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head)
 {
-  if (lhs > rhs) [[unlikely]] {
+  bool const cond = [&] {
+    if constexpr (comparable_concept<Lhs, Rhs>) {
+      return cmp_greater(lhs, rhs);
+    } else {
+      return lhs > rhs;
+    }
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}", head);
     debug_break();
     std::abort();
@@ -39,7 +57,15 @@ template<formattable_concept Lhs, formattable_concept Rhs, formattable_concept..
 void
 assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
 {
-  if (lhs > rhs) [[unlikely]] {
+  bool const cond = [&] {
+    if constexpr (comparable_concept<Lhs, Rhs>) {
+      return cmp_greater(lhs, rhs);
+    } else {
+      return lhs > rhs;
+    }
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} > {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
     debug_break();
     std::abort();
@@ -50,7 +76,15 @@ template<formattable_concept Lhs, formattable_concept Rhs>
 void
 assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head)
 {
-  if (lhs > rhs) [[unlikely]] {
+  bool const cond = [&] {
+    if constexpr (comparable_concept<Lhs, Rhs>) {
+      return cmp_greater(lhs, rhs);
+    } else {
+      return lhs > rhs;
+    }
+  }();
+
+  if (cond) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} > {}", head, lhs, rhs);
     debug_break();
     std::abort();

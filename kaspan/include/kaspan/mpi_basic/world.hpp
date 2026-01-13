@@ -1,6 +1,8 @@
 #pragma once
 
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
+
 #include <mpi.h>
 
 namespace kaspan::mpi_basic {

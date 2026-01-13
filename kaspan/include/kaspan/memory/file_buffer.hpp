@@ -1,7 +1,9 @@
 #pragma once
 
 #include <kaspan/debug/assert.hpp>
+#include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/scope_guard.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 #include <cerrno>
 #include <fcntl.h>
@@ -94,7 +96,7 @@ public:
     SCOPE_GUARD(close(fd));
 
     if (allocate) {
-      ASSERT_EQ(ftruncate(fd, static_cast<off_t>(size)), 0, "{}", file);
+      ASSERT_EQ(ftruncate(fd, integral_cast<off_t>(size)), 0, "{}", file);
     } else {
       struct stat st{};
       ASSERT_EQ(fstat(fd, &st), 0, "{}", file);
@@ -124,7 +126,7 @@ public:
     SCOPE_GUARD(close(fd));
 
     if (allocate) {
-      ASSERT_EQ(ftruncate(fd, static_cast<off_t>(byte_size)), 0, "{}", file);
+      ASSERT_EQ(ftruncate(fd, integral_cast<off_t>(byte_size)), 0, "{}", file);
     } else {
       struct stat st{};
       ASSERT_EQ(fstat(fd, &st), 0, "{}", file);
