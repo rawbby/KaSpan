@@ -46,21 +46,26 @@ public:
 
   constexpr result()
     requires(value_is_void_v)
-    : data(std::in_place_index<0>, std::monostate{})
+    : data(std::in_place_index<0>,
+           std::monostate{})
   {
   }
 
   template<typename T>
     requires(value_convertible_v<T>)
-  constexpr result(T&& value) // NOLINT(*-explicit-constructor, *-explicit-conversions)
-    : data(std::in_place_index<0>, std::forward<T>(value))
+  constexpr result(
+    T&& value) // NOLINT(*-explicit-constructor, *-explicit-conversions)
+    : data(std::in_place_index<0>,
+           std::forward<T>(value))
   {
   }
 
   template<typename T>
     requires(error_convertible_v<T>)
-  constexpr result(T&& error) // NOLINT(*-explicit-constructor, *-explicit-conversions)
-    : data(std::in_place_index<1>, std::forward<T>(error))
+  constexpr result(
+    T&& error) // NOLINT(*-explicit-constructor, *-explicit-conversions)
+    : data(std::in_place_index<1>,
+           std::forward<T>(error))
   {
   }
 
@@ -70,7 +75,8 @@ public:
     return result();
   }
 
-  static constexpr auto success(V value) -> result
+  static constexpr auto success(
+    V value) -> result
   {
     return result(std::move(value));
   }
@@ -80,7 +86,8 @@ public:
     return result(error_code::ERROR);
   }
 
-  static constexpr auto failure(error_code error) -> result
+  static constexpr auto failure(
+    error_code error) -> result
   {
     return result(error);
   }
@@ -127,13 +134,15 @@ public:
 
   template<class U>
     requires(value_convertible_v<U>)
-  [[nodiscard]] constexpr auto value_or(U&& alt) const& -> V
+  [[nodiscard]] constexpr auto value_or(
+    U&& alt) const& -> V
   {
     return has_value() ? value() : V{ std::forward<U>(alt) };
   }
   template<class U>
     requires(value_convertible_v<U>)
-  constexpr auto value_or(U&& alt) && -> V
+  constexpr auto value_or(
+    U&& alt) && -> V
   {
     return has_value() ? std::move(*this).value() : V{ std::forward<U>(alt) };
   }
@@ -145,7 +154,8 @@ public:
   }
 
   template<class F>
-  [[nodiscard]] constexpr auto map(F&& mapper) const
+  [[nodiscard]] constexpr auto map(
+    F&& mapper) const
   {
     using R = result<std::invoke_result_t<F, V const&>>;
     if (not has_value()) {
@@ -155,7 +165,8 @@ public:
   }
 
   template<class F>
-  [[nodiscard]] constexpr auto and_then(F&& consumer) const
+  [[nodiscard]] constexpr auto and_then(
+    F&& consumer) const
   {
     using R = std::invoke_result_t<F, V const&>;
     if (not has_value()) {

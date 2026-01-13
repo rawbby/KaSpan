@@ -21,9 +21,13 @@
 namespace kaspan {
 namespace sub_graph {
 
-template<world_part_concept part_t, class fn_t>
+template<world_part_concept part_t,
+         class fn_t>
 auto
-allgather_sub_ids(part_t const& part, vertex_t local_sub_n, fn_t&& in_sub_graph)
+allgather_sub_ids(
+  part_t const& part,
+  vertex_t      local_sub_n,
+  fn_t&&        in_sub_graph)
 {
   auto const local_n = part.local_n();
 
@@ -51,14 +55,15 @@ allgather_sub_ids(part_t const& part, vertex_t local_sub_n, fn_t&& in_sub_graph)
 
 template<class part_t>
 auto
-allgather_csr_degrees(part_t const&   part,
-                      vertex_t        local_sub_n,
-                      index_t const*  head,
-                      vertex_t const* csr,
+allgather_csr_degrees(
+  part_t const&   part,
+  vertex_t        local_sub_n,
+  index_t const*  head,
+  vertex_t const* csr,
 
-                      vertex_t const* local_ids_inverse,
-                      vertex_t        sub_n,
-                      vertex_t const* ids_inverse)
+  vertex_t const* local_ids_inverse,
+  vertex_t        sub_n,
+  vertex_t const* ids_inverse)
 {
   auto const local_n = part.local_n();
 
@@ -105,10 +110,20 @@ allgather_csr_degrees(part_t const&   part,
 
 }
 
-template<class part_t, class fn_t>
-  requires(part_t::ordered and std::convertible_to<std::invoke_result_t<fn_t, vertex_t>, bool>)
+template<class part_t,
+         class fn_t>
+  requires(part_t::ordered and std::convertible_to<std::invoke_result_t<fn_t,
+                                                                        vertex_t>,
+                                                   bool>)
 auto
-allgather_sub_graph(part_t const& part, vertex_t local_sub_n, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, fn_t&& in_sub_graph)
+allgather_sub_graph(
+  part_t const&   part,
+  vertex_t        local_sub_n,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  fn_t&&          in_sub_graph)
 {
   struct result // NOLINT(*-pro-type-member-init)
   {
@@ -182,10 +197,18 @@ allgather_sub_graph(part_t const& part, vertex_t local_sub_n, index_t const* fw_
   return sub;
 }
 
-template<class part_t, class fn_t>
-  requires(part_t::ordered and std::convertible_to<std::invoke_result_t<fn_t, vertex_t>, bool>)
+template<class part_t,
+         class fn_t>
+  requires(part_t::ordered and std::convertible_to<std::invoke_result_t<fn_t,
+                                                                        vertex_t>,
+                                                   bool>)
 auto
-allgather_fw_sub_graph(part_t const& part, vertex_t local_sub_n, index_t const* fw_head, vertex_t const* fw_csr, fn_t&& in_sub_graph)
+allgather_fw_sub_graph(
+  part_t const&   part,
+  vertex_t        local_sub_n,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  fn_t&&          in_sub_graph)
 {
   struct result // NOLINT(*-pro-type-member-init)
   {

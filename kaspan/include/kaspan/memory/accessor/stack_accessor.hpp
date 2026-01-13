@@ -20,7 +20,9 @@ public:
   ~stack_accessor() = default;
 
   template<arithmetic_concept Size>
-  explicit stack_accessor(void* data, Size size)
+  explicit stack_accessor(
+    void* data,
+    Size  size)
     : data_(size == 0 ? nullptr : data)
   {
     DEBUG_ASSERT_GE(size, 0);
@@ -29,8 +31,12 @@ public:
     IF(KASPAN_DEBUG, size_ = integral_cast<u64>(size));
   }
 
-  template<arithmetic_concept End, arithmetic_concept Size>
-  stack_accessor(void* data, End end, Size size)
+  template<arithmetic_concept End,
+           arithmetic_concept Size>
+  stack_accessor(
+    void* data,
+    End   end,
+    Size  size)
     : data_(size == 0 ? nullptr : data)
     , end_(integral_cast<u64>(end))
   {
@@ -73,7 +79,8 @@ public:
     return static_cast<T const*>(data_);
   }
 
-  void push(T t) noexcept
+  void push(
+    T t) noexcept
   {
     DEBUG_ASSERT_LT(end_, size_);
     data()[end_++] = t;
@@ -101,12 +108,16 @@ public:
 private:
   void* data_ = nullptr;
   u64   end_  = 0;
-  IF(KASPAN_DEBUG, u64 size_ = 0);
+  IF(KASPAN_DEBUG,
+     u64 size_ = 0);
 };
 
-template<typename T, arithmetic_concept Size>
+template<typename T,
+         arithmetic_concept Size>
 auto
-borrow_stack(void** memory, Size size) -> stack_accessor<T>
+borrow_stack(
+  void** memory,
+  Size   size) -> stack_accessor<T>
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
@@ -114,9 +125,12 @@ borrow_stack(void** memory, Size size) -> stack_accessor<T>
   return stack_accessor<T>{ borrow_array<T>(memory, size64), size64 };
 }
 
-template<typename T, arithmetic_concept Size>
+template<typename T,
+         arithmetic_concept Size>
 auto
-view_stack(void* data, Size size) -> stack_accessor<T>
+view_stack(
+  void* data,
+  Size  size) -> stack_accessor<T>
 {
   return stack_accessor<T>{ data, size };
 }

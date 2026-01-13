@@ -14,3 +14,5 @@ AlignConsecutiveDeclarations:
 QualifierAlignment: Right
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 AllowShortBlocksOnASingleLine: Never
+BinPackParameters: AlwaysOnePerLine
+BreakFunctionDefinitionParameters: true

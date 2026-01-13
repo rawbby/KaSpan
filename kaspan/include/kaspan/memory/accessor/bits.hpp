@@ -32,7 +32,8 @@ public:
   }
 
   bits(bits const&) = delete;
-  bits(bits&& rhs) noexcept
+  bits(
+    bits&& rhs) noexcept
     : buffer(std::move(rhs))
   {
     IF(KASPAN_DEBUG, size_ = rhs.size_);
@@ -40,7 +41,8 @@ public:
   }
 
   auto operator=(bits const&) -> bits& = delete;
-  auto operator=(bits&& rhs) noexcept -> bits&
+  auto operator=(
+    bits&& rhs) noexcept -> bits&
   {
     buffer::operator=(std::move(rhs));
     IF(KASPAN_DEBUG, size_ = rhs.size_);
@@ -59,7 +61,8 @@ public:
   }
 
   template<arithmetic_concept Size>
-  void clear(Size end)
+  void clear(
+    Size end)
   {
     DEBUG_ASSERT_GE(end, 0);
     DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
@@ -69,7 +72,8 @@ public:
   }
 
   template<arithmetic_concept Size>
-  void fill(Size end)
+  void fill(
+    Size end)
   {
     DEBUG_ASSERT_GE(end, 0);
     DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
@@ -79,7 +83,8 @@ public:
   }
 
   template<arithmetic_concept Index>
-  [[nodiscard]] auto get(Index index) const -> bool
+  [[nodiscard]] auto get(
+    Index index) const -> bool
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -89,7 +94,9 @@ public:
   }
 
   template<arithmetic_concept Index>
-  void set(Index index, bool value)
+  void set(
+    Index index,
+    bool  value)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -99,7 +106,8 @@ public:
   }
 
   template<arithmetic_concept Index>
-  void set(Index index)
+  void set(
+    Index index)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -109,7 +117,8 @@ public:
   }
 
   template<arithmetic_concept Index>
-  void unset(Index index)
+  void unset(
+    Index index)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -119,33 +128,40 @@ public:
   }
 
   template<arithmetic_concept Index = size_t>
-  void for_each(Index end, std::invocable<Index> auto&& fn) const
+  void for_each(
+    Index                        end,
+    std::invocable<Index> auto&& fn) const
   {
     DEBUG_ASSERT_LE(end, size_);
     bits_ops::for_each<Index>(data(), end, std::forward<decltype(fn)>(fn));
   }
 
   template<arithmetic_concept Index = size_t>
-  void set_each(Index end, std::invocable<Index> auto&& fn)
+  void set_each(
+    Index                        end,
+    std::invocable<Index> auto&& fn)
   {
     DEBUG_ASSERT_LE(end, size_);
     bits_ops::set_each<Index>(data(), end, std::forward<decltype(fn)>(fn));
   }
 
 private:
-  IF(KASPAN_DEBUG, u64 size_);
+  IF(KASPAN_DEBUG,
+     u64 size_);
 };
 
 template<arithmetic_concept Size>
 auto
-make_bits(Size size) noexcept -> bits
+make_bits(
+  Size size) noexcept -> bits
 {
   return bits{ size };
 }
 
 template<arithmetic_concept Size>
 auto
-make_bits_clean(Size size) noexcept -> bits
+make_bits_clean(
+  Size size) noexcept -> bits
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
@@ -167,7 +183,8 @@ make_bits_clean(Size size) noexcept -> bits
 
 template<arithmetic_concept Size>
 auto
-make_bits_filled(Size size) noexcept -> bits
+make_bits_filled(
+  Size size) noexcept -> bits
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());

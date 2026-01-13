@@ -29,7 +29,9 @@ struct edge64
 
 struct edge64_less
 {
-  constexpr auto operator()(edge64 const& lhs, edge64 const& rhs) const noexcept -> bool
+  constexpr auto operator()(
+    edge64 const& lhs,
+    edge64 const& rhs) const noexcept -> bool
   {
     return lhs.u < rhs.u or (lhs.u == rhs.u and lhs.v < rhs.v);
   }
@@ -47,7 +49,9 @@ struct edge64_less
 
 struct edge64_greater
 {
-  constexpr auto operator()(edge64 const& lhs, edge64 const& rhs) const noexcept -> bool
+  constexpr auto operator()(
+    edge64 const& lhs,
+    edge64 const& rhs) const noexcept -> bool
   {
     return lhs.u > rhs.u or (lhs.u == rhs.u and lhs.v > rhs.v);
   }
@@ -64,7 +68,8 @@ struct edge64_greater
 };
 
 inline auto
-parse_uv(std::string const& s) -> edge64
+parse_uv(
+  std::string const& s) -> edge64
 {
   u64 pos = 0;
 
@@ -100,12 +105,14 @@ struct local_sort_adapter
 {
   std::vector<edge64> buffer{};
 
-  explicit local_sort_adapter(u64 memory)
+  explicit local_sort_adapter(
+    u64 memory)
   {
     buffer.reserve(memory / sizeof(edge64));
   }
 
-  void push(edge64 edge)
+  void push(
+    edge64 edge)
   {
     buffer.push_back(edge);
   }
@@ -142,12 +149,15 @@ struct extern_sort_adapter
 {
   stxxl::sorter<edge64, edge64_less> storage;
 
-  explicit extern_sort_adapter(u64 memory)
-    : storage(edge64_less{}, memory)
+  explicit extern_sort_adapter(
+    u64 memory)
+    : storage(edge64_less{},
+              memory)
   {
   }
 
-  void push(edge64 edge)
+  void push(
+    edge64 edge)
   {
     storage.push(edge);
   }
@@ -182,7 +192,10 @@ struct extern_sort_adapter
 
 template<typename sorter_t>
 auto
-convert_graph(std::string const& input_file, u64 mem_bytes, std::string const& graph_name = std::string()) -> void_result
+convert_graph(
+  std::string const& input_file,
+  u64                mem_bytes,
+  std::string const& graph_name = std::string()) -> void_result
 {
 
   std::string const code = input_file.substr(0, input_file.find_first_of('.'));
@@ -354,7 +367,10 @@ convert_graph(std::string const& input_file, u64 mem_bytes, std::string const& g
 } // namespace convert_graph_internal
 
 inline auto
-convert_graph(std::string const& input_file, u64 mem_bytes, std::string const& graph_name = std::string{}) -> void_result
+convert_graph(
+  std::string const& input_file,
+  u64                mem_bytes,
+  std::string const& graph_name = std::string{}) -> void_result
 {
   auto const file_size = std::filesystem::file_size(input_file);
   if (file_size < mem_bytes) {

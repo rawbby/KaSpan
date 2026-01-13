@@ -13,7 +13,9 @@ namespace kaspan {
 
 template<world_part_concept part_t>
 void
-color_scc_init_label(part_t const& part, vertex_t* colors)
+color_scc_init_label(
+  part_t const& part,
+  vertex_t*     colors)
 {
   auto const local_n = part.local_n();
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -23,18 +25,19 @@ color_scc_init_label(part_t const& part, vertex_t* colors)
 
 template<world_part_concept part_t>
 auto
-color_scc_step_multi(part_t const&   part,
-                     index_t const*  fw_head,
-                     vertex_t const* fw_csr,
-                     index_t const*  bw_head,
-                     vertex_t const* bw_csr,
-                     vertex_t*       scc_id,
-                     vertex_t*       colors,
-                     vertex_t*       active_array,
-                     u64*            active_storage,
-                     u64*            changed_storage,
-                     edge_frontier&  frontier,
-                     vertex_t        local_pivot) -> vertex_t
+color_scc_step_multi(
+  part_t const&   part,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  vertex_t*       scc_id,
+  vertex_t*       colors,
+  vertex_t*       active_array,
+  u64*            active_storage,
+  u64*            changed_storage,
+  edge_frontier&  frontier,
+  vertex_t        local_pivot) -> vertex_t
 {
   auto const local_n      = part.local_n();
   auto       active       = view_bits(active_storage, local_n);
@@ -187,17 +190,18 @@ color_scc_step_multi(part_t const&   part,
 
 template<world_part_concept part_t>
 auto
-color_scc_step_multi(part_t const&   part,
-                     index_t const*  fw_head,
-                     vertex_t const* fw_csr,
-                     index_t const*  bw_head,
-                     vertex_t const* bw_csr,
-                     vertex_t*       scc_id,
-                     vertex_t*       colors,
-                     vertex_t*       active_array,
-                     u64*            active_storage,
-                     u64*            changed_storage,
-                     edge_frontier&  frontier) -> vertex_t
+color_scc_step_multi(
+  part_t const&   part,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  vertex_t*       scc_id,
+  vertex_t*       colors,
+  vertex_t*       active_array,
+  u64*            active_storage,
+  u64*            changed_storage,
+  edge_frontier&  frontier) -> vertex_t
 {
   auto const local_n = part.local_n();
   auto       active  = view_bits(active_storage, local_n);
@@ -253,18 +257,19 @@ color_scc_step_multi(part_t const&   part,
 
 template<world_part_concept part_t>
 auto
-color_scc_step(part_t const&   part,
-               index_t const*  fw_head,
-               vertex_t const* fw_csr,
-               index_t const*  bw_head,
-               vertex_t const* bw_csr,
-               vertex_t*       scc_id,
-               vertex_t*       colors,
-               vertex_t*       active_array,
-               u64*            active_storage,
-               u64*            changed_storage,
-               edge_frontier&  frontier,
-               vertex_t        decided_count = 0) -> vertex_t
+color_scc_step(
+  part_t const&   part,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  vertex_t*       scc_id,
+  vertex_t*       colors,
+  vertex_t*       active_array,
+  u64*            active_storage,
+  u64*            changed_storage,
+  edge_frontier&  frontier,
+  vertex_t        decided_count = 0) -> vertex_t
 {
   auto const local_n      = part.local_n();
   auto       active       = view_bits(active_storage, local_n);

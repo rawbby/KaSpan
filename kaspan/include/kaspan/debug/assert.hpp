@@ -114,78 +114,98 @@ namespace internal {
 template<typename T>
 concept formattable_concept = requires { std::formatter<std::remove_cvref_t<T>>{}; };
 
-template<typename Lhs, typename Rhs>
+template<typename Lhs,
+         typename Rhs>
   requires(not arithmetic_concept<Lhs> or not arithmetic_concept<Rhs>)
 constexpr bool
-eq(Lhs const& lhs, Rhs const& rhs) noexcept
+eq(
+  Lhs const& lhs,
+  Rhs const& rhs) noexcept
 {
   return lhs == rhs;
 }
 
-template<typename Lhs, typename Rhs>
+template<typename Lhs,
+         typename Rhs>
   requires(not arithmetic_concept<Lhs> or not arithmetic_concept<Rhs>)
 constexpr bool
-lt(Lhs const& lhs, Rhs const& rhs) noexcept
+lt(
+  Lhs const& lhs,
+  Rhs const& rhs) noexcept
 {
   return lhs < rhs;
 }
 
-template<arithmetic_concept Lhs, arithmetic_concept Rhs>
+template<arithmetic_concept Lhs,
+         arithmetic_concept Rhs>
 constexpr bool
-eq(Lhs lhs, Rhs rhs) noexcept
+eq(
+  Lhs lhs,
+  Rhs rhs) noexcept
 {
-  if constexpr (signed_concept<Lhs> == signed_concept<Rhs>)
-    return lhs == rhs;
-  else if constexpr (signed_concept<Lhs>)
-    return lhs >= 0 && std::make_unsigned_t<Lhs>(lhs) == rhs;
-  else
-    return rhs >= 0 && std::make_unsigned_t<Rhs>(rhs) == lhs;
+  if constexpr (signed_concept<Lhs> == signed_concept<Rhs>) return lhs == rhs;
+  else if constexpr (signed_concept<Lhs>) return lhs >= 0 && std::make_unsigned_t<Lhs>(lhs) == rhs;
+  else return rhs >= 0 && std::make_unsigned_t<Rhs>(rhs) == lhs;
 }
 
-template<arithmetic_concept Lhs, arithmetic_concept Rhs>
+template<arithmetic_concept Lhs,
+         arithmetic_concept Rhs>
 constexpr bool
-lt(Lhs lhs, Rhs rhs) noexcept
+lt(
+  Lhs lhs,
+  Rhs rhs) noexcept
 {
-  if constexpr (signed_concept<Lhs> == signed_concept<Rhs>)
-    return lhs < rhs;
-  else if constexpr (signed_concept<Lhs>)
-    return lhs < 0 || std::make_unsigned_t<Lhs>(lhs) < rhs;
-  else
-    return rhs >= 0 && lhs < std::make_unsigned_t<Rhs>(rhs);
+  if constexpr (signed_concept<Lhs> == signed_concept<Rhs>) return lhs < rhs;
+  else if constexpr (signed_concept<Lhs>) return lhs < 0 || std::make_unsigned_t<Lhs>(lhs) < rhs;
+  else return rhs >= 0 && lhs < std::make_unsigned_t<Rhs>(rhs);
 }
 
 constexpr bool
-ne(auto const& lhs, auto const& rhs) noexcept
+ne(
+  auto const& lhs,
+  auto const& rhs) noexcept
 {
   return !eq(lhs, rhs);
 }
 
 constexpr bool
-gt(auto const& lhs, auto const& rhs) noexcept
+gt(
+  auto const& lhs,
+  auto const& rhs) noexcept
 {
   return lt(rhs, lhs);
 }
 
 constexpr bool
-le(auto const& lhs, auto const& rhs) noexcept
+le(
+  auto const& lhs,
+  auto const& rhs) noexcept
 {
   return !gt(lhs, rhs);
 }
 
 constexpr bool
-ge(auto const& lhs, auto const& rhs) noexcept
+ge(
+  auto const& lhs,
+  auto const& rhs) noexcept
 {
   return !lt(lhs, rhs);
 }
 
 constexpr bool
-in_range(auto const& val, auto const& beg, auto const& end) noexcept
+in_range(
+  auto const& val,
+  auto const& beg,
+  auto const& end) noexcept
 {
   return ge(val, beg) & lt(val, end);
 }
 
 constexpr bool
-in_range_inclusive(auto const& val, auto const& beg, auto const& end) noexcept
+in_range_inclusive(
+  auto const& val,
+  auto const& beg,
+  auto const& end) noexcept
 {
   return ge(val, beg) & le(val, end);
 }
@@ -194,7 +214,11 @@ in_range_inclusive(auto const& val, auto const& beg, auto const& end) noexcept
 
 template<internal::formattable_concept... Args>
 void
-assert_true(auto const& cond, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_true(
+  auto const&                 cond,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (not cond) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -204,7 +228,9 @@ assert_true(auto const& cond, std::string_view head, std::format_string<Args...>
 }
 
 void
-assert_true(auto const& cond, std::string_view head)
+assert_true(
+  auto const&      cond,
+  std::string_view head)
 {
   if (not cond) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -215,7 +241,11 @@ assert_true(auto const& cond, std::string_view head)
 
 template<internal::formattable_concept... Args>
 void
-assert_false(auto const& cond, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_false(
+  auto const&                 cond,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (cond) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -225,7 +255,9 @@ assert_false(auto const& cond, std::string_view head, std::format_string<Args...
 }
 
 void
-assert_false(auto cond, std::string_view head)
+assert_false(
+  auto             cond,
+  std::string_view head)
 {
   if (cond) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -234,10 +266,17 @@ assert_false(auto cond, std::string_view head)
   }
 }
 
-template<typename Lhs, typename Rhs, internal::formattable_concept... Args>
+template<typename Lhs,
+         typename Rhs,
+         internal::formattable_concept... Args>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_eq(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_eq(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::ne(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -246,10 +285,14 @@ assert_eq(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<typename Lhs, typename Rhs>
+template<typename Lhs,
+         typename Rhs>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_eq(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_eq(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::ne(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -258,9 +301,16 @@ assert_eq(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs, internal::formattable_concept... Args>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs,
+         internal::formattable_concept... Args>
 void
-assert_eq(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_eq(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::ne(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} != {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
@@ -269,9 +319,13 @@ assert_eq(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs>
 void
-assert_eq(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_eq(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::ne(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} != {}", head, lhs, rhs);
@@ -280,10 +334,17 @@ assert_eq(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<typename Lhs, typename Rhs, internal::formattable_concept... Args>
+template<typename Lhs,
+         typename Rhs,
+         internal::formattable_concept... Args>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_ne(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_ne(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::eq(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -292,10 +353,14 @@ assert_ne(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<typename Lhs, typename Rhs>
+template<typename Lhs,
+         typename Rhs>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_ne(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_ne(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::eq(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -304,9 +369,16 @@ assert_ne(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs, internal::formattable_concept... Args>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs,
+         internal::formattable_concept... Args>
 void
-assert_ne(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_ne(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::eq(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} == {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
@@ -315,9 +387,13 @@ assert_ne(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs>
 void
-assert_ne(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_ne(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::eq(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} == {}", head, lhs, rhs);
@@ -326,10 +402,17 @@ assert_ne(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<typename Lhs, typename Rhs, internal::formattable_concept... Args>
+template<typename Lhs,
+         typename Rhs,
+         internal::formattable_concept... Args>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_lt(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_lt(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::ge(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -338,10 +421,14 @@ assert_lt(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<typename Lhs, typename Rhs>
+template<typename Lhs,
+         typename Rhs>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_lt(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_lt(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::ge(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -350,9 +437,16 @@ assert_lt(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs, internal::formattable_concept... Args>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs,
+         internal::formattable_concept... Args>
 void
-assert_lt(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_lt(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::ge(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} >= {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
@@ -361,9 +455,13 @@ assert_lt(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs>
 void
-assert_lt(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_lt(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::ge(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} >= {}", head, lhs, rhs);
@@ -372,10 +470,17 @@ assert_lt(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<typename Lhs, typename Rhs, internal::formattable_concept... Args>
+template<typename Lhs,
+         typename Rhs,
+         internal::formattable_concept... Args>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_gt(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_gt(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::le(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -384,10 +489,14 @@ assert_gt(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<typename Lhs, typename Rhs>
+template<typename Lhs,
+         typename Rhs>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_gt(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_gt(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::le(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -396,9 +505,16 @@ assert_gt(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs, internal::formattable_concept... Args>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs,
+         internal::formattable_concept... Args>
 void
-assert_gt(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_gt(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::le(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} <= {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
@@ -407,9 +523,13 @@ assert_gt(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs>
 void
-assert_gt(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_gt(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::le(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} <= {}", head, lhs, rhs);
@@ -418,10 +538,17 @@ assert_gt(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<typename Lhs, typename Rhs, internal::formattable_concept... Args>
+template<typename Lhs,
+         typename Rhs,
+         internal::formattable_concept... Args>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_le(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::gt(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -430,10 +557,14 @@ assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<typename Lhs, typename Rhs>
+template<typename Lhs,
+         typename Rhs>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_le(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::gt(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -442,9 +573,16 @@ assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs, internal::formattable_concept... Args>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs,
+         internal::formattable_concept... Args>
 void
-assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_le(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::gt(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} > {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
@@ -453,9 +591,13 @@ assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs>
 void
-assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_le(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::gt(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} > {}", head, lhs, rhs);
@@ -464,10 +606,17 @@ assert_le(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<typename Lhs, typename Rhs, internal::formattable_concept... Args>
+template<typename Lhs,
+         typename Rhs,
+         internal::formattable_concept... Args>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_ge(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::lt(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -476,10 +625,14 @@ assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<typename Lhs, typename Rhs>
+template<typename Lhs,
+         typename Rhs>
   requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
 void
-assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_ge(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::lt(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -488,9 +641,16 @@ assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs, internal::formattable_concept... Args>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs,
+         internal::formattable_concept... Args>
 void
-assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_ge(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (internal::lt(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} < {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
@@ -499,9 +659,13 @@ assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head, std::format_str
   }
 }
 
-template<internal::formattable_concept Lhs, internal::formattable_concept Rhs>
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs>
 void
-assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head)
+assert_ge(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
 {
   if (internal::lt(lhs, rhs)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} < {}", head, lhs, rhs);
@@ -510,10 +674,19 @@ assert_ge(Lhs const& lhs, Rhs const& rhs, std::string_view head)
   }
 }
 
-template<typename Val, typename Beg, typename End, internal::formattable_concept... Args>
+template<typename Val,
+         typename Beg,
+         typename End,
+         internal::formattable_concept... Args>
   requires(not internal::formattable_concept<Val> or not internal::formattable_concept<Beg> or not internal::formattable_concept<End>)
 void
-assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_in_range(
+  Val const&                  val,
+  Beg const&                  beg,
+  End const&                  end,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (!internal::in_range(val, beg, end)) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -522,10 +695,16 @@ assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view
   }
 }
 
-template<typename Val, typename Beg, typename End>
+template<typename Val,
+         typename Beg,
+         typename End>
   requires(not internal::formattable_concept<Val> or not internal::formattable_concept<Beg> or not internal::formattable_concept<End>)
 void
-assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head)
+assert_in_range(
+  Val const&       val,
+  Beg const&       beg,
+  End const&       end,
+  std::string_view head)
 {
   if (!internal::in_range(val, beg, end)) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -534,9 +713,18 @@ assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view
   }
 }
 
-template<internal::formattable_concept Val, internal::formattable_concept Beg, internal::formattable_concept End, internal::formattable_concept... Args>
+template<internal::formattable_concept Val,
+         internal::formattable_concept Beg,
+         internal::formattable_concept End,
+         internal::formattable_concept... Args>
 void
-assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_in_range(
+  Val const&                  val,
+  Beg const&                  beg,
+  End const&                  end,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (!internal::in_range(val, beg, end)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {})\n{}", head, val, beg, end, std::format(fmt, std::forward<Args>(args)...));
@@ -545,9 +733,15 @@ assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view
   }
 }
 
-template<internal::formattable_concept Val, internal::formattable_concept Beg, internal::formattable_concept End>
+template<internal::formattable_concept Val,
+         internal::formattable_concept Beg,
+         internal::formattable_concept End>
 void
-assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view head)
+assert_in_range(
+  Val const&       val,
+  Beg const&       beg,
+  End const&       end,
+  std::string_view head)
 {
   if (!internal::in_range(val, beg, end)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {})", head, val, beg, end);
@@ -556,10 +750,19 @@ assert_in_range(Val const& val, Beg const& beg, End const& end, std::string_view
   }
 }
 
-template<typename Val, typename Beg, typename End, internal::formattable_concept... Args>
+template<typename Val,
+         typename Beg,
+         typename End,
+         internal::formattable_concept... Args>
   requires(not internal::formattable_concept<Val> or not internal::formattable_concept<Beg> or not internal::formattable_concept<End>)
 void
-assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_in_range_inclusive(
+  Val const&                  val,
+  Beg const&                  beg,
+  End const&                  end,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (!internal::in_range_inclusive(val, beg, end)) [[unlikely]] {
     std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
@@ -568,10 +771,16 @@ assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::s
   }
 }
 
-template<typename Val, typename Beg, typename End>
+template<typename Val,
+         typename Beg,
+         typename End>
   requires(not internal::formattable_concept<Val> or not internal::formattable_concept<Beg> or not internal::formattable_concept<End>)
 void
-assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head)
+assert_in_range_inclusive(
+  Val const&       val,
+  Beg const&       beg,
+  End const&       end,
+  std::string_view head)
 {
   if (!internal::in_range_inclusive(val, beg, end)) [[unlikely]] {
     std::println(stderr, "{}", head);
@@ -580,9 +789,18 @@ assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::s
   }
 }
 
-template<internal::formattable_concept Val, internal::formattable_concept Beg, internal::formattable_concept End, internal::formattable_concept... Args>
+template<internal::formattable_concept Val,
+         internal::formattable_concept Beg,
+         internal::formattable_concept End,
+         internal::formattable_concept... Args>
 void
-assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head, std::format_string<Args...> fmt, Args&&... args)
+assert_in_range_inclusive(
+  Val const&                  val,
+  Beg const&                  beg,
+  End const&                  end,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
 {
   if (!internal::in_range_inclusive(val, beg, end)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {}]\n{}", head, val, beg, end, std::format(fmt, std::forward<Args>(args)...));
@@ -591,9 +809,15 @@ assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::s
   }
 }
 
-template<internal::formattable_concept Val, internal::formattable_concept Beg, internal::formattable_concept End>
+template<internal::formattable_concept Val,
+         internal::formattable_concept Beg,
+         internal::formattable_concept End>
 void
-assert_in_range_inclusive(Val const& val, Beg const& beg, End const& end, std::string_view head)
+assert_in_range_inclusive(
+  Val const&       val,
+  Beg const&       beg,
+  End const&       end,
+  std::string_view head)
 {
   if (!internal::in_range_inclusive(val, beg, end)) [[unlikely]] {
     std::println(stderr, "{}\n  Evaluation : {} in [{}, {}]", head, val, beg, end);

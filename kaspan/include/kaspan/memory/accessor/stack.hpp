@@ -30,7 +30,8 @@ public:
   }
 
   stack(stack const&) = delete;
-  stack(stack&& rhs) noexcept
+  stack(
+    stack&& rhs) noexcept
     : buffer(std::move(rhs))
     , end_(rhs.end_)
   {
@@ -40,7 +41,8 @@ public:
   }
 
   auto operator=(stack const&) -> stack& = delete;
-  auto operator=(stack&& rhs) noexcept -> stack&
+  auto operator=(
+    stack&& rhs) noexcept -> stack&
   {
     buffer::operator=(std::move(rhs));
     end_ = rhs.end_;
@@ -76,7 +78,8 @@ public:
     end_ = 0;
   }
 
-  void push(T item) noexcept
+  void push(
+    T item) noexcept
   {
     DEBUG_ASSERT_LT(end_, size_);
     data()[end_] = item;
@@ -105,12 +108,15 @@ public:
 
 private:
   u64 end_ = 0;
-  IF(KASPAN_DEBUG, u64 size_ = 0);
+  IF(KASPAN_DEBUG,
+     u64 size_ = 0);
 };
 
-template<typename T, arithmetic_concept Size>
+template<typename T,
+         arithmetic_concept Size>
 auto
-make_stack(Size size) -> stack<T>
+make_stack(
+  Size size) -> stack<T>
 {
   return stack<T>{ size };
 }

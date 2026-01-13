@@ -10,7 +10,12 @@
 namespace kaspan {
 
 inline void
-sorted_edgelist_to_graph(vertex_t n, vertex_t m, edge const* edgelist, index_t* head, vertex_t* csr)
+sorted_edgelist_to_graph(
+  vertex_t    n,
+  vertex_t    m,
+  edge const* edgelist,
+  index_t*    head,
+  vertex_t*   csr)
 {
   DEBUG_ASSERT(std::is_sorted(edgelist, edgelist + m, edge_less));
   head[0]     = 0;
@@ -26,7 +31,12 @@ sorted_edgelist_to_graph(vertex_t n, vertex_t m, edge const* edgelist, index_t* 
 }
 
 inline void
-edgelist_to_graph(vertex_t n, vertex_t m, edge* edgelist, index_t* head, vertex_t* csr)
+edgelist_to_graph(
+  vertex_t  n,
+  vertex_t  m,
+  edge*     edgelist,
+  index_t*  head,
+  vertex_t* csr)
 {
   std::sort(edgelist, edgelist + m, edge_less);
   sorted_edgelist_to_graph(n, m, edgelist, head, csr);
@@ -34,7 +44,12 @@ edgelist_to_graph(vertex_t n, vertex_t m, edge* edgelist, index_t* head, vertex_
 
 template<world_part_concept part_t>
 void
-sorted_edgelist_to_graph_part(part_t const& part, vertex_t local_m, edge const* edgelist, index_t* head, vertex_t* csr)
+sorted_edgelist_to_graph_part(
+  part_t const& part,
+  vertex_t      local_m,
+  edge const*   edgelist,
+  index_t*      head,
+  vertex_t*     csr)
 {
   DEBUG_ASSERT(std::is_sorted(edgelist, edgelist + local_m, edge_less));
   auto const local_n = part.local_n();
@@ -53,7 +68,12 @@ sorted_edgelist_to_graph_part(part_t const& part, vertex_t local_m, edge const* 
 
 template<world_part_concept part_t>
 void
-edgelist_to_graph_part(part_t const& part, vertex_t local_m, edge* edgelist, index_t* head, vertex_t* csr)
+edgelist_to_graph_part(
+  part_t const& part,
+  vertex_t      local_m,
+  edge*         edgelist,
+  index_t*      head,
+  vertex_t*     csr)
 {
   std::sort(edgelist, edgelist + local_m, edge_less);
   sorted_edgelist_to_graph_part(part, local_m, edgelist, head, csr);

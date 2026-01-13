@@ -9,9 +9,11 @@
 
 namespace kaspan {
 
-template<integral_concept T, integral_concept F>
+template<integral_concept T,
+         integral_concept F>
 constexpr auto
-integral_cast(F&& value) -> T
+integral_cast(
+  F&& value) -> T
 {
   if (std::is_constant_evaluated()) {
     return static_cast<T>(std::forward<F>(value));

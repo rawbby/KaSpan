@@ -68,9 +68,16 @@ make_briefkasten_edge()
   }
 }
 
-template<typename indirection_scheme_t, world_part_concept part_t>
+template<typename indirection_scheme_t,
+         world_part_concept part_t>
 void
-scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id)
+scc(
+  part_t const&   part,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  vertex_t*       scc_id)
 {
   DEBUG_ASSERT_VALID_GRAPH_PART(part, fw_head, fw_csr);
   DEBUG_ASSERT_VALID_GRAPH_PART(part, bw_head, bw_csr);

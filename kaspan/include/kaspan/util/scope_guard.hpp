@@ -11,12 +11,15 @@ class scope_guard final
 {
 public:
   template<class F0>
-  constexpr explicit scope_guard(F0&& f0, fn_t&& fn) noexcept
+  constexpr explicit scope_guard(
+    F0&&   f0,
+    fn_t&& fn) noexcept
     : fn(std::forward<fn_t>(fn))
   {
     f0();
   }
-  constexpr explicit scope_guard(fn_t&& fn) noexcept
+  constexpr explicit scope_guard(
+    fn_t&& fn) noexcept
     : fn(std::forward<fn_t>(fn))
   {
   }

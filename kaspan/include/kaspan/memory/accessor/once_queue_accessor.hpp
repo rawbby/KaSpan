@@ -19,7 +19,9 @@ public:
   ~once_queue_accessor() = default;
 
   template<arithmetic_concept Size>
-  explicit once_queue_accessor(void* data, Size size)
+  explicit once_queue_accessor(
+    void* data,
+    Size  size)
     : data_(size == 0 ? nullptr : data)
   {
     DEBUG_ASSERT_GE(size, 0);
@@ -62,7 +64,8 @@ public:
     end_ = 0;
   }
 
-  void push_back(T t) noexcept
+  void push_back(
+    T t) noexcept
   {
     data()[end_++] = t;
   }
@@ -79,12 +82,16 @@ private:
   void* data_ = nullptr;
   u64   beg_  = 0;
   u64   end_  = 0;
-  IF(KASPAN_DEBUG, u64 size_ = 0);
+  IF(KASPAN_DEBUG,
+     u64 size_ = 0);
 };
 
-template<typename T, arithmetic_concept Size>
+template<typename T,
+         arithmetic_concept Size>
 auto
-borrow_once_queue(void** memory, Size size) -> once_queue_accessor<T>
+borrow_once_queue(
+  void** memory,
+  Size   size) -> once_queue_accessor<T>
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
@@ -92,9 +99,12 @@ borrow_once_queue(void** memory, Size size) -> once_queue_accessor<T>
   return once_queue_accessor<T>{ borrow_array<T>(memory, size64), size64 };
 }
 
-template<typename T, arithmetic_concept Size>
+template<typename T,
+         arithmetic_concept Size>
 auto
-view_once_queue(void* data, Size size) -> once_queue_accessor<T>
+view_once_queue(
+  void* data,
+  Size  size) -> once_queue_accessor<T>
 {
   return once_queue_accessor<T>{ data, size };
 }

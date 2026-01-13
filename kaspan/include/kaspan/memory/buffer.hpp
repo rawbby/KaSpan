@@ -12,7 +12,8 @@
 namespace kaspan {
 
 constexpr auto
-representing_bytes(u64 max_val) -> u8
+representing_bytes(
+  u64 max_val) -> u8
 {
   constexpr auto one = integral_cast<u64>(1);
   for (u8 bytes = 1; bytes < 8; ++bytes) {
@@ -52,14 +53,16 @@ public:
   }
 
   buffer(buffer const&) = delete;
-  buffer(buffer&& rhs) noexcept
+  buffer(
+    buffer&& rhs) noexcept
     : data_(rhs.data_)
   {
     rhs.data_ = nullptr;
   }
 
   auto operator=(buffer const&) -> buffer& = delete;
-  auto operator=(buffer&& rhs) noexcept -> buffer&
+  auto operator=(
+    buffer&& rhs) noexcept -> buffer&
   {
     if (this != &rhs) {
       if (data_ != nullptr) {

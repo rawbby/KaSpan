@@ -23,7 +23,8 @@ struct vertex_frontier
   MPI_Count* recv_counts = nullptr;
   MPI_Aint*  recv_displs = nullptr;
 
-  static auto create(u64 capacity = 0) -> vertex_frontier
+  static auto create(
+    u64 capacity = 0) -> vertex_frontier
   {
     auto  b      = make_buffer<MPI_Count, MPI_Count, MPI_Aint, MPI_Aint>(mpi_basic::world_size, mpi_basic::world_size, mpi_basic::world_size, mpi_basic::world_size);
     auto* memory = b.data();
@@ -41,12 +42,15 @@ struct vertex_frontier
     return frontier;
   }
 
-  void local_push(vertex_t u)
+  void local_push(
+    vertex_t u)
   {
     recv_buffer.emplace_back(u);
   }
 
-  void push(i32 rank, vertex_t u)
+  void push(
+    i32      rank,
+    vertex_t u)
   {
     send_buffer.emplace_back(u);
     ++send_counts[rank];
@@ -65,7 +69,8 @@ struct vertex_frontier
   }
 
   template<world_part_concept part_t>
-  auto comm(part_t const& part) -> bool
+  auto comm(
+    part_t const& part) -> bool
   {
     auto const send_count = mpi_basic::displs(send_counts, send_displs);
     DEBUG_ASSERT_EQ(send_count, send_buffer.size());

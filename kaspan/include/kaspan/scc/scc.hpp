@@ -18,7 +18,13 @@
 namespace kaspan {
 
 void
-scc(world_part_concept auto const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id)
+scc(
+  world_part_concept auto const& part,
+  index_t const*                 fw_head,
+  vertex_t const*                fw_csr,
+  index_t const*                 bw_head,
+  vertex_t const*                bw_csr,
+  vertex_t*                      scc_id)
 {
   DEBUG_ASSERT_VALID_GRAPH_PART(part, fw_head, fw_csr);
   DEBUG_ASSERT_VALID_GRAPH_PART(part, bw_head, bw_csr);
@@ -74,14 +80,6 @@ scc(world_part_concept auto const& part, index_t const* fw_head, vertex_t const*
       KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
       KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     }
-    // {
-    //   KASPAN_STATISTIC_SCOPE("trim_1_fw_bw");
-    //   auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
-    //   local_decided += trim_1_decided;
-    //   auto const prev_global_decided = global_decided;
-    //   global_decided                 = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-    //   KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
-    // }
   }
 
   if (global_decided < decided_threshold) {
@@ -96,20 +94,6 @@ scc(world_part_concept auto const& part, index_t const* fw_head, vertex_t const*
 
       auto const prev_global_decided = global_decided;
 
-      // local_decided += color_scc_step_multi(part,
-      //                                       fw_head,
-      //                                       fw_csr,
-      //                                       bw_head,
-      //                                       bw_csr,
-      //                                       scc_id,
-      //                                       colors.data(),
-      //                                       active_array.data(),
-      //                                       active.data(),
-      //                                       changed.data(),
-      //                                       frontier,
-      //                                       local_decided);
-      // global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-
       do {
         local_decided += color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier, local_decided);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
@@ -122,14 +106,6 @@ scc(world_part_concept auto const& part, index_t const* fw_head, vertex_t const*
       KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
       KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     }
-    // {
-    //   KASPAN_STATISTIC_SCOPE("trim_1_color");
-    //   auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
-    //   local_decided += trim_1_decided;
-    //   auto const prev_global_decided = global_decided;
-    //   global_decided                 = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-    //   KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
-    // }
   }
 
   {

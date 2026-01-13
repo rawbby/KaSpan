@@ -7,19 +7,21 @@
 
 namespace kaspan::async {
 
-template<world_part_concept part_t, typename brief_queue_t>
+template<world_part_concept part_t,
+         typename brief_queue_t>
 auto
-color_scc_step(part_t const&   part,
-               index_t const*  fw_head,
-               vertex_t const* fw_csr,
-               index_t const*  bw_head,
-               vertex_t const* bw_csr,
-               brief_queue_t&  mq,
-               vertex_t*       scc_id,
-               vertex_t*       colors,
-               vertex_t*       active_array,
-               u64*            active_storage,
-               vertex_t        decided_count = 0) -> vertex_t
+color_scc_step(
+  part_t const&   part,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  brief_queue_t&  mq,
+  vertex_t*       scc_id,
+  vertex_t*       colors,
+  vertex_t*       active_array,
+  u64*            active_storage,
+  vertex_t        decided_count = 0) -> vertex_t
 {
   auto const local_n      = part.local_n();
   auto       active       = view_bits(active_storage, local_n);

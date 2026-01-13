@@ -29,7 +29,12 @@ namespace kaspan {
  * @param[out] bw_csr (maybe uninitialized) pre-allocated csr array of size m
  */
 inline void
-backward_complement_graph(vertex_t n, index_t const* fw_head, vertex_t const* fw_csr, index_t* bw_head, vertex_t* bw_csr)
+backward_complement_graph(
+  vertex_t        n,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t*        bw_head,
+  vertex_t*       bw_csr)
 {
   DEBUG_ASSERT_VALID_GRAPH(n, fw_head, fw_csr);
 
@@ -85,7 +90,11 @@ backward_complement_graph(vertex_t n, index_t const* fw_head, vertex_t const* fw
  */
 template<world_part_concept part_t>
 auto
-backward_complement_graph_part(part_t const& part, index_t local_m, index_t const* head, vertex_t const* csr)
+backward_complement_graph_part(
+  part_t const&   part,
+  index_t         local_m,
+  index_t const*  head,
+  vertex_t const* csr)
 {
   struct
   {

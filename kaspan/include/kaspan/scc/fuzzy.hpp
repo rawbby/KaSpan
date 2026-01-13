@@ -17,7 +17,11 @@
 namespace kaspan {
 
 inline auto
-fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double d = -1.0, void* temp_memory = nullptr)
+fuzzy_global_scc_id_and_graph(
+  u64    seed,
+  u64    n,
+  double d           = -1.0,
+  void*  temp_memory = nullptr)
 {
   DEBUG_ASSERT_GE(n, 0);
   DEBUG_ASSERT(d == -1.0 or d >= 0.0);
@@ -193,7 +197,11 @@ fuzzy_global_scc_id_and_graph(u64 seed, u64 n, double d = -1.0, void* temp_memor
 /// memory = 4 * page_ceil(n * sizeof(vertex_t))
 template<world_part_concept part_t>
 auto
-fuzzy_local_scc_id_and_graph(u64 seed, part_t const& part, double degree = -1.0, void* memory = nullptr)
+fuzzy_local_scc_id_and_graph(
+  u64           seed,
+  part_t const& part,
+  double        degree = -1.0,
+  void*         memory = nullptr)
 {
   struct local_scc_graph_part : local_graph_part<part_t>
   {

@@ -85,7 +85,9 @@ constexpr inline Op lor  = MPI_LOR;
 constexpr inline Op land = MPI_LAND;
 
 inline void
-get_address(void const* location, MPI_Aint* address)
+get_address(
+  void const* location,
+  MPI_Aint*   address)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   [[maybe_unused]] auto const rc = MPI_Get_address(location, address);
@@ -94,7 +96,12 @@ get_address(void const* location, MPI_Aint* address)
 }
 
 inline void
-type_create_struct(int count, int const* blocklengths, MPI_Aint const* displs, Datatype const* types, Datatype* newtype)
+type_create_struct(
+  int             count,
+  int const*      blocklengths,
+  MPI_Aint const* displs,
+  Datatype const* types,
+  Datatype*       newtype)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   [[maybe_unused]] auto const rc = MPI_Type_create_struct(count, blocklengths, displs, types, newtype);
@@ -103,7 +110,8 @@ type_create_struct(int count, int const* blocklengths, MPI_Aint const* displs, D
 }
 
 inline void
-type_commit(Datatype* type)
+type_commit(
+  Datatype* type)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   [[maybe_unused]] auto const rc = MPI_Type_commit(type);
@@ -112,7 +120,8 @@ type_commit(Datatype* type)
 }
 
 inline void
-type_free(Datatype* type)
+type_free(
+  Datatype* type)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   [[maybe_unused]] auto const rc = MPI_Type_free(type);
@@ -121,7 +130,10 @@ type_free(Datatype* type)
 }
 
 inline void
-type_get_extent(Datatype type, MPI_Aint* lb, MPI_Aint* extent)
+type_get_extent(
+  Datatype  type,
+  MPI_Aint* lb,
+  MPI_Aint* extent)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   [[maybe_unused]] auto const rc = MPI_Type_get_extent(type, lb, extent);
@@ -130,7 +142,10 @@ type_get_extent(Datatype type, MPI_Aint* lb, MPI_Aint* extent)
 }
 
 inline void
-op_create(MPI_User_function* user_fn, int commute, Op* op)
+op_create(
+  MPI_User_function* user_fn,
+  int                commute,
+  Op*                op)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   [[maybe_unused]] auto const rc = MPI_Op_create(user_fn, commute, op);
@@ -139,7 +154,8 @@ op_create(MPI_User_function* user_fn, int commute, Op* op)
 }
 
 inline void
-op_free(Op* op)
+op_free(
+  Op* op)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   [[maybe_unused]] auto const rc = MPI_Op_free(op);
@@ -148,7 +164,8 @@ op_free(Op* op)
 }
 
 inline auto
-extent_of(MPI_Datatype datatype) -> MPI_Aint
+extent_of(
+  MPI_Datatype datatype) -> MPI_Aint
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   MPI_Aint lb;
@@ -216,7 +233,8 @@ extent_of() -> MPI_Aint
  * @return PACK(counts, displs)
  */
 inline auto
-counts_and_displs(void** memory)
+counts_and_displs(
+  void** memory)
 {
   DEBUG_ASSERT_NE(memory, nullptr);
   DEBUG_ASSERT_NE(*memory, nullptr);
@@ -248,7 +266,9 @@ counts_and_displs()
  * @return Total number of elements.
  */
 inline auto
-displs(MPI_Count const* counts, MPI_Aint* displs) -> MPI_Count
+displs(
+  MPI_Count const* counts,
+  MPI_Aint*        displs) -> MPI_Count
 {
   DEBUG_ASSERT_NE(counts, nullptr);
   DEBUG_ASSERT_NE(displs, nullptr);
@@ -286,10 +306,17 @@ barrier()
  * @tparam T  Item type stored in send_buffer.
  * @tparam fn_t Callable with signature i32(T const&), returning the destination rank.
  */
-template<typename T, typename fn_t>
-  requires(std::convertible_to<std::invoke_result_t<fn_t, T const&>, i32>)
+template<typename T,
+         typename fn_t>
+  requires(std::convertible_to<std::invoke_result_t<fn_t,
+                                                    T const&>,
+                               i32>)
 void
-inplace_partition_by_rank(T* send_buffer, MPI_Count const* send_counts, MPI_Aint* send_displs, fn_t&& rank_of)
+inplace_partition_by_rank(
+  T*               send_buffer,
+  MPI_Count const* send_counts,
+  MPI_Aint*        send_displs,
+  fn_t&&           rank_of)
 {
   DEBUG_ASSERT_NE(send_counts, nullptr);
   DEBUG_ASSERT_NE(send_displs, nullptr);
@@ -337,7 +364,10 @@ inplace_partition_by_rank(T* send_buffer, MPI_Count const* send_counts, MPI_Aint
  */
 template<typename T>
 auto
-allreduce_single(T const& send_value, MPI_Datatype datatype, MPI_Op op) -> T
+allreduce_single(
+  T const&     send_value,
+  MPI_Datatype datatype,
+  MPI_Op       op) -> T
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(op, MPI_OP_NULL);
@@ -361,7 +391,9 @@ allreduce_single(T const& send_value, MPI_Datatype datatype, MPI_Op op) -> T
  */
 template<mpi_type_concept T>
 auto
-allreduce_single(T const& send_value, MPI_Op op) -> T
+allreduce_single(
+  T const& send_value,
+  MPI_Op   op) -> T
 {
   return allreduce_single(send_value, type<T>, op);
 }
@@ -390,7 +422,13 @@ allreduce_max_time() -> u64
  * @param recv_type The MPI datatype of the receive buffer.
  */
 inline void
-allgather(void const* send_buffer, MPI_Count send_count, MPI_Datatype send_type, void* recv_buffer, MPI_Count recv_count, MPI_Datatype recv_type)
+allgather(
+  void const*  send_buffer,
+  MPI_Count    send_count,
+  MPI_Datatype send_type,
+  void*        recv_buffer,
+  MPI_Count    recv_count,
+  MPI_Datatype recv_type)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(send_type, MPI_DATATYPE_NULL);
@@ -426,7 +464,11 @@ allgather(void const* send_buffer, MPI_Count send_count, MPI_Datatype send_type,
  */
 template<mpi_type_concept T>
 void
-allgather(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count recv_count)
+allgather(
+  T const*  send_buffer,
+  MPI_Count send_count,
+  T*        recv_buffer,
+  MPI_Count recv_count)
 {
   allgather(send_buffer, send_count, type<T>, recv_buffer, recv_count, type<T>);
 }
@@ -440,7 +482,9 @@ allgather(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count 
  */
 template<mpi_type_concept T>
 void
-allgather(T const& send_value, T* recv_buffer)
+allgather(
+  T const& send_value,
+  T*       recv_buffer)
 {
   allgather(&send_value, 1, type<T>, recv_buffer, 1, type<T>);
 }
@@ -452,7 +496,9 @@ allgather(T const& send_value, T* recv_buffer)
  * @param counts Out array of length world_size receiving one MPI_Count per rank.
  */
 inline void
-allgather_counts(MPI_Count send_count, MPI_Count* counts)
+allgather_counts(
+  MPI_Count  send_count,
+  MPI_Count* counts)
 {
   allgather(&send_count, 1, MPI_COUNT, counts, 1, MPI_COUNT);
 }
@@ -461,7 +507,13 @@ allgather_counts(MPI_Count send_count, MPI_Count* counts)
  * @brief Untyped wrapper for MPI_Allgatherv_c.
  */
 inline void
-allgatherv(void const* send_buffer, MPI_Count send_count, void* recv_buffer, MPI_Count const* recv_counts, MPI_Aint const* recv_displs, MPI_Datatype datatype)
+allgatherv(
+  void const*      send_buffer,
+  MPI_Count        send_count,
+  void*            recv_buffer,
+  MPI_Count const* recv_counts,
+  MPI_Aint const*  recv_displs,
+  MPI_Datatype     datatype)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
@@ -502,7 +554,12 @@ allgatherv(void const* send_buffer, MPI_Count send_count, void* recv_buffer, MPI
  */
 template<mpi_type_concept T>
 void
-allgatherv(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count const* recv_counts, MPI_Aint const* recv_displs)
+allgatherv(
+  T const*         send_buffer,
+  MPI_Count        send_count,
+  T*               recv_buffer,
+  MPI_Count const* recv_counts,
+  MPI_Aint const*  recv_displs)
 {
   allgatherv(send_buffer, send_count, recv_buffer, recv_counts, recv_displs, type<T>);
 }
@@ -519,7 +576,9 @@ allgatherv(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count
  */
 template<mpi_type_concept T>
 auto
-allgatherv(T const* send_buffer, MPI_Count send_count)
+allgatherv(
+  T const*  send_buffer,
+  MPI_Count send_count)
 {
   DEBUG_ASSERT_GE(send_count, 0);
   DEBUG_ASSERT(send_count == 0 || send_buffer != nullptr);
@@ -537,7 +596,11 @@ allgatherv(T const* send_buffer, MPI_Count send_count)
  * @brief In-place all-reduce for a buffer of untyped elements.
  */
 inline void
-allreduce_inplace(void* send_buffer, MPI_Count send_count, MPI_Datatype datatype, MPI_Op op)
+allreduce_inplace(
+  void*        send_buffer,
+  MPI_Count    send_count,
+  MPI_Datatype datatype,
+  MPI_Op       op)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
@@ -561,7 +624,10 @@ allreduce_inplace(void* send_buffer, MPI_Count send_count, MPI_Datatype datatype
  */
 template<mpi_type_concept T>
 void
-allreduce_inplace(T* send_buffer, MPI_Count send_count, MPI_Op op)
+allreduce_inplace(
+  T*        send_buffer,
+  MPI_Count send_count,
+  MPI_Op    op)
 {
   allreduce_inplace(send_buffer, send_count, type<T>, op);
 }
@@ -571,7 +637,9 @@ allreduce_inplace(T* send_buffer, MPI_Count send_count, MPI_Op op)
  */
 template<mpi_type_concept T>
 void
-allreduce_inplace(T& send_value, MPI_Op op)
+allreduce_inplace(
+  T&     send_value,
+  MPI_Op op)
 {
   allreduce_inplace(&send_value, 1, type<T>, op);
 }
@@ -580,13 +648,14 @@ allreduce_inplace(T& send_value, MPI_Op op)
  * @brief Untyped wrapper for MPI_Alltoallv_c.
  */
 inline void
-alltoallv(void const*      send_buffer,
-          MPI_Count const* send_counts,
-          MPI_Aint const*  send_displs,
-          void*            recv_buffer,
-          MPI_Count const* recv_counts,
-          MPI_Aint const*  recv_displs,
-          MPI_Datatype     datatype)
+alltoallv(
+  void const*      send_buffer,
+  MPI_Count const* send_counts,
+  MPI_Aint const*  send_displs,
+  void*            recv_buffer,
+  MPI_Count const* recv_counts,
+  MPI_Aint const*  recv_displs,
+  MPI_Datatype     datatype)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(datatype, MPI_DATATYPE_NULL);
@@ -627,7 +696,13 @@ alltoallv(void const*      send_buffer,
  */
 template<mpi_type_concept T>
 void
-alltoallv(T const* send_buffer, MPI_Count const* send_counts, MPI_Aint const* send_displs, T* recv_buffer, MPI_Count const* recv_counts, MPI_Aint const* recv_displs)
+alltoallv(
+  T const*         send_buffer,
+  MPI_Count const* send_counts,
+  MPI_Aint const*  send_displs,
+  T*               recv_buffer,
+  MPI_Count const* recv_counts,
+  MPI_Aint const*  recv_displs)
 {
   alltoallv(send_buffer, send_counts, send_displs, recv_buffer, recv_counts, recv_displs, type<T>);
 }
@@ -639,7 +714,9 @@ alltoallv(T const* send_buffer, MPI_Count const* send_counts, MPI_Aint const* se
  * @param recv_counts Out array of length world_size.
  */
 inline void
-alltoallv_counts(MPI_Count const* send_counts, MPI_Count* recv_counts)
+alltoallv_counts(
+  MPI_Count const* send_counts,
+  MPI_Count*       recv_counts)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(send_counts, nullptr);
@@ -660,7 +737,14 @@ alltoallv_counts(MPI_Count const* send_counts, MPI_Count* recv_counts)
  * @brief Gathers data from all processes to the root process (untyped).
  */
 inline void
-gather(void const* send_buffer, MPI_Count send_count, MPI_Datatype send_type, void* recv_buffer, MPI_Count recv_count, MPI_Datatype recv_type, int root = 0)
+gather(
+  void const*  send_buffer,
+  MPI_Count    send_count,
+  MPI_Datatype send_type,
+  void*        recv_buffer,
+  MPI_Count    recv_count,
+  MPI_Datatype recv_type,
+  int          root = 0)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(send_type, MPI_DATATYPE_NULL);
@@ -703,7 +787,12 @@ gather(void const* send_buffer, MPI_Count send_count, MPI_Datatype send_type, vo
  */
 template<mpi_type_concept T>
 void
-gather(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count recv_count, int root = 0)
+gather(
+  T const*  send_buffer,
+  MPI_Count send_count,
+  T*        recv_buffer,
+  MPI_Count recv_count,
+  int       root = 0)
 {
   gather(send_buffer, send_count, type<T>, recv_buffer, recv_count, type<T>, root);
 }
@@ -718,7 +807,10 @@ gather(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count rec
  */
 template<mpi_type_concept T>
 void
-gather(T const& send_value, T* recv_buffer, int root = 0)
+gather(
+  T const& send_value,
+  T*       recv_buffer,
+  int      root = 0)
 {
   gather(&send_value, 1, type<T>, recv_buffer, 1, type<T>, root);
 }
@@ -727,14 +819,15 @@ gather(T const& send_value, T* recv_buffer, int root = 0)
  * @brief Gathers data with varying counts from all processes to the root process (untyped).
  */
 inline void
-gatherv(void const*      send_buffer,
-        MPI_Count        send_count,
-        MPI_Datatype     send_type,
-        void*            recv_buffer,
-        MPI_Count const* recv_counts,
-        MPI_Aint const*  displs,
-        MPI_Datatype     recv_type,
-        int              root = 0)
+gatherv(
+  void const*      send_buffer,
+  MPI_Count        send_count,
+  MPI_Datatype     send_type,
+  void*            recv_buffer,
+  MPI_Count const* recv_counts,
+  MPI_Aint const*  displs,
+  MPI_Datatype     recv_type,
+  int              root = 0)
 {
   KASPAN_CALLGRIND_TOGGLE_COLLECT();
   DEBUG_ASSERT_NE(send_type, MPI_DATATYPE_NULL);
@@ -787,7 +880,13 @@ gatherv(void const*      send_buffer,
  */
 template<mpi_type_concept T>
 void
-gatherv(T const* send_buffer, MPI_Count send_count, T* recv_buffer, MPI_Count const* recv_counts, MPI_Aint const* displs, int root = 0)
+gatherv(
+  T const*         send_buffer,
+  MPI_Count        send_count,
+  T*               recv_buffer,
+  MPI_Count const* recv_counts,
+  MPI_Aint const*  displs,
+  int              root = 0)
 {
   gatherv(send_buffer, send_count, type<T>, recv_buffer, recv_counts, displs, type<T>, root);
 }

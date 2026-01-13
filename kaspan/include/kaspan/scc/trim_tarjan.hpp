@@ -11,22 +11,28 @@ namespace kaspan {
 
 namespace internal::trim_tarjan {
 
-using contains_fn = bool (*)(std::span<vertex_t>, vertex_t const&);
+using contains_fn = bool (*)(std::span<vertex_t>,
+                             vertex_t const&);
 
 inline bool
-linear_contains(std::span<vertex_t> span, vertex_t const& value)
+linear_contains(
+  std::span<vertex_t> span,
+  vertex_t const&     value)
 {
   return std::ranges::find(span, value) != span.end();
 }
 
 inline bool
-binary_contains(std::span<vertex_t> span, vertex_t const& value)
+binary_contains(
+  std::span<vertex_t> span,
+  vertex_t const&     value)
 {
   return std::ranges::binary_search(span, value);
 }
 
 inline auto
-choose_contains_fn(std::span<vertex_t> span)
+choose_contains_fn(
+  std::span<vertex_t> span)
 {
   DEBUG_ASSERT_GT(span.size(), 0);
 
@@ -46,16 +52,18 @@ choose_contains_fn(std::span<vertex_t> span)
 
 }
 
-template<world_part_concept part_t, typename filter_t = decltype(no_filter)>
+template<world_part_concept part_t,
+         typename filter_t = decltype(no_filter)>
 vertex_t
-trim_tarjan(part_t const&   part,
-            index_t const*  fw_head,
-            vertex_t const* fw_csr,
-            index_t const*  bw_head,
-            vertex_t const* bw_csr,
-            vertex_t*       scc_id,
-            filter_t        filter        = no_filter,
-            vertex_t        decided_count = 0)
+trim_tarjan(
+  part_t const&   part,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  vertex_t*       scc_id,
+  filter_t        filter        = no_filter,
+  vertex_t        decided_count = 0)
 {
   using namespace internal::trim_tarjan;
   KASPAN_STATISTIC_SCOPE("trim_tarjan");

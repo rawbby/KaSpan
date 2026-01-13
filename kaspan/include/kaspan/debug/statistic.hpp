@@ -39,7 +39,10 @@ struct statistic_node
   char const* name;
   timestamp   duration;
 
-  statistic_node(size_t parent, size_t end, char const* name)
+  statistic_node(
+    size_t      parent,
+    size_t      end,
+    char const* name)
     : parent(parent)
     , end(end)
     , name(name)
@@ -76,7 +79,9 @@ inline auto g_kaspan_statistic_stack = [] {
 }();
 
 inline void
-kaspan_statistic_add(char const* name, u64 value)
+kaspan_statistic_add(
+  char const* name,
+  u64         value)
 {
   DEBUG_ASSERT(not g_kaspan_statistic_stack.empty());
   auto const parent = g_kaspan_statistic_stack.back();
@@ -84,7 +89,8 @@ kaspan_statistic_add(char const* name, u64 value)
 }
 
 inline void
-kaspan_statistic_push(char const* name)
+kaspan_statistic_push(
+  char const* name)
 {
   auto const new_parent = g_kaspan_statistic_nodes.size();
   auto const old_parent = g_kaspan_statistic_stack.back();
@@ -106,7 +112,8 @@ kaspan_statistic_pop()
 }
 
 inline void
-kaspan_statistic_mpi_write_json(char const* file_path)
+kaspan_statistic_mpi_write_json(
+  char const* file_path)
 {
   constexpr auto kaspan_statistic_write_json = [](std::ostream& os) {
     auto const& nodes   = g_kaspan_statistic_nodes;
@@ -191,12 +198,15 @@ kaspan_statistic_mpi_write_json(char const* file_path)
 #else
 
 inline void
-kaspan_statistic_add(char const* name, u64 value)
+kaspan_statistic_add(
+  char const* name,
+  u64         value)
 {
 }
 
 inline void
-kaspan_statistic_push(char const* name)
+kaspan_statistic_push(
+  char const* name)
 {
 }
 
@@ -206,7 +216,8 @@ kaspan_statistic_pop()
 }
 
 inline void
-kaspan_statistic_mpi_write_json(char const* file_path)
+kaspan_statistic_mpi_write_json(
+  char const* file_path)
 {
 }
 

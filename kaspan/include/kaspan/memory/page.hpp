@@ -38,7 +38,8 @@ pagesize() -> Size
 
 template<unsigned_concept Size>
 auto
-page_align_down(Size size) -> Size
+page_align_down(
+  Size size) -> Size
 {
   auto const mask = pagesize<Size>() - 1;
   return size & ~mask;
@@ -46,7 +47,8 @@ page_align_down(Size size) -> Size
 
 template<unsigned_concept Size>
 auto
-page_align_up(Size size) -> Size
+page_align_up(
+  Size size) -> Size
 {
   auto const mask = pagesize<Size>() - 1;
   return (size + mask) & ~mask;
@@ -54,7 +56,8 @@ page_align_up(Size size) -> Size
 
 template<unsigned_concept Size>
 auto
-is_page_aligned(Size size) -> bool
+is_page_aligned(
+  Size size) -> bool
 {
   auto const mask = pagesize<Size>() - 1;
   return (size & mask) == 0;
@@ -89,7 +92,8 @@ page_alloc(Size size) noexcept(false) -> void*
 }
 
 inline void
-page_free(void* data)
+page_free(
+  void* data)
 {
   DEBUG_ASSERT_NE(data, nullptr);
   DEBUG_ASSERT(is_page_aligned(data));

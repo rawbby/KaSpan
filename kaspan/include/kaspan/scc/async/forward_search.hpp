@@ -9,16 +9,18 @@
 
 namespace kaspan::async {
 
-template<world_part_concept part_t, typename brief_queue_t>
+template<world_part_concept part_t,
+         typename brief_queue_t>
 auto
-forward_search(part_t const&   part,
-               index_t const*  fw_head,
-               vertex_t const* fw_csr,
-               brief_queue_t&  mq,
-               vertex_t const* scc_id,
-               u64*            fw_reached_storage,
-               vertex_t*       active_array,
-               vertex_t        root) -> vertex_t
+forward_search(
+  part_t const&   part,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  brief_queue_t&  mq,
+  vertex_t const* scc_id,
+  u64*            fw_reached_storage,
+  vertex_t*       active_array,
+  vertex_t        root) -> vertex_t
 {
   auto const local_n      = part.local_n();
   auto       fw_reached   = view_bits(fw_reached_storage, local_n);

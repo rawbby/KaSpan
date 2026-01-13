@@ -67,7 +67,8 @@ struct single_part
   constexpr single_part() noexcept  = default;
   constexpr ~single_part() noexcept = default;
 
-  explicit constexpr single_part(vertex_t n) noexcept
+  explicit constexpr single_part(
+    vertex_t n) noexcept
     : n(n)
     , end(n)
   {
@@ -79,17 +80,20 @@ struct single_part
   constexpr auto operator=(single_part const&) noexcept -> single_part& = default;
   constexpr auto operator=(single_part&&) noexcept -> single_part&      = default;
 
-  [[nodiscard]] static constexpr auto has_local(vertex_t /* i */) noexcept -> bool
+  [[nodiscard]] static constexpr auto has_local(
+    vertex_t /* i */) noexcept -> bool
   {
     return true;
   }
 
-  [[nodiscard]] static constexpr auto to_local(vertex_t i) noexcept -> vertex_t
+  [[nodiscard]] static constexpr auto to_local(
+    vertex_t i) noexcept -> vertex_t
   {
     return i;
   }
 
-  [[nodiscard]] static constexpr auto to_global(vertex_t k) noexcept -> vertex_t
+  [[nodiscard]] static constexpr auto to_global(
+    vertex_t k) noexcept -> vertex_t
   {
     return k;
   }
@@ -114,7 +118,8 @@ struct single_world_part
   constexpr single_world_part() noexcept  = default;
   constexpr ~single_world_part() noexcept = default;
 
-  explicit constexpr single_world_part(vertex_t n) noexcept
+  explicit constexpr single_world_part(
+    vertex_t n) noexcept
     : n(n)
     , end(n)
   {
@@ -126,17 +131,20 @@ struct single_world_part
   constexpr auto operator=(single_world_part const&) noexcept -> single_world_part& = default;
   constexpr auto operator=(single_world_part&&) noexcept -> single_world_part&      = default;
 
-  [[nodiscard]] static constexpr auto has_local(vertex_t /* i */) noexcept -> bool
+  [[nodiscard]] static constexpr auto has_local(
+    vertex_t /* i */) noexcept -> bool
   {
     return true;
   }
 
-  [[nodiscard]] static constexpr auto to_local(vertex_t i) noexcept -> vertex_t
+  [[nodiscard]] static constexpr auto to_local(
+    vertex_t i) noexcept -> vertex_t
   {
     return i;
   }
 
-  [[nodiscard]] static constexpr auto to_global(vertex_t k) noexcept -> vertex_t
+  [[nodiscard]] static constexpr auto to_global(
+    vertex_t k) noexcept -> vertex_t
   {
     return k;
   }
@@ -146,12 +154,14 @@ struct single_world_part
     return n;
   }
 
-  [[nodiscard]] static constexpr auto world_rank_of(vertex_t /* i */) noexcept -> i32
+  [[nodiscard]] static constexpr auto world_rank_of(
+    vertex_t /* i */) noexcept -> i32
   {
     return 0;
   }
 
-  [[nodiscard]] auto world_part_of(i32 /* r */) const -> single_world_part
+  [[nodiscard]] auto world_part_of(
+    i32 /* r */) const -> single_world_part
   {
     return single_world_part{ n };
   }
@@ -169,12 +179,16 @@ struct explicit_continuous_part
   constexpr explicit_continuous_part() noexcept  = default;
   constexpr ~explicit_continuous_part() noexcept = default;
 
-  explicit constexpr explicit_continuous_part(vertex_t n) noexcept
+  explicit constexpr explicit_continuous_part(
+    vertex_t n) noexcept
     : n(n)
   {
   }
 
-  constexpr explicit_continuous_part(vertex_t n, vertex_t begin, vertex_t end) noexcept
+  constexpr explicit_continuous_part(
+    vertex_t n,
+    vertex_t begin,
+    vertex_t end) noexcept
     : n(n)
     , begin(begin)
     , end(end)
@@ -189,17 +203,20 @@ struct explicit_continuous_part
   constexpr auto operator=(explicit_continuous_part const&) noexcept -> explicit_continuous_part& = default;
   constexpr auto operator=(explicit_continuous_part&&) noexcept -> explicit_continuous_part&      = default;
 
-  [[nodiscard]] constexpr auto has_local(vertex_t global_u) const noexcept -> bool
+  [[nodiscard]] constexpr auto has_local(
+    vertex_t global_u) const noexcept -> bool
   {
     return global_u >= begin and global_u < end;
   }
 
-  [[nodiscard]] constexpr auto to_local(vertex_t global_u) const noexcept -> vertex_t
+  [[nodiscard]] constexpr auto to_local(
+    vertex_t global_u) const noexcept -> vertex_t
   {
     return global_u - begin;
   }
 
-  [[nodiscard]] constexpr auto to_global(vertex_t local_k) const noexcept -> vertex_t
+  [[nodiscard]] constexpr auto to_global(
+    vertex_t local_k) const noexcept -> vertex_t
   {
     return begin + local_k;
   }
@@ -222,15 +239,21 @@ struct cyclic_part final
   constexpr cyclic_part() noexcept  = default;
   constexpr ~cyclic_part() noexcept = default;
 
-  constexpr cyclic_part(vertex_t n, i32 world_rank, i32 world_size) noexcept
+  constexpr cyclic_part(
+    vertex_t n,
+    i32      world_rank,
+    i32      world_size) noexcept
     : n(n)
     , world_rank(world_rank)
     , world_size(world_size)
   {
   }
 
-  explicit cyclic_part(vertex_t n) noexcept
-    : cyclic_part(n, mpi_basic::world_rank, mpi_basic::world_size)
+  explicit cyclic_part(
+    vertex_t n) noexcept
+    : cyclic_part(n,
+                  mpi_basic::world_rank,
+                  mpi_basic::world_size)
   {
   }
 
@@ -240,17 +263,20 @@ struct cyclic_part final
   constexpr auto operator=(cyclic_part const&) noexcept -> cyclic_part& = default;
   constexpr auto operator=(cyclic_part&&) noexcept -> cyclic_part&      = default;
 
-  [[nodiscard]] constexpr auto has_local(vertex_t i) const noexcept -> bool
+  [[nodiscard]] constexpr auto has_local(
+    vertex_t i) const noexcept -> bool
   {
     return world_size == 1 || (i % world_size) == world_rank;
   }
 
-  [[nodiscard]] constexpr auto world_rank_of(vertex_t i) const noexcept -> i32
+  [[nodiscard]] constexpr auto world_rank_of(
+    vertex_t i) const noexcept -> i32
   {
     return world_size == 1 ? 0 : (i % world_size);
   }
 
-  [[nodiscard]] constexpr auto to_local(vertex_t i) const noexcept -> vertex_t
+  [[nodiscard]] constexpr auto to_local(
+    vertex_t i) const noexcept -> vertex_t
   {
     if (world_size == 1) {
       return i;
@@ -258,7 +284,8 @@ struct cyclic_part final
     return (i - world_rank) / world_size;
   }
 
-  [[nodiscard]] constexpr auto to_global(vertex_t k) const noexcept -> vertex_t
+  [[nodiscard]] constexpr auto to_global(
+    vertex_t k) const noexcept -> vertex_t
   {
     if (world_size == 1) {
       return k;
@@ -277,7 +304,8 @@ struct cyclic_part final
     return ((n - 1 - world_rank) / world_size) + 1;
   }
 
-  [[nodiscard]] auto world_part_of(i32 r) const -> cyclic_part
+  [[nodiscard]] auto world_part_of(
+    i32 r) const -> cyclic_part
   {
     return cyclic_part{ n, r, world_size };
   }
@@ -297,7 +325,11 @@ struct block_cyclic_part final
   constexpr block_cyclic_part() noexcept  = default;
   constexpr ~block_cyclic_part() noexcept = default;
 
-  constexpr block_cyclic_part(vertex_t n, i32 world_rank, i32 world_size, vertex_t block_size = default_block_size) noexcept
+  constexpr block_cyclic_part(
+    vertex_t n,
+    i32      world_rank,
+    i32      world_size,
+    vertex_t block_size = default_block_size) noexcept
     : n(n)
     , world_rank(world_rank)
     , world_size(world_size)
@@ -305,8 +337,11 @@ struct block_cyclic_part final
   {
   }
 
-  explicit block_cyclic_part(vertex_t n) noexcept
-    : block_cyclic_part(n, mpi_basic::world_rank, mpi_basic::world_size)
+  explicit block_cyclic_part(
+    vertex_t n) noexcept
+    : block_cyclic_part(n,
+                        mpi_basic::world_rank,
+                        mpi_basic::world_size)
   {
   }
 
@@ -316,7 +351,8 @@ struct block_cyclic_part final
   constexpr auto operator=(block_cyclic_part const&) noexcept -> block_cyclic_part& = default;
   constexpr auto operator=(block_cyclic_part&&) noexcept -> block_cyclic_part&      = default;
 
-  [[nodiscard]] constexpr auto has_local(vertex_t global) const noexcept -> bool
+  [[nodiscard]] constexpr auto has_local(
+    vertex_t global) const noexcept -> bool
   {
     if (world_size == 1) {
       return true;
@@ -325,7 +361,8 @@ struct block_cyclic_part final
     return block % world_size == world_rank;
   }
 
-  [[nodiscard]] constexpr auto world_rank_of(vertex_t global) const noexcept -> i32
+  [[nodiscard]] constexpr auto world_rank_of(
+    vertex_t global) const noexcept -> i32
   {
     if (world_size == 1) {
       return 0;
@@ -335,7 +372,8 @@ struct block_cyclic_part final
   }
 
   // Precondition: has_local(i)
-  [[nodiscard]] constexpr auto to_local(vertex_t global) const noexcept -> vertex_t
+  [[nodiscard]] constexpr auto to_local(
+    vertex_t global) const noexcept -> vertex_t
   {
     if (world_size == 1) {
       return global;
@@ -347,7 +385,8 @@ struct block_cyclic_part final
   }
 
   // Precondition: k < local_n()
-  [[nodiscard]] constexpr auto to_global(vertex_t local) const noexcept -> vertex_t
+  [[nodiscard]] constexpr auto to_global(
+    vertex_t local) const noexcept -> vertex_t
   {
     if (world_size == 1) {
       return local;
@@ -391,7 +430,8 @@ struct block_cyclic_part final
     return ((owned_blocks - 1) * block_size) + last_block_size;
   }
 
-  [[nodiscard]] auto world_part_of(i32 r) const -> block_cyclic_part
+  [[nodiscard]] auto world_part_of(
+    i32 r) const -> block_cyclic_part
   {
     return block_cyclic_part{ n, r, world_size };
   }
@@ -408,7 +448,10 @@ struct trivial_slice_part final : explicit_continuous_part
   constexpr trivial_slice_part() noexcept  = default;
   constexpr ~trivial_slice_part() noexcept = default;
 
-  constexpr trivial_slice_part(vertex_t n, i32 world_rank, i32 world_size) noexcept
+  constexpr trivial_slice_part(
+    vertex_t n,
+    i32      world_rank,
+    i32      world_size) noexcept
     : explicit_continuous_part(n)
     , world_rank(world_rank)
     , world_size(world_size)
@@ -433,8 +476,11 @@ struct trivial_slice_part final : explicit_continuous_part
     }
   }
 
-  explicit trivial_slice_part(vertex_t n) noexcept
-    : trivial_slice_part(n, mpi_basic::world_rank, mpi_basic::world_size)
+  explicit trivial_slice_part(
+    vertex_t n) noexcept
+    : trivial_slice_part(n,
+                         mpi_basic::world_rank,
+                         mpi_basic::world_size)
   {
   }
 
@@ -444,7 +490,8 @@ struct trivial_slice_part final : explicit_continuous_part
   constexpr auto operator=(trivial_slice_part const&) noexcept -> trivial_slice_part& = default;
   constexpr auto operator=(trivial_slice_part&&) noexcept -> trivial_slice_part&      = default;
 
-  [[nodiscard]] constexpr auto world_rank_of(vertex_t global) const noexcept -> i32
+  [[nodiscard]] constexpr auto world_rank_of(
+    vertex_t global) const noexcept -> i32
   {
     if (world_size == 1) {
       return 0;
@@ -463,7 +510,8 @@ struct trivial_slice_part final : explicit_continuous_part
     return world_size - 1;
   }
 
-  [[nodiscard]] auto world_part_of(i32 r) const -> trivial_slice_part
+  [[nodiscard]] auto world_part_of(
+    i32 r) const -> trivial_slice_part
   {
     return trivial_slice_part{ n, r, world_size };
   }
@@ -480,7 +528,10 @@ struct balanced_slice_part final : explicit_continuous_part
   constexpr balanced_slice_part() noexcept  = default;
   constexpr ~balanced_slice_part() noexcept = default;
 
-  constexpr balanced_slice_part(vertex_t n, i32 world_rank, i32 world_size) noexcept
+  constexpr balanced_slice_part(
+    vertex_t n,
+    i32      world_rank,
+    i32      world_size) noexcept
     : explicit_continuous_part(n)
     , world_rank(world_rank)
     , world_size(world_size)
@@ -507,8 +558,11 @@ struct balanced_slice_part final : explicit_continuous_part
     }
   }
 
-  explicit balanced_slice_part(vertex_t n) noexcept
-    : balanced_slice_part(n, mpi_basic::world_rank, mpi_basic::world_size)
+  explicit balanced_slice_part(
+    vertex_t n) noexcept
+    : balanced_slice_part(n,
+                          mpi_basic::world_rank,
+                          mpi_basic::world_size)
   {
   }
 
@@ -518,7 +572,8 @@ struct balanced_slice_part final : explicit_continuous_part
   constexpr auto operator=(balanced_slice_part const&) noexcept -> balanced_slice_part& = default;
   constexpr auto operator=(balanced_slice_part&&) noexcept -> balanced_slice_part&      = default;
 
-  [[nodiscard]] constexpr auto world_rank_of(vertex_t i) const noexcept -> i32
+  [[nodiscard]] constexpr auto world_rank_of(
+    vertex_t i) const noexcept -> i32
   {
     if (world_size == 1) {
       return 0;
@@ -539,7 +594,8 @@ struct balanced_slice_part final : explicit_continuous_part
     return rem + integral_cast<i32>((i - split) / base);
   }
 
-  [[nodiscard]] auto world_part_of(i32 r) const -> balanced_slice_part
+  [[nodiscard]] auto world_part_of(
+    i32 r) const -> balanced_slice_part
   {
     return balanced_slice_part{ n, r, world_size };
   }
@@ -557,10 +613,17 @@ struct explicit_continuous_world_part final : explicit_continuous_part
   explicit_continuous_world_part()  = default;
   ~explicit_continuous_world_part() = default;
 
-  explicit_continuous_world_part(vertex_t n, vertex_t begin, vertex_t end, i32 world_rank, i32 world_size, void** memory)
+  explicit_continuous_world_part(
+    vertex_t n,
+    vertex_t begin,
+    vertex_t end,
+    i32      world_rank,
+    i32      world_size,
+    void**   memory)
     : world_rank(world_rank)
     , world_size(world_size)
-    , part(borrow_array<vertex_t>(memory, 2 * world_size))
+    , part(borrow_array<vertex_t>(memory,
+                                  2 * world_size))
   {
 
     auto const local_range = std::array{ begin, end };
@@ -577,7 +640,8 @@ struct explicit_continuous_world_part final : explicit_continuous_part
   auto operator=(explicit_continuous_world_part const&) -> explicit_continuous_world_part& = default;
   auto operator=(explicit_continuous_world_part&&) -> explicit_continuous_world_part&      = default;
 
-  [[nodiscard]] auto world_rank_of(vertex_t i) const -> i32
+  [[nodiscard]] auto world_rank_of(
+    vertex_t i) const -> i32
   {
     for (i32 r = 0; r < world_size; ++r) {
       if (i >= part[2 * r] and i < part[2 * r + 1]) {
@@ -587,7 +651,8 @@ struct explicit_continuous_world_part final : explicit_continuous_part
     return -1;
   }
 
-  [[nodiscard]] auto world_part_of(i32 r) const -> explicit_continuous_world_part
+  [[nodiscard]] auto world_part_of(
+    i32 r) const -> explicit_continuous_world_part
   {
     explicit_continuous_world_part result;
     result.n          = n;
@@ -612,10 +677,16 @@ struct explicit_sorted_continuous_world_part final : explicit_continuous_part
   explicit_sorted_continuous_world_part()  = default;
   ~explicit_sorted_continuous_world_part() = default;
 
-  explicit_sorted_continuous_world_part(vertex_t n, vertex_t end, i32 world_rank, i32 world_size, void** memory)
+  explicit_sorted_continuous_world_part(
+    vertex_t n,
+    vertex_t end,
+    i32      world_rank,
+    i32      world_size,
+    void**   memory)
     : world_rank(world_rank)
     , world_size(world_size)
-    , part(borrow_array<vertex_t>(memory, world_size))
+    , part(borrow_array<vertex_t>(memory,
+                                  world_size))
   {
     vertex_t const local_end = end;
     mpi_basic::allgather(local_end, part);
@@ -631,7 +702,8 @@ struct explicit_sorted_continuous_world_part final : explicit_continuous_part
   auto operator=(explicit_sorted_continuous_world_part const&) -> explicit_sorted_continuous_world_part& = default;
   auto operator=(explicit_sorted_continuous_world_part&&) -> explicit_sorted_continuous_world_part&      = default;
 
-  [[nodiscard]] auto world_rank_of(vertex_t i) const -> i32
+  [[nodiscard]] auto world_rank_of(
+    vertex_t i) const -> i32
   {
     auto r = i * integral_cast<u64>(world_size) / integral_cast<u64>(n);
     while (r > 0 and i < part[r - 1]) {
@@ -643,7 +715,8 @@ struct explicit_sorted_continuous_world_part final : explicit_continuous_part
     return r;
   }
 
-  [[nodiscard]] auto world_part_of(i32 r) const -> explicit_sorted_continuous_world_part
+  [[nodiscard]] auto world_part_of(
+    i32 r) const -> explicit_sorted_continuous_world_part
   {
     explicit_sorted_continuous_world_part result;
     result.n          = n;

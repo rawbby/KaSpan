@@ -35,7 +35,9 @@ struct edge
 static constexpr auto max_edge = edge{ std::numeric_limits<vertex_t>::max(), std::numeric_limits<vertex_t>::max() };
 
 constexpr auto
-edge_less(edge const& lhs, edge const& rhs) -> bool
+edge_less(
+  edge const& lhs,
+  edge const& rhs) -> bool
 {
   return lhs.u < rhs.u or (lhs.u == rhs.u and lhs.v < rhs.v);
 }
@@ -115,7 +117,11 @@ free_mpi_degree_t()
 }
 
 inline void
-degree_max_reduce(void* invec, void* inoutvec, int* len, mpi_basic::Datatype* /*datatype*/) // NOLINT(readability-non-const-parameter)
+degree_max_reduce(
+  void* invec,
+  void* inoutvec,
+  int*  len,
+  mpi_basic::Datatype* /*datatype*/) // NOLINT(readability-non-const-parameter)
 {
   auto const* in    = static_cast<degree const*>(invec);
   auto*       inout = static_cast<degree*>(inoutvec);

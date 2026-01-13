@@ -9,7 +9,9 @@ namespace kaspan {
 
 template<world_part_concept part_t>
 void
-normalize_scc_id(part_t const& part, vertex_t* scc_id)
+normalize_scc_id(
+  part_t const& part,
+  vertex_t*     scc_id)
 {
   KASPAN_STATISTIC_SCOPE("normalize_scc_id");
   // for (vertex_t k = 0; k < part.local_n(); ++k)

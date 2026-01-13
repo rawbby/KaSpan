@@ -32,7 +32,8 @@ public:
   }
 
   dense_unsigned_array(dense_unsigned_array const&) = delete;
-  dense_unsigned_array(dense_unsigned_array&& rhs) noexcept
+  dense_unsigned_array(
+    dense_unsigned_array&& rhs) noexcept
     : buffer(std::move(rhs))
     , element_byte_size_(rhs.element_byte_size_)
     , endian_(rhs.endian_)
@@ -42,7 +43,8 @@ public:
   }
 
   auto operator=(dense_unsigned_array const&) -> dense_unsigned_array& = delete;
-  auto operator=(dense_unsigned_array&& rhs) noexcept -> dense_unsigned_array&
+  auto operator=(
+    dense_unsigned_array&& rhs) noexcept -> dense_unsigned_array&
   {
     buffer::operator=(std::move(rhs));
     element_byte_size_ = rhs.element_byte_size_;
@@ -73,7 +75,9 @@ public:
   }
 
   template<arithmetic_concept Count>
-  void fill(T value, Count n)
+  void fill(
+    T     value,
+    Count n)
   {
     DEBUG_ASSERT_GE(n, 0);
     DEBUG_ASSERT_LE(n, std::numeric_limits<u64>::max());
@@ -83,7 +87,8 @@ public:
   }
 
   template<arithmetic_concept Index>
-  [[nodiscard]] auto get(Index index) const -> T
+  [[nodiscard]] auto get(
+    Index index) const -> T
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -93,7 +98,9 @@ public:
   }
 
   template<arithmetic_concept Index>
-  void set(Index index, T val)
+  void set(
+    Index index,
+    T     val)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -105,12 +112,17 @@ public:
 private:
   u8          element_byte_size_ = 0;
   std::endian endian_            = std::endian::native;
-  IF(KASPAN_DEBUG, u64 size_ = 0);
+  IF(KASPAN_DEBUG,
+     u64 size_ = 0);
 };
 
-template<unsigned_concept T = u64, arithmetic_concept Count>
+template<unsigned_concept   T = u64,
+         arithmetic_concept Count>
 auto
-make_dense_unsigned_array(Count count, u8 element_byte_size, std::endian endian = std::endian::native) -> dense_unsigned_array<T>
+make_dense_unsigned_array(
+  Count       count,
+  u8          element_byte_size,
+  std::endian endian = std::endian::native) -> dense_unsigned_array<T>
 {
   return dense_unsigned_array<T>{ count, element_byte_size, endian };
 }

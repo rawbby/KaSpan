@@ -21,7 +21,9 @@ class bits_accessor final
 {
 public:
   template<arithmetic_concept Size>
-  explicit bits_accessor(void* data, Size size)
+  explicit bits_accessor(
+    void* data,
+    Size  size)
     : data_(size == 0 ? nullptr : data)
   {
     DEBUG_ASSERT_IN_RANGE_INCLUSIVE(size, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
@@ -51,7 +53,8 @@ public:
   }
 
   template<arithmetic_concept Size>
-  void clear(Size end)
+  void clear(
+    Size end)
   {
     DEBUG_ASSERT_GE(end, 0);
     DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
@@ -61,7 +64,8 @@ public:
   }
 
   template<arithmetic_concept Size>
-  void fill(Size end)
+  void fill(
+    Size end)
   {
     DEBUG_ASSERT_GE(end, 0);
     DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
@@ -71,7 +75,8 @@ public:
   }
 
   template<arithmetic_concept Index>
-  [[nodiscard]] auto get(Index index) const -> bool
+  [[nodiscard]] auto get(
+    Index index) const -> bool
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -81,7 +86,9 @@ public:
   }
 
   template<arithmetic_concept Index>
-  void set(Index index, bool value)
+  void set(
+    Index index,
+    bool  value)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -91,7 +98,8 @@ public:
   }
 
   template<arithmetic_concept Index>
-  void set(Index index)
+  void set(
+    Index index)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -101,7 +109,8 @@ public:
   }
 
   template<arithmetic_concept Index>
-  void unset(Index index)
+  void unset(
+    Index index)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -111,14 +120,18 @@ public:
   }
 
   template<arithmetic_concept Index = size_t>
-  void for_each(Index end, std::invocable<Index> auto&& fn) const
+  void for_each(
+    Index                        end,
+    std::invocable<Index> auto&& fn) const
   {
     DEBUG_ASSERT_LE(end, size_);
     bits_ops::for_each<Index>(data(), end, std::forward<decltype(fn)>(fn));
   }
 
   template<arithmetic_concept Index = size_t>
-  void set_each(Index end, std::invocable<Index> auto&& fn)
+  void set_each(
+    Index                        end,
+    std::invocable<Index> auto&& fn)
   {
     DEBUG_ASSERT_LE(end, size_);
     bits_ops::set_each<Index>(data(), end, std::forward<decltype(fn)>(fn));
@@ -126,12 +139,15 @@ public:
 
 private:
   void* data_ = nullptr;
-  IF(KASPAN_DEBUG, u64 size_ = 0);
+  IF(KASPAN_DEBUG,
+     u64 size_ = 0);
 };
 
 template<arithmetic_concept Size>
 auto
-borrow_bits(void** memory, Size size) noexcept -> bits_accessor
+borrow_bits(
+  void** memory,
+  Size   size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
@@ -141,7 +157,9 @@ borrow_bits(void** memory, Size size) noexcept -> bits_accessor
 
 template<arithmetic_concept Size>
 auto
-borrow_bits_clean(void** memory, Size size) noexcept -> bits_accessor
+borrow_bits_clean(
+  void** memory,
+  Size   size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
@@ -151,7 +169,9 @@ borrow_bits_clean(void** memory, Size size) noexcept -> bits_accessor
 
 template<arithmetic_concept Size>
 auto
-borrow_bits_filled(void** memory, Size size) noexcept -> bits_accessor
+borrow_bits_filled(
+  void** memory,
+  Size   size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
@@ -161,7 +181,9 @@ borrow_bits_filled(void** memory, Size size) noexcept -> bits_accessor
 
 template<arithmetic_concept Size>
 auto
-view_bits(void* data, Size size) noexcept -> bits_accessor
+view_bits(
+  void* data,
+  Size  size) noexcept -> bits_accessor
 {
   return bits_accessor{ data, size };
 }

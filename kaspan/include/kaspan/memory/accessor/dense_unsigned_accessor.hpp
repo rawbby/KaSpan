@@ -17,7 +17,11 @@ class dense_unsigned_accessor final
 {
 public:
   template<arithmetic_concept Size>
-  explicit dense_unsigned_accessor(void* data, Size size, u8 element_byte_size, std::endian endian = std::endian::native)
+  explicit dense_unsigned_accessor(
+    void*       data,
+    Size        size,
+    u8          element_byte_size,
+    std::endian endian = std::endian::native)
     : data_(size == 0 ? nullptr : data)
     , element_byte_size_(element_byte_size)
     , endian_(endian)
@@ -61,7 +65,9 @@ public:
   }
 
   template<arithmetic_concept Count>
-  void fill(T value, Count n)
+  void fill(
+    T     value,
+    Count n)
   {
     DEBUG_ASSERT_GE(n, 0);
     DEBUG_ASSERT_LE(n, std::numeric_limits<u64>::max());
@@ -71,7 +77,8 @@ public:
   }
 
   template<arithmetic_concept Index>
-  [[nodiscard]] auto get(Index index) const -> T
+  [[nodiscard]] auto get(
+    Index index) const -> T
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -81,7 +88,9 @@ public:
   }
 
   template<arithmetic_concept Index>
-  void set(Index index, T val)
+  void set(
+    Index index,
+    T     val)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -94,12 +103,19 @@ private:
   void*       data_;
   u8          element_byte_size_;
   std::endian endian_;
-  IF(KASPAN_DEBUG, u64 size_ = 0;)
+  IF(
+    KASPAN_DEBUG,
+    u64 size_ = 0;)
 };
 
-template<unsigned_concept T = u64, arithmetic_concept Count>
+template<unsigned_concept   T = u64,
+         arithmetic_concept Count>
 auto
-borrow_dense_unsigned(void** memory, Count count, u8 element_byte_size, std::endian endian = std::endian::native) -> dense_unsigned_accessor<T>
+borrow_dense_unsigned(
+  void**      memory,
+  Count       count,
+  u8          element_byte_size,
+  std::endian endian = std::endian::native) -> dense_unsigned_accessor<T>
 {
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
@@ -108,9 +124,14 @@ borrow_dense_unsigned(void** memory, Count count, u8 element_byte_size, std::end
   return dense_unsigned_accessor<T>{ data, count64, element_byte_size, endian };
 }
 
-template<unsigned_concept T = u64, arithmetic_concept Count>
+template<unsigned_concept   T = u64,
+         arithmetic_concept Count>
 auto
-view_dense_unsigned(void* data, Count count, u8 element_byte_size, std::endian endian = std::endian::native) -> dense_unsigned_accessor<T>
+view_dense_unsigned(
+  void*       data,
+  Count       count,
+  u8          element_byte_size,
+  std::endian endian = std::endian::native) -> dense_unsigned_accessor<T>
 {
   return dense_unsigned_accessor<T>{ data, count, element_byte_size, endian };
 }

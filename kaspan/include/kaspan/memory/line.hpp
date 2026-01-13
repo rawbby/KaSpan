@@ -38,7 +38,8 @@ linesize() -> Size
 
 template<unsigned_concept Size>
 auto
-line_align_down(Size size) -> Size
+line_align_down(
+  Size size) -> Size
 {
   auto const mask = linesize<Size>() - 1;
   return size & ~mask;
@@ -46,7 +47,8 @@ line_align_down(Size size) -> Size
 
 template<unsigned_concept Size>
 auto
-line_align_up(Size size) -> Size
+line_align_up(
+  Size size) -> Size
 {
   auto const mask = linesize<Size>() - 1;
   return (size + mask) & ~mask;
@@ -54,7 +56,8 @@ line_align_up(Size size) -> Size
 
 template<unsigned_concept Size>
 auto
-is_line_aligned(Size size) -> bool
+is_line_aligned(
+  Size size) -> bool
 {
   auto const mask = linesize<Size>() - 1;
   return (size & mask) == 0;
@@ -89,7 +92,8 @@ line_alloc(Size size) noexcept(false) -> void*
 }
 
 inline void
-line_free(void* data)
+line_free(
+  void* data)
 {
   DEBUG_ASSERT_NE(data, nullptr);
   DEBUG_ASSERT(is_line_aligned(data));

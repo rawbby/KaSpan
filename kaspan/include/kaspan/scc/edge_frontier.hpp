@@ -20,7 +20,8 @@ struct edge_frontier
   MPI_Count* recv_counts = nullptr;
   MPI_Aint*  recv_displs = nullptr;
 
-  static auto create(u64 capacity = 0) -> edge_frontier
+  static auto create(
+    u64 capacity = 0) -> edge_frontier
   {
     auto  b      = make_buffer<MPI_Count, MPI_Count, MPI_Aint, MPI_Aint>(mpi_basic::world_size, mpi_basic::world_size, mpi_basic::world_size, mpi_basic::world_size);
     auto* memory = b.data();
@@ -38,18 +39,23 @@ struct edge_frontier
     return frontier;
   }
 
-  void local_push(edge const& e)
+  void local_push(
+    edge const& e)
   {
     recv_buffer.emplace_back(e);
   }
 
-  void push(i32 rank, edge const& e)
+  void push(
+    i32         rank,
+    edge const& e)
   {
     send_buffer.emplace_back(e);
     ++send_counts[rank];
   }
 
-  void relaxed_push(i32 rank, edge const& e)
+  void relaxed_push(
+    i32         rank,
+    edge const& e)
   {
     if (rank == mpi_basic::world_rank) {
       local_push(e);
@@ -71,7 +77,8 @@ struct edge_frontier
   }
 
   template<world_part_concept part_t>
-  auto comm(part_t const& part) -> bool
+  auto comm(
+    part_t const& part) -> bool
   {
     DEBUG_ASSERT_NE(mpi_edge_t, mpi_basic::datatype_null);
 

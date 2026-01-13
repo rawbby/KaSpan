@@ -25,7 +25,9 @@ public:
   }
 
 private:
-  file_buffer(void* data, size_t size)
+  file_buffer(
+    void*  data,
+    size_t size)
     : data_(data)
     , size_(size)
   {
@@ -33,7 +35,8 @@ private:
 
 public:
   file_buffer(file_buffer const&) = delete;
-  file_buffer(file_buffer&& rhs) noexcept
+  file_buffer(
+    file_buffer&& rhs) noexcept
     : data_(rhs.data_)
     , size_(rhs.size_)
   {
@@ -42,7 +45,8 @@ public:
   }
 
   auto operator=(file_buffer const&) -> file_buffer& = delete;
-  auto operator=(file_buffer&& rhs) noexcept -> file_buffer&
+  auto operator=(
+    file_buffer&& rhs) noexcept -> file_buffer&
   {
     if (this != &rhs) {
       if (data_ != nullptr) {
@@ -56,7 +60,9 @@ public:
     return *this;
   }
 
-  [[nodiscard]] static auto create_r(char const* file, size_t byte_size) -> file_buffer
+  [[nodiscard]] static auto create_r(
+    char const* file,
+    size_t      byte_size) -> file_buffer
   {
     if (byte_size == 0) {
       return file_buffer{};
@@ -77,7 +83,9 @@ public:
   }
 
   template<bool allocate = false>
-  [[nodiscard]] static auto create_w(char const* file, size_t size) -> file_buffer
+  [[nodiscard]] static auto create_w(
+    char const* file,
+    size_t      size) -> file_buffer
   {
     if (size == 0) {
       return file_buffer{};
@@ -107,7 +115,9 @@ public:
   }
 
   template<bool allocate = false>
-  [[nodiscard]] static auto create_rw(char const* file, size_t byte_size) -> file_buffer
+  [[nodiscard]] static auto create_rw(
+    char const* file,
+    size_t      byte_size) -> file_buffer
   {
     if (byte_size == 0) {
       return file_buffer{};

@@ -12,7 +12,9 @@ namespace kaspan {
 
 template<unsigned_concept T>
 constexpr auto
-floordiv(T x, T base) noexcept -> T
+floordiv(
+  T x,
+  T base) noexcept -> T
 {
   if (not std::is_constant_evaluated()) {
     DEBUG_ASSERT_GT(base, 0);
@@ -22,7 +24,9 @@ floordiv(T x, T base) noexcept -> T
 
 template<unsigned_concept T>
 constexpr auto
-ceildiv(T x, T base) noexcept -> T
+ceildiv(
+  T x,
+  T base) noexcept -> T
 {
   if (not std::is_constant_evaluated()) {
     DEBUG_ASSERT_GT(base, 0);
@@ -33,7 +37,9 @@ ceildiv(T x, T base) noexcept -> T
 
 template<unsigned_concept T>
 constexpr auto
-remainder(T x, T base) noexcept -> T
+remainder(
+  T x,
+  T base) noexcept -> T
 {
   if (not std::is_constant_evaluated()) {
     DEBUG_ASSERT_GT(base, 0);
@@ -43,7 +49,9 @@ remainder(T x, T base) noexcept -> T
 
 template<unsigned_concept T>
 constexpr auto
-round_down(T x, T base) noexcept -> T
+round_down(
+  T x,
+  T base) noexcept -> T
 {
   if (not std::is_constant_evaluated()) {
     DEBUG_ASSERT_GT(base, 0);
@@ -53,7 +61,9 @@ round_down(T x, T base) noexcept -> T
 
 template<unsigned_concept T>
 constexpr auto
-round_up(T x, T base) noexcept -> T
+round_up(
+  T x,
+  T base) noexcept -> T
 {
   if (not std::is_constant_evaluated()) {
     DEBUG_ASSERT_GT(base, 0);
@@ -65,7 +75,10 @@ round_up(T x, T base) noexcept -> T
 
 template<unsigned_concept T>
 constexpr T
-clip(T x, T lo, T hi) noexcept
+clip(
+  T x,
+  T lo,
+  T hi) noexcept
 {
   if (not std::is_constant_evaluated()) {
     DEBUG_ASSERT_LE(lo, hi);
@@ -73,9 +86,11 @@ clip(T x, T lo, T hi) noexcept
   return x < lo ? lo : (x > hi ? hi : x);
 }
 
-template<u64 base, unsigned_concept T>
+template<u64              base,
+         unsigned_concept T>
 constexpr auto
-floordiv(T x) noexcept -> T
+floordiv(
+  T x) noexcept -> T
 {
   static_assert(base > 0);
   if constexpr (base == 1) {
@@ -88,9 +103,11 @@ floordiv(T x) noexcept -> T
   }
 }
 
-template<u64 base, unsigned_concept T>
+template<u64              base,
+         unsigned_concept T>
 constexpr auto
-ceildiv(T x) noexcept -> T
+ceildiv(
+  T x) noexcept -> T
 {
   static_assert(base > 0);
   if (not std::is_constant_evaluated()) {
@@ -103,9 +120,11 @@ ceildiv(T x) noexcept -> T
   }
 }
 
-template<u64 base, unsigned_concept T>
+template<u64              base,
+         unsigned_concept T>
 constexpr auto
-remainder(T x) noexcept -> T
+remainder(
+  T x) noexcept -> T
 {
   static_assert(base > 0);
   if constexpr (base == 1) {
@@ -118,9 +137,11 @@ remainder(T x) noexcept -> T
   }
 }
 
-template<u64 base, unsigned_concept T>
+template<u64              base,
+         unsigned_concept T>
 constexpr auto
-round_down(T x) noexcept -> T
+round_down(
+  T x) noexcept -> T
 {
   static_assert(base > 0);
   if constexpr (base == 1) {
@@ -134,9 +155,11 @@ round_down(T x) noexcept -> T
   }
 }
 
-template<u64 base, unsigned_concept T>
+template<u64              base,
+         unsigned_concept T>
 constexpr auto
-round_up(T x) noexcept -> T
+round_up(
+  T x) noexcept -> T
 {
   static_assert(base > 0);
   if (not std::is_constant_evaluated()) {
@@ -154,9 +177,12 @@ round_up(T x) noexcept -> T
   }
 }
 
-template<u64 lo, u64 hi, unsigned_concept T>
+template<u64              lo,
+         u64              hi,
+         unsigned_concept T>
 constexpr T
-clip(T x) noexcept
+clip(
+  T x) noexcept
 {
   static_assert(lo <= hi);
   return x < lo ? integral_cast<T>(lo) : (x > hi ? integral_cast<T>(hi) : x);

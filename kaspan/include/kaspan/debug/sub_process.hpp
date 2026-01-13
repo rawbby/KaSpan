@@ -10,7 +10,8 @@
 namespace kaspan {
 
 inline auto
-decode_system_status(int status) -> int
+decode_system_status(
+  int status) -> int
 {
   if (status == -1) {
     return 127;
@@ -54,7 +55,11 @@ decode_system_status(int status) -> int
 }
 
 inline void
-mpi_sub_process(int argc, char** argv, int npc, int const* npv)
+mpi_sub_process(
+  int        argc,
+  char**     argv,
+  int        npc,
+  int const* npv)
 {
   constexpr std::string_view magic_flag = "--mpi-sub-process";
 
@@ -92,7 +97,9 @@ mpi_sub_process(int argc, char** argv, int npc, int const* npv)
 }
 
 inline void
-mpi_sub_process(int argc, char** argv)
+mpi_sub_process(
+  int    argc,
+  char** argv)
 {
   constexpr int npc      = 3;
   constexpr int npv[npc] = { 3, 1, 7 };

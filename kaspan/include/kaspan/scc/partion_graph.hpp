@@ -15,7 +15,9 @@ namespace kaspan {
 template<world_part_concept part_t>
   requires(part_t::continuous)
 index_t
-partition_degree(index_t const* fw_head, part_t const& part)
+partition_degree(
+  index_t const* fw_head,
+  part_t const&  part)
 {
   if (part.local_n() > 0) {
     return fw_head[part.end] - fw_head[part.begin];
@@ -27,7 +29,9 @@ partition_degree(index_t const* fw_head, part_t const& part)
 template<world_part_concept part_t>
   requires(not part_t::continuous)
 index_t
-partition_degree(index_t const* fw_head, part_t const& part)
+partition_degree(
+  index_t const* fw_head,
+  part_t const&  part)
 {
   auto const local_n = part.local_n();
 
@@ -40,7 +44,13 @@ partition_degree(index_t const* fw_head, part_t const& part)
 
 template<world_part_concept part_t>
 auto
-partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, part_t const& part) -> local_graph_part<part_t>
+partition(
+  index_t         m,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  part_t const&   part) -> local_graph_part<part_t>
 {
   auto const local_n = part.local_n();
   DEBUG_ASSERT_VALID_GRAPH(part.n, fw_head, fw_csr);
@@ -90,7 +100,11 @@ partition(index_t m, index_t const* fw_head, vertex_t const* fw_csr, index_t con
 
 template<world_part_concept part_t>
 auto
-partition(index_t m, index_t const* head, vertex_t const* csr, part_t const& part)
+partition(
+  index_t         m,
+  index_t const*  head,
+  vertex_t const* csr,
+  part_t const&   part)
 {
   struct partition_result
   {

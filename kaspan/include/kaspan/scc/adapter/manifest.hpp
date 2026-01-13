@@ -19,7 +19,9 @@ namespace kaspan {
 namespace manifest_internal {
 
 inline auto
-parse_kv_map(std::filesystem::path const& file) -> result<std::unordered_map<std::string, std::string>>
+parse_kv_map(
+  std::filesystem::path const& file) -> result<std::unordered_map<std::string,
+                                                                  std::string>>
 {
   std::ifstream in{ file };
   RESULT_ASSERT(in.is_open(), IO_ERROR);
@@ -51,9 +53,11 @@ parse_kv_map(std::filesystem::path const& file) -> result<std::unordered_map<std
 }
 
 template<typename T>
-  requires requires(char* it, T t) { std::from_chars(it, it, t); }
+  requires requires(char* it,
+                    T     t) { std::from_chars(it, it, t); }
 auto
-parse_int(std::string_view value_str) -> result<T>
+parse_int(
+  std::string_view value_str) -> result<T>
 {
   auto const* begin = value_str.data();
   auto const* end   = begin + value_str.size();
@@ -69,7 +73,8 @@ parse_int(std::string_view value_str) -> result<T>
 }
 
 constexpr auto
-parse_bool(std::string_view value_str) -> result<bool>
+parse_bool(
+  std::string_view value_str) -> result<bool>
 {
   if (value_str.size() == 4) {
     ASSERT_EQ(value_str[0], 't');
@@ -88,7 +93,8 @@ parse_bool(std::string_view value_str) -> result<bool>
 }
 
 constexpr auto
-parse_endian(std::string_view value_str) -> std::endian
+parse_endian(
+  std::string_view value_str) -> std::endian
 {
   if (value_str.size() == 6) {
     ASSERT_EQ(value_str[0], 'l');
@@ -128,7 +134,8 @@ struct manifest
   std::filesystem::path bw_head_path;
   std::filesystem::path bw_csr_path;
 
-  static auto load(std::filesystem::path const& file) -> manifest
+  static auto load(
+    std::filesystem::path const& file) -> manifest
   {
     using namespace manifest_internal;
 
@@ -188,7 +195,8 @@ struct manifest
 };
 
 static auto
-load_graph_from_manifest(manifest const& manifest) -> local_graph
+load_graph_from_manifest(
+  manifest const& manifest) -> local_graph
 {
   auto const  n            = manifest.graph_node_count;
   auto const  m            = manifest.graph_edge_count;
@@ -258,7 +266,9 @@ load_graph_from_manifest(manifest const& manifest) -> local_graph
 
 template<world_part_concept part_t>
 static auto
-load_graph_part_from_manifest(part_t const& part, manifest const& manifest) -> local_graph_part<part_t>
+load_graph_part_from_manifest(
+  part_t const&   part,
+  manifest const& manifest) -> local_graph_part<part_t>
 {
   DEBUG_ASSERT_EQ(manifest.graph_node_count, part.n);
 

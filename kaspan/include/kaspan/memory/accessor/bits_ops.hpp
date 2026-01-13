@@ -15,7 +15,9 @@ namespace kaspan {
 
 struct bits_ops
 {
-  static void clear(u64* data, u64 count)
+  static void clear(
+    u64* data,
+    u64  count)
   {
     auto const idx = floordiv<64>(count);
     std::memset(data, 0, idx * sizeof(u64));
@@ -25,7 +27,9 @@ struct bits_ops
     }
   }
 
-  static void fill(u64* data, u64 count)
+  static void fill(
+    u64* data,
+    u64  count)
   {
     auto const idx = floordiv<64>(count);
     std::memset(data, ~0, idx * sizeof(u64));
@@ -35,7 +39,9 @@ struct bits_ops
     }
   }
 
-  [[nodiscard]] static auto get(u64 const* data, u64 bit_index) -> bool
+  [[nodiscard]] static auto get(
+    u64 const* data,
+    u64        bit_index) -> bool
   {
     DEBUG_ASSERT_NE(data, nullptr);
     auto const idx = floordiv<64>(bit_index);
@@ -44,7 +50,10 @@ struct bits_ops
     return (data[idx] & msk) != 0;
   }
 
-  static void set(u64* data, u64 bit_index, bool bit_value)
+  static void set(
+    u64* data,
+    u64  bit_index,
+    bool bit_value)
   {
     DEBUG_ASSERT_NE(data, nullptr);
     auto const val_msk = -integral_cast<u64>(bit_value);
@@ -58,7 +67,9 @@ struct bits_ops
     data[idx] = field;
   }
 
-  static void set(u64* data, u64 bit_index)
+  static void set(
+    u64* data,
+    u64  bit_index)
   {
     DEBUG_ASSERT_NE(data, nullptr);
     auto const idx = floordiv<64>(bit_index);
@@ -67,7 +78,9 @@ struct bits_ops
     data[idx] |= msk;
   }
 
-  static void unset(u64* data, u64 bit_index)
+  static void unset(
+    u64* data,
+    u64  bit_index)
   {
     DEBUG_ASSERT_NE(data, nullptr);
     auto const idx = floordiv<64>(bit_index);
@@ -76,8 +89,12 @@ struct bits_ops
     data[idx] &= ~msk;
   }
 
-  template<arithmetic_concept Index = size_t, std::invocable<Index> fn_t>
-  static void for_each(u64 const* data, Index end, fn_t&& fn)
+  template<arithmetic_concept    Index = size_t,
+           std::invocable<Index> fn_t>
+  static void for_each(
+    u64 const* data,
+    Index      end,
+    fn_t&&     fn)
   {
     DEBUG_ASSERT(end == 0 || data != nullptr);
     DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
@@ -101,8 +118,12 @@ struct bits_ops
     }
   }
 
-  template<arithmetic_concept Index = size_t, std::invocable<Index> fn_t>
-  static void set_each(u64* data, Index end, fn_t&& fn)
+  template<arithmetic_concept    Index = size_t,
+           std::invocable<Index> fn_t>
+  static void set_each(
+    u64*   data,
+    Index  end,
+    fn_t&& fn)
   {
     DEBUG_ASSERT(end == 0 || data != nullptr);
     DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());

@@ -47,7 +47,12 @@ namespace kaspan {
 template<world_part_concept part_t>
   requires(part_t::ordered)
 auto
-allgather_graph(part_t const& part, index_t m, index_t local_fw_m, index_t const* fw_head, vertex_t const* fw_csr) -> local_graph
+allgather_graph(
+  part_t const&   part,
+  index_t         m,
+  index_t         local_fw_m,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr) -> local_graph
 {
   auto const n       = part.n;
   auto const local_n = part.local_n();

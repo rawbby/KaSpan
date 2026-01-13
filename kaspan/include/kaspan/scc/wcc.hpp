@@ -62,7 +62,11 @@
 namespace kaspan {
 
 inline auto
-wcc(vertex_t n, index_t* fw_head, index_t* fw_csr, vertex_t* wcc_id) -> size_t
+wcc(
+  vertex_t  n,
+  index_t*  fw_head,
+  index_t*  fw_csr,
+  vertex_t* wcc_id) -> size_t
 {
   KASPAN_STATISTIC_SCOPE("residual_wcc");
 

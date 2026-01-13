@@ -8,15 +8,16 @@ namespace kaspan {
 
 template<bool InterleavedSupport>
 auto
-trim_1_first(world_part_concept auto const&       part,
-             index_t const*                       fw_head,
-             index_t const*                       fw_csr,
-             index_t const*                       bw_head,
-             index_t const*                       bw_csr,
-             vertex_t*                            scc_id,
-             vertex_t*                            outdegree,
-             vertex_t*                            indegree,
-             vertex_frontier<InterleavedSupport>& frontier)
+trim_1_first(
+  world_part_concept auto const&       part,
+  index_t const*                       fw_head,
+  index_t const*                       fw_csr,
+  index_t const*                       bw_head,
+  index_t const*                       bw_csr,
+  vertex_t*                            scc_id,
+  vertex_t*                            outdegree,
+  vertex_t*                            indegree,
+  vertex_frontier<InterleavedSupport>& frontier)
 {
   struct return_t
   {
@@ -117,14 +118,15 @@ trim_1_first(world_part_concept auto const&       part,
 
 template<world_part_concept part_t>
 auto
-trim_1(part_t const&   part,
-       index_t const*  fw_head,
-       vertex_t const* fw_csr,
-       index_t const*  bw_head,
-       vertex_t const* bw_csr,
-       vertex_t*       scc_id,
-       vertex_t*       fw_degree,
-       vertex_t*       bw_degree) -> vertex_t
+trim_1(
+  part_t const&   part,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  vertex_t*       scc_id,
+  vertex_t*       fw_degree,
+  vertex_t*       bw_degree) -> vertex_t
 {
   auto const local_n       = part.local_n();
   vertex_t   decided_count = 0;

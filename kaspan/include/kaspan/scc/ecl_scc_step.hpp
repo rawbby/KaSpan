@@ -23,7 +23,10 @@ namespace kaspan {
 
 template<world_part_concept part_t>
 void
-ecl_scc_init_lable(part_t const& part, vertex_t* ecl_fw_label, vertex_t* ecl_bw_label)
+ecl_scc_init_lable(
+  part_t const& part,
+  vertex_t*     ecl_fw_label,
+  vertex_t*     ecl_bw_label)
 {
   auto const local_n = part.local_n();
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -35,19 +38,20 @@ ecl_scc_init_lable(part_t const& part, vertex_t* ecl_fw_label, vertex_t* ecl_bw_
 
 template<world_part_concept part_t>
 auto
-ecl_scc_step(part_t const&   part,
-             index_t const*  fw_head,
-             vertex_t const* fw_csr,
-             index_t const*  bw_head,
-             vertex_t const* bw_csr,
-             vertex_t*       scc_id,
-             vertex_t*       ecl_fw_label,
-             vertex_t*       ecl_bw_label,
-             vertex_t*       active_array,
-             u64*            active_storage,
-             u64*            changed_storage,
-             edge_frontier&  frontier,
-             vertex_t        decided_count = 0) -> vertex_t
+ecl_scc_step(
+  part_t const&   part,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  vertex_t*       scc_id,
+  vertex_t*       ecl_fw_label,
+  vertex_t*       ecl_bw_label,
+  vertex_t*       active_array,
+  u64*            active_storage,
+  u64*            changed_storage,
+  edge_frontier&  frontier,
+  vertex_t        decided_count = 0) -> vertex_t
 {
   // this function uses the project convention that:
   // k,l always describe local vertex ids

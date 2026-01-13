@@ -9,7 +9,10 @@
 namespace kaspan {
 
 inline auto
-arg_select_flag(int argc, char** argv, char const* flag) -> bool
+arg_select_flag(
+  int         argc,
+  char**      argv,
+  char const* flag) -> bool
 {
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], flag) == 0) {
@@ -20,7 +23,12 @@ arg_select_flag(int argc, char** argv, char const* flag) -> bool
 }
 
 inline auto
-arg_select_str(int argc, char** argv, char const* flag, void (*usage)(int, char**)) -> char const*
+arg_select_str(
+  int         argc,
+  char**      argv,
+  char const* flag,
+  void (*usage)(int,
+                char**)) -> char const*
 {
   for (int i = 1; i < argc - 1; ++i) {
     if (strcmp(argv[i], flag) == 0) {
@@ -32,7 +40,10 @@ arg_select_str(int argc, char** argv, char const* flag, void (*usage)(int, char*
 }
 
 inline auto
-arg_select_optional_str(int argc, char** argv, char const* flag) -> char const*
+arg_select_optional_str(
+  int         argc,
+  char**      argv,
+  char const* flag) -> char const*
 {
   for (int i = 1; i < argc - 1; ++i) {
     if (strcmp(argv[i], flag) == 0) {
@@ -43,7 +54,11 @@ arg_select_optional_str(int argc, char** argv, char const* flag) -> char const*
 }
 
 inline auto
-arg_select_default_str(int argc, char** argv, char const* flag, char const* default_value) -> char const*
+arg_select_default_str(
+  int         argc,
+  char**      argv,
+  char const* flag,
+  char const* default_value) -> char const*
 {
   for (int i = 1; i < argc - 1; ++i) {
     if (strcmp(argv[i], flag) == 0) {
@@ -55,7 +70,12 @@ arg_select_default_str(int argc, char** argv, char const* flag, char const* defa
 
 template<integral_concept Int>
 auto
-arg_select_int(int argc, char** argv, char const* flag, void*(usage)(int, char**)) -> Int
+arg_select_int(
+  int         argc,
+  char**      argv,
+  char const* flag,
+  void*(usage)(int,
+               char**)) -> Int
 {
   for (int i = 1; i < argc - 1; ++i) {
     if (strcmp(argv[i], flag) == 0) {
@@ -71,7 +91,10 @@ arg_select_int(int argc, char** argv, char const* flag, void*(usage)(int, char**
 
 template<integral_concept Int>
 auto
-arg_select_optional_int(int argc, char** argv, char const* flag) -> std::optional<Int>
+arg_select_optional_int(
+  int         argc,
+  char**      argv,
+  char const* flag) -> std::optional<Int>
 {
   for (int i = 1; i < argc - 1; ++i) {
     if (strcmp(argv[i], flag) == 0) {
@@ -86,7 +109,11 @@ arg_select_optional_int(int argc, char** argv, char const* flag) -> std::optiona
 
 template<integral_concept Int>
 auto
-arg_select_default_int(int argc, char** argv, char const* flag, Int default_value) -> Int
+arg_select_default_int(
+  int         argc,
+  char**      argv,
+  char const* flag,
+  Int         default_value) -> Int
 {
   for (int i = 1; i < argc - 1; ++i) {
     if (strcmp(argv[i], flag) == 0) {

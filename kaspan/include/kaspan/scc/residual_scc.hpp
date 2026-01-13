@@ -10,15 +10,16 @@
 namespace kaspan {
 
 inline void
-residual_scc(vertex_t const* wcc_id,
-             vertex_t        wcc_count,
-             vertex_t*       sub_scc_id,
-             vertex_t        n,
-             index_t const*  fw_head,
-             vertex_t const* fw_csr,
-             index_t const*  bw_head,
-             vertex_t const* bw_csr,
-             vertex_t const* sub_ids_inverse)
+residual_scc(
+  vertex_t const* wcc_id,
+  vertex_t        wcc_count,
+  vertex_t*       sub_scc_id,
+  vertex_t        n,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  index_t const*  bw_head,
+  vertex_t const* bw_csr,
+  vertex_t const* sub_ids_inverse)
 {
   KASPAN_STATISTIC_SCOPE("residual_scc");
 

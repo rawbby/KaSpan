@@ -12,7 +12,11 @@ namespace kaspan {
 struct dense_unsigned_ops
 {
   template<unsigned_concept T>
-  static auto get(std::byte const* data, u64 index, u8 element_bytes, std::endian endian) -> T
+  static auto get(
+    std::byte const* data,
+    u64              index,
+    u8               element_bytes,
+    std::endian      endian) -> T
   {
     T          result{};
     auto       result_view = std::as_writable_bytes(std::span{ &result, 1 });
@@ -38,7 +42,12 @@ struct dense_unsigned_ops
   }
 
   template<unsigned_concept T>
-  static void set(std::byte* data, u64 index, u8 element_bytes, std::endian endian, T val)
+  static void set(
+    std::byte*  data,
+    u64         index,
+    u8          element_bytes,
+    std::endian endian,
+    T           val)
   {
     auto value_view = std::as_writable_bytes(std::span{ &val, 1 });
     auto data_view  = std::as_writable_bytes(std::span{ data + index * element_bytes, element_bytes });
@@ -62,7 +71,12 @@ struct dense_unsigned_ops
   }
 
   template<unsigned_concept T>
-  static void fill(std::byte* data, u64 n, u8 element_bytes, std::endian endian, T value)
+  static void fill(
+    std::byte*  data,
+    u64         n,
+    u8          element_bytes,
+    std::endian endian,
+    T           value)
   {
     for (u64 i = 0; i < n; ++i) {
       set(data, i, element_bytes, endian, value);

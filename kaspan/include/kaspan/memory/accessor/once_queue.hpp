@@ -30,7 +30,8 @@ public:
   }
 
   once_queue(once_queue const&) = delete;
-  once_queue(once_queue&& rhs) noexcept
+  once_queue(
+    once_queue&& rhs) noexcept
     : buffer(std::move(rhs))
     , beg_(rhs.beg_)
     , end_(rhs.end_)
@@ -42,7 +43,8 @@ public:
   }
 
   auto operator=(once_queue const&) -> once_queue& = delete;
-  auto operator=(once_queue&& rhs) noexcept -> once_queue&
+  auto operator=(
+    once_queue&& rhs) noexcept -> once_queue&
   {
     buffer::operator=(std::move(rhs));
     beg_ = rhs.beg_;
@@ -81,7 +83,8 @@ public:
     end_ = 0;
   }
 
-  void push_back(T t) noexcept
+  void push_back(
+    T t) noexcept
   {
     data()[end_++] = t;
   }
@@ -97,12 +100,15 @@ public:
 private:
   u64 beg_ = 0;
   u64 end_ = 0;
-  IF(KASPAN_DEBUG, u64 size_ = 0);
+  IF(KASPAN_DEBUG,
+     u64 size_ = 0);
 };
 
-template<typename T, arithmetic_concept Size>
+template<typename T,
+         arithmetic_concept Size>
 auto
-make_once_queue(Size size) -> once_queue<T>
+make_once_queue(
+  Size size) -> once_queue<T>
 {
   return once_queue<T>{ size };
 }

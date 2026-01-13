@@ -10,7 +10,8 @@
 namespace kaspan {
 
 constexpr auto
-no_filter(vertex_t /* k */) -> bool
+no_filter(
+  vertex_t /* k */) -> bool
 {
   return true;
 }
@@ -23,9 +24,17 @@ no_filter(vertex_t /* k */) -> bool
  * @param[in] decided_count number of vertices filtered out (must match filter)
  * @return number of strongly connected components
  */
-template<world_part_concept part_t, typename callback_t, typename filter_t = decltype(no_filter)>
+template<world_part_concept part_t,
+         typename callback_t,
+         typename filter_t = decltype(no_filter)>
 void
-tarjan(part_t const& part, index_t const* head, vertex_t const* csr, callback_t callback, filter_t filter = no_filter, vertex_t decided_count = 0) noexcept
+tarjan(
+  part_t const&   part,
+  index_t const*  head,
+  vertex_t const* csr,
+  callback_t      callback,
+  filter_t        filter        = no_filter,
+  vertex_t        decided_count = 0) noexcept
 {
   KASPAN_STATISTIC_SCOPE("tarjan");
   constexpr auto index_undecided = scc_id_undecided;
@@ -144,9 +153,16 @@ tarjan(part_t const& part, index_t const* head, vertex_t const* csr, callback_t 
  * @param[in] decided_count number of vertices filtered out (must match filter)
  * @return number of strongly connected components
  */
-template<typename callback_t, typename filter_t = decltype(no_filter)>
+template<typename callback_t,
+         typename filter_t = decltype(no_filter)>
 void
-tarjan(vertex_t const n, index_t const* head, vertex_t const* csr, callback_t callback, filter_t filter = no_filter, vertex_t decided_count = 0) noexcept
+tarjan(
+  vertex_t const  n,
+  index_t const*  head,
+  vertex_t const* csr,
+  callback_t      callback,
+  filter_t        filter        = no_filter,
+  vertex_t        decided_count = 0) noexcept
 {
   tarjan(single_world_part{ n }, head, csr, callback, filter, decided_count);
 }

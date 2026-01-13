@@ -10,7 +10,8 @@ namespace kaspan {
 
 namespace internal {
 inline auto
-allreduce_pivot(degree local_max) -> vertex_t
+allreduce_pivot(
+  degree local_max) -> vertex_t
 {
   auto const [p, u] = mpi_basic::allreduce_single(local_max, mpi_degree_t, mpi_degree_max_op);
   DEBUG_ASSERT_NE(p, std::numeric_limits<vertex_t>::min());
@@ -25,7 +26,11 @@ allreduce_pivot(degree local_max) -> vertex_t
 /// This pivot selection ignores degree reduction due to decided neighbours.
 template<world_part_concept part_t>
 auto
-select_pivot_from_head(part_t const& part, index_t const* fw_head, index_t const* bw_head, vertex_t const* scc_id) -> vertex_t
+select_pivot_from_head(
+  part_t const&   part,
+  index_t const*  fw_head,
+  index_t const*  bw_head,
+  vertex_t const* scc_id) -> vertex_t
 {
   degree local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
 
@@ -48,7 +53,11 @@ select_pivot_from_head(part_t const& part, index_t const* fw_head, index_t const
 /// degree arrays. It is not only faster but also more accurate.
 template<world_part_concept part_t>
 auto
-select_pivot_from_degree(part_t const& part, vertex_t const* scc_id, vertex_t const* outdegree, vertex_t const* indegree) -> vertex_t
+select_pivot_from_degree(
+  part_t const&   part,
+  vertex_t const* scc_id,
+  vertex_t const* outdegree,
+  vertex_t const* indegree) -> vertex_t
 {
   degree local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
 

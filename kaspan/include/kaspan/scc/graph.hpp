@@ -48,7 +48,8 @@ struct graph
   graph()  = default;
   ~graph() = default;
 
-  explicit graph(local_graph const& rhs)
+  explicit graph(
+    local_graph const& rhs)
     : n(rhs.n)
     , m(rhs.m)
     , fw_head(rhs.fw_head)
@@ -74,7 +75,8 @@ struct graph_part
   graph_part()  = default;
   ~graph_part() = default;
 
-  explicit graph_part(local_graph_part<part_t> const& rhs)
+  explicit graph_part(
+    local_graph_part<part_t> const& rhs)
     : part(rhs.part)
     , m(rhs.m)
     , local_fw_m(rhs.local_fw_m)
@@ -88,13 +90,19 @@ struct graph_part
 };
 
 inline std::span<vertex_t const>
-csr_range(index_t const* head, vertex_t const* csr, vertex_t k)
+csr_range(
+  index_t const*  head,
+  vertex_t const* csr,
+  vertex_t        k)
 {
   return { csr + head[k], csr + head[k + 1] };
 }
 
 inline std::span<vertex_t>
-csr_range(index_t const* head, vertex_t* csr, vertex_t k)
+csr_range(
+  index_t const* head,
+  vertex_t*      csr,
+  vertex_t       k)
 {
   return { csr + head[k], csr + head[k + 1] };
 }
@@ -144,19 +152,26 @@ csr_range(index_t const* head, vertex_t* csr, vertex_t k)
   });
 
 inline auto
-make_graph_buffer(vertex_t n, index_t m) -> buffer
+make_graph_buffer(
+  vertex_t n,
+  index_t  m) -> buffer
 {
   return make_buffer<index_t, vertex_t, index_t, vertex_t>(n + 1, m, n + 1, m);
 }
 
 inline auto
-make_fw_graph_buffer(vertex_t n, index_t m) -> buffer
+make_fw_graph_buffer(
+  vertex_t n,
+  index_t  m) -> buffer
 {
   return make_buffer<index_t, vertex_t>(n + 1, m);
 }
 
 inline auto
-make_graph_buffer(vertex_t n, index_t fw_m, index_t bw_m) -> buffer
+make_graph_buffer(
+  vertex_t n,
+  index_t  fw_m,
+  index_t  bw_m) -> buffer
 {
   return make_buffer<index_t, vertex_t, index_t, vertex_t>(n + 1, fw_m, n + 1, bw_m);
 }

@@ -11,7 +11,8 @@
 namespace kaspan {
 
 inline auto
-kagen_forward_graph_part(char const* generator_args)
+kagen_forward_graph_part(
+  char const* generator_args)
 {
   struct
   {
@@ -62,7 +63,8 @@ kagen_forward_graph_part(char const* generator_args)
 }
 
 inline auto
-kagen_graph_part(char const* generator_args)
+kagen_graph_part(
+  char const* generator_args)
 {
   struct local_ka_gen_graph
   {

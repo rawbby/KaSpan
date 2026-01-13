@@ -13,8 +13,13 @@ namespace kaspan {
 /// but its not needed nor adviced performance wise.
 template<bool InterleavedSupport = false>
 auto
-trim_1_exhaustive(world_part_concept auto const& part, index_t const* head, index_t const* csr, vertex_t* scc_id, vertex_t* degree, vertex_frontier<InterleavedSupport>& frontier)
-  -> vertex_t
+trim_1_exhaustive(
+  world_part_concept auto const&       part,
+  index_t const*                       head,
+  index_t const*                       csr,
+  vertex_t*                            scc_id,
+  vertex_t*                            degree,
+  vertex_frontier<InterleavedSupport>& frontier) -> vertex_t
 {
   vertex_t decided_count = 0;
 
@@ -53,15 +58,16 @@ trim_1_exhaustive(world_part_concept auto const& part, index_t const* head, inde
 /// but its not needed nor adviced performance wise.
 template<bool Interleaved = false>
 auto
-trim_1_exhaustive_first(world_part_concept auto const& part,
-                        index_t const*                 fw_head,
-                        index_t const*                 fw_csr,
-                        index_t const*                 bw_head,
-                        index_t const*                 bw_csr,
-                        vertex_t*                      scc_id,
-                        vertex_t*                      outdegree,
-                        vertex_t*                      indegree,
-                        vertex_frontier<Interleaved>&  frontier) -> vertex_t
+trim_1_exhaustive_first(
+  world_part_concept auto const& part,
+  index_t const*                 fw_head,
+  index_t const*                 fw_csr,
+  index_t const*                 bw_head,
+  index_t const*                 bw_csr,
+  vertex_t*                      scc_id,
+  vertex_t*                      outdegree,
+  vertex_t*                      indegree,
+  vertex_frontier<Interleaved>&  frontier) -> vertex_t
 {
   auto const local_n       = part.local_n();
   vertex_t   decided_count = 0;
@@ -127,15 +133,16 @@ namespace interleaved {
 /// To do that scc_id must be valid and degree must be valid if:
 /// scc_id[k] != undecided || (valid(indegree[k]) && valid(outdegree[k])).
 auto
-trim_1_exhaustive(world_part_concept auto const& part,
-                  index_t const*                 fw_head,
-                  index_t const*                 fw_csr,
-                  index_t const*                 bw_head,
-                  index_t const*                 bw_csr,
-                  vertex_t*                      scc_id,
-                  vertex_t*                      outdegree,
-                  vertex_t*                      indegree,
-                  vertex_frontier&               frontier) -> vertex_t
+trim_1_exhaustive(
+  world_part_concept auto const& part,
+  index_t const*                 fw_head,
+  index_t const*                 fw_csr,
+  index_t const*                 bw_head,
+  index_t const*                 bw_csr,
+  vertex_t*                      scc_id,
+  vertex_t*                      outdegree,
+  vertex_t*                      indegree,
+  vertex_frontier&               frontier) -> vertex_t
   requires(signed_concept<vertex_t>)
 {
   vertex_t decided_count = 0;
@@ -185,15 +192,16 @@ trim_1_exhaustive(world_part_concept auto const& part,
 /// It assumes to run on a fresh graph with uninitialised scc_id/indegree/outdegree and
 /// will initilise these appropriately.
 auto
-trim_1_exhaustive_first(world_part_concept auto const& part,
-                        index_t const*                 fw_head,
-                        index_t const*                 fw_csr,
-                        index_t const*                 bw_head,
-                        index_t const*                 bw_csr,
-                        vertex_t*                      scc_id,
-                        vertex_t*                      outdegree,
-                        vertex_t*                      indegree,
-                        vertex_frontier&               frontier) -> vertex_t
+trim_1_exhaustive_first(
+  world_part_concept auto const& part,
+  index_t const*                 fw_head,
+  index_t const*                 fw_csr,
+  index_t const*                 bw_head,
+  index_t const*                 bw_csr,
+  vertex_t*                      scc_id,
+  vertex_t*                      outdegree,
+  vertex_t*                      indegree,
+  vertex_frontier&               frontier) -> vertex_t
   requires(signed_concept<vertex_t>)
 {
   auto const local_n       = part.local_n();
