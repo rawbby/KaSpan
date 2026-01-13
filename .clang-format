@@ -12,3 +12,5 @@ AlignConsecutiveAssignments:
 AlignConsecutiveDeclarations:
   Enabled: true
 QualifierAlignment: Right
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortBlocksOnASingleLine: Never
