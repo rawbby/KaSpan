@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/scc/allgather_sub_graph.hpp>
@@ -11,7 +11,7 @@
 #include <kaspan/scc/pivot_selection.hpp>
 #include <kaspan/scc/trim_1_exhaustive.hpp>
 #include <kaspan/scc/trim_tarjan.hpp>
-#include <kaspan/util/return_pack.hpp>
+#include <kaspan/util/pp.hpp>
 
 #include <algorithm>
 

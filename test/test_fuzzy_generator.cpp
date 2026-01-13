@@ -1,6 +1,4 @@
-#include <kaspan/debug/assert_eq.hpp>
-#include <kaspan/debug/assert_ge.hpp>
-#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/graph.hpp>

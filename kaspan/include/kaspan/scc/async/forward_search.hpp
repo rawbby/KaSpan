@@ -1,9 +1,11 @@
 #pragma once
 
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/graph.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 
 namespace kaspan::async {
 

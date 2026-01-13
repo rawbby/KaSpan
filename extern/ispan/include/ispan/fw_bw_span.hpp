@@ -1,9 +1,9 @@
 #pragma once
 
-#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/statistic.hpp>
-#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/scope_guard.hpp>
 
 #include <ispan/util.hpp>

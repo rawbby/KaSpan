@@ -1,4 +1,4 @@
-#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/memory/accessor/dense_unsigned_accessor.hpp>
 #include <kaspan/memory/accessor/dense_unsigned_array.hpp>
 #include <kaspan/util/arithmetic.hpp>

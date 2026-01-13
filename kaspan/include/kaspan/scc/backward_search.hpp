@@ -1,9 +1,10 @@
 #pragma once
 
-#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/vertex_frontier.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 
 namespace kaspan {
 

@@ -1,15 +1,11 @@
 #pragma once
 
-#include <kaspan/debug/assert_ge.hpp>
-#include <kaspan/debug/assert_gt.hpp>
-#include <kaspan/debug/assert_le.hpp>
-#include <kaspan/debug/assert_lt.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/memory/borrow.hpp>
-#include <kaspan/mpi_basic/allgather.hpp>
-#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 
 #include <array>
 #include <concepts>

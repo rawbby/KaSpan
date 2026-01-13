@@ -2,11 +2,12 @@
 
 #include <kaspan/memory/accessor/dense_unsigned_accessor.hpp>
 #include <kaspan/memory/buffer.hpp>
+#include <kaspan/memory/file_buffer.hpp>
 #include <kaspan/scc/adapter/stxxl_wrapper.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
-#include <kaspan/util/result.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/result.hpp>
 
 #include <algorithm>
 #include <cctype>

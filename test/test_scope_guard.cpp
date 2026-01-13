@@ -1,4 +1,4 @@
-#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/util/scope_guard.hpp>
 
 #include <stdexcept>

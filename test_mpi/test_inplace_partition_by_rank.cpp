@@ -1,16 +1,12 @@
-#include <kaspan/debug/assert_eq.hpp>
-#include <kaspan/debug/assert_in_range.hpp>
-#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/mpi_basic/counts_and_displs.hpp>
-#include <kaspan/mpi_basic/inplace_partition_by_rank.hpp>
-#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 #include <kaspan/util/scope_guard.hpp>
 

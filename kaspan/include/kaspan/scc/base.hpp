@@ -1,12 +1,9 @@
 #pragma once
 
-#include <kaspan/util/arithmetic.hpp>
-#include <kaspan/debug/assert_eq.hpp>
-#include <kaspan/debug/assert_in_range.hpp>
-#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/debug.hpp>
-#include <kaspan/mpi_basic/init.hpp>
-#include <kaspan/mpi_basic/type.hpp>
+#include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 
 #include <mpi.h>

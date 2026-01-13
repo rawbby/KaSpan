@@ -1,22 +1,18 @@
 #pragma once
 
+#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/debug.hpp>
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/memory/accessor/bits_ops.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/util/arithmetic.hpp>
-#include <kaspan/util/math.hpp>
 #include <kaspan/util/integral_cast.hpp>
-#include <kaspan/debug/assert_ge.hpp>
-#include <kaspan/debug/assert_in_range.hpp>
-#include <kaspan/debug/assert_le.hpp>
-#include <kaspan/debug/assert_lt.hpp>
-#include <kaspan/debug/assert_true.hpp>
-#include <kaspan/debug/debug.hpp>
+#include <kaspan/util/math.hpp>
 #include <kaspan/util/pp.hpp>
 
-#include <stddef.h>
 #include <concepts>
 #include <limits>
+#include <stddef.h>
 #include <utility>
 
 namespace kaspan {

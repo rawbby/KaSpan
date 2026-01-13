@@ -1,8 +1,8 @@
 #pragma once
 
-#include <kaspan/scc/vertex_frontier.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/part.hpp>
+#include <kaspan/scc/vertex_frontier.hpp>
 
 namespace kaspan {
 

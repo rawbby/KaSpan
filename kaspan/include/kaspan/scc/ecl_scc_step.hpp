@@ -1,7 +1,7 @@
 #pragma once
 
-#include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
+#include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/edge_frontier.hpp>
 #include <kaspan/scc/graph.hpp>

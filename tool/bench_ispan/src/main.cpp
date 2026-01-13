@@ -1,13 +1,13 @@
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/valgrind.hpp>
-#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
 #include <kaspan/scc/allgather_graph.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/scope_guard.hpp>
 
 #include <ispan/scc.hpp>

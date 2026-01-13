@@ -7,6 +7,7 @@
 #include <kaspan/scc/part.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 
 namespace kaspan {
 

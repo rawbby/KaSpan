@@ -1,14 +1,8 @@
-#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/mpi_basic/allgather_counts.hpp>
-#include <kaspan/mpi_basic/allgatherv.hpp>
-#include <kaspan/mpi_basic/alltoallv.hpp>
-#include <kaspan/mpi_basic/alltoallv_counts.hpp>
-#include <kaspan/mpi_basic/counts_and_displs.hpp>
-#include <kaspan/mpi_basic/displs.hpp>
-#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/base.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 
 using namespace kaspan;
 

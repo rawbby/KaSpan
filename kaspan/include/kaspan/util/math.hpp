@@ -1,7 +1,6 @@
 #pragma once
 
-#include <kaspan/debug/assert_gt.hpp>
-#include <kaspan/debug/assert_le.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 

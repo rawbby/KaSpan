@@ -1,15 +1,13 @@
-#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/mpi_basic/allreduce_max_time.hpp>
-#include <kaspan/mpi_basic/allreduce_single.hpp>
-#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/async/scc.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/part.hpp>
 #include <kaspan/scc/scc.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 
 #include <briefkasten/noop_indirection.hpp>
 
@@ -45,7 +43,7 @@ verify_scc_id(Graph const& graph, vertex_t const* scc_id_orig, vertex_t* scc_id)
         }
       }();
 
-      auto const w = integral_cast<vertex_t>(std::log10(std::max(2, part.to_global(end)) - 1) + 1);
+      auto const w = static_cast<vertex_t>(std::log10(std::max(2, part.to_global(end)) - 1) + 1);
       auto const p = std::string{ " " } + std::string(w, ' ');
       auto const m = std::string{ " " } + std::string(w, '^');
 

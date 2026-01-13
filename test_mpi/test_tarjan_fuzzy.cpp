@@ -1,10 +1,10 @@
-#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/mpi_basic/allreduce_max_time.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/tarjan.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 
 #include <cstdio>
 #include <ostream>

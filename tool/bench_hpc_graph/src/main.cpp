@@ -1,15 +1,14 @@
-#include <kaspan/debug/assert_lt.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/valgrind.hpp>
-#include <kaspan/mpi_basic/barrier.hpp>
-#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/pivot_selection.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/scope_guard.hpp>
 #include <kaspan_adapter.hpp>
 

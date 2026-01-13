@@ -1,17 +1,11 @@
 #pragma once
 
-#include <kaspan/debug/assert_eq.hpp>
-#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/memory/borrow.hpp>
-#include <kaspan/mpi_basic/counts_and_displs.hpp>
-#include <kaspan/mpi_basic/displs.hpp>
-#include <kaspan/mpi_basic/gather.hpp>
-#include <kaspan/mpi_basic/gatherv.hpp>
-#include <kaspan/mpi_basic/mpi_basic.hpp>
-#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 
 #include <chrono>

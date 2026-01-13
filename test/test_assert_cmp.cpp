@@ -1,10 +1,4 @@
-#include <kaspan/debug/assert_false.hpp>
-#include <kaspan/debug/assert_ge.hpp>
-#include <kaspan/debug/assert_gt.hpp>
-#include <kaspan/debug/assert_le.hpp>
-#include <kaspan/debug/assert_lt.hpp>
-#include <kaspan/debug/assert_ne.hpp>
-#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/util/arithmetic.hpp>
 
 #include <cstdint>

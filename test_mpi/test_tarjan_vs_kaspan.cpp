@@ -1,5 +1,4 @@
-#include <kaspan/debug/assert_eq.hpp>
-#include <kaspan/debug/assert_in_range.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/buffer.hpp>

@@ -14,7 +14,8 @@
 #include <kaspan/scc/pivot_selection.hpp>
 #include <kaspan/scc/tarjan.hpp>
 #include <kaspan/scc/trim_1_exhaustive.hpp>
-#include <kaspan/util/return_pack.hpp>
+#include <kaspan/util/mpi_basic.hpp>
+#include <kaspan/util/pp.hpp>
 
 #include <briefkasten/aggregators.hpp>
 #include <briefkasten/buffered_queue.hpp>

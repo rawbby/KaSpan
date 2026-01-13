@@ -1,5 +1,8 @@
 #pragma once
 
+#include <type_traits> // std::remove_cvref_t
+#include <utility>     // std::forward
+
 namespace kaspan {
 
 // clang-format off
@@ -199,6 +202,21 @@ namespace kaspan {
 #define NOR(X,Y) NOT(OR(X,Y))
 #define XOR(X,Y) AND(OR(X,Y),NOT(AND(X,Y)))
 #define XNOR(X,Y) NOT(XOR(X,Y))
+
+// === TEMPORARY NAME ===
+#define TMP() CAT(tmp, __COUNTER__)
+
+// === PACK VARIABLES INTO ANNONYMOUS STRUCT ===
+#define PACK_TYPE_ALIAS_KERNEL(X) using CAT(X,_t)=std::remove_cvref_t<decltype(X)>;
+#define PACK_MEMBER_DECLARATION_KERNEL(X) CAT(X,_t)(X);
+#define PACK_FORWARD_KERNEL(X) std::forward<decltype(X)>(X)
+#define PACK(...)                                               \
+  [&](){                                                        \
+    ARGS_FOREACH(PACK_TYPE_ALIAS_KERNEL,__VA_ARGS__)            \
+    struct pack /* NOLINT(*-pro-type-member-init) */            \
+    {ARGS_FOREACH(PACK_MEMBER_DECLARATION_KERNEL,__VA_ARGS__)}; \
+    return pack{ARGS_MAP(PACK_FORWARD_KERNEL,__VA_ARGS__)};     \
+  }()
 
 // clang-format on
 

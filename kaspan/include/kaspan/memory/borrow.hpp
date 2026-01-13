@@ -1,15 +1,11 @@
 #pragma once
 
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/memory/line.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
-#include <kaspan/debug/assert_eq.hpp>
-#include <kaspan/debug/assert_ge.hpp>
-#include <kaspan/debug/assert_le.hpp>
-#include <kaspan/debug/assert_ne.hpp>
-#include <kaspan/debug/assert_true.hpp>
 #include <kaspan/util/pp.hpp>
 
 #include <cstddef>

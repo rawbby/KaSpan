@@ -1,8 +1,7 @@
 #include <ispan/scc.hpp>
-#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
-#include <kaspan/mpi_basic/allreduce_max_time.hpp>
 #include <kaspan/scc/fuzzy.hpp>
+#include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/scope_guard.hpp>
 
 #include <iomanip>

@@ -1,10 +1,10 @@
 #pragma once
 
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/util/arithmetic.hpp>
-#include <kaspan/debug/assert_in_range.hpp>
 
-#include <type_traits>
 #include <limits>
+#include <type_traits>
 #include <utility>
 
 namespace kaspan {

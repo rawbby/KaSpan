@@ -1,9 +1,8 @@
 #pragma once
 
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/part.hpp>
-#include <kaspan/debug/assert_eq.hpp>
-#include <kaspan/debug/assert_true.hpp>
 #include <kaspan/util/pp.hpp>
 
 #include <algorithm>

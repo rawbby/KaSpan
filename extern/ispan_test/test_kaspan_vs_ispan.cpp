@@ -1,7 +1,6 @@
 #include <ispan/scc.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
-#include <kaspan/mpi_basic/mpi_basic.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
 #include <kaspan/scc/allgather_graph.hpp>

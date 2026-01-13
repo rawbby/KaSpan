@@ -1,7 +1,4 @@
-#include <kaspan/debug/assert_eq.hpp>
-#include <kaspan/debug/assert_ge.hpp>
-#include <kaspan/debug/assert_in_range.hpp>
-#include <kaspan/debug/assert_lt.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/scc/allgather_graph.hpp>
 #include <kaspan/scc/base.hpp>

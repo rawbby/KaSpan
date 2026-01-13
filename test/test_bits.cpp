@@ -1,4 +1,4 @@
-#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/memory/accessor/bits.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
