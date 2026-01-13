@@ -9,9 +9,12 @@ namespace kaspan {
 /// trim_1_exhaustive iteratevely trims one direction, either forward or backward, exhaustive.
 /// To do that scc_id must be valid and degree must be valid if:
 /// scc_id[k] != undecided || valid(degree[k]).
-template<world_part_concept part_t>
+/// notice: you can pass a vertex_frontier with interleaved support,
+/// but its not needed nor adviced performance wise.
+template<bool InterleavedSupport = false>
 auto
-trim_1_exhaustive(part_t const& part, index_t const* head, index_t const* csr, vertex_t* scc_id, vertex_t* degree, vertex_frontier& frontier) -> vertex_t
+trim_1_exhaustive(world_part_concept auto const& part, index_t const* head, index_t const* csr, vertex_t* scc_id, vertex_t* degree, vertex_frontier<InterleavedSupport>& frontier)
+  -> vertex_t
 {
   vertex_t decided_count = 0;
 
@@ -46,17 +49,19 @@ trim_1_exhaustive(part_t const& part, index_t const* head, index_t const* csr, v
 /// trim_1_exhaustive_first iteratively trims vertices with indegree/outdegree of zero.
 /// It assumes to run on a fresh graph with uninitialised scc_id/indegree/outdegree and
 /// will initilise these appropriately.
-template<world_part_concept part_t>
+/// notice: you can pass a vertex_frontier with interleaved support,
+/// but its not needed nor adviced performance wise.
+template<bool Interleaved = false>
 auto
-trim_1_exhaustive_first(part_t const&    part,
-                        index_t const*   fw_head,
-                        index_t const*   fw_csr,
-                        index_t const*   bw_head,
-                        index_t const*   bw_csr,
-                        vertex_t*        scc_id,
-                        vertex_t*        outdegree,
-                        vertex_t*        indegree,
-                        vertex_frontier& frontier) -> vertex_t
+trim_1_exhaustive_first(world_part_concept auto const& part,
+                        index_t const*                 fw_head,
+                        index_t const*                 fw_csr,
+                        index_t const*                 bw_head,
+                        index_t const*                 bw_csr,
+                        vertex_t*                      scc_id,
+                        vertex_t*                      outdegree,
+                        vertex_t*                      indegree,
+                        vertex_frontier<Interleaved>&  frontier) -> vertex_t
 {
   auto const local_n       = part.local_n();
   vertex_t   decided_count = 0;
@@ -113,7 +118,123 @@ trim_1_exhaustive_first(part_t const&    part,
   }
 
   // delegate the exhaustive trimming to a sub routine again.
-  return decided_count + trim_1_exhaustive(part, fw_head, fw_csr, scc_id, indegree, frontier);
+  return decided_count + trim_1_exhaustive(part, bw_head, bw_csr, scc_id, outdegree, frontier);
+}
+
+namespace interleaved {
+
+/// trim_1_exhaustive iteratevely trims both directions, forward and backward, interleaved.
+/// To do that scc_id must be valid and degree must be valid if:
+/// scc_id[k] != undecided || (valid(indegree[k]) && valid(outdegree[k])).
+auto
+trim_1_exhaustive(world_part_concept auto const& part,
+                  index_t const*                 fw_head,
+                  index_t const*                 fw_csr,
+                  index_t const*                 bw_head,
+                  index_t const*                 bw_csr,
+                  vertex_t*                      scc_id,
+                  vertex_t*                      outdegree,
+                  vertex_t*                      indegree,
+                  vertex_frontier&               frontier) -> vertex_t
+  requires(signed_concept<vertex_t>)
+{
+  vertex_t decided_count = 0;
+
+  do {
+    while (frontier.has_next()) {
+      auto const u = frontier.next();
+
+      if (u < 0) { // outdegree trim
+        auto const v = -u;
+        auto const k = part.to_local(v);
+
+        if (scc_id[k] == scc_id_undecided) {
+          if (--outdegree[k] == 0) { // decide and prepare to notify neighbours
+            scc_id[k] = v;
+            ++decided_count;
+            for (auto const w : csr_range(bw_head, bw_csr, k)) {
+              if (part.has_local(w)) frontier.local_push(-w);
+              else frontier.push(part.world_rank_of(w), -w);
+            }
+          }
+        }
+      }
+
+      else { // indegree trim
+        auto const v = u;
+        auto const k = part.to_local(v);
+
+        if (scc_id[k] == scc_id_undecided) {
+          if (--indegree[k] == 0) { // decide and prepare to notify neighbours
+            scc_id[k] = v;
+            ++decided_count;
+            for (auto const w : csr_range(fw_head, fw_csr, k)) {
+              if (part.has_local(w)) frontier.local_push(w);
+              else frontier.push(part.world_rank_of(w), w);
+            }
+          }
+        }
+      }
+    }
+  } while (frontier.comm(part));
+
+  return decided_count;
+}
+
+/// trim_1_exhaustive_first iteratively trims vertices with indegree/outdegree of zero.
+/// It assumes to run on a fresh graph with uninitialised scc_id/indegree/outdegree and
+/// will initilise these appropriately.
+auto
+trim_1_exhaustive_first(world_part_concept auto const& part,
+                        index_t const*                 fw_head,
+                        index_t const*                 fw_csr,
+                        index_t const*                 bw_head,
+                        index_t const*                 bw_csr,
+                        vertex_t*                      scc_id,
+                        vertex_t*                      outdegree,
+                        vertex_t*                      indegree,
+                        vertex_frontier&               frontier) -> vertex_t
+  requires(signed_concept<vertex_t>)
+{
+  auto const local_n       = part.local_n();
+  vertex_t   decided_count = 0;
+
+  for (vertex_t k = 0; k < local_n; ++k) {
+    auto const indegree_k  = bw_head[k + 1] - bw_head[k];
+    auto const outdegree_k = fw_head[k + 1] - fw_head[k];
+
+    if (indegree_k == 0 && outdegree_k == 0) [[unlikely]] {
+      scc_id[k] = part.to_global(k);
+      ++decided_count;
+    }
+
+    else if (indegree_k == 0) {
+      scc_id[k] = part.to_global(k);
+      ++decided_count;
+      for (auto const v : csr_range(fw_head, fw_csr, k)) {
+        if (part.has_local(v)) frontier.local_push(v);
+        else frontier.push(part.world_rank_of(v), v);
+      }
+    }
+
+    else if (outdegree_k == 0) {
+      scc_id[k] = part.to_global(k);
+      ++decided_count;
+      for (auto const v : csr_range(bw_head, bw_csr, k)) {
+        if (part.has_local(v)) frontier.local_push(-v);
+        else frontier.push(part.world_rank_of(v), -v);
+      }
+    }
+
+    else [[likely]] {
+      scc_id[k]    = scc_id_undecided;
+      indegree[k]  = indegree_k;
+      outdegree[k] = outdegree_k;
+    }
+  }
+
+  return decided_count + trim_1_exhaustive(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree, indegree, frontier);
+}
 }
 
 } // namespace kaspan

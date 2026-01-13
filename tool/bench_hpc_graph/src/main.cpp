@@ -5,7 +5,7 @@
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/scc/pivot_selection.hpp>
+#include <kaspan/scc/pivot.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/mpi_basic.hpp>
@@ -97,7 +97,7 @@ benchmark(auto&& graph_part)
       max_degree.u              = kaspan::integral_cast<vertex_t>(hpc_data.g.local_unmap[k]);
     }
   }
-  auto const pivot = pivot_selection(max_degree);
+  auto const pivot = internal::allreduce_pivot(max_degree);
   KASPAN_STATISTIC_POP();
   char output_file[] = "hpc_scc_output.txt";
   scc_dist(&hpc_data.g, &hpc_data.comm, &hpc_data.q, kaspan::integral_cast<uint64_t>(pivot), output_file);

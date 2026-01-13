@@ -11,9 +11,10 @@
 #include <kaspan/scc/async/forward_search.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/color_scc_step.hpp>
-#include <kaspan/scc/pivot_selection.hpp>
+#include <kaspan/scc/pivot.hpp>
 #include <kaspan/scc/tarjan.hpp>
 #include <kaspan/scc/trim_1_exhaustive.hpp>
+#include <kaspan/scc/vertex_frontier.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 
@@ -80,16 +81,14 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
 
   auto outdegree = make_array<vertex_t>(local_n);
   auto indegree  = make_array<vertex_t>(local_n);
-  auto frontier  = vertex_frontier::create(local_n);
-
-  vertex_t local_decided = 0;
+  auto frontier  = interleaved::vertex_frontier::create(local_n);
 
   KASPAN_STATISTIC_PUSH("trim_1");
   // notice: trim_1_exhaustive_first has a side effect by initializing scc_id with scc_id undecided
   // if trim_1_exhaustive_first is removed one has to initialize scc_id with scc_id_undecided manually!
-  auto const [trim_1_decided, max] = trim_1_exhaustive_first(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
-  KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(trim_1_decided, mpi_basic::sum));
-  local_decided += trim_1_decided;
+  vertex_t local_decided  = interleaved::trim_1_exhaustive_first(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
+  vertex_t global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+  KASPAN_STATISTIC_ADD("decided_count", global_decided);
   KASPAN_STATISTIC_POP();
 
   // fallback to tarjan on single rank
@@ -112,12 +111,12 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
   auto const decided_threshold = n - (2 * n / mpi_basic::world_size); // as we only gather fw graph we can only reduce to 2 * local_n
   DEBUG_ASSERT_GE(decided_threshold, 0);
 
-  if (mpi_basic::allreduce_single(local_decided, mpi_basic::sum) < decided_threshold) {
+  if (global_decided < decided_threshold) {
     {
       KASPAN_STATISTIC_SCOPE("forward_backward_search");
       auto const prev_local_decided = local_decided;
 
-      auto pivot        = pivot_selection(max);
+      auto pivot        = select_pivot_from_degree(part, scc_id, outdegree.data(), indegree.data());
       auto bitvector    = make_bits_clean(local_n);
       auto active_array = make_array<vertex_t>(local_n);
       auto vertex_queue = make_briefkasten_vertex<indirection_scheme_t>();

@@ -9,8 +9,11 @@
 
 namespace kaspan {
 
+template<bool interleaved = false>
 struct vertex_frontier
 {
+  static constexpr bool is_interleaved = interleaved;
+
   std::vector<vertex_t> send_buffer;
   std::vector<vertex_t> recv_buffer;
 
@@ -80,7 +83,8 @@ struct vertex_frontier
     auto* recv_memory = recv_buffer.data() + recv_offset;
 
     mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](vertex_t u) {
-      return part.world_rank_of(u);
+      if constexpr (is_interleaved) return part.world_rank_of(std::abs(u));
+      else return part.world_rank_of(u);
     });
 
     mpi_basic::alltoallv(send_buffer.data(), send_counts, send_displs, recv_memory, recv_counts, recv_displs);
@@ -91,5 +95,9 @@ struct vertex_frontier
     return true;
   }
 };
+
+namespace interleaved {
+using vertex_frontier = kaspan::vertex_frontier<true>;
+}
 
 } // namespace kaspan

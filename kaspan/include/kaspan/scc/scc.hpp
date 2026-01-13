@@ -8,7 +8,7 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/color_scc_step.hpp>
 #include <kaspan/scc/forward_search.hpp>
-#include <kaspan/scc/pivot_selection.hpp>
+#include <kaspan/scc/pivot.hpp>
 #include <kaspan/scc/trim_1_exhaustive.hpp>
 #include <kaspan/scc/trim_tarjan.hpp>
 #include <kaspan/util/pp.hpp>
@@ -17,9 +17,8 @@
 
 namespace kaspan {
 
-template<world_part_concept part_t>
 void
-scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id)
+scc(world_part_concept auto const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t const* bw_head, vertex_t const* bw_csr, vertex_t* scc_id)
 {
   DEBUG_ASSERT_VALID_GRAPH_PART(part, fw_head, fw_csr);
   DEBUG_ASSERT_VALID_GRAPH_PART(part, bw_head, bw_csr);
@@ -30,21 +29,15 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
 
   auto outdegree = make_array<vertex_t>(local_n);
   auto indegree  = make_array<vertex_t>(local_n);
-  auto frontier  = vertex_frontier::create(local_n);
-
-  vertex_t local_decided  = 0;
-  vertex_t global_decided = 0;
+  auto frontier  = interleaved::vertex_frontier::create(local_n);
 
   // notice: trim_1_exhaustive_first has a side effect by initializing scc_id with scc_id undecided
   // if trim_1_exhaustive_first is removed one has to initialize scc_id with scc_id_undecided manually!
-  auto const max = [&] {
-    KASPAN_STATISTIC_SCOPE("trim_1_exhaustive_first");
-    auto const [trim_1_decided, trim_1_max] = trim_1_exhaustive_first(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
-    local_decided += trim_1_decided;
-    global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-    KASPAN_STATISTIC_ADD("decided_count", global_decided);
-    return trim_1_max;
-  }();
+  KASPAN_STATISTIC_PUSH("trim_1_exhaustive_first");
+  vertex_t local_decided  = interleaved::trim_1_exhaustive_first(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
+  vertex_t global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+  KASPAN_STATISTIC_ADD("decided_count", global_decided);
+  KASPAN_STATISTIC_POP();
 
   // fallback to tarjan on single rank
   if (mpi_basic::world_size == 1) {
@@ -66,11 +59,14 @@ scc(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, index_t 
     {
       KASPAN_STATISTIC_SCOPE("forward_backward_search");
 
-      auto pivot = pivot_selection(max);
+      // as degree arrays are up to date we can use this more
+      // accurate degree information for a better pivot selection
+      auto pivot = select_pivot_from_degree(part, scc_id, outdegree.data(), indegree.data());
 
-      auto bitvector = make_bits_clean(local_n);
-      forward_search(part, fw_head, fw_csr, frontier, scc_id, bitvector.data(), pivot);
-      local_decided += backward_search(part, bw_head, bw_csr, frontier, scc_id, bitvector.data(), pivot);
+      auto bitvector   = make_bits_clean(local_n);
+      auto fb_frontier = vertex_frontier<>::create(local_n);
+      forward_search(part, fw_head, fw_csr, fb_frontier, scc_id, bitvector.data(), pivot);
+      local_decided += backward_search(part, bw_head, bw_csr, fb_frontier, scc_id, bitvector.data(), pivot);
 
       auto const prev_global_decided = global_decided;
 

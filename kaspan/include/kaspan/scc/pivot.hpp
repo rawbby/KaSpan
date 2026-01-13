@@ -1,0 +1,68 @@
+#pragma once
+
+#include <kaspan/debug/debug.hpp>
+#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/part.hpp>
+#include <kaspan/util/mpi_basic.hpp>
+#include <kaspan/util/pp.hpp>
+
+namespace kaspan {
+
+namespace internal {
+inline auto
+allreduce_pivot(degree local_max) -> vertex_t
+{
+  auto const [p, u] = mpi_basic::allreduce_single(local_max, mpi_degree_t, mpi_degree_max_op);
+  DEBUG_ASSERT_NE(p, std::numeric_limits<vertex_t>::min());
+  DEBUG_ASSERT_NE(u, std::numeric_limits<vertex_t>::min());
+  return u;
+}
+}
+
+/// This pivot selection assumes that at least one vertex is undecided globally.
+/// If no vertex is decided locally this should not be a problem.
+/// This pivot selection finds the undecided global vertex with the heightest initial degree product.
+/// This pivot selection ignores degree reduction due to decided neighbours.
+template<world_part_concept part_t>
+auto
+select_pivot_from_head(part_t const& part, index_t const* fw_head, index_t const* bw_head, vertex_t const* scc_id) -> vertex_t
+{
+  degree local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
+
+  for (vertex_t k = 0; k < part.local_n(); ++k) {
+    if (scc_id[k] == scc_id_undecided) {
+      auto const degree_product = (fw_head[k + 1] - fw_head[k]) * (bw_head[k + 1] - bw_head[k]);
+      if (degree_product > local_max.degree_product) [[unlikely]]
+        local_max = degree{ degree_product, part.to_global(k) };
+    }
+  }
+
+  auto const pivot = internal::allreduce_pivot(local_max);
+  DEBUG_ASSERT(!part.has_local(pivot) || scc_id[part.to_local(pivot)] == scc_id_undecided);
+  return pivot;
+}
+
+/// This pivot selection assumes that at least one vertex is undecided globally.
+/// If no vertex is decided locally this should not be a problem.
+/// This is an optimized pivot selection that profits from and up-to-date
+/// degree arrays. It is not only faster but also more accurate.
+template<world_part_concept part_t>
+auto
+select_pivot_from_degree(part_t const& part, vertex_t const* scc_id, vertex_t const* outdegree, vertex_t const* indegree) -> vertex_t
+{
+  degree local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
+
+  for (vertex_t k = 0; k < part.local_n(); ++k) {
+    if (scc_id[k] == scc_id_undecided) {
+      auto const degree_product = outdegree[k] * indegree[k];
+      if (degree_product > local_max.degree_product) [[unlikely]]
+        local_max = degree{ degree_product, part.to_global(k) };
+    }
+  }
+
+  auto const pivot = internal::allreduce_pivot(local_max);
+  DEBUG_ASSERT(!part.has_local(pivot) || scc_id[part.to_local(pivot)] == scc_id_undecided);
+  return pivot;
+}
+
+} // namespace kaspan

@@ -6,17 +6,17 @@
 
 namespace kaspan {
 
-template<world_part_concept part_t>
+template<bool InterleavedSupport>
 auto
-trim_1_first(part_t const&    part,
-             index_t const*   fw_head,
-             index_t const*   fw_csr,
-             index_t const*   bw_head,
-             index_t const*   bw_csr,
-             vertex_t*        scc_id,
-             vertex_t*        outdegree,
-             vertex_t*        indegree,
-             vertex_frontier& frontier)
+trim_1_first(world_part_concept auto const&       part,
+             index_t const*                       fw_head,
+             index_t const*                       fw_csr,
+             index_t const*                       bw_head,
+             index_t const*                       bw_csr,
+             vertex_t*                            scc_id,
+             vertex_t*                            outdegree,
+             vertex_t*                            indegree,
+             vertex_frontier<InterleavedSupport>& frontier)
 {
   struct return_t
   {

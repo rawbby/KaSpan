@@ -4,9 +4,15 @@
 
 namespace kaspan {
 
-template<world_part_concept part_t>
+template<bool InterleavedSupport = false>
 void
-forward_search(part_t const& part, index_t const* fw_head, vertex_t const* fw_csr, vertex_frontier& frontier, vertex_t const* scc_id, u64* fw_reached_storage, vertex_t pivot)
+forward_search(world_part_concept auto const&       part,
+               index_t const*                       fw_head,
+               index_t const*                       fw_csr,
+               vertex_frontier<InterleavedSupport>& frontier,
+               vertex_t const*                      scc_id,
+               u64*                                 fw_reached_storage,
+               vertex_t                             pivot)
 {
   auto const local_n    = part.local_n();
   auto       fw_reached = view_bits(fw_reached_storage, local_n);
