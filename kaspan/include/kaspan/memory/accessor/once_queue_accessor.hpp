@@ -57,6 +57,26 @@ public:
     return end_ == beg_;
   }
 
+  auto begin() const
+  {
+    return data() + beg_;
+  }
+
+  auto end() const
+  {
+    return data() + end_;
+  }
+
+  auto begin()
+  {
+    return data() + beg_;
+  }
+
+  auto end()
+  {
+    return data() + end_;
+  }
+
   void clear()
   {
     KASPAN_MEMCHECK_MAKE_MEM_UNDEFINED(data() + beg_, size() * sizeof(T));
@@ -70,12 +90,13 @@ public:
     data()[end_++] = t;
   }
 
-  void pop_front() noexcept
+  auto pop_front() noexcept -> T
   {
     DEBUG_ASSERT_LT(beg_, end_);
     T item = data()[beg_];
     KASPAN_MEMCHECK_MAKE_MEM_UNDEFINED(data() + beg_, sizeof(T));
     ++beg_;
+    return item;
   }
 
 private:

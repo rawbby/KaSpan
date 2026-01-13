@@ -72,6 +72,26 @@ public:
     return end_ == 0;
   }
 
+  auto begin() const
+  {
+    return data();
+  }
+
+  auto end() const
+  {
+    return data() + end_;
+  }
+
+  auto begin()
+  {
+    return data();
+  }
+
+  auto end()
+  {
+    return data() + end_;
+  }
+
   void clear()
   {
     KASPAN_MEMCHECK_MAKE_MEM_UNDEFINED(data(), end_ * sizeof(T));
