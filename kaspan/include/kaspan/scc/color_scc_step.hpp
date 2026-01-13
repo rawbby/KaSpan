@@ -23,6 +23,7 @@ color_scc_init_label(
   }
 }
 
+/// start with up to one pivot per rank
 template<world_part_concept part_t>
 auto
 color_scc_step_multi(
@@ -43,14 +44,6 @@ color_scc_step_multi(
   auto       active       = view_bits(active_storage, local_n);
   auto       changed      = view_bits(changed_storage, local_n);
   auto       active_stack = view_stack<vertex_t>(active_array, local_n);
-
-  auto const count_degree = [=](vertex_t k, index_t const* head, vertex_t const* csr) {
-    index_t degree = 0;
-    for (auto u : csr_range(head, csr, k)) {
-      degree += integral_cast<index_t>(not part.has_local(u) || scc_id[part.to_local(u)] == scc_id_undecided);
-    }
-    return degree;
-  };
 
   // Phase 1: Forward Color Propagation (inspired by HPCGraph scc_color)
   // This partitions the graph into components that are supersets of SCCs.
