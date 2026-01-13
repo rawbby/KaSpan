@@ -3,8 +3,14 @@
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/part.hpp>
+#include <kaspan/debug/assert_ge.hpp>
+#include <kaspan/debug/assert_in_range.hpp>
+#include <kaspan/debug/assert_lt.hpp>
+#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/debug/debug.hpp>
+#include <kaspan/util/pp.hpp>
 
-#include <type_traits>
+#include <span>
 
 namespace kaspan {
 

@@ -1,9 +1,6 @@
 #pragma once
 
-#include <ispan/util.hpp>
 #include <kaspan/util/scope_guard.hpp>
-
-#include <algorithm>
 
 inline void
 residual_scc(kaspan::index_t const*  sub_wcc_id,

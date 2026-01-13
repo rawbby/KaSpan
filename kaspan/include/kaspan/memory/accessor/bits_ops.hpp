@@ -1,13 +1,17 @@
 #pragma once
 
-#include <kaspan/debug/assert.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/math.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/debug/assert_in_range.hpp>
+#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/util/pp.hpp>
 
 #include <bit>
 #include <cstring>
 #include <limits>
+#include <concepts>
 
 namespace kaspan {
 

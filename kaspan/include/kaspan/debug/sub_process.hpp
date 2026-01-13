@@ -2,9 +2,10 @@
 
 #include <cstdio>
 #include <format>
-#include <iosfwd>
 #include <print>
 #include <sstream>
+#include <memory>
+#include <string_view>
 
 namespace kaspan {
 

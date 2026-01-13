@@ -1,14 +1,18 @@
 #pragma once
 
-#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/valgrind.hpp>
-#include <kaspan/mpi_basic/extent_of.hpp>
 #include <kaspan/mpi_basic/type.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert_ge.hpp>
+#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/debug/assert_true.hpp>
+#include <kaspan/debug/debug.hpp>
+#include <kaspan/util/pp.hpp>
 
 #include <mpi.h>
-#include <numeric> // std::accumulate
+#include <numeric>
 
 namespace kaspan::mpi_basic {
 

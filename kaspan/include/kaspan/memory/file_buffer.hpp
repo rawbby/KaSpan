@@ -1,13 +1,12 @@
 #pragma once
 
-#include <kaspan/debug/assert.hpp>
-#include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/scope_guard.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/debug/assert_true.hpp>
 
-#include <cerrno>
 #include <fcntl.h>
-#include <filesystem>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>

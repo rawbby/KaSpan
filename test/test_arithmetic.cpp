@@ -1,6 +1,7 @@
+#include <kaspan/util/arithmetic.hpp>
+
 #include <concepts>
 #include <cstdint>
-#include <kaspan/util/arithmetic.hpp>
 #include <type_traits>
 #include <variant>
 

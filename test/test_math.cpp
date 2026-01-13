@@ -1,9 +1,8 @@
-#include <cmath>
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/math.hpp>
-#include <limits>
 
+#include <limits>
 #include <random>
 
 using namespace kaspan;

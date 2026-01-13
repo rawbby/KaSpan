@@ -1,10 +1,10 @@
 #pragma once
-
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/mpi_basic/mpi_basic.hpp>
+#include <kaspan/scc/graph.hpp>
 
 #include <ispan/fw_bw_span.hpp>
 #include <ispan/get_scc_result.hpp>
@@ -16,7 +16,6 @@
 #include <ispan/trim_1_first.hpp>
 #include <ispan/trim_1_normal.hpp>
 #include <ispan/util.hpp>
-#include <kaspan/scc/graph.hpp>
 
 #include <algorithm>
 #include <cstdio>

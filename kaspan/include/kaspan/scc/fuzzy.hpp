@@ -1,13 +1,11 @@
 #pragma once
 
 #include <kaspan/memory/accessor/stack_accessor.hpp>
-#include <kaspan/util/integral_cast.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/partion_graph.hpp>
 #include <kaspan/util/arithmetic.hpp>
-#include <kaspan/util/integral_cast.hpp>
 
 #include <algorithm>
 #include <map>

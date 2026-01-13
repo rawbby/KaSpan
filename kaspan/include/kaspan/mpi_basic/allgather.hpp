@@ -5,6 +5,10 @@
 #include <kaspan/mpi_basic/extent_of.hpp>
 #include <kaspan/mpi_basic/type.hpp>
 #include <kaspan/mpi_basic/world.hpp>
+#include <kaspan/debug/assert_ge.hpp>
+#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/util/pp.hpp>
+#include <kaspan/debug/assert_eq.hpp>
 
 #include <mpi.h>
 

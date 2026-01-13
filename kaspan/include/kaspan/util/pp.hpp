@@ -1,13 +1,10 @@
 #pragma once
 
+namespace kaspan {
+
 // clang-format off
 
 // === STRINGIFY ===
-
-
-
-namespace kaspan {
-
 #define STRINGIFY(X) #X
 
 // === TOSTRING ===

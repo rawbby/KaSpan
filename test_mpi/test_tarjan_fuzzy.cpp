@@ -1,4 +1,3 @@
-#include "kaspan/mpi_basic/type.hpp"
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/memory/buffer.hpp>
@@ -6,13 +5,12 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/tarjan.hpp>
-#include <kaspan/util/arithmetic.hpp>
+
+#include <cstdio>
 #include <ostream>
 #include <span>
 #include <sstream>
 #include <unordered_map>
-
-#include <cstdio>
 
 using namespace kaspan;
 

@@ -1,15 +1,16 @@
-#include "kaspan/memory/borrow.hpp"
-#include "kaspan/memory/buffer.hpp"
-#include <briefkasten/noop_indirection.hpp>
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/assert_in_range.hpp>
 #include <kaspan/debug/sub_process.hpp>
+#include <kaspan/memory/borrow.hpp>
+#include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/allgather_graph.hpp>
 #include <kaspan/scc/async/scc.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/scc.hpp>
 #include <kaspan/scc/tarjan.hpp>
+
+#include <briefkasten/noop_indirection.hpp>
 
 #include <mpi.h>
 

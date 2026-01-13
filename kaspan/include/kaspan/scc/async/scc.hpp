@@ -1,11 +1,5 @@
 #pragma once
 
-#include <briefkasten/aggregators.hpp>
-#include <briefkasten/buffered_queue.hpp>
-#include <briefkasten/grid_indirection.hpp>
-#include <briefkasten/indirection.hpp>
-#include <briefkasten/noop_indirection.hpp>
-#include <briefkasten/queue_builder.hpp>
 #include <kamping/mpi_datatype.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
@@ -21,6 +15,13 @@
 #include <kaspan/scc/tarjan.hpp>
 #include <kaspan/scc/trim_1_exhaustive.hpp>
 #include <kaspan/util/return_pack.hpp>
+
+#include <briefkasten/aggregators.hpp>
+#include <briefkasten/buffered_queue.hpp>
+#include <briefkasten/grid_indirection.hpp>
+#include <briefkasten/indirection.hpp>
+#include <briefkasten/noop_indirection.hpp>
+#include <briefkasten/queue_builder.hpp>
 
 #include <algorithm>
 #include <cstdio>

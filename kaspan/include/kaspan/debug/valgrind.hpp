@@ -1,7 +1,6 @@
 #pragma once
 
 #include <kaspan/util/pp.hpp>
-#include <valgrind/callgrind.h>
 
 #if defined(KASPAN_MEMCHECK)
 #if KASPAN_MEMCHECK != 0

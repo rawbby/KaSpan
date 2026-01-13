@@ -2,8 +2,6 @@
 
 #include <kaspan/util/arithmetic.hpp>
 
-#include <utility>
-
 namespace kaspan {
 
 template<typename T, typename U>

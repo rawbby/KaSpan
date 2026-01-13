@@ -1,6 +1,3 @@
-#include <briefkasten/grid_indirection.hpp>
-#include <briefkasten/noop_indirection.hpp>
-#include <cstdlib>
 #include <kaspan/debug/assert_lt.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
@@ -13,9 +10,11 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/scc.hpp>
 #include <kaspan/util/arg_parse.hpp>
+#include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/scope_guard.hpp>
-#include <kaspan/util/integral_cast.hpp>
-#include <kaspan/util/integral_cast.hpp>
+
+#include <briefkasten/grid_indirection.hpp>
+#include <briefkasten/noop_indirection.hpp>
 
 #include <mpi.h>
 

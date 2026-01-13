@@ -11,6 +11,11 @@
 #include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/part.hpp>
 #include <kaspan/scc/partion_graph.hpp>
+#include <kaspan/memory/buffer.hpp>
+#include <kaspan/util/pp.hpp>
+#include <kaspan/util/scope_guard.hpp>
+
+#include <mpi.h>
 
 using namespace kaspan;
 

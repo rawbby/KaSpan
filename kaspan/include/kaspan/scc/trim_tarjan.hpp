@@ -2,12 +2,9 @@
 
 #include <kaspan/scc/part.hpp>
 #include <kaspan/scc/tarjan.hpp>
-#include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 
 #include <algorithm>
-#include <cstddef>
-#include <iostream>
 #include <unordered_set>
 
 namespace kaspan {

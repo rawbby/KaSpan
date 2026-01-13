@@ -1,8 +1,6 @@
 #pragma once
 
-#include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
-#include <kaspan/util/cmp.hpp>
 
 #include <fstream>
 #include <unistd.h>

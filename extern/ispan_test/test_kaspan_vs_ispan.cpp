@@ -1,5 +1,4 @@
 #include <ispan/scc.hpp>
-#include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/mpi_basic/mpi_basic.hpp>
@@ -12,7 +11,6 @@
 
 #include <mpi.h>
 
-#include <fstream>
 #include <random>
 
 using namespace kaspan;

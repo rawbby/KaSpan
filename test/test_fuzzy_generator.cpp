@@ -1,4 +1,3 @@
-#include <cmath>
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/assert_ge.hpp>
 #include <kaspan/debug/assert_ne.hpp>
@@ -6,9 +5,9 @@
 #include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/tarjan.hpp>
-#include <kaspan/util/integral_cast.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <random>
 
 using namespace kaspan;

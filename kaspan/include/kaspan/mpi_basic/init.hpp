@@ -1,10 +1,9 @@
 #pragma once
 
-#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/scope_guard.hpp>
-#include <kaspan/util/integral_cast.hpp>
 
 #include <mpi.h>
 

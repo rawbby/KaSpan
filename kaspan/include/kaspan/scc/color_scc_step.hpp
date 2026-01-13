@@ -9,8 +9,6 @@
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 
-#include <functional>
-
 namespace kaspan {
 
 template<world_part_concept part_t>

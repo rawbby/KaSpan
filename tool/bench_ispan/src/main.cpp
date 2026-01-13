@@ -1,5 +1,3 @@
-#include <cstdlib>
-#include <ispan/scc.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/valgrind.hpp>
@@ -11,6 +9,8 @@
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/scope_guard.hpp>
+
+#include <ispan/scc.hpp>
 
 #include <mpi.h>
 

@@ -1,8 +1,12 @@
 #pragma once
 
+#include <kaspan/memory/borrow.hpp>
+#include <kaspan/memory/buffer.hpp>
+#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/degree.hpp>
 #include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/part.hpp>
+#include <kaspan/util/pp.hpp>
 
 /// from a global_graph get the degree of a partition
 

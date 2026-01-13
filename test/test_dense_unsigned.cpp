@@ -1,9 +1,10 @@
-#include <iostream>
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/memory/accessor/dense_unsigned_accessor.hpp>
 #include <kaspan/memory/accessor/dense_unsigned_array.hpp>
-#include <random>
-#include <vector>
+#include <kaspan/util/arithmetic.hpp>
+
+#include <cstddef>
+#include <iostream>
 
 using namespace kaspan;
 

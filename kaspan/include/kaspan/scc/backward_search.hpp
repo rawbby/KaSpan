@@ -1,7 +1,6 @@
 #pragma once
 
-#include <kaspan/debug/assert.hpp>
-#include <kaspan/debug/statistic.hpp>
+#include <kaspan/debug/assert_true.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/vertex_frontier.hpp>

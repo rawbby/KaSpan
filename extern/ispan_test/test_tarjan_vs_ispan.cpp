@@ -11,7 +11,6 @@
 
 #include <mpi.h>
 
-#include <fstream>
 #include <random>
 
 using namespace kaspan;

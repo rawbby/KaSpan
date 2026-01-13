@@ -1,14 +1,16 @@
 #pragma once
 
-#include <ispan/util.hpp>
-#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/assert_true.hpp>
 #include <kaspan/debug/statistic.hpp>
-#include <kaspan/mpi_basic/mpi_basic.hpp>
-#include <kaspan/util/scope_guard.hpp>
+#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/scope_guard.hpp>
+
+#include <ispan/util.hpp>
+
+#include <mpi.h>
 
 #include <cstring>
-#include <mpi.h>
 #include <set>
 
 inline void

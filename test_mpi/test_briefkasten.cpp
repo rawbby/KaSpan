@@ -1,8 +1,3 @@
-#include <algorithm>
-#include <briefkasten/buffered_queue.hpp>
-#include <briefkasten/queue_builder.hpp>
-#include <chrono>
-#include <cstddef>
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/assert_lt.hpp>
 #include <kaspan/debug/sub_process.hpp>
@@ -11,6 +6,12 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
+
+#include <briefkasten/buffered_queue.hpp>
+#include <briefkasten/queue_builder.hpp>
+
+#include <algorithm>
+#include <chrono>
 #include <ranges>
 #include <vector>
 

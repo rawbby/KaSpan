@@ -1,14 +1,15 @@
 #pragma once
 
-#include <concepts>
-#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/assert_true.hpp>
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 
 #include <mpi.h>
-#include <numeric> // std::accumulate
+
+#include <concepts>
+#include <numeric>
 
 namespace kaspan::mpi_basic {
 

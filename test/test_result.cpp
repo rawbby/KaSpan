@@ -1,16 +1,11 @@
-// ReSharper disable CppDFAConstantFunctionResult
-// ReSharper disable CppDeclaratorNeverUsed
-// ReSharper disable CppDFAUnreadVariable
-// ReSharper disable CppDFAUnreachableCode
-
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/assert_ne.hpp>
 #include <kaspan/debug/assert_true.hpp>
-#include <kaspan/util/result.hpp>
 #include <kaspan/util/integral_cast.hpp>
-#include <type_traits>
+#include <kaspan/util/result.hpp>
 
 #include <string>
+#include <type_traits>
 #include <utility>
 
 using namespace kaspan;

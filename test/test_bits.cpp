@@ -1,10 +1,10 @@
-#include <iostream>
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/memory/accessor/bits.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
-#include <random>
-#include <vector>
+#include <kaspan/util/arithmetic.hpp>
+
+#include <iostream>
 
 using namespace kaspan;
 

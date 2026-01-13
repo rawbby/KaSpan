@@ -1,4 +1,3 @@
-#include <kaspan/mpi_basic/type.hpp>
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/assert_in_range.hpp>
 #include <kaspan/debug/assert_true.hpp>
@@ -12,10 +11,13 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/pp.hpp>
+#include <kaspan/util/scope_guard.hpp>
 
-#include <cstddef>
-#include <cstring>
+#include <mpi.h>
+
 #include <algorithm>
+#include <cstring>
 #include <random>
 
 using namespace kaspan;

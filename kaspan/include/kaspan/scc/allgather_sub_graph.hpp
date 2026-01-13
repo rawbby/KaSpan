@@ -1,19 +1,31 @@
 #pragma once
 
+#include <kaspan/debug/assert_eq.hpp>
+#include <kaspan/debug/assert_ge.hpp>
+#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/debug/assert_true.hpp>
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
+#include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/mpi_basic/allgather_counts.hpp>
 #include <kaspan/mpi_basic/allgatherv.hpp>
+#include <kaspan/mpi_basic/allreduce_single.hpp>
 #include <kaspan/mpi_basic/counts_and_displs.hpp>
 #include <kaspan/mpi_basic/displs.hpp>
+#include <kaspan/mpi_basic/type.hpp>
+#include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/part.hpp>
-#include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 
-#include <unordered_map>
+#include <mpi.h>
+
+#include <algorithm>
+#include <concepts>
+#include <iterator>
+#include <type_traits>
 
 namespace kaspan {
 namespace sub_graph {

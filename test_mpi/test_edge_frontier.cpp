@@ -1,10 +1,10 @@
-#include "kaspan/mpi_basic/type.hpp"
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/assert_false.hpp>
 #include <kaspan/debug/assert_lt.hpp>
 #include <kaspan/debug/assert_ne.hpp>
 #include <kaspan/debug/assert_true.hpp>
 #include <kaspan/debug/sub_process.hpp>
+#include <kaspan/mpi_basic/type.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/edge_frontier.hpp>

@@ -1,7 +1,14 @@
-#include <iostream>
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/memory/accessor/dense_unsigned_ops.hpp>
+#include <kaspan/util/arithmetic.hpp>
+
+#include <bit>
+#include <cstddef>
+#include <initializer_list>
+#include <iostream>
+#include <limits>
 #include <random>
+#include <vector>
 
 using namespace kaspan;
 

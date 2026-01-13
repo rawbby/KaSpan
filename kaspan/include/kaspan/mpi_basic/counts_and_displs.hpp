@@ -1,10 +1,12 @@
 #pragma once
 
-#include <kaspan/debug/assert.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/return_pack.hpp>
-#include <kaspan/util/integral_cast.hpp>
+#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/memory/buffer.hpp>
+#include <kaspan/util/pp.hpp>
+
 #include <mpi.h>
 
 namespace kaspan::mpi_basic {

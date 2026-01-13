@@ -1,10 +1,13 @@
 #pragma once
 
-#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/mpi_basic/world.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/debug/assert_ge.hpp>
+#include <kaspan/debug/assert_ne.hpp>
+#include <kaspan/util/pp.hpp>
+
 #include <mpi.h>
 
 namespace kaspan::mpi_basic {

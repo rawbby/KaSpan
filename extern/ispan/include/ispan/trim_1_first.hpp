@@ -1,7 +1,8 @@
 #pragma once
 
-#include <ispan/util.hpp>
 #include <kaspan/debug/statistic.hpp>
+
+#include <ispan/util.hpp>
 
 inline void
 trim_1_first(kaspan::vertex_t*      scc_id,

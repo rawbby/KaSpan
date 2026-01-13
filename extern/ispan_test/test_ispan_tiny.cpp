@@ -5,7 +5,6 @@
 #include <kaspan/util/scope_guard.hpp>
 
 #include <cstdio>
-#include <iostream>
 #include <print>
 
 using namespace kaspan;

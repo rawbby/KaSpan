@@ -43,18 +43,17 @@
 //@HEADER
 */
 
-#include <fstream>
-#include <mpi.h>
-#include <omp.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/util/scope_guard.hpp>
+#include <fstream>
+#include <mpi.h>
+#include <kaspan/debug/assert.hpp>
+#include <omp.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "comms.h"
 #include "dist_graph.h"

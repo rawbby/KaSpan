@@ -5,6 +5,8 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/part.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/pp.hpp>
+#include <kaspan/util/scope_guard.hpp>
 
 using namespace kaspan;
 

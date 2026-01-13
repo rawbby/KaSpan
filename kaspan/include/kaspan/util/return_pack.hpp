@@ -1,10 +1,9 @@
 #pragma once
 
-#include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/pp.hpp>
-#include <kaspan/util/integral_cast.hpp>
 
 #include <type_traits>
+#include <utility>
 
 namespace kaspan {
 

@@ -4,8 +4,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
-#include <variant>
-#include <version>
 
 namespace kaspan {
 

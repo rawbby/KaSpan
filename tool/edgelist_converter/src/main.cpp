@@ -1,11 +1,10 @@
 #include <kaspan/scc/adapter/external_edgelist.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/arithmetic.hpp>
-#include <kaspan/util/result.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/util/result.hpp>
 
 #include <cstdio>
-#include <cstdlib>
 #include <print>
 
 using namespace kaspan;

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <csignal>
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/debug/valgrind.hpp>
+
+#include <csignal>
 
 namespace kaspan {
 

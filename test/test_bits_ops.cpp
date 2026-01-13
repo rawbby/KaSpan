@@ -1,7 +1,8 @@
-#include <iostream>
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/memory/accessor/bits_ops.hpp>
-#include <random>
+#include <kaspan/util/arithmetic.hpp>
+
+#include <iostream>
 #include <vector>
 
 using namespace kaspan;

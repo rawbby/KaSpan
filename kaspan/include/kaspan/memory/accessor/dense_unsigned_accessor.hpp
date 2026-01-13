@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kaspan/debug/assert.hpp>
+#include <kaspan/debug/assert_true.hpp>
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/memory/accessor/dense_unsigned_ops.hpp>
 #include <kaspan/memory/borrow.hpp>

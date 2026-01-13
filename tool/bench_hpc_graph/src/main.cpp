@@ -1,6 +1,3 @@
-#include <kaspan_adapter.hpp>
-#include <scc.h>
-
 #include <kaspan/debug/assert_lt.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
@@ -12,16 +9,18 @@
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/pivot_selection.hpp>
 #include <kaspan/util/arg_parse.hpp>
+#include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/scope_guard.hpp>
-#include <kaspan/util/integral_cast.hpp>
-#include <kaspan/util/integral_cast.hpp>
+#include <kaspan_adapter.hpp>
+
+#include <scc.h>
+
+#include <mpi.h>
+#include <omp.h>
 
 #include <cstdio>
 #include <limits>
 #include <print>
-
-#include <mpi.h>
-#include <omp.h>
 
 using namespace kaspan;
 

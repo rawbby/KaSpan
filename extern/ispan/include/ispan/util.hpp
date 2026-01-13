@@ -2,6 +2,7 @@
 
 #include <kaspan/mpi_basic/mpi_basic.hpp>
 #include <kaspan/scc/base.hpp>
+
 #include <sys/stat.h>
 
 using depth_t = kaspan::i16;

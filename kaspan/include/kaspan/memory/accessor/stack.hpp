@@ -1,14 +1,17 @@
 #pragma once
 
 #include <kaspan/debug/valgrind.hpp>
-#include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
+#include <kaspan/debug/assert_ge.hpp>
+#include <kaspan/debug/assert_gt.hpp>
+#include <kaspan/debug/assert_le.hpp>
+#include <kaspan/debug/assert_lt.hpp>
+#include <kaspan/debug/debug.hpp>
+#include <kaspan/util/pp.hpp>
 
-#include <cstring>
-#include <type_traits>
-#include <utility>
+#include <limits>
 
 namespace kaspan {
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <kaspan/memory/accessor/bits.hpp>
-
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/memory/accessor/stack.hpp>

@@ -1,0 +1,12 @@
+[
+  # Ignore external dependencies - don't report issues in these headers
+  { "include": ["@<briefkasten/.*>", "private", "<briefkasten-ignored>", "public"] },
+  { "include": ["@\".*briefkasten.*\"", "private", "<briefkasten-ignored>", "public"] },
+  { "include": ["@<kamping/.*>", "private", "<kamping-ignored>", "public"] },
+  { "include": ["@\".*kamping.*\"", "private", "<kamping-ignored>", "public"] },
+  { "include": ["@<stxxl/.*>", "private", "<stxxl-ignored>", "public"] },
+  { "include": ["@\".*stxxl.*\"", "private", "<stxxl-ignored>", "public"] },
+  { "include": ["@<kagen/.*>", "private", "<kagen-ignored>", "public"] },
+  { "include": ["@\".*kagen.*\"", "private", "<kagen-ignored>", "public"] },
+  { "include": ["@\".*/_deps/.*\"", "private", "<deps-ignored>", "public"] }
+]

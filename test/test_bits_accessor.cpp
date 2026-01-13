@@ -1,7 +1,9 @@
-#include <iostream>
 #include <kaspan/debug/assert_eq.hpp>
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
+#include <kaspan/util/arithmetic.hpp>
+
+#include <iostream>
 #include <random>
 #include <vector>
 

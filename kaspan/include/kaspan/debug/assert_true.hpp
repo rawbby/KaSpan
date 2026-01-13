@@ -2,13 +2,14 @@
 
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/debug/debug_break.hpp>
-#include <kaspan/util/formatable.hpp> // formattable_concept
+#include <kaspan/util/formatable.hpp>
 #include <kaspan/util/pp.hpp>
-#include <kaspan/util/cmp.hpp>
 
 #include <cstdio>
 #include <format>
 #include <print>
+#include <string_view>
+#include <utility>
 
 namespace kaspan {
 

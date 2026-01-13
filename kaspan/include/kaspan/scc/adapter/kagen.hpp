@@ -1,11 +1,12 @@
 #pragma once
 
-#include <kagen.h>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/backward_complement.hpp>
 #include <kaspan/scc/part.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
+
+#include <kagen.h>
 
 namespace kaspan {
 

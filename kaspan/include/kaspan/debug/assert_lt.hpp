@@ -10,6 +10,8 @@
 #include <cstdio>
 #include <format>
 #include <print>
+#include <string_view>
+#include <utility>
 
 namespace kaspan {
 

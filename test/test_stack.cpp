@@ -1,10 +1,8 @@
-#include <iostream>
 #include <kaspan/debug/assert_eq.hpp>
-#include <kaspan/debug/debug.hpp>
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
-#include <random>
-#include <vector>
+
+#include <iostream>
 
 using namespace kaspan;
 
