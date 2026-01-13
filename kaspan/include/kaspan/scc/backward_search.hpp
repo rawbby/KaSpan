@@ -17,7 +17,8 @@ backward_search(
   vertex_frontier<InterleavedSupport>& frontier,
   vertex_t*                            scc_id,
   u64*                                 fw_reached_storage,
-  vertex_t                             pivot) -> vertex_t
+  vertex_t                             pivot,
+  auto&&                               on_decision = [](vertex_t) {}) -> vertex_t
 {
   auto const local_n    = part.local_n();
   auto       fw_reached = view_bits(fw_reached_storage, local_n);
@@ -41,7 +42,8 @@ backward_search(
 
       // (inside fw-reached and bw-reached => contributes to scc)
       scc_id[k] = pivot;
-      min_u     = std::min(min_u, u);
+      on_decision(k);
+      min_u = std::min(min_u, u);
       ++decided_count;
 
       // add all neighbours to frontier

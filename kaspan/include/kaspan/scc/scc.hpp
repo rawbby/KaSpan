@@ -35,7 +35,7 @@ scc(
 
   auto outdegree = make_array<vertex_t>(local_n);
   auto indegree  = make_array<vertex_t>(local_n);
-  auto frontier  = vertex_frontier<>::create(local_n);
+  auto frontier  = interleaved::vertex_frontier::create(local_n);
 
   // notice: trim_1_exhaustive_first has a side effect by initializing scc_id with scc_id undecided
   // if trim_1_exhaustive_first is removed one has to initialize scc_id with scc_id_undecided manually!
@@ -72,7 +72,11 @@ scc(
       auto bitvector   = make_bits_clean(local_n);
       auto fb_frontier = vertex_frontier<>::create(local_n);
       forward_search(part, fw_head, fw_csr, fb_frontier, scc_id, bitvector.data(), pivot);
-      local_decided += backward_search(part, bw_head, bw_csr, fb_frontier, scc_id, bitvector.data(), pivot);
+      local_decided += backward_search(part, bw_head, bw_csr, fb_frontier, scc_id, bitvector.data(), pivot, [&](vertex_t k) {
+        frontier.local_push(part.to_global(k));
+      });
+
+      local_decided += interleaved::trim_1_non_directional(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
 
       auto const prev_global_decided = global_decided;
 
@@ -90,15 +94,21 @@ scc(
       auto active_array = make_array<vertex_t>(local_n - local_decided);
       auto active       = make_bits_clean(local_n);
       auto changed      = make_bits_clean(local_n);
-      auto frontier     = edge_frontier::create(local_n);
+      auto frontier_edge = edge_frontier::create(local_n);
 
       auto const prev_global_decided = global_decided;
 
       do {
-        local_decided += color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier, local_decided);
+        local_decided += color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier_edge, local_decided, [&](vertex_t k) {
+          frontier.local_push(part.to_global(k));
+        });
+        local_decided += interleaved::trim_1_non_directional(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
-        local_decided += color_scc_step(part, bw_head, bw_csr, fw_head, fw_csr, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier, local_decided);
+        local_decided += color_scc_step(part, bw_head, bw_csr, fw_head, fw_csr, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier_edge, local_decided, [&](vertex_t k) {
+          frontier.local_push(part.to_global(k));
+        });
+        local_decided += interleaved::trim_1_non_directional(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
       } while (global_decided < decided_threshold);

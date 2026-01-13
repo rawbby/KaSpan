@@ -188,6 +188,93 @@ trim_1_exhaustive(
   return decided_count;
 }
 
+/// trim_1_non_directional iteratevely trims both directions, forward and backward, interleaved
+/// starting with a frontier of already decided vertices.
+auto
+trim_1_non_directional(
+  world_part_concept auto const& part,
+  index_t const*                 fw_head,
+  index_t const*                 fw_csr,
+  index_t const*                 bw_head,
+  index_t const*                 bw_csr,
+  vertex_t*                      scc_id,
+  vertex_t*                      outdegree,
+  vertex_t*                      indegree,
+  vertex_frontier&               frontier) -> vertex_t
+  requires(signed_concept<vertex_t>)
+{
+  // todo this needs to be optimized
+
+  vertex_t decided_count = 0;
+
+  // 1. Convert initial decided vertices to notifications
+  std::vector<vertex_t> initial_decided;
+  while (frontier.has_next()) {
+    initial_decided.push_back(frontier.next());
+  }
+
+  for (auto const u : initial_decided) {
+    auto const k = part.to_local(u);
+    for (auto const v : csr_range(fw_head, fw_csr, k)) {
+      if (part.has_local(v)) frontier.local_push(v);
+      else frontier.push(part.world_rank_of(v), v);
+    }
+    for (auto const v : csr_range(bw_head, bw_csr, k)) {
+      if (part.has_local(v)) frontier.local_push(-v);
+      else frontier.push(part.world_rank_of(v), -v);
+    }
+  }
+
+  // 2. Iterative trimming
+  do {
+    while (frontier.has_next()) {
+      auto const u = frontier.next();
+
+      if (u < 0) { // outdegree notification
+        auto const v = -u;
+        auto const k = part.to_local(v);
+
+        if (scc_id[k] == scc_id_undecided) {
+          if (--outdegree[k] == 0) { // decide and prepare to notify neighbours
+            scc_id[k] = v;
+            ++decided_count;
+            for (auto const w : csr_range(fw_head, fw_csr, k)) {
+              if (part.has_local(w)) frontier.local_push(w);
+              else frontier.push(part.world_rank_of(w), w);
+            }
+            for (auto const w : csr_range(bw_head, bw_csr, k)) {
+              if (part.has_local(w)) frontier.local_push(-w);
+              else frontier.push(part.world_rank_of(w), -w);
+            }
+          }
+        }
+      }
+
+      else { // indegree notification
+        auto const v = u;
+        auto const k = part.to_local(v);
+
+        if (scc_id[k] == scc_id_undecided) {
+          if (--indegree[k] == 0) { // decide and prepare to notify neighbours
+            scc_id[k] = v;
+            ++decided_count;
+            for (auto const w : csr_range(fw_head, fw_csr, k)) {
+              if (part.has_local(w)) frontier.local_push(w);
+              else frontier.push(part.world_rank_of(w), w);
+            }
+            for (auto const w : csr_range(bw_head, bw_csr, k)) {
+              if (part.has_local(w)) frontier.local_push(-w);
+              else frontier.push(part.world_rank_of(w), -w);
+            }
+          }
+        }
+      }
+    }
+  } while (frontier.comm(part));
+
+  return decided_count;
+}
+
 /// trim_1_exhaustive_first iteratively trims vertices with indegree/outdegree of zero.
 /// It assumes to run on a fresh graph with uninitialised scc_id/indegree/outdegree and
 /// will initilise these appropriately.

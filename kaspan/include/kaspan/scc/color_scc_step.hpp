@@ -38,7 +38,8 @@ color_scc_step_multi(
   u64*            active_storage,
   u64*            changed_storage,
   edge_frontier&  frontier,
-  vertex_t        local_pivot) -> vertex_t
+  vertex_t        local_pivot,
+  auto&&          on_decision = [](vertex_t) {}) -> vertex_t
 {
   auto const local_n      = part.local_n();
   auto       active       = view_bits(active_storage, local_n);
@@ -121,6 +122,7 @@ color_scc_step_multi(
       active_stack.push(local_pivot);
 
       scc_id[local_pivot] = colors[local_pivot];
+      on_decision(local_pivot);
       ++local_decided_count;
     }
 
@@ -135,6 +137,7 @@ color_scc_step_multi(
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided and colors[l] == pivot) {
               scc_id[l] = pivot;
+              on_decision(l);
               ++local_decided_count;
               changed.set(l);
               if (not active.get(l)) {
@@ -167,6 +170,7 @@ color_scc_step_multi(
         auto const k          = part.to_local(u);
         if (scc_id[k] == scc_id_undecided and colors[k] == pivot) {
           scc_id[k] = pivot;
+          on_decision(k);
           ++local_decided_count;
           changed.set(k);
           if (not active.get(k)) {
@@ -194,7 +198,8 @@ color_scc_step_multi(
   vertex_t*       active_array,
   u64*            active_storage,
   u64*            changed_storage,
-  edge_frontier&  frontier) -> vertex_t
+  edge_frontier&  frontier,
+  auto&&          on_decision = [](vertex_t) {}) -> vertex_t
 {
   auto const local_n = part.local_n();
   auto       active  = view_bits(active_storage, local_n);
@@ -221,6 +226,7 @@ color_scc_step_multi(
 
       if (out_degree == 0) {
         scc_id[k] = part.to_global(k);
+        on_decision(k);
         ++local_decided_count;
         continue;
       }
@@ -228,6 +234,7 @@ color_scc_step_multi(
       auto const in_degree = count_degree(k, bw_head, bw_csr);
       if (in_degree == 0) {
         scc_id[k] = part.to_global(k);
+        on_decision(k);
         ++local_decided_count;
         continue;
       }
@@ -245,7 +252,7 @@ color_scc_step_multi(
     }
   }
 
-  return local_decided_count + color_scc_step_multi(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors, active_array, active, changed, frontier, max_degree_vertex);
+  return local_decided_count + color_scc_step_multi(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors, active_array, active_storage, changed_storage, frontier, max_degree_vertex, on_decision);
 }
 
 template<world_part_concept part_t>
@@ -262,7 +269,8 @@ color_scc_step(
   u64*            active_storage,
   u64*            changed_storage,
   edge_frontier&  frontier,
-  vertex_t        decided_count = 0) -> vertex_t
+  vertex_t        decided_count = 0,
+  auto&&          on_decision   = [](vertex_t) {}) -> vertex_t
 {
   auto const local_n      = part.local_n();
   auto       active       = view_bits(active_storage, local_n);
@@ -357,6 +365,7 @@ color_scc_step(
     active.for_each(local_n, [&](auto k) {
       if (colors[k] == part.to_global(k)) {
         scc_id[k] = colors[k];
+        on_decision(k);
         ++local_decided_count;
         changed.set(k);
         active_stack.push(k);
@@ -377,6 +386,7 @@ color_scc_step(
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided and colors[l] == pivot) {
               scc_id[l] = pivot;
+              on_decision(l);
               ++local_decided_count;
               changed.set(l);
               if (not active.get(l)) {
@@ -407,6 +417,7 @@ color_scc_step(
         auto const k          = part.to_local(u);
         if (scc_id[k] == scc_id_undecided and colors[k] == pivot) {
           scc_id[k] = pivot;
+          on_decision(k);
           ++local_decided_count;
           changed.set(k);
           if (not active.get(k)) {

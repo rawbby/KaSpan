@@ -68,6 +68,15 @@ struct vertex_frontier
     return edge;
   }
 
+  // clang-format off
+  auto cbegin() const { return recv_buffer.cbegin(); }
+  auto cend()   const { return recv_buffer.cend();   }
+  auto begin()  const { return cbegin();             }
+  auto end()    const { return cend();               }
+  auto begin()        { return recv_buffer.begin();  }
+  auto end()          { return recv_buffer.end();    }
+  // clang-format on
+
   template<world_part_concept part_t>
   auto comm(
     part_t const& part) -> bool
