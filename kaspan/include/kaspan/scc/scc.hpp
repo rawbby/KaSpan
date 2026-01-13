@@ -29,12 +29,12 @@ scc(world_part_concept auto const& part, index_t const* fw_head, vertex_t const*
 
   auto outdegree = make_array<vertex_t>(local_n);
   auto indegree  = make_array<vertex_t>(local_n);
-  auto frontier  = interleaved::vertex_frontier::create(local_n);
+  auto frontier  = vertex_frontier<>::create(local_n);
 
   // notice: trim_1_exhaustive_first has a side effect by initializing scc_id with scc_id undecided
   // if trim_1_exhaustive_first is removed one has to initialize scc_id with scc_id_undecided manually!
   KASPAN_STATISTIC_PUSH("trim_1_exhaustive_first");
-  vertex_t local_decided  = interleaved::trim_1_exhaustive_first(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
+  vertex_t local_decided  = trim_1_exhaustive_first(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
   vertex_t global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("decided_count", global_decided);
   KASPAN_STATISTIC_POP();
