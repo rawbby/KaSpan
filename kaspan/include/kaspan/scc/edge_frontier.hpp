@@ -11,8 +11,8 @@ namespace kaspan {
 
 struct edge_frontier
 {
-  std::vector<edge> send_buffer;
-  std::vector<edge> recv_buffer;
+  std::vector<edge_t> send_buffer;
+  std::vector<edge_t> recv_buffer;
 
   buffer     storage;
   MPI_Count* send_counts = nullptr;
@@ -40,22 +40,22 @@ struct edge_frontier
   }
 
   void local_push(
-    edge const& e)
+    edge_t const& e)
   {
     recv_buffer.emplace_back(e);
   }
 
   void push(
-    i32         rank,
-    edge const& e)
+    i32           rank,
+    edge_t const& e)
   {
     send_buffer.emplace_back(e);
     ++send_counts[rank];
   }
 
   void relaxed_push(
-    i32         rank,
-    edge const& e)
+    i32           rank,
+    edge_t const& e)
   {
     if (rank == mpi_basic::world_rank) {
       local_push(e);
@@ -69,7 +69,7 @@ struct edge_frontier
     return not recv_buffer.empty();
   }
 
-  auto next() -> edge
+  auto next() -> edge_t
   {
     auto const e = recv_buffer.back();
     recv_buffer.pop_back();
@@ -106,7 +106,7 @@ struct edge_frontier
     recv_buffer.resize(recv_offset + recv_count);
     auto* recv_memory = recv_buffer.data() + recv_offset;
 
-    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](edge const& e) {
+    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](edge_t const& e) {
       return part.world_rank_of(e.u);
     });
 

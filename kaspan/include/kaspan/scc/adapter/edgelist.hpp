@@ -11,11 +11,11 @@ namespace kaspan {
 
 inline void
 sorted_edgelist_to_graph(
-  vertex_t    n,
-  vertex_t    m,
-  edge const* edgelist,
-  index_t*    head,
-  vertex_t*   csr)
+  vertex_t      n,
+  vertex_t      m,
+  edge_t const* edgelist,
+  index_t*      head,
+  vertex_t*     csr)
 {
   DEBUG_ASSERT(std::is_sorted(edgelist, edgelist + m, edge_less));
   head[0]     = 0;
@@ -34,7 +34,7 @@ inline void
 edgelist_to_graph(
   vertex_t  n,
   vertex_t  m,
-  edge*     edgelist,
+  edge_t*   edgelist,
   index_t*  head,
   vertex_t* csr)
 {
@@ -47,7 +47,7 @@ void
 sorted_edgelist_to_graph_part(
   part_t const& part,
   vertex_t      local_m,
-  edge const*   edgelist,
+  edge_t const* edgelist,
   index_t*      head,
   vertex_t*     csr)
 {
@@ -71,7 +71,7 @@ void
 edgelist_to_graph_part(
   part_t const& part,
   vertex_t      local_m,
-  edge*         edgelist,
+  edge_t*       edgelist,
   index_t*      head,
   vertex_t*     csr)
 {

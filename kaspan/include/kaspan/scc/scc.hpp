@@ -111,7 +111,6 @@ scc(
 
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
-        decided_stack.clear();
         local_decided += color_scc_step(
           part, bw_head, bw_csr, fw_head, fw_csr, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier_edge, local_decided, [&](vertex_t k) {
             decided_stack.push(k);

@@ -30,7 +30,7 @@
 
 namespace kamping {
 template<>
-struct mpi_type_traits<kaspan::edge>
+struct mpi_type_traits<kaspan::edge_t>
 {
   static constexpr bool has_to_be_committed = false;
   static MPI_Datatype   data_type()
@@ -62,9 +62,9 @@ auto
 make_briefkasten_edge()
 {
   if constexpr (std::same_as<indirection_scheme_t, briefkasten::NoopIndirectionScheme>) {
-    return briefkasten::BufferedMessageQueueBuilder<edge>().build();
+    return briefkasten::BufferedMessageQueueBuilder<edge_t>().build();
   } else {
-    return briefkasten::IndirectionAdapter{ briefkasten::BufferedMessageQueueBuilder<edge>().build(), indirection_scheme_t{ mpi_basic::comm_world } };
+    return briefkasten::IndirectionAdapter{ briefkasten::BufferedMessageQueueBuilder<edge_t>().build(), indirection_scheme_t{ mpi_basic::comm_world } };
   }
 }
 

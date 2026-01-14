@@ -11,7 +11,7 @@ namespace kaspan {
 namespace internal {
 inline auto
 allreduce_pivot(
-  degree local_max) -> vertex_t
+  degree_t local_max) -> vertex_t
 {
   auto const [p, u] = mpi_basic::allreduce_single(local_max, mpi_degree_t, mpi_degree_max_op);
   DEBUG_ASSERT_NE(p, std::numeric_limits<vertex_t>::min());
@@ -32,13 +32,13 @@ select_pivot_from_head(
   index_t const*  bw_head,
   vertex_t const* scc_id) -> vertex_t
 {
-  degree local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
+  degree_t local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
 
   for (vertex_t k = 0; k < part.local_n(); ++k) {
     if (scc_id[k] == scc_id_undecided) {
       auto const degree_product = (fw_head[k + 1] - fw_head[k]) * (bw_head[k + 1] - bw_head[k]);
       if (degree_product > local_max.degree_product) [[unlikely]]
-        local_max = degree{ degree_product, part.to_global(k) };
+        local_max = degree_t{ degree_product, part.to_global(k) };
     }
   }
 
@@ -59,13 +59,13 @@ select_pivot_from_degree(
   vertex_t const* outdegree,
   vertex_t const* indegree) -> vertex_t
 {
-  degree local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
+  degree_t local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
 
   for (vertex_t k = 0; k < part.local_n(); ++k) {
     if (scc_id[k] == scc_id_undecided) {
       auto const degree_product = outdegree[k] * indegree[k];
       if (degree_product > local_max.degree_product) [[unlikely]]
-        local_max = degree{ degree_product, part.to_global(k) };
+        local_max = degree_t{ degree_product, part.to_global(k) };
     }
   }
 

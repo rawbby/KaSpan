@@ -82,7 +82,7 @@ color_scc_step(
               }
             }
           } else {
-            mq.post_message_blocking(edge{ v, label }, part.world_rank_of(v), on_message);
+            mq.post_message_blocking(edge_t{ v, label }, part.world_rank_of(v), on_message);
           }
         }
         mq.poll_throttled(on_message);
@@ -149,7 +149,7 @@ color_scc_step(
               }
             }
           } else {
-            mq.post_message_blocking(edge{ v, pivot }, part.world_rank_of(v), on_message);
+            mq.post_message_blocking(edge_t{ v, pivot }, part.world_rank_of(v), on_message);
           }
         }
         mq.poll_throttled(on_message);

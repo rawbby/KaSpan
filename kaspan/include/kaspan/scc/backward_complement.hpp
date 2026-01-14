@@ -117,10 +117,10 @@ backward_complement_graph_part(
     return result;
   }
 
-  auto  send_stack_buffer = make_buffer<edge>(local_m);
+  auto  send_stack_buffer = make_buffer<edge_t>(local_m);
   void* send_stack_memory = send_stack_buffer.data();
 
-  auto send_stack                     = view_stack<edge>(send_stack_memory, local_m);
+  auto send_stack                     = view_stack<edge_t>(send_stack_memory, local_m);
   auto [sb, send_counts, send_displs] = mpi_basic::counts_and_displs();
   std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
 
@@ -150,12 +150,12 @@ backward_complement_graph_part(
   auto [rb, recv_counts, recv_displs] = mpi_basic::counts_and_displs();
   mpi_basic::alltoallv_counts(send_counts, recv_counts);
   auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
-  mpi_basic::inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&part](edge const& e) {
+  mpi_basic::inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&part](edge_t const& e) {
     return part.world_rank_of(e.u);
   });
 
-  auto  recv_buffer = make_buffer<edge>(recv_count);
-  auto* recv_access = static_cast<edge*>(recv_buffer.data());
+  auto  recv_buffer = make_buffer<edge_t>(recv_count);
+  auto* recv_access = static_cast<edge_t*>(recv_buffer.data());
 
   mpi_basic::alltoallv(send_stack.data(), send_counts, send_displs, recv_access, recv_counts, recv_displs, mpi_edge_t);
 

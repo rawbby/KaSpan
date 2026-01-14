@@ -30,7 +30,9 @@ bool verify  = false;
 bool output  = false;
 
 void
-usage(int /* argc */, char** argv)
+usage(
+  int /* argc */,
+  char** argv)
 {
   std::println("usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file "
                "<output_file> [--threads <threads>]",
@@ -38,7 +40,8 @@ usage(int /* argc */, char** argv)
 }
 
 void
-benchmark(auto&& graph_part)
+benchmark(
+  auto&& graph_part)
 {
   using part_t = std::remove_cvref_t<decltype(graph_part.part)>;
 
@@ -86,7 +89,7 @@ benchmark(auto&& graph_part)
   KASPAN_STATISTIC_POP();
 
   KASPAN_STATISTIC_PUSH("pivot");
-  degree max_degree{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
+  degree_t max_degree{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
   // Pivot selection using HPCGraph data (kaspan memory has been released)
   for (uint64_t k = 0; k < hpc_data.g.n_local; ++k) {
     auto const out_degree     = hpc_data.g.out_degree_list[k + 1] - hpc_data.g.out_degree_list[k];
@@ -109,7 +112,9 @@ benchmark(auto&& graph_part)
 }
 
 int
-main(int argc, char** argv)
+main(
+  int    argc,
+  char** argv)
 {
   auto const* const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
   auto const* const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
@@ -139,7 +144,8 @@ main(int argc, char** argv)
 
   if (kagen_option_string != nullptr) {
     KASPAN_STATISTIC_PUSH("kagen");
-    auto kagen_graph = kagen_graph_part(kagen_option_string);
+    auto kagen_graph  = kagen_graph_part(kagen_option_string);
+    auto part_storage = std::move(kagen_graph.part_storage);
     KASPAN_STATISTIC_POP();
     benchmark(std::move(kagen_graph));
   } else {

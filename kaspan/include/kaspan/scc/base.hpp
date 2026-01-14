@@ -27,17 +27,17 @@ using vertex_t = i32;
 constexpr inline auto mpi_index_t  = mpi_basic::type<index_t>;
 constexpr inline auto mpi_vertex_t = mpi_basic::type<vertex_t>;
 
-struct edge
+struct edge_t
 {
   vertex_t u, v;
 };
 
-static constexpr auto max_edge = edge{ std::numeric_limits<vertex_t>::max(), std::numeric_limits<vertex_t>::max() };
+static constexpr auto max_edge = edge_t{ std::numeric_limits<vertex_t>::max(), std::numeric_limits<vertex_t>::max() };
 
 constexpr auto
 edge_less(
-  edge const& lhs,
-  edge const& rhs) -> bool
+  edge_t const& lhs,
+  edge_t const& rhs) -> bool
 {
   return lhs.u < rhs.u or (lhs.u == rhs.u and lhs.v < rhs.v);
 }
@@ -52,8 +52,8 @@ init_mpi_edge_t()
   MPI_Aint            displs[2];
   mpi_basic::Datatype types[2] = { mpi_vertex_t, mpi_vertex_t };
 
-  constexpr edge dummy{};
-  MPI_Aint       base = 0;
+  constexpr edge_t dummy{};
+  MPI_Aint         base = 0;
   mpi_basic::get_address(&dummy, &base);
   mpi_basic::get_address(&dummy.u, &displs[0]);
   mpi_basic::get_address(&dummy.v, &displs[1]);
@@ -63,7 +63,7 @@ init_mpi_edge_t()
   mpi_basic::type_create_struct(2, blocklengths, displs, types, &mpi_edge_t);
   mpi_basic::type_commit(&mpi_edge_t);
 
-  IF(KASPAN_DEBUG, MPI_Aint lb = 0; MPI_Aint extent = 0; mpi_basic::type_get_extent(mpi_edge_t, &lb, &extent); ASSERT_EQ(extent, sizeof(edge));)
+  IF(KASPAN_DEBUG, MPI_Aint lb = 0; MPI_Aint extent = 0; mpi_basic::type_get_extent(mpi_edge_t, &lb, &extent); ASSERT_EQ(extent, sizeof(edge_t));)
 }
 
 inline void
@@ -77,7 +77,7 @@ free_mpi_edge_t()
 constexpr auto scc_id_undecided = std::numeric_limits<vertex_t>::max();
 constexpr auto scc_id_singular  = scc_id_undecided - 1;
 
-struct degree
+struct degree_t
 {
   index_t  degree_product;
   vertex_t u;
@@ -94,8 +94,8 @@ init_mpi_degree_t()
   MPI_Aint            displs[2];
   mpi_basic::Datatype types[2] = { mpi_index_t, mpi_vertex_t };
 
-  constexpr degree dummy{};
-  MPI_Aint         base = 0;
+  constexpr degree_t dummy{};
+  MPI_Aint           base = 0;
   mpi_basic::get_address(&dummy, &base);
   mpi_basic::get_address(&dummy.degree_product, &displs[0]);
   mpi_basic::get_address(&dummy.u, &displs[1]);
@@ -105,7 +105,7 @@ init_mpi_degree_t()
   mpi_basic::type_create_struct(2, blocklengths, displs, types, &mpi_degree_t);
   mpi_basic::type_commit(&mpi_degree_t);
 
-  IF(KASPAN_DEBUG, MPI_Aint lb = 0; MPI_Aint extent = 0; mpi_basic::type_get_extent(mpi_degree_t, &lb, &extent); ASSERT_EQ(extent, sizeof(degree));)
+  IF(KASPAN_DEBUG, MPI_Aint lb = 0; MPI_Aint extent = 0; mpi_basic::type_get_extent(mpi_degree_t, &lb, &extent); ASSERT_EQ(extent, sizeof(degree_t));)
 }
 
 inline void
@@ -123,8 +123,8 @@ degree_max_reduce(
   int*  len,
   mpi_basic::Datatype* /*datatype*/) // NOLINT(readability-non-const-parameter)
 {
-  auto const* in    = static_cast<degree const*>(invec);
-  auto*       inout = static_cast<degree*>(inoutvec);
+  auto const* in    = static_cast<degree_t const*>(invec);
+  auto*       inout = static_cast<degree_t*>(inoutvec);
 
   for (int i = 0; i < *len; ++i) {
     auto const& a = inout[i];
