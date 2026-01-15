@@ -10,6 +10,7 @@
 #include <print>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 namespace kaspan {
 
@@ -79,22 +80,6 @@ namespace kaspan {
     "  Line       : " TOSTRING(__LINE__)                \
 __VA_OPT__(, "  Details    : " __VA_ARGS__))
 
-#define ASSERT_IN_RANGE(VAL, BEG, END, ...)             \
-    kaspan::assert_in_range(VAL, BEG, END,              \
-    "[ASSERTION FAILED]\n"                              \
-    "  Condition  : " #VAL " in [" #BEG ", " #END ")\n" \
-    "  File       : " __FILE__ "\n"                     \
-    "  Line       : " TOSTRING(__LINE__)                \
-    __VA_OPT__(, "  Details    : " __VA_ARGS__))
-
-#define ASSERT_IN_RANGE_INCLUSIVE(VAL, BEG, END, ...)   \
-    kaspan::assert_in_range_inclusive(VAL, BEG, END,    \
-    "[ASSERTION FAILED]\n"                              \
-    "  Condition  : " #VAL " in [" #BEG ", " #END "]\n" \
-    "  File       : " __FILE__ "\n"                     \
-    "  Line       : " TOSTRING(__LINE__)                \
-    __VA_OPT__(, "  Details    : " __VA_ARGS__))
-
 #define DEBUG_ASSERT(...)     IF(KASPAN_DEBUG, ASSERT(__VA_ARGS__))
 #define DEBUG_ASSERT_NE(...)  IF(KASPAN_DEBUG, ASSERT_NE(__VA_ARGS__))
 #define DEBUG_ASSERT_LT(...)  IF(KASPAN_DEBUG, ASSERT_LT(__VA_ARGS__))
@@ -104,8 +89,17 @@ __VA_OPT__(, "  Details    : " __VA_ARGS__))
 #define DEBUG_ASSERT_NOT(...) IF(KASPAN_DEBUG, ASSERT_NOT(__VA_ARGS__))
 #define DEBUG_ASSERT_EQ(...)  IF(KASPAN_DEBUG, ASSERT_EQ(__VA_ARGS__))
 
-#define DEBUG_ASSERT_IN_RANGE(...)           IF(KASPAN_DEBUG, ASSERT_IN_RANGE(__VA_ARGS__))
+#define ASSERT_IN_RANGE(VAL, BEG, END, ...) ASSERT_GE(VAL, BEG); ASSERT_LT(VAL, END)
+#define DEBUG_ASSERT_IN_RANGE(...) IF(KASPAN_DEBUG, ASSERT_IN_RANGE(__VA_ARGS__))
+
+#define ASSERT_IN_RANGE_INCLUSIVE(VAL, BEG, END, ...) ASSERT_GE(VAL, BEG); ASSERT_LE(VAL, END)
 #define DEBUG_ASSERT_IN_RANGE_INCLUSIVE(...) IF(KASPAN_DEBUG, ASSERT_IN_RANGE_INCLUSIVE(__VA_ARGS__))
+
+#define ASSERT_NULLPTR(PTR) ASSERT_EQ(PTR, nullptr)
+#define DEBUG_ASSERT_NULLPTR(...) IF(KASPAN_DEBUG, ASSERT_NULLPTR(__VA_ARGS__))
+
+#define ASSERT_NON_NULLPTR(PTR) ASSERT_NE(PTR, nullptr)
+#define DEBUG_ASSERT_NON_NULLPTR(...) IF(KASPAN_DEBUG, ASSERT_NON_NULLPTR(__VA_ARGS__))
 
 // clang-format on
 
@@ -114,9 +108,94 @@ namespace internal {
 template<typename T>
 concept formattable_concept = requires { std::formatter<std::remove_cvref_t<T>>{}; };
 
+[[noreturn]] constexpr void
+fail(
+  std::string_view head)
+{
+  if (std::is_constant_evaluated()) throw std::runtime_error{ head.data() };
+  std::fwrite(head.data(), 1, head.size(), stderr);
+  std::fputc('\n', stderr);
+  debug_break();
+  std::abort();
+}
+
+template<formattable_concept... Args>
+[[noreturn]] constexpr void
+fail_fmt(
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
+{
+  if (std::is_constant_evaluated()) fail(head); // formatting is not constexpr (yet)
+  try {
+    auto const details = std::format(fmt, std::forward<Args>(args)...);
+    std::print(stderr, "{}\n{}\n", head, details);
+  } catch (std::format_error& e) {
+    std::fwrite(head.data(), 1, head.size(), stderr);
+    std::fputc('\n', stderr);
+  }
+  debug_break();
+  std::abort();
+}
+
+template<formattable_concept Arg0,
+         formattable_concept Arg1,
+         formattable_concept... Args>
+[[noreturn]] constexpr void
+fail_fmt2_fmt(
+  std::string_view            head,
+  std::format_string<Arg0,
+                     Arg1>    fmt2,
+  Arg0&&                      arg0,
+  Arg1&&                      arg1,
+  std::format_string<Args...> fmt,
+  Args&&... args)
+{
+  if (std::is_constant_evaluated()) fail(head); // formatting is not constexpr (yet)
+  try {
+    auto const evaluation = std::format(fmt2, std::forward<Arg0>(arg0), std::forward<Arg1>(arg1));
+    auto const details    = std::format(fmt, std::forward<Args>(args)...);
+    std::print(stderr, "{}\n{}\n{}\n", head, evaluation, details);
+  } catch (std::format_error& e) {
+    std::fwrite(head.data(), 1, head.size(), stderr);
+    std::fputc('\n', stderr);
+  }
+  debug_break();
+  std::abort();
+}
+
+template<formattable_concept Arg0,
+         formattable_concept Arg1,
+         formattable_concept Arg2,
+         formattable_concept... Args>
+[[noreturn]] constexpr void
+fail_fmt3_fmt(
+  std::string_view            head,
+  std::format_string<Arg0,
+                     Arg1,
+                     Arg2>    fmt3,
+  Arg0&&                      arg0,
+  Arg1&&                      arg1,
+  Arg2&&                      arg2,
+  std::format_string<Args...> fmt,
+  Args&&... args)
+{
+  if (std::is_constant_evaluated()) fail(head); // formatting is not constexpr (yet)
+  try {
+    auto const evaluation = std::format(fmt3, std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));
+    auto const details    = std::format(fmt, std::forward<Args>(args)...);
+    std::print(stderr, "{}\n{}\n{}\n", head, evaluation, details);
+  } catch (std::format_error& e) {
+    std::fwrite(head.data(), 1, head.size(), stderr);
+    std::fputc('\n', stderr);
+  }
+  debug_break();
+  std::abort();
+}
+
 template<typename Lhs,
          typename Rhs>
-  requires(not arithmetic_concept<Lhs> or not arithmetic_concept<Rhs>)
+  requires(!arithmetic_concept<Lhs> || !arithmetic_concept<Rhs>)
 constexpr bool
 eq(
   Lhs const& lhs,
@@ -127,7 +206,7 @@ eq(
 
 template<typename Lhs,
          typename Rhs>
-  requires(not arithmetic_concept<Lhs> or not arithmetic_concept<Rhs>)
+  requires(!arithmetic_concept<Lhs> || !arithmetic_concept<Rhs>)
 constexpr bool
 lt(
   Lhs const& lhs,
@@ -212,65 +291,95 @@ in_range_inclusive(
 
 }
 
-template<internal::formattable_concept... Args>
-void
-assert_true(
-  auto const&                 cond,
-  std::string_view            head,
-  std::format_string<Args...> fmt,
-  Args&&... args)
-{
-  if (not cond) [[unlikely]] {
-    std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
-}
-
-void
+constexpr void
 assert_true(
   auto const&      cond,
   std::string_view head)
 {
-  if (not cond) [[unlikely]] {
-    std::println(stderr, "{}", head);
-    debug_break();
-    std::abort();
-  }
+  if (!cond) [[unlikely]]
+    internal::fail(head);
 }
 
 template<internal::formattable_concept... Args>
-void
+constexpr void
+assert_true(
+  auto const&                 cond,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
+{
+  if (!cond) [[unlikely]]
+    internal::fail_fmt(head, fmt, std::forward<Args>(args)...);
+}
+
+constexpr void
+assert_false(
+  auto             cond,
+  std::string_view head)
+{
+  if (cond) [[unlikely]]
+    internal::fail(head);
+}
+
+template<internal::formattable_concept... Args>
+constexpr void
 assert_false(
   auto const&                 cond,
   std::string_view            head,
   std::format_string<Args...> fmt,
   Args&&... args)
 {
-  if (cond) [[unlikely]] {
-    std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
+  if (cond) [[unlikely]]
+    internal::fail_fmt(head, fmt, std::forward<Args>(args)...);
 }
 
-void
-assert_false(
-  auto             cond,
+template<typename Lhs,
+         typename Rhs>
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
+assert_eq(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
   std::string_view head)
 {
-  if (cond) [[unlikely]] {
-    std::println(stderr, "{}", head);
-    debug_break();
-    std::abort();
-  }
+  if (internal::ne(lhs, rhs)) [[unlikely]]
+    internal::fail(head);
 }
 
 template<typename Lhs,
          typename Rhs,
          internal::formattable_concept... Args>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
+assert_eq(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
+{
+  if (internal::ne(lhs, rhs)) [[unlikely]]
+    internal::fail_fmt(head, fmt, std::forward<Args>(args)...);
+}
+
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs>
+constexpr void
+assert_eq(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
+{
+  if (internal::ne(lhs, rhs)) [[unlikely]] {
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt(head, "  Evaluation : {} != {}", lhs, rhs);
+  }
+}
+
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs,
+         internal::formattable_concept... Args>
+constexpr void
 assert_eq(
   Lhs const&                  lhs,
   Rhs const&                  rhs,
@@ -279,66 +388,44 @@ assert_eq(
   Args&&... args)
 {
   if (internal::ne(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
-}
-
-template<typename Lhs,
-         typename Rhs>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
-assert_eq(
-  Lhs const&       lhs,
-  Rhs const&       rhs,
-  std::string_view head)
-{
-  if (internal::ne(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}", head);
-    debug_break();
-    std::abort();
-  }
-}
-
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs,
-         internal::formattable_concept... Args>
-void
-assert_eq(
-  Lhs const&                  lhs,
-  Rhs const&                  rhs,
-  std::string_view            head,
-  std::format_string<Args...> fmt,
-  Args&&... args)
-{
-  if (internal::ne(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} != {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
-}
-
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs>
-void
-assert_eq(
-  Lhs const&       lhs,
-  Rhs const&       rhs,
-  std::string_view head)
-{
-  if (internal::ne(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} != {}", head, lhs, rhs);
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt2_fmt(head, "  Evaluation : {} != {}", lhs, rhs, fmt, std::forward<Args>(args)...);
   }
 }
 
 template<typename Lhs,
          typename Rhs,
          internal::formattable_concept... Args>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
+assert_ne(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
+{
+  if (internal::eq(lhs, rhs)) [[unlikely]]
+    internal::fail_fmt(head, fmt, std::forward<Args>(args)...);
+}
+
+template<typename Lhs,
+         typename Rhs>
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
+assert_ne(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
+{
+  if (internal::eq(lhs, rhs)) [[unlikely]]
+    internal::fail(head);
+}
+
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs,
+         internal::formattable_concept... Args>
+constexpr void
 assert_ne(
   Lhs const&                  lhs,
   Rhs const&                  rhs,
@@ -347,66 +434,58 @@ assert_ne(
   Args&&... args)
 {
   if (internal::eq(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt2_fmt(head, "  Evaluation : {} == {}", lhs, rhs, fmt, std::forward<Args>(args)...);
   }
 }
 
-template<typename Lhs,
-         typename Rhs>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs>
+constexpr void
 assert_ne(
   Lhs const&       lhs,
   Rhs const&       rhs,
   std::string_view head)
 {
   if (internal::eq(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}", head);
-    debug_break();
-    std::abort();
-  }
-}
-
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs,
-         internal::formattable_concept... Args>
-void
-assert_ne(
-  Lhs const&                  lhs,
-  Rhs const&                  rhs,
-  std::string_view            head,
-  std::format_string<Args...> fmt,
-  Args&&... args)
-{
-  if (internal::eq(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} == {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
-}
-
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs>
-void
-assert_ne(
-  Lhs const&       lhs,
-  Rhs const&       rhs,
-  std::string_view head)
-{
-  if (internal::eq(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} == {}", head, lhs, rhs);
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt(head, "  Evaluation : {} == {}", lhs, rhs);
   }
 }
 
 template<typename Lhs,
          typename Rhs,
          internal::formattable_concept... Args>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
+assert_lt(
+  Lhs const&                  lhs,
+  Rhs const&                  rhs,
+  std::string_view            head,
+  std::format_string<Args...> fmt,
+  Args&&... args)
+{
+  if (internal::ge(lhs, rhs)) [[unlikely]]
+    internal::fail_fmt(head, fmt, std::forward<Args>(args)...);
+}
+
+template<typename Lhs,
+         typename Rhs>
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
+assert_lt(
+  Lhs const&       lhs,
+  Rhs const&       rhs,
+  std::string_view head)
+{
+  if (internal::ge(lhs, rhs)) [[unlikely]]
+    internal::fail(head);
+}
+
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs,
+         internal::formattable_concept... Args>
+constexpr void
 assert_lt(
   Lhs const&                  lhs,
   Rhs const&                  rhs,
@@ -415,66 +494,30 @@ assert_lt(
   Args&&... args)
 {
   if (internal::ge(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt2_fmt(head, "  Evaluation : {} >= {}", lhs, rhs, fmt, std::forward<Args>(args)...);
   }
 }
 
-template<typename Lhs,
-         typename Rhs>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
+template<internal::formattable_concept Lhs,
+         internal::formattable_concept Rhs>
+constexpr void
 assert_lt(
   Lhs const&       lhs,
   Rhs const&       rhs,
   std::string_view head)
 {
   if (internal::ge(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}", head);
-    debug_break();
-    std::abort();
-  }
-}
-
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs,
-         internal::formattable_concept... Args>
-void
-assert_lt(
-  Lhs const&                  lhs,
-  Rhs const&                  rhs,
-  std::string_view            head,
-  std::format_string<Args...> fmt,
-  Args&&... args)
-{
-  if (internal::ge(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} >= {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
-}
-
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs>
-void
-assert_lt(
-  Lhs const&       lhs,
-  Rhs const&       rhs,
-  std::string_view head)
-{
-  if (internal::ge(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} >= {}", head, lhs, rhs);
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt(head, "  Evaluation : {} >= {}", lhs, rhs);
   }
 }
 
 template<typename Lhs,
          typename Rhs,
          internal::formattable_concept... Args>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
 assert_gt(
   Lhs const&                  lhs,
   Rhs const&                  rhs,
@@ -482,33 +525,27 @@ assert_gt(
   std::format_string<Args...> fmt,
   Args&&... args)
 {
-  if (internal::le(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
+  if (internal::le(lhs, rhs)) [[unlikely]]
+    internal::fail_fmt(head, fmt, std::forward<Args>(args)...);
 }
 
 template<typename Lhs,
          typename Rhs>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
 assert_gt(
   Lhs const&       lhs,
   Rhs const&       rhs,
   std::string_view head)
 {
-  if (internal::le(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}", head);
-    debug_break();
-    std::abort();
-  }
+  if (internal::le(lhs, rhs)) [[unlikely]]
+    internal::fail(head);
 }
 
 template<internal::formattable_concept Lhs,
          internal::formattable_concept Rhs,
          internal::formattable_concept... Args>
-void
+constexpr void
 assert_gt(
   Lhs const&                  lhs,
   Rhs const&                  rhs,
@@ -517,32 +554,30 @@ assert_gt(
   Args&&... args)
 {
   if (internal::le(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} <= {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt2_fmt(head, "  Evaluation : {} <= {}", lhs, rhs, fmt, std::forward<Args>(args)...);
   }
 }
 
 template<internal::formattable_concept Lhs,
          internal::formattable_concept Rhs>
-void
+constexpr void
 assert_gt(
   Lhs const&       lhs,
   Rhs const&       rhs,
   std::string_view head)
 {
   if (internal::le(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} <= {}", head, lhs, rhs);
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt(head, "  Evaluation : {} <= {}", lhs, rhs);
   }
 }
 
 template<typename Lhs,
          typename Rhs,
          internal::formattable_concept... Args>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
 assert_le(
   Lhs const&                  lhs,
   Rhs const&                  rhs,
@@ -550,33 +585,27 @@ assert_le(
   std::format_string<Args...> fmt,
   Args&&... args)
 {
-  if (internal::gt(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
+  if (internal::gt(lhs, rhs)) [[unlikely]]
+    internal::fail_fmt(head, fmt, std::forward<Args>(args)...);
 }
 
 template<typename Lhs,
          typename Rhs>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
 assert_le(
   Lhs const&       lhs,
   Rhs const&       rhs,
   std::string_view head)
 {
-  if (internal::gt(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}", head);
-    debug_break();
-    std::abort();
-  }
+  if (internal::gt(lhs, rhs)) [[unlikely]]
+    internal::fail(head);
 }
 
 template<internal::formattable_concept Lhs,
          internal::formattable_concept Rhs,
          internal::formattable_concept... Args>
-void
+constexpr void
 assert_le(
   Lhs const&                  lhs,
   Rhs const&                  rhs,
@@ -585,32 +614,30 @@ assert_le(
   Args&&... args)
 {
   if (internal::gt(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} > {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt2_fmt(head, "  Evaluation : {} > {}", lhs, rhs, fmt, std::forward<Args>(args)...);
   }
 }
 
 template<internal::formattable_concept Lhs,
          internal::formattable_concept Rhs>
-void
+constexpr void
 assert_le(
   Lhs const&       lhs,
   Rhs const&       rhs,
   std::string_view head)
 {
   if (internal::gt(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} > {}", head, lhs, rhs);
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt(head, "  Evaluation : {} > {}", lhs, rhs);
   }
 }
 
 template<typename Lhs,
          typename Rhs,
          internal::formattable_concept... Args>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
 assert_ge(
   Lhs const&                  lhs,
   Rhs const&                  rhs,
@@ -618,33 +645,27 @@ assert_ge(
   std::format_string<Args...> fmt,
   Args&&... args)
 {
-  if (internal::lt(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
+  if (internal::lt(lhs, rhs)) [[unlikely]]
+    internal::fail_fmt(head, fmt, std::forward<Args>(args)...);
 }
 
 template<typename Lhs,
          typename Rhs>
-  requires(not internal::formattable_concept<Lhs> or not internal::formattable_concept<Rhs>)
-void
+  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+constexpr void
 assert_ge(
   Lhs const&       lhs,
   Rhs const&       rhs,
   std::string_view head)
 {
-  if (internal::lt(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}", head);
-    debug_break();
-    std::abort();
-  }
+  if (internal::lt(lhs, rhs)) [[unlikely]]
+    internal::fail(head);
 }
 
 template<internal::formattable_concept Lhs,
          internal::formattable_concept Rhs,
          internal::formattable_concept... Args>
-void
+constexpr void
 assert_ge(
   Lhs const&                  lhs,
   Rhs const&                  rhs,
@@ -653,24 +674,22 @@ assert_ge(
   Args&&... args)
 {
   if (internal::lt(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} < {}\n{}", head, lhs, rhs, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt2_fmt(head, "  Evaluation : {} < {}", lhs, rhs, fmt, std::forward<Args>(args)...);
   }
 }
 
 template<internal::formattable_concept Lhs,
          internal::formattable_concept Rhs>
-void
+constexpr void
 assert_ge(
   Lhs const&       lhs,
   Rhs const&       rhs,
   std::string_view head)
 {
   if (internal::lt(lhs, rhs)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} < {}", head, lhs, rhs);
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt(head, "  Evaluation : {} < {}", lhs, rhs);
   }
 }
 
@@ -678,8 +697,8 @@ template<typename Val,
          typename Beg,
          typename End,
          internal::formattable_concept... Args>
-  requires(not internal::formattable_concept<Val> or not internal::formattable_concept<Beg> or not internal::formattable_concept<End>)
-void
+  requires(!internal::formattable_concept<Val> || !internal::formattable_concept<Beg> || !internal::formattable_concept<End>)
+constexpr void
 assert_in_range(
   Val const&                  val,
   Beg const&                  beg,
@@ -688,36 +707,30 @@ assert_in_range(
   std::format_string<Args...> fmt,
   Args&&... args)
 {
-  if (!internal::in_range(val, beg, end)) [[unlikely]] {
-    std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
+  if (!internal::in_range(val, beg, end)) [[unlikely]]
+    internal::fail_fmt(head, fmt, std::forward<Args>(args)...);
 }
 
 template<typename Val,
          typename Beg,
          typename End>
-  requires(not internal::formattable_concept<Val> or not internal::formattable_concept<Beg> or not internal::formattable_concept<End>)
-void
+  requires(!internal::formattable_concept<Val> || !internal::formattable_concept<Beg> || !internal::formattable_concept<End>)
+constexpr void
 assert_in_range(
   Val const&       val,
   Beg const&       beg,
   End const&       end,
   std::string_view head)
 {
-  if (!internal::in_range(val, beg, end)) [[unlikely]] {
-    std::println(stderr, "{}", head);
-    debug_break();
-    std::abort();
-  }
+  if (!internal::in_range(val, beg, end)) [[unlikely]]
+    internal::fail(head);
 }
 
 template<internal::formattable_concept Val,
          internal::formattable_concept Beg,
          internal::formattable_concept End,
          internal::formattable_concept... Args>
-void
+constexpr void
 assert_in_range(
   Val const&                  val,
   Beg const&                  beg,
@@ -727,16 +740,15 @@ assert_in_range(
   Args&&... args)
 {
   if (!internal::in_range(val, beg, end)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} in [{}, {})\n{}", head, val, beg, end, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt3_fmt(head, "  Evaluation : {} in [{}, {})", val, beg, end, fmt, std::forward<Args>(args)...);
   }
 }
 
 template<internal::formattable_concept Val,
          internal::formattable_concept Beg,
          internal::formattable_concept End>
-void
+constexpr void
 assert_in_range(
   Val const&       val,
   Beg const&       beg,
@@ -744,85 +756,8 @@ assert_in_range(
   std::string_view head)
 {
   if (!internal::in_range(val, beg, end)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} in [{}, {})", head, val, beg, end);
-    debug_break();
-    std::abort();
-  }
-}
-
-template<typename Val,
-         typename Beg,
-         typename End,
-         internal::formattable_concept... Args>
-  requires(not internal::formattable_concept<Val> or not internal::formattable_concept<Beg> or not internal::formattable_concept<End>)
-void
-assert_in_range_inclusive(
-  Val const&                  val,
-  Beg const&                  beg,
-  End const&                  end,
-  std::string_view            head,
-  std::format_string<Args...> fmt,
-  Args&&... args)
-{
-  if (!internal::in_range_inclusive(val, beg, end)) [[unlikely]] {
-    std::println(stderr, "{}\n{}", head, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
-}
-
-template<typename Val,
-         typename Beg,
-         typename End>
-  requires(not internal::formattable_concept<Val> or not internal::formattable_concept<Beg> or not internal::formattable_concept<End>)
-void
-assert_in_range_inclusive(
-  Val const&       val,
-  Beg const&       beg,
-  End const&       end,
-  std::string_view head)
-{
-  if (!internal::in_range_inclusive(val, beg, end)) [[unlikely]] {
-    std::println(stderr, "{}", head);
-    debug_break();
-    std::abort();
-  }
-}
-
-template<internal::formattable_concept Val,
-         internal::formattable_concept Beg,
-         internal::formattable_concept End,
-         internal::formattable_concept... Args>
-void
-assert_in_range_inclusive(
-  Val const&                  val,
-  Beg const&                  beg,
-  End const&                  end,
-  std::string_view            head,
-  std::format_string<Args...> fmt,
-  Args&&... args)
-{
-  if (!internal::in_range_inclusive(val, beg, end)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} in [{}, {}]\n{}", head, val, beg, end, std::format(fmt, std::forward<Args>(args)...));
-    debug_break();
-    std::abort();
-  }
-}
-
-template<internal::formattable_concept Val,
-         internal::formattable_concept Beg,
-         internal::formattable_concept End>
-void
-assert_in_range_inclusive(
-  Val const&       val,
-  Beg const&       beg,
-  End const&       end,
-  std::string_view head)
-{
-  if (!internal::in_range_inclusive(val, beg, end)) [[unlikely]] {
-    std::println(stderr, "{}\n  Evaluation : {} in [{}, {}]", head, val, beg, end);
-    debug_break();
-    std::abort();
+    if (std::is_constant_evaluated()) internal::fail(head);
+    internal::fail_fmt(head, "  Evaluation : {} in [{}, {})", val, beg, end);
   }
 }
 
