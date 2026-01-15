@@ -1,5 +1,6 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/graph/graph.hpp>
 
 #include <cstdint>
 #include <limits>

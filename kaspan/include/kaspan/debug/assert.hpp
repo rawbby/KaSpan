@@ -10,7 +10,6 @@
 #include <print>
 #include <string_view>
 #include <utility>
-#include <vector>
 
 namespace kaspan {
 
@@ -78,28 +77,39 @@ namespace kaspan {
     "  Condition  : " #LHS " == " #RHS "\n"             \
     "  File       : " __FILE__ "\n"                     \
     "  Line       : " TOSTRING(__LINE__)                \
-__VA_OPT__(, "  Details    : " __VA_ARGS__))
+    __VA_OPT__(, "  Details    : " __VA_ARGS__))
 
-#define DEBUG_ASSERT(...)     IF(KASPAN_DEBUG, ASSERT(__VA_ARGS__))
-#define DEBUG_ASSERT_NE(...)  IF(KASPAN_DEBUG, ASSERT_NE(__VA_ARGS__))
-#define DEBUG_ASSERT_LT(...)  IF(KASPAN_DEBUG, ASSERT_LT(__VA_ARGS__))
-#define DEBUG_ASSERT_LE(...)  IF(KASPAN_DEBUG, ASSERT_LE(__VA_ARGS__))
-#define DEBUG_ASSERT_GT(...)  IF(KASPAN_DEBUG, ASSERT_GT(__VA_ARGS__))
-#define DEBUG_ASSERT_GE(...)  IF(KASPAN_DEBUG, ASSERT_GE(__VA_ARGS__))
-#define DEBUG_ASSERT_NOT(...) IF(KASPAN_DEBUG, ASSERT_NOT(__VA_ARGS__))
-#define DEBUG_ASSERT_EQ(...)  IF(KASPAN_DEBUG, ASSERT_EQ(__VA_ARGS__))
+#define ASSERT_NULLPTR(PTR, ...) \
+  ASSERT_EQ(PTR, nullptr __VA_OPT__(, __VA_ARGS__))
 
-#define ASSERT_IN_RANGE(VAL, BEG, END, ...) ASSERT_GE(VAL, BEG); ASSERT_LT(VAL, END)
-#define DEBUG_ASSERT_IN_RANGE(...) IF(KASPAN_DEBUG, ASSERT_IN_RANGE(__VA_ARGS__))
+#define ASSERT_POINTER(PTR, ...) \
+  ASSERT_NE(PTR, nullptr __VA_OPT__(, __VA_ARGS__))
 
-#define ASSERT_IN_RANGE_INCLUSIVE(VAL, BEG, END, ...) ASSERT_GE(VAL, BEG); ASSERT_LE(VAL, END)
-#define DEBUG_ASSERT_IN_RANGE_INCLUSIVE(...) IF(KASPAN_DEBUG, ASSERT_IN_RANGE_INCLUSIVE(__VA_ARGS__))
+#define ASSERT_SIZE_POINTER(SIZE, PTR, ...)      \
+  if (internal::eq(SIZE, 0)) ASSERT_NULLPTR(PTR); \
+  else ASSERT_POINTER(PTR)
 
-#define ASSERT_NULLPTR(PTR) ASSERT_EQ(PTR, nullptr)
-#define DEBUG_ASSERT_NULLPTR(...) IF(KASPAN_DEBUG, ASSERT_NULLPTR(__VA_ARGS__))
+#define ASSERT_IN_RANGE(VAL, BEG, END, ...)      \
+  ASSERT_GE(VAL, BEG __VA_OPT__(, __VA_ARGS__)); \
+  ASSERT_LT(VAL, END __VA_OPT__(, __VA_ARGS__))
 
-#define ASSERT_NON_NULLPTR(PTR) ASSERT_NE(PTR, nullptr)
-#define DEBUG_ASSERT_NON_NULLPTR(...) IF(KASPAN_DEBUG, ASSERT_NON_NULLPTR(__VA_ARGS__))
+#define ASSERT_IN_RANGE_INCLUSIVE(VAL, BEG, END, ...) \
+  ASSERT_GE(VAL, BEG __VA_OPT__(, __VA_ARGS__));      \
+  ASSERT_LE(VAL, END __VA_OPT__(, __VA_ARGS__))
+
+#define DEBUG_ASSERT(...)                    IF(KASPAN_DEBUG, ASSERT(__VA_ARGS__),                    ((void)0))
+#define DEBUG_ASSERT_NE(...)                 IF(KASPAN_DEBUG, ASSERT_NE(__VA_ARGS__),                 ((void)0))
+#define DEBUG_ASSERT_LT(...)                 IF(KASPAN_DEBUG, ASSERT_LT(__VA_ARGS__),                 ((void)0))
+#define DEBUG_ASSERT_LE(...)                 IF(KASPAN_DEBUG, ASSERT_LE(__VA_ARGS__),                 ((void)0))
+#define DEBUG_ASSERT_GT(...)                 IF(KASPAN_DEBUG, ASSERT_GT(__VA_ARGS__),                 ((void)0))
+#define DEBUG_ASSERT_GE(...)                 IF(KASPAN_DEBUG, ASSERT_GE(__VA_ARGS__),                 ((void)0))
+#define DEBUG_ASSERT_NOT(...)                IF(KASPAN_DEBUG, ASSERT_NOT(__VA_ARGS__),                ((void)0))
+#define DEBUG_ASSERT_EQ(...)                 IF(KASPAN_DEBUG, ASSERT_EQ(__VA_ARGS__),                 ((void)0))
+#define DEBUG_ASSERT_NULLPTR(...)            IF(KASPAN_DEBUG, ASSERT_NULLPTR(__VA_ARGS__),            ((void)0))
+#define DEBUG_ASSERT_POINTER(...)            IF(KASPAN_DEBUG, ASSERT_POINTER(__VA_ARGS__),            ((void)0))
+#define DEBUG_ASSERT_SIZE_POINTER(...)       IF(KASPAN_DEBUG, ASSERT_SIZE_POINTER(__VA_ARGS__),       ((void)0))
+#define DEBUG_ASSERT_IN_RANGE(...)           IF(KASPAN_DEBUG, ASSERT_IN_RANGE(__VA_ARGS__),           ((void)0))
+#define DEBUG_ASSERT_IN_RANGE_INCLUSIVE(...) IF(KASPAN_DEBUG, ASSERT_IN_RANGE_INCLUSIVE(__VA_ARGS__), ((void)0))
 
 // clang-format on
 
@@ -130,7 +140,7 @@ fail_fmt(
   try {
     auto const details = std::format(fmt, std::forward<Args>(args)...);
     std::print(stderr, "{}\n{}\n", head, details);
-  } catch (std::format_error& e) {
+  } catch (std::format_error& /* e */) {
     std::fwrite(head.data(), 1, head.size(), stderr);
     std::fputc('\n', stderr);
   }
@@ -156,7 +166,7 @@ fail_fmt2_fmt(
     auto const evaluation = std::format(fmt2, std::forward<Arg0>(arg0), std::forward<Arg1>(arg1));
     auto const details    = std::format(fmt, std::forward<Args>(args)...);
     std::print(stderr, "{}\n{}\n{}\n", head, evaluation, details);
-  } catch (std::format_error& e) {
+  } catch (std::format_error& /* e */) {
     std::fwrite(head.data(), 1, head.size(), stderr);
     std::fputc('\n', stderr);
   }
@@ -185,7 +195,7 @@ fail_fmt3_fmt(
     auto const evaluation = std::format(fmt3, std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));
     auto const details    = std::format(fmt, std::forward<Args>(args)...);
     std::print(stderr, "{}\n{}\n{}\n", head, evaluation, details);
-  } catch (std::format_error& e) {
+  } catch (std::format_error& /* e */) {
     std::fwrite(head.data(), 1, head.size(), stderr);
     std::fputc('\n', stderr);
   }

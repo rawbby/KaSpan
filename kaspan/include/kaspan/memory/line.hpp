@@ -95,9 +95,10 @@ inline void
 line_free(
   void* data)
 {
-  DEBUG_ASSERT_NE(data, nullptr);
-  DEBUG_ASSERT(is_line_aligned(data));
-  std::free(data);
+  if (data != nullptr) {
+    DEBUG_ASSERT(is_line_aligned(data));
+    std::free(data);
+  }
 }
 
 } // namespace kaspan
