@@ -10,8 +10,8 @@ int main() {
         single_world_part part(0);
         bidi_graph_part<single_world_part> bgp(part, 0, 0);
         ASSERT_EQ(bgp.part.n, 0);
-        ASSERT_EQ(bgp.local_m_fw, 0);
-        ASSERT_EQ(bgp.local_m_bw, 0);
+        ASSERT_EQ(bgp.local_fw_m, 0);
+        ASSERT_EQ(bgp.local_bw_m, 0);
         bgp.debug_check();
         bgp.debug_validate();
     }

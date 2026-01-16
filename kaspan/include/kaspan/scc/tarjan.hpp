@@ -1,11 +1,13 @@
 #pragma once
 
+#include "kaspan/graph/graph_part.hpp"
+
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
+#include <kaspan/graph/graph.hpp>
 #include <kaspan/memory/accessor/bits.hpp>
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/scc/graph.hpp>
 
 namespace kaspan {
 
@@ -20,21 +22,18 @@ no_filter(
  * @param[in] part partition of the graph to work on
  * @param[in] head head buffer of size local_n+1 pointing into csr entries
  * @param[in] csr compressed sparse row of the local partition of the graph
- * @param[out] scc_id map vertex to strongly connected component id
  * @param[in] decided_count number of vertices filtered out (must match filter)
  * @return number of strongly connected components
  */
-template<world_part_concept part_t,
+template<world_part_concept Part,
          typename callback_t,
          typename filter_t = decltype(no_filter)>
 void
 tarjan(
-  part_t const&   part,
-  index_t const*  head,
-  vertex_t const* csr,
-  callback_t      callback,
-  filter_t        filter        = no_filter,
-  vertex_t        decided_count = 0) noexcept
+  graph_part_view<Part> gp,
+  callback_t            callback,
+  filter_t              filter        = no_filter,
+  vertex_t              decided_count = 0) noexcept
 {
   KASPAN_STATISTIC_SCOPE("tarjan");
   constexpr auto index_undecided = scc_id_undecided;
@@ -44,7 +43,7 @@ tarjan(
     index_t  it;
   };
 
-  auto const local_n = part.local_n();
+  auto const local_n = gp.part->local_n();
 
 #if KASPAN_DEBUG
   // Validate decided_count is consistent with filter
@@ -83,17 +82,17 @@ tarjan(
     index[local_root] = low[local_root] = index_count++;
     st.push(local_root);
     on_stack.set(local_root);
-    dfs.push({ local_root, head[local_root] });
+    dfs.push({ local_root, gp.head[local_root] });
 
     while (not dfs.empty()) {
 
       auto [local_u, it] = dfs.back();
-      if (it < head[local_u + 1]) {
-        auto const v = csr[it];
+      if (it < gp.head[local_u + 1]) {
+        auto const v = gp.csr[it];
         dfs.back().it += 1; // Update stack frame iterator
 
-        if (part.has_local(v)) { // ignore non local edges
-          auto const local_v = part.to_local(v);
+        if (gp.part->has_local(v)) { // ignore non local edges
+          auto const local_v = gp.part->to_local(v);
           if (not filter(local_v)) {
             continue;
           }
@@ -104,7 +103,7 @@ tarjan(
             index[local_v] = low[local_v] = index_count++;
             st.push(local_v);
             on_stack.set(local_v);
-            dfs.push({ local_v, head[local_v] });
+            dfs.push({ local_v, gp.head[local_v] });
           }
 
           else if (on_stack.get(local_v) and v_index < low[local_u]) {
@@ -157,14 +156,14 @@ template<typename callback_t,
          typename filter_t = decltype(no_filter)>
 void
 tarjan(
-  vertex_t const  n,
-  index_t const*  head,
-  vertex_t const* csr,
-  callback_t      callback,
-  filter_t        filter        = no_filter,
-  vertex_t        decided_count = 0) noexcept
+  graph_view g,
+  callback_t callback,
+  filter_t   filter        = no_filter,
+  vertex_t   decided_count = 0) noexcept
 {
-  tarjan(single_world_part{ n }, head, csr, callback, filter, decided_count);
+  auto const      part = single_world_part{ g.n };
+  graph_part_view gp{ &part, g.m, g.head, g.csr };
+  tarjan(gp, callback, filter, decided_count);
 }
 
 } // namespace kaspan

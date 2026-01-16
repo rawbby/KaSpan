@@ -17,16 +17,16 @@ namespace kaspan {
 struct bidi_graph_view
 {
   vertex_t n = 0; ///< Number of vertices
-  vertex_t m = 0; ///< Number of edges (in each direction)
+  index_t  m = 0; ///< Number of edges (in each direction)
   struct
   {
-    index_t const*  head = nullptr; ///< Forward offsets
-    vertex_t const* csr  = nullptr; ///< Forward neighbors
+    index_t*  head = nullptr; ///< Forward offsets
+    vertex_t* csr  = nullptr; ///< Forward neighbors
   } fw{};
   struct
   {
-    index_t const*  head = nullptr; ///< Backward offsets
-    vertex_t const* csr  = nullptr; ///< Backward neighbors
+    index_t*  head = nullptr; ///< Backward offsets
+    vertex_t* csr  = nullptr; ///< Backward neighbors
   } bw{};
 
   constexpr bidi_graph_view() noexcept  = default;
@@ -36,12 +36,12 @@ struct bidi_graph_view
   constexpr bidi_graph_view(bidi_graph_view const&) noexcept = default;
 
   constexpr bidi_graph_view(
-    vertex_t        n,
-    vertex_t        m,
-    index_t const*  fw_head,
-    vertex_t const* fw_csr,
-    index_t const*  bw_head,
-    vertex_t const* bw_csr) noexcept
+    vertex_t  n,
+    index_t   m,
+    index_t*  fw_head,
+    vertex_t* fw_csr,
+    index_t*  bw_head,
+    vertex_t* bw_csr) noexcept
     : n(n)
     , m(m)
     , fw{ fw_head,
@@ -83,7 +83,7 @@ struct bidi_graph_view
    * @brief Get the forward neighbors of vertex u.
    */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t u) const noexcept -> std::span<vertex_t>
   {
     return fw_view().csr_range(u);
   }
@@ -92,7 +92,7 @@ struct bidi_graph_view
    * @brief Get the backward neighbors of vertex u.
    */
   [[nodiscard]] constexpr auto bw_csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t u) const noexcept -> std::span<vertex_t>
   {
     return bw_view().csr_range(u);
   }
@@ -194,7 +194,7 @@ struct bidi_graph_view
 struct bidi_graph
 {
   vertex_t n = 0; ///< Number of vertices
-  vertex_t m = 0; ///< Number of edges (in each direction)
+  index_t  m = 0; ///< Number of edges (in each direction)
   struct
   {
     index_t*  head = nullptr; ///< Forward offsets
@@ -210,7 +210,7 @@ struct bidi_graph
 
   bidi_graph(
     vertex_t n,
-    vertex_t m)
+    index_t  m)
     : n(n)
     , m(m)
     , fw{ line_alloc<index_t>(n == 0 ? 0 : n + 1),
@@ -269,10 +269,34 @@ struct bidi_graph
   }
 
   /**
+   * @brief Create a view of the forward graph.
+   */
+  [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_view
+  {
+    return view().fw_view();
+  }
+
+  /**
+   * @brief Create a view of the backward graph.
+   */
+  [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_view
+  {
+    return view().bw_view();
+  }
+
+  /**
+   * @brief Create a view with forward and backward directions swapped.
+   */
+  [[nodiscard]] constexpr auto inverse_view() const noexcept -> bidi_graph_view
+  {
+    return view().inverse_view();
+  }
+
+  /**
    * @brief Get the forward neighbors of vertex u.
    */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t u) const noexcept -> std::span<vertex_t>
   {
     return view().csr_range(u);
   }
@@ -281,7 +305,7 @@ struct bidi_graph
    * @brief Get the backward neighbors of vertex u.
    */
   [[nodiscard]] constexpr auto bw_csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t u) const noexcept -> std::span<vertex_t>
   {
     return view().bw_csr_range(u);
   }

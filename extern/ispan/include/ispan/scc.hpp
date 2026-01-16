@@ -2,7 +2,7 @@
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
-#include <kaspan/scc/graph.hpp>
+#include <kaspan/graph/graph.hpp>
 
 #include <ispan/fw_bw_span.hpp>
 #include <ispan/get_scc_result.hpp>

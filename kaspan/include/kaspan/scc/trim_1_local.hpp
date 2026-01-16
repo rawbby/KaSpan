@@ -1,19 +1,15 @@
 #pragma once
 
 #include <kaspan/scc/base.hpp>
-#include <kaspan/scc/part.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/scc/vertex_frontier.hpp>
 
 namespace kaspan {
 
-template<bool InterleavedSupport>
+template<bool InterleavedSupport, world_part_concept part_t>
 auto
 trim_1_first(
-  world_part_concept auto const&       part,
-  index_t const*                       fw_head,
-  index_t const*                       fw_csr,
-  index_t const*                       bw_head,
-  index_t const*                       bw_csr,
+  bidi_graph_part_view<part_t>         graph,
   vertex_t*                            scc_id,
   vertex_t*                            outdegree,
   vertex_t*                            indegree,
@@ -25,15 +21,16 @@ trim_1_first(
     degree   max{};
   };
 
-  auto const local_n       = part.local_n();
-  vertex_t   decided_count = 0;
+  auto const& part          = *graph.part;
+  auto const  local_n       = part.local_n();
+  vertex_t    decided_count = 0;
 
   // initial trim forward
   for (vertex_t k = 0; k < local_n; ++k) {
-    if (indegree[k] = bw_head[k + 1] - bw_head[k]; indegree[k] == 0) {
+    if (indegree[k] = graph.indegree(k); indegree[k] == 0) {
       scc_id[k] = part.to_global(k);
       ++decided_count;
-      for (auto const v : csr_range(fw_head, fw_csr, k)) {
+      for (auto const v : graph.fw_csr_range(k)) {
         if (part.has_local(v)) {
           frontier.local_push(v);
         } else {
@@ -52,7 +49,7 @@ trim_1_first(
         if (--indegree[k]; indegree[k] == 0) {
           scc_id[k] = part.to_global(k);
           ++decided_count;
-          for (auto const v : csr_range(fw_head, fw_csr, k)) {
+          for (auto const v : graph.fw_csr_range(k)) {
             if (part.has_local(v)) {
               frontier.local_push(v);
             } else {
@@ -67,10 +64,10 @@ trim_1_first(
   // initial trim backward
   for (vertex_t k = 0; k < local_n; ++k) {
     if (scc_id[k] == scc_id_undecided) {
-      if (outdegree[k] = fw_head[k + 1] - fw_head[k]; outdegree[k] == 0) {
+      if (outdegree[k] = graph.outdegree(k); outdegree[k] == 0) {
         scc_id[k] = part.to_global(k);
         ++decided_count;
-        for (auto const v : csr_range(bw_head, bw_csr, k)) {
+        for (auto const v : graph.bw_csr_range(k)) {
           if (part.has_local(v)) {
             frontier.local_push(v);
           } else {
@@ -88,7 +85,7 @@ trim_1_first(
         if (--outdegree[k]; outdegree[k] == 0) {
           scc_id[k] = part.to_global(k);
           ++decided_count;
-          for (auto const v : csr_range(bw_head, bw_csr, k)) {
+          for (auto const v : graph.bw_csr_range(k)) {
             if (part.has_local(v)) {
               frontier.local_push(v);
             } else {
@@ -119,17 +116,14 @@ trim_1_first(
 template<world_part_concept part_t>
 auto
 trim_1(
-  part_t const&   part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  vertex_t*       scc_id,
-  vertex_t*       fw_degree,
-  vertex_t*       bw_degree) -> vertex_t
+  bidi_graph_part_view<part_t> graph,
+  vertex_t*                    scc_id,
+  vertex_t const*              fw_degree,
+  vertex_t const*              bw_degree) -> vertex_t
 {
-  auto const local_n       = part.local_n();
-  vertex_t   decided_count = 0;
+  auto const& part          = *graph.part;
+  auto const  local_n       = part.local_n();
+  vertex_t    decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
     if (scc_id[k] == scc_id_undecided) {
       if (not fw_degree[k] or not bw_degree[k]) {

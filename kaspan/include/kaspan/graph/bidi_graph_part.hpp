@@ -14,17 +14,17 @@ struct bidi_graph_part_view
 {
   using part_t             = Part;
   part_t const* part       = nullptr; ///< The partition information
-  vertex_t      local_m_fw = 0;       ///< Number of local forward edges
-  vertex_t      local_m_bw = 0;       ///< Number of local backward edges
+  index_t       local_fw_m = 0;       ///< Number of local forward edges
+  index_t       local_bw_m = 0;       ///< Number of local backward edges
   struct
   {
-    index_t const*  head = nullptr; ///< Local forward offsets
-    vertex_t const* csr  = nullptr; ///< Forward neighbors (global IDs)
+    index_t*  head = nullptr; ///< Local forward offsets
+    vertex_t* csr  = nullptr; ///< Forward neighbors (global IDs)
   } fw{};
   struct
   {
-    index_t const*  head = nullptr; ///< Local backward offsets
-    vertex_t const* csr  = nullptr; ///< Backward neighbors (global IDs)
+    index_t*  head = nullptr; ///< Local backward offsets
+    vertex_t* csr  = nullptr; ///< Backward neighbors (global IDs)
   } bw{};
 
   constexpr bidi_graph_part_view() noexcept  = default;
@@ -34,16 +34,16 @@ struct bidi_graph_part_view
   constexpr bidi_graph_part_view(bidi_graph_part_view const&) noexcept = default;
 
   constexpr bidi_graph_part_view(
-    part_t const*   part,
-    vertex_t        local_m_fw,
-    vertex_t        local_m_bw,
-    index_t const*  fw_head,
-    vertex_t const* fw_csr,
-    index_t const*  bw_head,
-    vertex_t const* bw_csr) noexcept
+    part_t const* part,
+    index_t       local_fw_m,
+    index_t       local_bw_m,
+    index_t*      fw_head,
+    vertex_t*     fw_csr,
+    index_t*      bw_head,
+    vertex_t*     bw_csr) noexcept
     : part(part)
-    , local_m_fw(local_m_fw)
-    , local_m_bw(local_m_bw)
+    , local_fw_m(local_fw_m)
+    , local_bw_m(local_bw_m)
     , fw{ fw_head,
           fw_csr }
     , bw{ bw_head,
@@ -60,7 +60,7 @@ struct bidi_graph_part_view
    */
   [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_part_view<part_t>
   {
-    return { part, local_m_fw, fw.head, fw.csr };
+    return { part, local_fw_m, fw.head, fw.csr };
   }
 
   /**
@@ -68,7 +68,7 @@ struct bidi_graph_part_view
    */
   [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_part_view<part_t>
   {
-    return { part, local_m_bw, bw.head, bw.csr };
+    return { part, local_bw_m, bw.head, bw.csr };
   }
 
   /**
@@ -76,14 +76,14 @@ struct bidi_graph_part_view
    */
   [[nodiscard]] constexpr auto inverse_view() const noexcept -> bidi_graph_part_view<part_t>
   {
-    return { part, local_m_bw, local_m_fw, bw.head, bw.csr, fw.head, fw.csr };
+    return { part, local_bw_m, local_fw_m, bw.head, bw.csr, fw.head, fw.csr };
   }
 
   /**
    * @brief Get the forward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t>
   {
     return fw_view().csr_range(k);
   }
@@ -92,7 +92,7 @@ struct bidi_graph_part_view
    * @brief Get the backward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto bw_csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t>
   {
     return bw_view().csr_range(k);
   }
@@ -230,9 +230,9 @@ template<world_part_concept Part>
 struct bidi_graph_part
 {
   using part_t = Part;
-  part_t   part{};         ///< The partition info
-  vertex_t local_m_fw = 0; ///< Forward edge count
-  vertex_t local_m_bw = 0; ///< Backward edge count
+  part_t  part{};         ///< The partition info
+  index_t local_fw_m = 0; ///< Forward edge count
+  index_t local_bw_m = 0; ///< Backward edge count
   struct
   {
     index_t*  head = nullptr; ///< Forward offsets
@@ -247,16 +247,16 @@ struct bidi_graph_part
   constexpr bidi_graph_part() noexcept = default;
 
   bidi_graph_part(
-    part_t   part,
-    vertex_t local_m_fw,
-    vertex_t local_m_bw)
-    : part(part)
-    , local_m_fw(local_m_fw)
-    , local_m_bw(local_m_bw)
+    part_t  part,
+    index_t local_fw_m,
+    index_t local_bw_m)
+    : part(std::move(part))
+    , local_fw_m(local_fw_m)
+    , local_bw_m(local_bw_m)
     , fw{ line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1),
-          line_alloc<vertex_t>(local_m_fw) }
+          line_alloc<vertex_t>(local_fw_m) }
     , bw{ line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1),
-          line_alloc<vertex_t>(local_m_bw) }
+          line_alloc<vertex_t>(local_bw_m) }
   {
     debug_check();
   }
@@ -271,9 +271,9 @@ struct bidi_graph_part
 
   constexpr bidi_graph_part(
     bidi_graph_part&& rhs) noexcept
-    : part(rhs.part)
-    , local_m_fw(rhs.local_m_fw)
-    , local_m_bw(rhs.local_m_bw)
+    : part(std::move(rhs.part))
+    , local_fw_m(rhs.local_fw_m)
+    , local_bw_m(rhs.local_bw_m)
     , fw(rhs.fw)
     , bw(rhs.bw)
   {
@@ -290,9 +290,9 @@ struct bidi_graph_part
       line_free(fw.csr);
       line_free(bw.head);
       line_free(bw.csr);
-      part       = rhs.part;
-      local_m_fw = rhs.local_m_fw;
-      local_m_bw = rhs.local_m_bw;
+      part       = std::move(rhs.part);
+      local_fw_m = rhs.local_fw_m;
+      local_bw_m = rhs.local_bw_m;
       fw         = rhs.fw;
       bw         = rhs.bw;
       rhs.fw     = {};
@@ -307,7 +307,7 @@ struct bidi_graph_part
    */
   [[nodiscard]] constexpr auto view() const noexcept -> bidi_graph_part_view<part_t>
   {
-    return { &part, local_m_fw, local_m_bw, fw.head, fw.csr, bw.head, bw.csr };
+    return { &part, local_fw_m, local_bw_m, fw.head, fw.csr, bw.head, bw.csr };
   }
 
   /**
@@ -330,7 +330,7 @@ struct bidi_graph_part
    * @brief Get the forward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t>
   {
     return view().csr_range(k);
   }
@@ -339,7 +339,7 @@ struct bidi_graph_part
    * @brief Get the backward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto bw_csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t>
   {
     return view().bw_csr_range(k);
   }

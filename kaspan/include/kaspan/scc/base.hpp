@@ -30,6 +30,12 @@ constexpr inline auto mpi_vertex_t = mpi_basic::type<vertex_t>;
 struct edge_t
 {
   vertex_t u, v;
+
+  constexpr auto operator<(
+    edge_t e) const noexcept -> bool
+  {
+    return u < e.u | u == e.u & v < e.v;
+  }
 };
 
 static constexpr auto max_edge = edge_t{ std::numeric_limits<vertex_t>::max(), std::numeric_limits<vertex_t>::max() };

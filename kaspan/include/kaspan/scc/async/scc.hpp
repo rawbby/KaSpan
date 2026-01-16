@@ -1,5 +1,6 @@
 #pragma once
 
+#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kamping/mpi_datatype.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
@@ -72,15 +73,11 @@ template<typename indirection_scheme_t,
          world_part_concept part_t>
 void
 scc(
-  part_t const&   part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  vertex_t*       scc_id)
+  bidi_graph_part_view<part_t> graph,
+  vertex_t*                    scc_id)
 {
-  DEBUG_ASSERT_VALID_GRAPH_PART(part, fw_head, fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH_PART(part, bw_head, bw_csr);
+  graph.debug_validate();
+  auto const& part = *graph.part;
   KASPAN_STATISTIC_SCOPE("scc");
 
   auto const n       = part.n;
@@ -93,7 +90,7 @@ scc(
   KASPAN_STATISTIC_PUSH("trim_1");
   // notice: trim_1_exhaustive_first has a side effect by initializing scc_id with scc_id undecided
   // if trim_1_exhaustive_first is removed one has to initialize scc_id with scc_id_undecided manually!
-  vertex_t local_decided  = interleaved::trim_1_exhaustive_first(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree.data(), indegree.data(), frontier);
+  vertex_t local_decided  = interleaved::trim_1_exhaustive_first(graph, scc_id, outdegree.data(), indegree.data(), frontier);
   vertex_t global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("decided_count", global_decided);
   KASPAN_STATISTIC_POP();
@@ -101,9 +98,7 @@ scc(
   // fallback to tarjan on single rank
   if (mpi_basic::world_size == 1) {
     tarjan(
-      part,
-      fw_head,
-      fw_csr,
+      graph.fw_view(),
       [=](auto const* cbeg, auto const* cend) {
         auto const id = *std::min_element(cbeg, cend);
         std::for_each(cbeg, cend, [=](auto const k) {
@@ -128,15 +123,15 @@ scc(
       auto active_array = make_array<vertex_t>(local_n);
       auto vertex_queue = make_briefkasten_vertex<indirection_scheme_t>();
 
-      async::forward_search(part, fw_head, fw_csr, vertex_queue, scc_id, bitvector.data(), active_array.data(), pivot);
-      local_decided += async::backward_search(part, bw_head, bw_csr, vertex_queue, scc_id, bitvector.data(), active_array.data(), pivot, pivot);
+      async::forward_search(graph.fw_view(), vertex_queue, scc_id, bitvector.data(), active_array.data(), pivot);
+      local_decided += async::backward_search(graph.bw_view(), vertex_queue, scc_id, bitvector.data(), active_array.data(), pivot, pivot);
 
       KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_decided - prev_local_decided, mpi_basic::sum));
       KASPAN_STATISTIC_ADD("memory", kaspan::get_resident_set_bytes());
     }
     // {
     //   KASPAN_STATISTIC_SCOPE("trim_1_fw_bw");
-    //   auto const trim_1_decided = trim_1(part, fw_head, fw_csr, bw_head, bw_csr, scc_id);
+    //   auto const trim_1_decided = trim_1(graph, scc_id);
     //   local_decided += trim_1_decided;
     //   KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(trim_1_decided, mpi_basic::sum));
     // }
@@ -162,7 +157,7 @@ scc(
       first_iter = false;
 
       color_scc_init_label(part, colors.data());
-      local_decided += async::color_scc_step(part, fw_head, fw_csr, bw_head, bw_csr, edge_queue, scc_id, colors.data(), active_array.data(), active.data(), local_decided);
+      local_decided += async::color_scc_step(graph, edge_queue, scc_id, colors.data(), active_array.data(), active.data(), local_decided);
     } while (mpi_basic::allreduce_single(local_decided, mpi_basic::sum) < decided_threshold);
 
     KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_decided - prev_local_decided, mpi_basic::sum));
@@ -172,12 +167,11 @@ scc(
   {
     KASPAN_STATISTIC_SCOPE("residual");
 
-    auto [TMP(), sub_ids_inverse, TMP(), sub_n, sub_m, sub_head, sub_csr] =
-      allgather_fw_sub_graph(part, local_n - local_decided, fw_head, fw_csr, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
-    DEBUG_ASSERT_VALID_GRAPH(sub_n, sub_head, sub_csr);
+    auto [sub_ids_inverse, sub_graph] =
+      allgather_fw_sub_graph(part, local_n - local_decided, graph.fw.head, graph.fw.csr, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
 
-    if (sub_n) {
-      tarjan(sub_n, sub_head, sub_csr, [&](auto const* beg, auto const* end) {
+    if (sub_graph.n) {
+      tarjan(sub_graph.view(), [&](auto const* beg, auto const* end) {
         auto const min_u = sub_ids_inverse[*std::min_element(beg, end)];
         for (auto sub_u : std::span{ beg, end }) {
           auto const u = sub_ids_inverse[sub_u];
@@ -188,8 +182,8 @@ scc(
       });
     }
 
-    KASPAN_STATISTIC_ADD("n", sub_n);
-    KASPAN_STATISTIC_ADD("m", sub_m);
+    KASPAN_STATISTIC_ADD("n", sub_graph.n);
+    KASPAN_STATISTIC_ADD("m", sub_graph.m);
     KASPAN_STATISTIC_ADD("memory", kaspan::get_resident_set_bytes());
     KASPAN_STATISTIC_ADD("decided_count", mpi_basic::allreduce_single(local_n - local_decided, mpi_basic::sum));
   }

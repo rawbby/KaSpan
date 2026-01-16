@@ -1,10 +1,9 @@
 #pragma once
 
-#include <kaspan/debug/assert.hpp>
+#include <kaspan/graph/graph_part.hpp>
+#include <kaspan/scc/base.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
-#include <kaspan/scc/base.hpp>
-#include <kaspan/scc/graph.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
 #include <algorithm>
@@ -15,21 +14,20 @@ template<world_part_concept part_t,
          typename brief_queue_t>
 auto
 backward_search(
-  part_t const&   part,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  brief_queue_t&  mq,
-  vertex_t*       scc_id,
-  u64*            fw_reached_storage,
-  vertex_t*       active_storage,
-  vertex_t        root,
-  vertex_t        id) -> vertex_t
+  graph_part_view<part_t> graph,
+  brief_queue_t&          mq,
+  vertex_t*               scc_id,
+  u64*                    fw_reached_storage,
+  vertex_t*               active_storage,
+  vertex_t                root,
+  vertex_t                id) -> vertex_t
 {
-  auto const local_n       = part.local_n();
-  auto       fw_reached    = view_bits(fw_reached_storage, local_n);
-  auto       active_stack  = view_stack<vertex_t>(active_storage, local_n);
-  vertex_t   decided_count = 0;
-  vertex_t   min_u         = part.n;
+  auto const& part          = *graph.part;
+  auto const  local_n       = part.local_n();
+  auto        fw_reached    = view_bits(fw_reached_storage, local_n);
+  auto        active_stack  = view_stack<vertex_t>(active_storage, local_n);
+  vertex_t    decided_count = 0;
+  vertex_t    min_u         = part.n;
 
   auto on_message = [&](auto env) {
     for (auto v : env.message) {
@@ -62,7 +60,7 @@ backward_search(
       auto const k = active_stack.back();
       active_stack.pop();
 
-      for (auto v : csr_range(bw_head, bw_csr, k)) {
+      for (auto v : graph.csr_range(k)) {
         if (part.has_local(v)) {
           auto const l = part.to_local(v);
           if (fw_reached.get(l) and scc_id[l] == scc_id_undecided) {

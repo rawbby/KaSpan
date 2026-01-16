@@ -1,22 +1,22 @@
 #pragma once
 
+#include <kaspan/graph/graph_part.hpp>
 #include <kaspan/scc/base.hpp>
 
 namespace kaspan {
 
-template<bool InterleavedSupport = false>
+template<bool InterleavedSupport = false, world_part_concept Part>
 void
 forward_search(
-  world_part_concept auto const&       part,
-  index_t const*                       fw_head,
-  index_t const*                       fw_csr,
+  graph_part_view<Part>                graph,
   vertex_frontier<InterleavedSupport>& frontier,
   vertex_t const*                      scc_id,
   u64*                                 fw_reached_storage,
   vertex_t                             pivot)
 {
-  auto const local_n    = part.local_n();
-  auto       fw_reached = view_bits(fw_reached_storage, local_n);
+  auto const& part          = *graph.part;
+  auto const  local_n       = part.local_n();
+  auto        fw_reached    = view_bits(fw_reached_storage, local_n);
 
   DEBUG_ASSERT_NOT(frontier.has_next());
   if (part.has_local(pivot)) {
@@ -36,7 +36,7 @@ forward_search(
 
       fw_reached.set(k);
 
-      for (vertex_t const v : csr_range(fw_head, fw_csr, k)) {
+      for (vertex_t const v : graph.csr_range(k)) {
         if (part.has_local(v)) {
           frontier.local_push(v);
         } else {

@@ -4,8 +4,7 @@
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/edge_frontier.hpp>
-#include <kaspan/scc/graph.hpp>
-#include <kaspan/scc/part.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 
@@ -27,24 +26,21 @@ color_scc_init_label(
 template<world_part_concept part_t>
 auto
 color_scc_step_multi(
-  part_t const&   part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  vertex_t*       scc_id,
-  vertex_t*       colors,
-  vertex_t*       active_array,
-  u64*            active_storage,
-  u64*            changed_storage,
-  edge_frontier&  frontier,
-  vertex_t        local_pivot,
-  auto&&          on_decision = [](vertex_t) {}) -> vertex_t
+  bidi_graph_part_view<part_t> graph,
+  vertex_t*                    scc_id,
+  vertex_t*                    colors,
+  vertex_t*                    active_array,
+  u64*                         active_storage,
+  u64*                         changed_storage,
+  edge_frontier&               frontier,
+  vertex_t                     local_pivot,
+  auto&&                       on_decision = [](vertex_t) {}) -> vertex_t
 {
-  auto const local_n      = part.local_n();
-  auto       active       = view_bits(active_storage, local_n);
-  auto       changed      = view_bits(changed_storage, local_n);
-  auto       active_stack = view_stack<vertex_t>(active_array, local_n);
+  auto const& part         = *graph.part;
+  auto const  local_n      = part.local_n();
+  auto        active       = view_bits(active_storage, local_n);
+  auto        changed      = view_bits(changed_storage, local_n);
+  auto        active_stack = view_stack<vertex_t>(active_array, local_n);
 
   // Phase 1: Forward Color Propagation (inspired by HPCGraph scc_color)
   // This partitions the graph into components that are supersets of SCCs.
@@ -63,7 +59,7 @@ color_scc_step_multi(
         active_stack.pop();
 
         auto const label = colors[k];
-        for (auto v : csr_range(fw_head, fw_csr, k)) {
+        for (auto v : graph.csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided and label < colors[l]) {
@@ -81,7 +77,7 @@ color_scc_step_multi(
 
       changed.for_each(local_n, [&](auto&& k) {
         auto const label_k = colors[k];
-        for (auto v : csr_range(fw_head, fw_csr, k)) {
+        for (auto v : graph.csr_range(k)) {
           // if (label_k < v and not part.has_local(v)) {
           frontier.push(part.world_rank_of(v), { v, label_k });
           //}
@@ -132,7 +128,7 @@ color_scc_step_multi(
         active_stack.pop();
 
         auto const pivot = colors[k];
-        for (auto v : csr_range(bw_head, bw_csr, k)) {
+        for (auto v : graph.bw_csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided and colors[l] == pivot) {
@@ -153,7 +149,7 @@ color_scc_step_multi(
 
       changed.for_each(local_n, [&](auto&& k) {
         auto const pivot = colors[k];
-        for (auto v : csr_range(bw_head, bw_csr, k)) {
+        for (auto v : graph.bw_csr_range(k)) {
           if (not part.has_local(v)) {
             frontier.push(part.world_rank_of(v), { v, pivot });
           }
@@ -188,26 +184,23 @@ color_scc_step_multi(
 template<world_part_concept part_t>
 auto
 color_scc_step_multi(
-  part_t const&   part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  vertex_t*       scc_id,
-  vertex_t*       colors,
-  vertex_t*       active_array,
-  u64*            active_storage,
-  u64*            changed_storage,
-  edge_frontier&  frontier,
-  auto&&          on_decision = [](vertex_t) {}) -> vertex_t
+  bidi_graph_part_view<part_t> graph,
+  vertex_t*                    scc_id,
+  vertex_t*                    colors,
+  vertex_t*                    active_array,
+  u64*                         active_storage,
+  u64*                         changed_storage,
+  edge_frontier&               frontier,
+  auto&&                       on_decision = [](vertex_t) {}) -> vertex_t
 {
-  auto const local_n = part.local_n();
-  auto       active  = view_bits(active_storage, local_n);
-  auto       changed = view_bits(changed_storage, local_n);
+  auto const& part    = *graph.part;
+  auto const  local_n = part.local_n();
+  auto        active  = view_bits(active_storage, local_n);
+  auto        changed = view_bits(changed_storage, local_n);
 
-  auto const count_degree = [=](vertex_t k, index_t const* head, vertex_t const* csr) {
+  auto const count_degree = [=, &part](vertex_t k, graph_view const g) {
     index_t degree = 0;
-    for (auto u : csr_range(head, csr, k)) {
+    for (auto u : g.csr_range(k)) {
       degree += integral_cast<index_t>(not part.has_local(u) || scc_id[part.to_local(u)] == scc_id_undecided);
     }
     return degree;
@@ -222,7 +215,7 @@ color_scc_step_multi(
     colors[k] = part.n;
 
     if (scc_id[k] == scc_id_undecided) {
-      auto const out_degree = count_degree(k, fw_head, fw_csr);
+      auto const out_degree = count_degree(k, graph.fw_view());
 
       if (out_degree == 0) {
         scc_id[k] = part.to_global(k);
@@ -231,7 +224,7 @@ color_scc_step_multi(
         continue;
       }
 
-      auto const in_degree = count_degree(k, bw_head, bw_csr);
+      auto const in_degree = count_degree(k, graph.bw_view());
       if (in_degree == 0) {
         scc_id[k] = part.to_global(k);
         on_decision(k);
@@ -252,30 +245,27 @@ color_scc_step_multi(
     }
   }
 
-  return local_decided_count + color_scc_step_multi(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, colors, active_array, active_storage, changed_storage, frontier, max_degree_vertex, on_decision);
+  return local_decided_count + color_scc_step_multi(graph, scc_id, colors, active_array, active_storage, changed_storage, frontier, max_degree_vertex, on_decision);
 }
 
 template<world_part_concept part_t>
 auto
 color_scc_step(
-  part_t const&   part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  vertex_t*       scc_id,
-  vertex_t*       colors,
-  vertex_t*       active_array,
-  u64*            active_storage,
-  u64*            changed_storage,
-  edge_frontier&  frontier,
-  vertex_t        decided_count = 0,
-  auto&&          on_decision   = [](vertex_t) {}) -> vertex_t
+  bidi_graph_part_view<part_t> graph,
+  vertex_t*                    scc_id,
+  vertex_t*                    colors,
+  vertex_t*                    active_array,
+  u64*                         active_storage,
+  u64*                         changed_storage,
+  edge_frontier&               frontier,
+  vertex_t                     decided_count = 0,
+  auto&&                       on_decision   = [](vertex_t) {}) -> vertex_t
 {
-  auto const local_n      = part.local_n();
-  auto       active       = view_bits(active_storage, local_n);
-  auto       changed      = view_bits(changed_storage, local_n);
-  auto       active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
+  auto const& part         = *graph.part;
+  auto const  local_n      = part.local_n();
+  auto        active       = view_bits(active_storage, local_n);
+  auto        changed      = view_bits(changed_storage, local_n);
+  auto        active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
 
 #if KASPAN_DEBUG
   // Validate decided_count is consistent with scc_id
@@ -308,7 +298,7 @@ color_scc_step(
         active_stack.pop();
 
         auto const label = colors[k];
-        for (auto v : csr_range(fw_head, fw_csr, k)) {
+        for (auto v : graph.csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided and label < colors[l]) {
@@ -326,7 +316,7 @@ color_scc_step(
 
       changed.for_each(local_n, [&](auto&& k) {
         auto const label_k = colors[k];
-        for (auto v : csr_range(fw_head, fw_csr, k)) {
+        for (auto v : graph.csr_range(k)) {
           if (label_k < v and not part.has_local(v)) {
             frontier.push(part.world_rank_of(v), { v, label_k });
           }
@@ -381,7 +371,7 @@ color_scc_step(
         active.unset(k);
 
         auto const pivot = colors[k];
-        for (auto v : csr_range(bw_head, bw_csr, k)) {
+        for (auto v : graph.bw_csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided and colors[l] == pivot) {
@@ -400,7 +390,7 @@ color_scc_step(
 
       changed.for_each(local_n, [&](auto&& k) {
         auto const pivot = colors[k];
-        for (auto v : csr_range(bw_head, bw_csr, k)) {
+        for (auto v : graph.bw_csr_range(k)) {
           if (not part.has_local(v)) {
             frontier.push(part.world_rank_of(v), { v, pivot });
           }

@@ -1,9 +1,9 @@
 #pragma once
 
+#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/scc/graph.hpp>
 
 namespace kaspan {
 
@@ -28,24 +28,21 @@ template<world_part_concept part_t,
          typename brief_queue_t>
 auto
 ecl_scc_step(
-  part_t const&   part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  brief_queue_t&  mq,
-  vertex_t*       scc_id,
-  vertex_t*       ecl_fw_label,
-  vertex_t*       ecl_bw_label,
-  vertex_t*       fw_active_array,
-  vertex_t*       bw_active_array,
-  bits_accessor   fw_active,
-  bits_accessor   bw_active,
-  bits_accessor   fw_changed,
-  bits_accessor   bw_changed,
-  vertex_t        decided_count = 0) -> vertex_t
+  bidi_graph_part_view<part_t> graph,
+  brief_queue_t&               mq,
+  vertex_t*                    scc_id,
+  vertex_t*                    ecl_fw_label,
+  vertex_t*                    ecl_bw_label,
+  vertex_t*                    fw_active_array,
+  vertex_t*                    bw_active_array,
+  bits_accessor                fw_active,
+  bits_accessor                bw_active,
+  bits_accessor                fw_changed,
+  bits_accessor                bw_changed,
+  vertex_t                     decided_count = 0) -> vertex_t
 {
-  auto const local_n = part.local_n();
+  auto const& part    = *graph.part;
+  auto const  local_n = part.local_n();
 
   auto fw_active_stack = view_stack<vertex_t>(fw_active_array, local_n);
   auto bw_active_stack = view_stack<vertex_t>(bw_active_array, local_n);
@@ -108,7 +105,7 @@ ecl_scc_step(
         fw_active.unset(k);
 
         auto const label_k = ecl_fw_label[k];
-        for (auto v : csr_range(fw_head, fw_csr, k)) {
+        for (auto v : graph.fw_csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided and label_k < ecl_fw_label[l]) {
@@ -138,7 +135,7 @@ ecl_scc_step(
       fw_pushed = true;
       fw_changed.unset(k);
       auto const label_k = ecl_fw_label[k];
-      for (auto v : csr_range(fw_head, fw_csr, k)) {
+      for (auto v : graph.fw_csr_range(k)) {
         if (not part.has_local(v) and label_k < v) {
           mq.post_message_blocking(edge{ v, label_k }, part.world_rank_of(v), on_fw_message);
         }
@@ -153,7 +150,7 @@ ecl_scc_step(
         bw_active.unset(k);
 
         auto const label_k = ecl_bw_label[k];
-        for (auto v : csr_range(bw_head, bw_csr, k)) {
+        for (auto v : graph.bw_csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided and label_k < ecl_bw_label[l]) {
@@ -183,7 +180,7 @@ ecl_scc_step(
       bw_pushed = true;
       bw_changed.unset(k);
       auto const label_k = ecl_bw_label[k];
-      for (auto v : csr_range(bw_head, bw_csr, k)) {
+      for (auto v : graph.bw_csr_range(k)) {
         if (not part.has_local(v) and label_k < v) {
           mq.post_message_blocking(edge{ v, label_k }, part.world_rank_of(v), on_bw_message);
         }

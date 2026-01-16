@@ -5,7 +5,7 @@
 #include <kaspan/scc/async/scc.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/fuzzy.hpp>
-#include <kaspan/scc/part.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/scc/scc.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
@@ -64,7 +64,7 @@ verify_scc_id(Graph const& graph, vertex_t const* scc_id_orig, vertex_t* scc_id)
         mrk_stream << (scc_id_orig[it] == scc_id[it] ? p : m);
       }
 
-      ASSERT_EQ(graph.scc_id_part[k],
+      ASSERT_EQ(scc_id_orig[k],
                 scc_id[k],
                 "k={}; u={}; n={}; rank={}; size={};\n{}\n{}\n{}\n{}",
                 k,
@@ -94,27 +94,25 @@ main(int argc, char** argv)
 
       auto const seed  = mpi_basic::allreduce_max_time();
       auto const part  = balanced_slice_part{ n };
-      auto const graph = fuzzy_local_scc_id_and_graph(seed, part);
+      auto const [scc_id_, bg] = fuzzy_local_scc_id_and_graph(seed, part);
 
       // Test sync version
       {
         auto const local_n = part.local_n();
         auto       scc_id  = make_array<vertex_t>(local_n);
-        scc(part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id.data());
+        scc(bg.view(), scc_id.data());
         if (local_n > 0) {
-          verify_scc_id(graph, graph.scc_id_part, scc_id.data());
+          verify_scc_id(bg, scc_id_.data(), scc_id.data());
         }
       }
 
       // Test async version with NoopIndirectionScheme
       {
         auto const local_n = part.local_n();
-        auto       buffer  = make_buffer<vertex_t>(std::max<vertex_t>(local_n, 1));
-        auto*      memory  = buffer.data();
-        auto*      scc_id  = borrow_array<vertex_t>(&memory, local_n > 0 ? local_n : 1);
-        async::scc<briefkasten::NoopIndirectionScheme>(part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+        auto       scc_id  = make_array<vertex_t>(local_n);
+        async::scc<briefkasten::NoopIndirectionScheme>(bg.view(), scc_id.data());
         if (local_n > 0) {
-          verify_scc_id(graph, graph.scc_id_part, scc_id);
+          verify_scc_id(bg, scc_id_.data(), scc_id.data());
         }
       }
     }

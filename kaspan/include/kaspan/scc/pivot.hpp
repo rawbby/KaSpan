@@ -2,7 +2,7 @@
 
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/graph/part.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 
@@ -27,16 +27,15 @@ allreduce_pivot(
 template<world_part_concept part_t>
 auto
 select_pivot_from_head(
-  part_t const&   part,
-  index_t const*  fw_head,
-  index_t const*  bw_head,
-  vertex_t const* scc_id) -> vertex_t
+  bidi_graph_part_view<part_t> graph,
+  vertex_t const*              scc_id) -> vertex_t
 {
-  degree_t local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
+  auto const& part = *graph.part;
+  degree_t    local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
 
   for (vertex_t k = 0; k < part.local_n(); ++k) {
     if (scc_id[k] == scc_id_undecided) {
-      auto const degree_product = (fw_head[k + 1] - fw_head[k]) * (bw_head[k + 1] - bw_head[k]);
+      auto const degree_product = graph.outdegree(k) * graph.indegree(k);
       if (degree_product > local_max.degree_product) [[unlikely]]
         local_max = degree_t{ degree_product, part.to_global(k) };
     }

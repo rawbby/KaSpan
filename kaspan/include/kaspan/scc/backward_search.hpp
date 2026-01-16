@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kaspan/debug/assert.hpp>
+#include <kaspan/graph/graph_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/vertex_frontier.hpp>
@@ -8,20 +9,19 @@
 
 namespace kaspan {
 
-template<bool InterleavedSupport = false>
+template<bool InterleavedSupport = false, world_part_concept Part>
 auto
 backward_search(
-  world_part_concept auto const&       part,
-  index_t const*                       bw_head,
-  vertex_t const*                      bw_csr,
+  graph_part_view<Part>                graph,
   vertex_frontier<InterleavedSupport>& frontier,
   vertex_t*                            scc_id,
   u64*                                 fw_reached_storage,
   vertex_t                             pivot,
   auto&&                               on_decision = [](vertex_t) {}) -> vertex_t
 {
-  auto const local_n    = part.local_n();
-  auto       fw_reached = view_bits(fw_reached_storage, local_n);
+  auto const& part          = *graph.part;
+  auto const  local_n       = part.local_n();
+  auto        fw_reached    = view_bits(fw_reached_storage, local_n);
 
   vertex_t decided_count = 0;
   vertex_t min_u         = part.n;
@@ -47,7 +47,7 @@ backward_search(
       ++decided_count;
 
       // add all neighbours to frontier
-      for (vertex_t const v : csr_range(bw_head, bw_csr, k)) {
+      for (vertex_t const v : graph.csr_range(k)) {
         if (part.has_local(v)) {
           frontier.local_push(v);
         } else {

@@ -1,15 +1,18 @@
 #pragma once
 
-#include <kaspan/memory/accessor/stack_accessor.hpp>
+#include "kaspan/graph/bidi_graph.hpp"
+
+#include <kaspan/graph/graph.hpp>
+#include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/scc/graph.hpp>
 #include <kaspan/scc/partion_graph.hpp>
 #include <kaspan/util/arithmetic.hpp>
 
 #include <algorithm>
 #include <map>
 #include <random>
+#include <ranges>
 #include <set>
 #include <utility>
 #include <vector>
@@ -18,10 +21,9 @@ namespace kaspan {
 
 inline auto
 fuzzy_global_scc_id_and_graph(
-  u64    seed,
-  u64    n,
-  double d           = -1.0,
-  void*  temp_memory = nullptr)
+  u64      seed,
+  vertex_t n,
+  double   d = -1.0)
 {
   DEBUG_ASSERT_GE(n, 0);
   DEBUG_ASSERT(d == -1.0 or d >= 0.0);
@@ -31,73 +33,42 @@ fuzzy_global_scc_id_and_graph(
   // normalize degree
   d = [&rng, n, d] {
     // corner cases
-    if (n < 2) {
-      return -1.0;
-    }
+    if (n < 2) return -1.0;
 
     auto const min_d = std::log(std::max(1.0, std::log(static_cast<double>(n))));
     auto const max_d = static_cast<double>(n - 1) / 2.0; // this is not the upper bound, but a reasonable limit performance wise
 
     // random request
-    if (d == -1.0) {
-      return std::uniform_real_distribution{ min_d, max_d }(rng);
-    }
+    if (d == -1.0) return std::uniform_real_distribution{ min_d, max_d }(rng);
 
     // logical clamping
-    if (d < min_d) {
-      return min_d;
-    }
-    if (d > max_d) {
-      return max_d;
-    }
+    if (d < min_d) return min_d;
+    if (d > max_d) return max_d;
     return d;
   }();
 
-  struct local_scc_graph : local_graph
-  {
-    buffer    scc_id_buffer;
-    vertex_t* scc_id = nullptr;
-  };
-
-  local_scc_graph result;
-  result.scc_id_buffer = make_buffer<vertex_t>(n);
-  result.scc_id        = static_cast<vertex_t*>(result.scc_id_buffer.data());
-
-  buffer temp_buffer;
-  if (temp_memory == nullptr) {
-    temp_buffer = make_buffer<vertex_t>(n, n, n);
-    temp_memory = temp_buffer.data();
-  }
-
+  auto scc_id    = make_array_clean<vertex_t>(n);
+  auto fw_degree = make_array_clean<vertex_t>(n);
+  auto bw_degree = make_array_clean<vertex_t>(n);
   auto start_new = std::bernoulli_distribution{ 0.25 };
 
-  auto* fw_degree = borrow_array_clean<vertex_t>(&temp_memory, n);
-  auto* bw_degree = borrow_array_clean<vertex_t>(&temp_memory, n);
-
-  auto comps = std::map<u64, std::vector<u64>>{};
-  auto reps  = borrow_stack<vertex_t>(&temp_memory, n);
-  for (u64 v = 0; v < n; ++v) {
+  auto comps = std::map<vertex_t, std::vector<vertex_t>>{};
+  auto reps  = make_stack<vertex_t>(n);
+  for (vertex_t v = 0; v < n; ++v) {
     if (v == 0 or start_new(rng)) {
-
       reps.push(v);
       comps[v].push_back(v);
-
-      result.scc_id[v] = v;
-
+      scc_id[v] = v;
     } else {
-
       auto       pick = std::uniform_int_distribution<size_t>(0, reps.size() - 1);
-      auto const p    = pick(rng);
-
-      auto const root = reps.data()[p];
-
-      result.scc_id[v] = root;
+      auto const root = reps.data()[pick(rng)];
+      scc_id[v]       = root;
       comps[root].push_back(v);
     }
   }
 
-  auto edges        = std::set<std::pair<u64, u64>>{};
-  auto try_add_edge = [&](u64 u, u64 v) {
+  auto edges        = std::set<edge_t>{};
+  auto try_add_edge = [&](auto u, auto v) {
     if (u != v and edges.emplace(u, v).second) {
       ++fw_degree[u];
       ++bw_degree[v];
@@ -106,8 +77,8 @@ fuzzy_global_scc_id_and_graph(
 
   // create random cyclic path in
   // each non singular component
-  for (auto& [_, comp] : comps) {
-    if (comp.size() != 1) {
+  for (auto& comp : comps | std::views::values) {
+    if (comp.size() > 1) {
       std::ranges::shuffle(comp, rng);
       try_add_edge(comp.front(), comp.back());
       for (size_t i = 1; i < comp.size(); ++i) {
@@ -117,15 +88,11 @@ fuzzy_global_scc_id_and_graph(
   }
 
   auto avg_degree = [&] {
-    if (n == 0) {
-      return 0.0;
-    }
-    auto const dn = static_cast<double>(n);
-    auto const dm = static_cast<double>(edges.size());
-    return dm / dn;
+    if (n == 0) return 0.0;
+    return static_cast<double>(edges.size()) / n;
   };
 
-  std::vector<u64> prior;
+  std::vector<vertex_t> prior;
   prior.reserve(comps.size());
   while (avg_degree() < d) {
     prior.clear();
@@ -152,78 +119,64 @@ fuzzy_global_scc_id_and_graph(
     }
   }
 
-  auto const m = edges.size();
-
-  result.storage     = make_graph_buffer(n, m);
-  auto* graph_memory = result.storage.data();
-
-  result.n       = n;
-  result.m       = m;
-  result.fw_head = (n > 0) ? borrow_array<index_t>(&graph_memory, n + 1) : nullptr;
-  result.bw_head = (n > 0) ? borrow_array<index_t>(&graph_memory, n + 1) : nullptr;
-  result.fw_csr  = borrow_array<vertex_t>(&graph_memory, m);
-  result.bw_csr  = borrow_array<vertex_t>(&graph_memory, m);
+  auto bg = bidi_graph(n, integral_cast<index_t>(edges.size()));
 
   if (n > 0) {
-    u64 pos           = 0;
-    result.fw_head[0] = pos;
-    for (u64 i = 0; i < n; ++i) {
-      pos += fw_degree[i];
-      result.fw_head[i + 1] = pos;
+    index_t offset = 0;
+    bg.fw.head[0]  = offset;
+    for (vertex_t i = 0; i < n; ++i) {
+      offset += fw_degree[i];
+      bg.fw.head[i + 1] = offset;
     }
-    pos               = 0;
-    result.bw_head[0] = pos;
-    for (u64 i = 0; i < n; ++i) {
-      pos += bw_degree[i];
-      result.bw_head[i + 1] = pos;
-    }
-    std::vector<u64> fw_pos(n);
-    std::vector<u64> bw_pos(n);
-    for (u64 i = 0; i < n; ++i) {
-      fw_pos[i] = result.fw_head[i];
-      bw_pos[i] = result.bw_head[i];
+    std::vector<index_t> fw_pos(n);
+    for (vertex_t i = 0; i < n; ++i) {
+      fw_pos[i] = bg.fw.head[i];
     }
     for (auto const& [u, v] : edges) {
-      result.fw_csr[fw_pos[u]++] = v;
-      result.bw_csr[bw_pos[v]++] = u;
+      bg.fw.csr[fw_pos[u]++] = v;
     }
   }
 
-  DEBUG_ASSERT_VALID_GRAPH(result.n, result.fw_head, result.fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH(result.n, result.bw_head, result.bw_csr);
-  return result;
+  if (n > 0) {
+    index_t offset = 0;
+    bg.bw.head[0]  = offset;
+    for (vertex_t i = 0; i < n; ++i) {
+      offset += bw_degree[i];
+      bg.bw.head[i + 1] = offset;
+    }
+
+    std::vector<index_t> bw_pos(n);
+    for (vertex_t i = 0; i < n; ++i) {
+      bw_pos[i] = bg.bw.head[i];
+    }
+    for (auto const& [u, v] : edges) {
+      bg.bw.csr[bw_pos[v]++] = u;
+    }
+  }
+
+  bg.debug_validate();
+  return PACK(scc_id, bg);
 }
 
-/// memory = 4 * page_ceil(n * sizeof(vertex_t))
 template<world_part_concept part_t>
 auto
 fuzzy_local_scc_id_and_graph(
   u64           seed,
   part_t const& part,
-  double        degree = -1.0,
-  void*         memory = nullptr)
+  double        degree = -1.0)
 {
-  struct local_scc_graph_part : local_graph_part<part_t>
-  {
-    buffer    scc_id_part_buffer;
-    vertex_t* scc_id_part = nullptr;
-  };
-
   auto const local_n = part.local_n();
 
-  auto g = fuzzy_global_scc_id_and_graph(seed, part.n, degree, memory);
+  auto [scc_id, bg] = fuzzy_global_scc_id_and_graph(seed, part.n, degree);
 
-  local_scc_graph_part gp;
-  static_cast<local_graph_part<part_t>&>(gp) = partition(g.m, g.fw_head, g.fw_csr, g.bw_head, g.bw_csr, part);
-  gp.scc_id_part_buffer                      = make_buffer<vertex_t>(local_n);
-  gp.scc_id_part                             = static_cast<vertex_t*>(gp.scc_id_part_buffer.data());
-  for (vertex_t k = 0; k < local_n; ++k) {
-    gp.scc_id_part[k] = g.scc_id[part.to_global(k)];
-  }
+  auto scc_id_part = make_array<vertex_t>(local_n);
+  auto bgp         = partition(bg.view(), part);
 
-  DEBUG_ASSERT_VALID_GRAPH_PART(gp.part, gp.fw_head, gp.fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH_PART(gp.part, gp.bw_head, gp.bw_csr);
-  return gp;
+  bgp.each_k([&](auto k) {
+    scc_id_part[k] = scc_id[part.to_global(k)];
+  });
+
+  return PACK(scc_id_part, bgp);
 }
 
 } // namespace kaspan

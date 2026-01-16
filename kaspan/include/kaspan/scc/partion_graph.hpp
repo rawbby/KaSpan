@@ -1,121 +1,112 @@
 #pragma once
 
-#include <kaspan/memory/borrow.hpp>
-#include <kaspan/memory/buffer.hpp>
-#include <kaspan/scc/base.hpp>
-#include <kaspan/scc/degree.hpp>
+#include "kaspan/graph/bidi_graph.hpp"
+
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/graph_part.hpp>
 #include <kaspan/graph/part.hpp>
+#include <kaspan/scc/base.hpp>
 #include <kaspan/util/pp.hpp>
-
-/// from a global_graph get the degree of a partition
 
 namespace kaspan {
 
+/// from a global_graph get the degree of a partition
 template<world_part_concept part_t>
   requires(part_t::continuous)
-index_t
-partition_degree(
-  index_t const* fw_head,
-  part_t const&  part)
+auto
+partition_local_m(
+  graph_view    g,
+  part_t const& part) -> index_t
 {
-  if (part.local_n() > 0) {
-    return fw_head[part.end] - fw_head[part.begin];
-  }
-  return 0;
+  return part.local_n() > 0 ? g.head[part.end] - g.head[part.begin] : 0;
 }
 
 /// from a global_graph get the degree of a partition
-template<world_part_concept part_t>
-  requires(not part_t::continuous)
-index_t
-partition_degree(
-  index_t const* fw_head,
-  part_t const&  part)
+template<world_part_concept Part>
+  requires(!Part::continuous)
+auto
+partition_local_m(
+  graph_view  g,
+  Part const& part) -> index_t
 {
   auto const local_n = part.local_n();
 
   index_t m = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    m += degree(fw_head, part.to_global(k));
+    m += g.outdegree(part.to_global(k));
   }
   return m;
 }
 
-template<world_part_concept part_t>
+/// from a global_graph get the degree of a partition
+template<world_part_concept Part>
 auto
-partition(
-  index_t         m,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  part_t const&   part) -> bidi_graph_part<part_t>
+partition_local_m(
+  bidi_graph_view bg,
+  Part const&     part)
 {
-  auto const local_n = part.local_n();
-  DEBUG_ASSERT_VALID_GRAPH(part.n, fw_head, fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH(part.n, bw_head, bw_csr);
-
-  auto partition_direction = [&part, local_n, m](index_t const* head, vertex_t const* csr, index_t* out_head, vertex_t* out_csr) {
-    DEBUG_ASSERT_VALID_GRAPH(part.n, head, csr);
-
-    vertex_t pos = 0;
-    for (vertex_t k = 0; k < local_n; ++k) {
-      auto const u = part.to_global(k);
-
-      auto const beg = head[u];
-      auto const end = head[u + 1];
-
-      out_head[k] = pos;
-      for (auto it = beg; it < end; ++it) {
-        out_csr[pos] = csr[it];
-        ++pos;
-      }
-    }
-    out_head[local_n] = pos;
-  };
-
-  auto const local_fw_m = partition_degree(fw_head, part);
-  auto const local_bw_m = partition_degree(bw_head, part);
-
-  bidi_graph_part<part_t> result(part, local_fw_m, local_bw_m);
-
-  partition_direction(fw_head, fw_csr, result.fw.head, result.fw.csr);
-  partition_direction(bw_head, bw_csr, result.bw.head, result.bw.csr);
-
-  return result;
+  auto const local_fw_m = partition_local_m(bg.fw_view(), part);
+  auto const local_bw_m = partition_local_m(bg.bw_view(), part);
+  return PACK(local_fw_m, local_bw_m);
 }
 
 template<world_part_concept part_t>
 auto
 partition(
-  index_t         /* m */,
-  index_t const*  head,
-  vertex_t const* csr,
-  part_t const&   part)
+  graph_view g,
+  part_t     part) -> graph_part<part_t>
 {
+  g.debug_validate();
   auto const local_n = part.local_n();
-  auto const local_m = partition_degree(head, part);
 
-  graph_part<part_t> result(part, local_m);
+  auto const local_m = partition_local_m(g, part);
+  auto       gp      = graph_part<part_t>{ std::move(part), local_m };
 
-  vertex_t pos = 0;
+  index_t pos = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    auto const u = part.to_global(k);
-
-    auto const beg = head[u];
-    auto const end = head[u + 1];
-
-    result.head[k] = pos;
-    for (auto it = beg; it < end; ++it) {
-      result.csr[pos] = csr[it];
-      ++pos;
-    }
+    gp.head[k] = pos;
+    g.each_v(gp.part.to_global(k), [&](auto v) {
+      gp.csr[pos++] = v;
+    });
   }
-  result.head[local_n] = pos;
+  if (local_n > 0) gp.head[local_n] = pos;
 
-  return result;
+  gp.debug_validate();
+  return gp;
+}
+
+template<world_part_concept part_t>
+auto
+partition(
+  bidi_graph_view bg,
+  part_t          part) -> bidi_graph_part<part_t>
+{
+  bg.debug_validate();
+  auto const local_n                  = part.local_n();
+  auto const [local_fw_m, local_bw_m] = partition_local_m(bg, part);
+
+  auto bgp = bidi_graph_part<part_t>{ std::move(part), local_fw_m, local_bw_m };
+
+  index_t fw_offset = 0;
+  for (vertex_t k = 0; k < local_n; ++k) {
+    bgp.fw.head[k] = fw_offset;
+    bg.each_v(bgp.part.to_global(k), [&](auto v) {
+      bgp.fw.csr[fw_offset++] = v;
+    });
+  }
+  if (local_n > 0) bgp.fw.head[local_n] = fw_offset;
+
+  index_t bw_offset = 0;
+  for (vertex_t k = 0; k < local_n; ++k) {
+    bgp.bw.head[k] = bw_offset;
+    bg.each_bw_v(bgp.part.to_global(k), [&](auto v) {
+      bgp.bw.csr[bw_offset++] = v;
+    });
+  }
+  if (local_n > 0) bgp.bw.head[local_n] = bw_offset;
+
+  bgp.debug_validate();
+  return bgp;
 }
 
 } // namespace kaspan

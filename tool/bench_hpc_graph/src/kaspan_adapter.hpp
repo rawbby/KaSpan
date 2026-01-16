@@ -1,7 +1,7 @@
 #pragma once
 
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/scc/graph.hpp>
+#include <kaspan/graph/graph.hpp>
 #include <kaspan/util/integral_cast.hpp>
 
 #include <comms.h>

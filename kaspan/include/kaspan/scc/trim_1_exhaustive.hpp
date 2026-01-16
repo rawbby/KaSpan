@@ -2,7 +2,7 @@
 
 #include <kaspan/memory/accessor/once_queue_accessor.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/scc/part.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/scc/vertex_frontier.hpp>
 
 namespace kaspan {
@@ -12,17 +12,16 @@ namespace kaspan {
 /// scc_id[k] != undecided || valid(degree[k]).
 /// notice: you can pass a vertex_frontier with interleaved support,
 /// but its not needed nor adviced performance wise.
-template<bool InterleavedSupport = false>
+template<bool InterleavedSupport = false, world_part_concept Part>
 auto
 trim_1_exhaustive(
-  world_part_concept auto const&       part,
-  index_t const*                       head,
-  index_t const*                       csr,
+  graph_part_view<Part>                graph,
   vertex_t*                            scc_id,
   vertex_t*                            degree,
   vertex_frontier<InterleavedSupport>& frontier) -> vertex_t
 {
-  vertex_t decided_count = 0;
+  auto const& part          = *graph.part;
+  vertex_t    decided_count = 0;
 
   do {
     while (frontier.has_next()) {
@@ -40,7 +39,7 @@ trim_1_exhaustive(
         if (--degree[k]; degree[k] == 0) { // decide and prepare to notify neighbours
           scc_id[k] = u;
           ++decided_count;
-          for (auto const v : csr_range(head, csr, k)) {
+          for (auto const v : graph.csr_range(k)) {
             if (part.has_local(v)) frontier.local_push(v);
             else frontier.push(part.world_rank_of(v), v);
           }
@@ -52,40 +51,38 @@ trim_1_exhaustive(
   return decided_count;
 }
 
+template<world_part_concept Part>
 auto
 trim_1_exhaustive(
-  world_part_concept auto const& part,
-  index_t const*                 fw_head,
-  index_t const*                 fw_csr,
-  index_t const*                 bw_head,
-  index_t const*                 bw_csr,
-  vertex_t*                      scc_id,
-  vertex_t*                      outdegree,
-  vertex_t*                      indegree,
-  vertex_frontier<>&             frontier,
-  vertex_t*                      decided_beg,
-  vertex_t*                      decided_end) -> vertex_t
+  bidi_graph_part_view<Part> graph,
+  vertex_t*                  scc_id,
+  vertex_t*                  outdegree,
+  vertex_t*                  indegree,
+  vertex_frontier<>&         frontier,
+  vertex_t*                  decided_beg,
+  vertex_t*                  decided_end) -> vertex_t
 {
-  vertex_t decided_count = 0;
+  auto const& part          = *graph.part;
+  vertex_t    decided_count = 0;
 
   // from all decided
   for (auto it = decided_beg; it != decided_end; ++it) {
-    for (auto const v : csr_range(fw_head, fw_csr, *it)) {
+    for (auto const v : graph.fw_view().csr_range(*it)) {
       if (part.has_local(v)) frontier.local_push(v);
       else frontier.push(part.world_rank_of(v), v);
     }
   }
 
-  decided_count += trim_1_exhaustive(part, fw_head, fw_csr, scc_id, indegree, frontier);
+  decided_count += trim_1_exhaustive(graph.fw_view(), scc_id, indegree, frontier);
 
   for (auto it = decided_beg; it != decided_end; ++it) {
-    for (auto const v : csr_range(bw_head, bw_csr, *it)) {
+    for (auto const v : graph.bw_view().csr_range(*it)) {
       if (part.has_local(v)) frontier.local_push(v);
       else frontier.push(part.world_rank_of(v), v);
     }
   }
 
-  return decided_count + trim_1_exhaustive(part, bw_head, bw_csr, scc_id, outdegree, frontier);
+  return decided_count + trim_1_exhaustive(graph.bw_view(), scc_id, outdegree, frontier);
 }
 
 /// trim_1_exhaustive_first iteratively trims vertices with indegree/outdegree of zero.
@@ -93,21 +90,18 @@ trim_1_exhaustive(
 /// will initilise these appropriately.
 /// notice: you can pass a vertex_frontier with interleaved support,
 /// but its not needed nor adviced performance wise.
-template<bool Interleaved = false>
+template<bool Interleaved = false, world_part_concept Part>
 auto
 trim_1_exhaustive_first(
-  world_part_concept auto const& part,
-  index_t const*                 fw_head,
-  index_t const*                 fw_csr,
-  index_t const*                 bw_head,
-  index_t const*                 bw_csr,
-  vertex_t*                      scc_id,
-  vertex_t*                      outdegree,
-  vertex_t*                      indegree,
-  vertex_frontier<Interleaved>&  frontier) -> vertex_t
+  bidi_graph_part_view<Part>    graph,
+  vertex_t*                     scc_id,
+  vertex_t*                     outdegree,
+  vertex_t*                     indegree,
+  vertex_frontier<Interleaved>& frontier) -> vertex_t
 {
-  auto const local_n       = part.local_n();
-  vertex_t   decided_count = 0;
+  auto const& part          = *graph.part;
+  auto const  local_n       = part.local_n();
+  vertex_t    decided_count = 0;
 
   // == initial indegree trim ==
   // We get the initial indegree right from the head array
@@ -116,7 +110,7 @@ trim_1_exhaustive_first(
   // indegree and mark as undecided. (As this function is
   // expected to initialise the scc_id array)
   for (vertex_t k = 0; k < local_n; ++k) {
-    auto const degree = bw_head[k + 1] - bw_head[k];
+    auto const degree = graph.indegree(k);
 
     if (degree > 0) { // initialise
       scc_id[k]   = scc_id_undecided;
@@ -126,7 +120,7 @@ trim_1_exhaustive_first(
     else { // decide right away and prepare to notify neighbours
       scc_id[k] = part.to_global(k);
       ++decided_count;
-      for (auto const v : csr_range(fw_head, fw_csr, k)) {
+      for (auto const v : graph.csr_range(k)) {
         if (part.has_local(v)) frontier.local_push(v);
         else frontier.push(part.world_rank_of(v), v);
       }
@@ -135,7 +129,7 @@ trim_1_exhaustive_first(
 
   // With the initialisation done and the first collected decision we
   // can now simply delegate the exhaustive trimming to a sub routine.
-  decided_count += trim_1_exhaustive(part, fw_head, fw_csr, scc_id, indegree, frontier);
+  decided_count += trim_1_exhaustive(graph.fw_view(), scc_id, indegree, frontier);
 
   // == initial outdegree trim ==
   // We do similar to the initial indegree trim
@@ -143,7 +137,7 @@ trim_1_exhaustive_first(
   // already have decided vertices to skip.
   for (vertex_t k = 0; k < local_n; ++k) {
     if (scc_id[k] == scc_id_undecided) {
-      auto const degree = fw_head[k + 1] - fw_head[k];
+      auto const degree = graph.outdegree(k);
 
       if (degree > 0) { // initialise
         outdegree[k] = degree;
@@ -152,7 +146,7 @@ trim_1_exhaustive_first(
       else { // decide right away and prepare to notify neighbours
         scc_id[k] = part.to_global(k);
         ++decided_count;
-        for (auto const v : csr_range(bw_head, bw_csr, k)) {
+        for (auto const v : graph.bw_csr_range(k)) {
           if (part.has_local(v)) frontier.local_push(v);
           else frontier.push(part.world_rank_of(v), v);
         }
@@ -161,7 +155,7 @@ trim_1_exhaustive_first(
   }
 
   // delegate the exhaustive trimming to a sub routine again.
-  return decided_count + trim_1_exhaustive(part, bw_head, bw_csr, scc_id, outdegree, frontier);
+  return decided_count + trim_1_exhaustive(graph.bw_view(), scc_id, outdegree, frontier);
 }
 
 namespace interleaved {
@@ -169,20 +163,18 @@ namespace interleaved {
 /// trim_1_exhaustive iteratevely trims both directions, forward and backward, interleaved.
 /// To do that scc_id must be valid and degree must be valid if:
 /// scc_id[k] != undecided || (valid(indegree[k]) && valid(outdegree[k])).
+template<world_part_concept Part>
 auto
 trim_1_exhaustive(
-  world_part_concept auto const& part,
-  index_t const*                 fw_head,
-  index_t const*                 fw_csr,
-  index_t const*                 bw_head,
-  index_t const*                 bw_csr,
-  vertex_t*                      scc_id,
-  vertex_t*                      outdegree,
-  vertex_t*                      indegree,
-  vertex_frontier&               frontier) -> vertex_t
+  bidi_graph_part_view<Part> graph,
+  vertex_t*                  scc_id,
+  vertex_t*                  outdegree,
+  vertex_t*                  indegree,
+  vertex_frontier&           frontier) -> vertex_t
   requires(signed_concept<vertex_t>)
 {
-  vertex_t decided_count = 0;
+  auto const& part          = *graph.part;
+  vertex_t    decided_count = 0;
 
   do {
     while (frontier.has_next()) {
@@ -196,7 +188,7 @@ trim_1_exhaustive(
           if (--outdegree[k] == 0) { // decide and prepare to notify neighbours
             scc_id[k] = v;
             ++decided_count;
-            for (auto const w : csr_range(bw_head, bw_csr, k)) {
+            for (auto const w : graph.bw_csr_range(k)) {
               if (part.has_local(w)) frontier.local_push(-w);
               else frontier.push(part.world_rank_of(w), -w);
             }
@@ -212,7 +204,7 @@ trim_1_exhaustive(
           if (--indegree[k] == 0) { // decide and prepare to notify neighbours
             scc_id[k] = v;
             ++decided_count;
-            for (auto const w : csr_range(fw_head, fw_csr, k)) {
+            for (auto const w : graph.csr_range(k)) {
               if (part.has_local(w)) frontier.local_push(w);
               else frontier.push(part.world_rank_of(w), w);
             }
@@ -228,25 +220,23 @@ trim_1_exhaustive(
 /// trim_1_exhaustive_first iteratively trims vertices with indegree/outdegree of zero.
 /// It assumes to run on a fresh graph with uninitialised scc_id/indegree/outdegree and
 /// will initilise these appropriately.
+template<world_part_concept Part>
 auto
 trim_1_exhaustive_first(
-  world_part_concept auto const& part,
-  index_t const*                 fw_head,
-  index_t const*                 fw_csr,
-  index_t const*                 bw_head,
-  index_t const*                 bw_csr,
-  vertex_t*                      scc_id,
-  vertex_t*                      outdegree,
-  vertex_t*                      indegree,
-  vertex_frontier&               frontier) -> vertex_t
+  bidi_graph_part_view<Part> graph,
+  vertex_t*                  scc_id,
+  vertex_t*                  outdegree,
+  vertex_t*                  indegree,
+  vertex_frontier&           frontier) -> vertex_t
   requires(signed_concept<vertex_t>)
 {
-  auto const local_n       = part.local_n();
-  vertex_t   decided_count = 0;
+  auto const& part          = *graph.part;
+  auto const  local_n       = part.local_n();
+  vertex_t    decided_count = 0;
 
   for (vertex_t k = 0; k < local_n; ++k) {
-    auto const indegree_k  = bw_head[k + 1] - bw_head[k];
-    auto const outdegree_k = fw_head[k + 1] - fw_head[k];
+    auto const indegree_k  = graph.indegree(k);
+    auto const outdegree_k = graph.outdegree(k);
 
     if (indegree_k == 0 && outdegree_k == 0) [[unlikely]] {
       scc_id[k] = part.to_global(k);
@@ -256,7 +246,7 @@ trim_1_exhaustive_first(
     else if (indegree_k == 0) {
       scc_id[k] = part.to_global(k);
       ++decided_count;
-      for (auto const v : csr_range(fw_head, fw_csr, k)) {
+      for (auto const v : graph.csr_range(k)) {
         if (part.has_local(v)) frontier.local_push(v);
         else frontier.push(part.world_rank_of(v), v);
       }
@@ -265,7 +255,7 @@ trim_1_exhaustive_first(
     else if (outdegree_k == 0) {
       scc_id[k] = part.to_global(k);
       ++decided_count;
-      for (auto const v : csr_range(bw_head, bw_csr, k)) {
+      for (auto const v : graph.bw_csr_range(k)) {
         if (part.has_local(v)) frontier.local_push(-v);
         else frontier.push(part.world_rank_of(v), -v);
       }
@@ -278,7 +268,7 @@ trim_1_exhaustive_first(
     }
   }
 
-  return decided_count + trim_1_exhaustive(part, fw_head, fw_csr, bw_head, bw_csr, scc_id, outdegree, indegree, frontier);
+  return decided_count + trim_1_exhaustive(graph, scc_id, outdegree, indegree, frontier);
 }
 }
 

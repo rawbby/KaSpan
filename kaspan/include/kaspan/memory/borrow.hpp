@@ -237,7 +237,7 @@ make_array_clean(
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
   auto const count64 = integral_cast<u64>(count);
   auto       result  = array<T>{ count64 };
-  std::memset(result, 0x00, count64 * sizeof(T));
+  std::memset(result.data(), 0x00, count64 * sizeof(T));
   return result;
 }
 
@@ -251,7 +251,7 @@ make_array_filled(
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
   auto const count64 = integral_cast<u64>(count);
   auto       result  = array<T>{ count64 };
-  std::memset(result, 0xff, count64 * sizeof(T));
+  std::memset(result.data(), 0xff, count64 * sizeof(T));
   return result;
 }
 

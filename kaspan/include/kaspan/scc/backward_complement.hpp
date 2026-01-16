@@ -1,13 +1,15 @@
 #pragma once
 
+#include "kaspan/graph/bidi_graph.hpp"
+
 #include <kaspan/debug/assert.hpp>
+#include <kaspan/graph/graph.hpp>
+#include <kaspan/graph/part.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/adapter/edgelist.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/scc/graph.hpp>
-#include <kaspan/scc/part.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
@@ -30,27 +32,24 @@ namespace kaspan {
  */
 inline void
 backward_complement_graph(
-  vertex_t        n,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t*        bw_head,
-  vertex_t*       bw_csr)
+  bidi_graph_view bg)
 {
-  DEBUG_ASSERT_VALID_GRAPH(n, fw_head, fw_csr);
+  bg.fw_view().debug_validate();
+  bg.bw_view().debug_check();
 
   // === zero bw_head and count indegrees in-place ===
   // after this loop: bw_head[0] == 0 and for every vertex v, bw_head[v + 1] == indegree(v)
-  if (n > 0) {
-    std::memset(bw_head, 0, (n + 1) * sizeof(index_t));
+  if (bg.n > 0) {
+    std::memset(bg.bw.head, 0, (bg.n + 1) * sizeof(index_t));
   }
   index_t it = 0;
-  DEBUG_ASSERT(n == 0 or fw_head[0] == 0);
-  for (vertex_t u = 0; u < n; ++u) {
-    DEBUG_ASSERT_IN_RANGE(fw_head[u], 0, fw_head[u + 1] + 1);
-    auto const end = fw_head[u + 1];
+  DEBUG_ASSERT(bg.n == 0 or bg.fw.head[0] == 0);
+  for (vertex_t u = 0; u < bg.n; ++u) {
+    DEBUG_ASSERT_IN_RANGE(bg.fw.head[u], 0, bg.fw.head[u + 1] + 1);
+    auto const end = bg.fw.head[u + 1];
     for (; it < end; ++it) {
-      DEBUG_ASSERT_IN_RANGE(fw_csr[it], 0, n);
-      ++bw_head[fw_csr[it] + 1];
+      DEBUG_ASSERT_IN_RANGE(bg.fw.csr[it], 0, bg.n);
+      ++bg.bw.head[bg.fw.csr[it] + 1];
     }
   }
 
@@ -58,10 +57,10 @@ backward_complement_graph(
   // after the loop: bw_head[u + 1] == sum_{k < u} indegree(k)
   // thus bw_head[v + 1] = row_begin(v) for the transposed graph
   index_t acc = 0;
-  for (vertex_t u = 0; u < n; ++u) {
-    DEBUG_ASSERT_IN_RANGE(bw_head[u + 1], 0, fw_head[n] + 1);
-    auto const indegree = bw_head[u + 1];
-    bw_head[u + 1]      = acc;
+  for (vertex_t u = 0; u < bg.n; ++u) {
+    DEBUG_ASSERT_IN_RANGE(bg.bw.head[u + 1], 0, bg.fw.head[bg.n] + 1);
+    auto const indegree = bg.bw.head[u + 1];
+    bg.bw.head[u + 1]   = acc;
     acc += indegree;
   }
 
@@ -69,14 +68,14 @@ backward_complement_graph(
   // for each edge (u,v), write u at bw_csr[bw_head[v + 1]] and increment that cursor
   // upon completion, each cursor advanced by indegree(v), so bw_head[v + 1] == row_end(v)
   it = 0;
-  for (vertex_t u = 0; u < n; ++u) {
-    auto const end = fw_head[u + 1];
+  for (vertex_t u = 0; u < bg.n; ++u) {
+    auto const end = bg.fw.head[u + 1];
     for (; it < end; ++it) {
-      bw_csr[bw_head[fw_csr[it] + 1]++] = u;
+      bg.bw.csr[bg.bw.head[bg.fw.csr[it] + 1]++] = u;
     }
   }
 
-  DEBUG_ASSERT_VALID_GRAPH(n, bw_head, bw_csr);
+  bg.bw_view().debug_validate();
 }
 
 /**

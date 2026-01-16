@@ -4,8 +4,8 @@
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/edge_frontier.hpp>
-#include <kaspan/scc/graph.hpp>
-#include <kaspan/scc/part.hpp>
+#include <kaspan/graph/graph.hpp>
+#include <kaspan/graph/part.hpp>
 
 #include <functional>
 

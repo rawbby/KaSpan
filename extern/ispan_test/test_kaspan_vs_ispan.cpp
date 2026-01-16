@@ -5,7 +5,7 @@
 #include <kaspan/scc/adapter/manifest.hpp>
 #include <kaspan/scc/allgather_graph.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/scc/graph.hpp>
+#include <kaspan/graph/graph.hpp>
 #include <kaspan/scc/scc.hpp>
 
 #include <mpi.h>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kaspan/scc/part.hpp>
+#include <kaspan/graph/part.hpp>
 #include <kaspan/scc/tarjan.hpp>
 #include <kaspan/util/integral_cast.hpp>
 

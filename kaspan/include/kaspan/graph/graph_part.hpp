@@ -2,9 +2,9 @@
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/valgrind.hpp>
+#include <kaspan/graph/part.hpp>
 #include <kaspan/memory/line.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/graph/part.hpp>
 
 #include <concepts>
 #include <span>
@@ -25,11 +25,11 @@ namespace kaspan {
 template<world_part_concept Part>
 struct graph_part_view
 {
-  using part_t            = Part;
-  part_t const*   part    = nullptr;
-  vertex_t        local_m = 0;
-  index_t const*  head    = nullptr;
-  vertex_t const* csr     = nullptr;
+  using part_t          = Part;
+  part_t const* part    = nullptr;
+  index_t       local_m = 0;
+  index_t*      head    = nullptr;
+  vertex_t*     csr     = nullptr;
 
   constexpr graph_part_view() noexcept  = default;
   constexpr ~graph_part_view() noexcept = default;
@@ -38,10 +38,10 @@ struct graph_part_view
   constexpr graph_part_view(graph_part_view const&) noexcept = default;
 
   constexpr graph_part_view(
-    part_t const*   part,
-    vertex_t        local_m,
-    index_t const*  head,
-    vertex_t const* csr) noexcept
+    part_t const* part,
+    index_t       local_m,
+    index_t*      head,
+    vertex_t*     csr) noexcept
     : part(part)
     , local_m(local_m)
     , head(head)
@@ -54,7 +54,7 @@ struct graph_part_view
   constexpr auto operator=(graph_part_view const&) noexcept -> graph_part_view& = default;
 
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t>
   {
     return { csr + head[k], csr + head[k + 1] };
   }
@@ -211,16 +211,16 @@ struct graph_part
 {
   using part_t = Part;
   part_t    part{};
-  vertex_t  local_m = 0;
+  index_t   local_m = 0;
   index_t*  head    = nullptr;
   vertex_t* csr     = nullptr;
 
   constexpr graph_part() noexcept = default;
 
   graph_part(
-    part_t   part,
-    vertex_t local_m)
-    : part(part)
+    part_t  part,
+    index_t local_m)
+    : part(std::move(part))
     , local_m(local_m)
     , head(line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1))
     , csr(line_alloc<vertex_t>(local_m))
@@ -236,7 +236,7 @@ struct graph_part
 
   constexpr graph_part(
     graph_part&& rhs) noexcept
-    : part(rhs.part)
+    : part(std::move(rhs.part))
     , local_m(rhs.local_m)
     , head(rhs.head)
     , csr(rhs.csr)
@@ -252,7 +252,7 @@ struct graph_part
     if (this != &rhs) {
       line_free(head);
       line_free(csr);
-      part     = rhs.part;
+      part     = std::move(rhs.part);
       local_m  = rhs.local_m;
       head     = rhs.head;
       csr      = rhs.csr;
@@ -269,7 +269,7 @@ struct graph_part
   }
 
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t>
   {
     return view().csr_range(k);
   }

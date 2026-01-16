@@ -1,9 +1,9 @@
 #pragma once
 
+#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/scc/graph.hpp>
 
 namespace kaspan::async {
 
@@ -11,21 +11,18 @@ template<world_part_concept part_t,
          typename brief_queue_t>
 auto
 color_scc_step(
-  part_t const&   part,
-  index_t const*  fw_head,
-  vertex_t const* fw_csr,
-  index_t const*  bw_head,
-  vertex_t const* bw_csr,
-  brief_queue_t&  mq,
-  vertex_t*       scc_id,
-  vertex_t*       colors,
-  vertex_t*       active_array,
-  u64*            active_storage,
-  vertex_t        decided_count = 0) -> vertex_t
+  bidi_graph_part_view<part_t> graph,
+  brief_queue_t&               mq,
+  vertex_t*                    scc_id,
+  vertex_t*                    colors,
+  vertex_t*                    active_array,
+  u64*                         active_storage,
+  vertex_t                     decided_count = 0) -> vertex_t
 {
-  auto const local_n      = part.local_n();
-  auto       active       = view_bits(active_storage, local_n);
-  auto       active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
+  auto const& part         = *graph.part;
+  auto const  local_n      = part.local_n();
+  auto        active       = view_bits(active_storage, local_n);
+  auto        active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
 
 #if KASPAN_DEBUG
   // Validate decided_count is consistent with scc_id
@@ -71,7 +68,7 @@ color_scc_step(
         active.unset(k);
 
         auto const label = colors[k];
-        for (auto v : csr_range(fw_head, fw_csr, k)) {
+        for (auto v : graph.csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided and label < colors[l]) {
@@ -137,7 +134,7 @@ color_scc_step(
         active.unset(k);
 
         auto const pivot = colors[k];
-        for (auto v : csr_range(bw_head, bw_csr, k)) {
+        for (auto v : graph.bw_csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided and colors[l] == pivot) {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <kaspan/scc/base.hpp>
-#include <kaspan/scc/part.hpp>
+#include <kaspan/graph/part.hpp>
 
 namespace kaspan {
 

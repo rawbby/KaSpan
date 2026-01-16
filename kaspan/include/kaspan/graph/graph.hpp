@@ -24,10 +24,10 @@ namespace kaspan {
  */
 struct graph_view
 {
-  vertex_t        n    = 0;       ///< Number of vertices
-  vertex_t        m    = 0;       ///< Number of edges
-  index_t const*  head = nullptr; ///< Offsets into the CSR array (size n + 1)
-  vertex_t const* csr  = nullptr; ///< Neighbor array (size m)
+  vertex_t  n    = 0;       ///< Number of vertices
+  index_t   m    = 0;       ///< Number of edges
+  index_t*  head = nullptr; ///< Offsets into the CSR array (size n + 1)
+  vertex_t* csr  = nullptr; ///< Neighbor array (size m)
 
   constexpr graph_view() noexcept  = default;
   constexpr ~graph_view() noexcept = default;
@@ -36,10 +36,10 @@ struct graph_view
   constexpr graph_view(graph_view const&) noexcept = default;
 
   constexpr graph_view(
-    vertex_t        n,
-    vertex_t        m,
-    index_t const*  head,
-    vertex_t const* csr) noexcept
+    vertex_t  n,
+    index_t   m,
+    index_t*  head,
+    vertex_t* csr) noexcept
     : n(n)
     , m(m)
     , head(head)
@@ -57,7 +57,7 @@ struct graph_view
    * @return A span of neighbors.
    */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t u) const noexcept -> std::span<vertex_t>
   {
     return { csr + head[u], csr + head[u + 1] };
   }
@@ -187,7 +187,7 @@ struct graph_view
 struct graph
 {
   vertex_t  n    = 0;       ///< Number of vertices
-  vertex_t  m    = 0;       ///< Number of edges
+  index_t   m    = 0;       ///< Number of edges
   index_t*  head = nullptr; ///< Offsets (size n + 1)
   vertex_t* csr  = nullptr; ///< Neighbors (size m)
 
@@ -195,7 +195,7 @@ struct graph
 
   graph(
     vertex_t n,
-    vertex_t m)
+    index_t  m)
     : n(n)
     , m(m)
     , head(line_alloc<index_t>(n == 0 ? 0 : n + 1))
@@ -250,7 +250,7 @@ struct graph
    * @brief Get the neighbors of vertex u.
    */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t u) const noexcept -> std::span<vertex_t>
   {
     return view().csr_range(u);
   }

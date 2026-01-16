@@ -2,7 +2,7 @@
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/edge_frontier.hpp>
-#include <kaspan/scc/part.hpp>
+#include <kaspan/graph/part.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
