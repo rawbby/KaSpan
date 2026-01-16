@@ -4,8 +4,9 @@
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/degree.hpp>
-#include <kaspan/scc/graph.hpp>
-#include <kaspan/scc/part.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/graph/graph_part.hpp>
+#include <kaspan/graph/part.hpp>
 #include <kaspan/util/pp.hpp>
 
 /// from a global_graph get the degree of a partition
@@ -50,7 +51,7 @@ partition(
   vertex_t const* fw_csr,
   index_t const*  bw_head,
   vertex_t const* bw_csr,
-  part_t const&   part) -> local_graph_part<part_t>
+  part_t const&   part) -> bidi_graph_part<part_t>
 {
   auto const local_n = part.local_n();
   DEBUG_ASSERT_VALID_GRAPH(part.n, fw_head, fw_csr);
@@ -78,22 +79,10 @@ partition(
   auto const local_fw_m = partition_degree(fw_head, part);
   auto const local_bw_m = partition_degree(bw_head, part);
 
-  local_graph_part<part_t> result;
-  result.storage = make_graph_buffer(local_n, local_fw_m, local_bw_m);
-  auto* memory   = result.storage.data();
+  bidi_graph_part<part_t> result(part, local_fw_m, local_bw_m);
 
-  result.part       = part;
-  result.m          = m;
-  result.local_fw_m = local_fw_m;
-  result.local_bw_m = local_bw_m;
-
-  result.fw_head = borrow_array<index_t>(&memory, local_n + 1);
-  result.fw_csr  = borrow_array<vertex_t>(&memory, local_fw_m);
-  partition_direction(fw_head, fw_csr, result.fw_head, result.fw_csr);
-
-  result.bw_head = borrow_array<index_t>(&memory, local_n + 1);
-  result.bw_csr  = borrow_array<vertex_t>(&memory, local_bw_m);
-  partition_direction(bw_head, bw_csr, result.bw_head, result.bw_csr);
+  partition_direction(fw_head, fw_csr, result.fw.head, result.fw.csr);
+  partition_direction(bw_head, bw_csr, result.bw.head, result.bw.csr);
 
   return result;
 }
@@ -101,34 +90,16 @@ partition(
 template<world_part_concept part_t>
 auto
 partition(
-  index_t         m,
+  index_t         /* m */,
   index_t const*  head,
   vertex_t const* csr,
   part_t const&   part)
 {
-  struct partition_result
-  {
-    buffer    storage;
-    part_t    part;
-    index_t   m       = 0;
-    index_t   local_m = 0;
-    index_t*  head    = nullptr;
-    vertex_t* csr     = nullptr;
-  };
-
   auto const local_n = part.local_n();
   auto const local_m = partition_degree(head, part);
 
-  partition_result result;
-  result.storage = make_fw_graph_buffer(local_n + 1, local_m);
-  auto* memory   = result.storage.data();
+  graph_part<part_t> result(part, local_m);
 
-  result.part    = part;
-  result.m       = m;
-  result.local_m = local_m;
-
-  result.head  = borrow_array<index_t>(&memory, local_n + 1);
-  result.csr   = borrow_array<vertex_t>(&memory, local_m);
   vertex_t pos = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
     auto const u = part.to_global(k);

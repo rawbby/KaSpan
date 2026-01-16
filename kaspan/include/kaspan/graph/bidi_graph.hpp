@@ -72,6 +72,14 @@ struct bidi_graph_view
   }
 
   /**
+   * @brief Create a view with forward and backward directions swapped.
+   */
+  [[nodiscard]] constexpr auto inverse_view() const noexcept -> bidi_graph_view
+  {
+    return { n, m, bw.head, bw.csr, fw.head, fw.csr };
+  }
+
+  /**
    * @brief Get the forward neighbors of vertex u.
    */
   [[nodiscard]] constexpr auto csr_range(

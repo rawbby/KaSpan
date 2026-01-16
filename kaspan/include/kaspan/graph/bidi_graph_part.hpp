@@ -72,6 +72,14 @@ struct bidi_graph_part_view
   }
 
   /**
+   * @brief Create a view with forward and backward directions swapped.
+   */
+  [[nodiscard]] constexpr auto inverse_view() const noexcept -> bidi_graph_part_view<part_t>
+  {
+    return { part, local_m_bw, local_m_fw, bw.head, bw.csr, fw.head, fw.csr };
+  }
+
+  /**
    * @brief Get the forward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto csr_range(
@@ -300,6 +308,22 @@ struct bidi_graph_part
   [[nodiscard]] constexpr auto view() const noexcept -> bidi_graph_part_view<part_t>
   {
     return { &part, local_m_fw, local_m_bw, fw.head, fw.csr, bw.head, bw.csr };
+  }
+
+  /**
+   * @brief Create a view of the forward partitioned graph.
+   */
+  [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_part_view<part_t>
+  {
+    return view().fw_view();
+  }
+
+  /**
+   * @brief Create a view of the backward partitioned graph.
+   */
+  [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_part_view<part_t>
+  {
+    return view().bw_view();
   }
 
   /**

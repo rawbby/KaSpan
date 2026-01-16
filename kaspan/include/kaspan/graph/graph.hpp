@@ -5,12 +5,33 @@
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/line.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/scc/part.hpp>
+#include <kaspan/graph/part.hpp>
 
 #include <concepts>
 #include <span>
 
 namespace kaspan {
+
+#define DEBUG_ASSERT_VALID_GRAPH_LIGHT(N, HEAD, CSR)                                                                                                                               \
+  DEBUG_ASSERT_GE(N, 0);                                                                                                                                                           \
+  DEBUG_ASSERT((N) == 0 || (HEAD) != nullptr);                                                                                                                                     \
+  DEBUG_ASSERT((N) == 0 || (HEAD)[N] == 0 || (CSR) != nullptr);                                                                                                                    \
+  DEBUG_ASSERT((N) == 0 || (HEAD)[0] == 0);
+
+#define DEBUG_ASSERT_VALID_GRAPH(N, HEAD, CSR)                                                                                                                                     \
+  DEBUG_ASSERT_VALID_GRAPH_LIGHT(N, HEAD, CSR);                                                                                                                                    \
+  IF(KASPAN_DEBUG, {                                                                                                                                                               \
+    std::remove_cvref_t<decltype(N)> const _n = N;                                                                                                                                 \
+    for (std::remove_cvref_t<decltype(N)> _i = 1; _i < _n; ++_i) {                                                                                                                 \
+      DEBUG_ASSERT_GE((HEAD)[_i], (HEAD)[_i - 1]);                                                                                                                                 \
+    }                                                                                                                                                                              \
+    if (N > 0) {                                                                                                                                                                   \
+      std::remove_cvref_t<decltype(*(HEAD))> _m = (HEAD)[N];                                                                                                                       \
+      for (std::remove_cvref_t<decltype(*(HEAD))> _i = 0; _i < _m; ++_i) {                                                                                                         \
+        DEBUG_ASSERT_IN_RANGE((CSR)[_i], 0, N);                                                                                                                                    \
+      }                                                                                                                                                                            \
+    }                                                                                                                                                                              \
+  });
 
 /**
  * @brief A non-mutable view of a graph in Compressed Sparse Row (CSR) format.
@@ -154,8 +175,10 @@ struct graph_view
 
       // validate logical consistency
 
-      DEBUG_ASSERT_EQ(head[0], 0);
-      DEBUG_ASSERT_EQ(head[n], m);
+      if (n > 0) {
+        DEBUG_ASSERT_EQ(head[0], 0);
+        DEBUG_ASSERT_EQ(head[n], m);
+      }
 
       index_t last_offset = 0;
       each_u([&](auto u) {
