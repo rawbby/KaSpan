@@ -72,23 +72,25 @@ inline auto page_align_down(void* data){return std::bit_cast<void*>(page_align_d
 inline auto page_align_up(void* data){return std::bit_cast<void*>(page_align_up(std::bit_cast<u64>(data)));}
 // clang-format on
 
-template<arithmetic_concept Size>
+template<typename T = byte>
 [[nodiscard]] auto
-page_alloc(Size size) noexcept(false) -> void*
+page_alloc(arithmetic_concept auto size) noexcept(false) -> T*
 {
+  using alloc_t = std::conditional_t<std::is_same_v<T, void>, byte, T>;
+
   DEBUG_ASSERT_GE(size, 0);
-  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = integral_cast<u64>(size);
-  if (size64 == 0) {
+  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max() / sizeof(alloc_t));
+  auto const bytes = integral_cast<u64>(size) * sizeof(alloc_t);
+  if (bytes == 0) {
     return nullptr;
   }
   auto const page = pagesize();
   auto const mask = page - 1;
-  void*      data = std::aligned_alloc(page, (size64 + mask) & ~mask);
+  void*      data = std::aligned_alloc(page, (bytes + mask) & ~mask);
   if (data == nullptr) [[unlikely]] {
     throw std::bad_alloc{};
   }
-  return data;
+  return static_cast<T*>(data);
 }
 
 inline void

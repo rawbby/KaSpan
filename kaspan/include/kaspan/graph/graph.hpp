@@ -2,6 +2,7 @@
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/valgrind.hpp>
+#include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/line.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/part.hpp>
@@ -43,6 +44,12 @@ struct graph_view
   constexpr auto operator=(graph_view&&) noexcept -> graph_view&      = default;
   constexpr auto operator=(graph_view const&) noexcept -> graph_view& = default;
 
+  [[nodiscard]] constexpr auto csr_range(
+    vertex_t u) const noexcept -> std::span<vertex_t const>
+  {
+    return { csr + head[u], csr + head[u + 1] };
+  }
+
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_u(
     Consumer&& consumer) const noexcept
@@ -56,8 +63,14 @@ struct graph_view
     vertex_t   u,
     Consumer&& consumer) const noexcept
   {
-    for (vertex_t v : std::span{ csr + head[u], csr + head[u + 1] })
-      consumer(u, v);
+    for (vertex_t v : csr_range(u))
+      consumer(v);
+  }
+
+  [[nodiscard]] constexpr auto degree(
+    vertex_t u) const noexcept -> vertex_t
+  {
+    return integral_cast<vertex_t>(csr[head[u + 1]] - csr[head[u]]);
   }
 
   template<std::invocable<vertex_t,
@@ -126,8 +139,8 @@ struct graph
     vertex_t m)
     : n(n)
     , m(m)
-    , head(static_cast<index_t*>(line_alloc((n + 1) * sizeof(index_t))))
-    , csr(static_cast<vertex_t*>(line_alloc(m * sizeof(vertex_t))))
+    , head(line_alloc<index_t>(n + 1))
+    , csr(line_alloc<vertex_t>(m))
   {
     DEBUG_ASSERT_GE(n, 0);
     DEBUG_ASSERT_GE(m, 0);
@@ -149,6 +162,86 @@ struct graph
   [[nodiscard]] constexpr auto view() const noexcept -> graph_view
   {
     return graph_view{ n, m, head, csr };
+  }
+
+  [[nodiscard]] constexpr auto csr_range(
+    vertex_t u) const noexcept -> std::span<vertex_t const>
+  {
+    return { csr + head[u], csr + head[u + 1] };
+  }
+
+  template<std::invocable<vertex_t> Consumer>
+  constexpr void each_u(
+    Consumer&& consumer) const noexcept
+  {
+    for (vertex_t u = 0; u < n; ++u)
+      consumer(u);
+  }
+
+  template<std::invocable<vertex_t> Consumer>
+  constexpr void each_v(
+    vertex_t   u,
+    Consumer&& consumer) const noexcept
+  {
+    for (vertex_t v : csr_range(u))
+      consumer(v);
+  }
+
+  [[nodiscard]] constexpr auto degree(
+    vertex_t u) const noexcept -> vertex_t
+  {
+    return integral_cast<vertex_t>(csr[head[u + 1]] - csr[head[u]]);
+  }
+
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_uv(
+    Consumer&& consumer) const noexcept
+  {
+    each_u([&](vertex_t u) {
+      each_v(u, [&](vertex_t v) {
+        consumer(u, v);
+      });
+    });
+  }
+
+  constexpr void debug_validate() const noexcept
+  {
+    // validate memory consistency
+    {
+      DEBUG_ASSERT_GE(n, 0);
+      DEBUG_ASSERT_GE(m, 0);
+      DEBUG_ASSERT_SIZE_POINTER(n, head);
+      DEBUG_ASSERT_SIZE_POINTER(m, csr);
+      DEBUG_ASSERT_EQ(head[n], m);
+      if (!std::is_constant_evaluated()) {
+        KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(head, (n + 1) * sizeof(index_t));
+        KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(head, m * sizeof(vertex_t));
+      }
+    }
+
+    if (n > 0) {
+      // validate sorted head
+      {
+        IF(KASPAN_DEBUG, vertex_t last_offset = head[0]);
+        each_u([&](vertex_t u) {
+          DEBUG_ASSERT_LE(last_offset, head[u + 1]);
+          IF(KASPAN_DEBUG, last_offset = head[u + 1]);
+        });
+      }
+
+      // validate sorted csr
+      {
+        IF(KASPAN_DEBUG, vertex_t last_u = 0);
+        IF(KASPAN_DEBUG, vertex_t last_v = 0);
+        each_uv([&](vertex_t u, vertex_t v) {
+          if (u == last_u) DEBUG_ASSERT_LE(last_u, u);
+          else DEBUG_ASSERT_LE(last_v, v);
+          IF(KASPAN_DEBUG, last_u = u);
+          IF(KASPAN_DEBUG, last_v = v);
+        });
+      }
+    }
   }
 };
 
