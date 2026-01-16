@@ -11,13 +11,24 @@
 
 namespace kaspan {
 
+/**
+ * @brief A non-mutable view of a partitioned graph in CSR format.
+ *
+ * This struct provides read-only access to local graph data. It does not own the
+ * underlying memory. The CSR is assumed to be sorted by vertex ID (u, then v).
+ *
+ * The CSR format consists of:
+ * - head: An array of local offsets of size local_n + 1 (if local_n > 0).
+ *         The neighbors of local vertex k are stored in csr[head[k]] to csr[head[k+1]-1].
+ * - csr:  An array of neighbor vertex global IDs of size local_m.
+ */
 template<world_part_concept Part>
 struct graph_part_view
 {
-  using part_t         = Part;
-  part_t const*  part    = nullptr;
-  vertex_t       local_m = 0;
-  index_t const* head    = nullptr;
+  using part_t            = Part;
+  part_t const*   part    = nullptr;
+  vertex_t        local_m = 0;
+  index_t const*  head    = nullptr;
   vertex_t const* csr     = nullptr;
 
   constexpr graph_part_view() noexcept  = default;
@@ -27,9 +38,9 @@ struct graph_part_view
   constexpr graph_part_view(graph_part_view const&) noexcept = default;
 
   constexpr graph_part_view(
-    part_t const*  part,
-    vertex_t       local_m,
-    index_t const* head,
+    part_t const*   part,
+    vertex_t        local_m,
+    index_t const*  head,
     vertex_t const* csr) noexcept
     : part(part)
     , local_m(local_m)
@@ -43,93 +54,152 @@ struct graph_part_view
   constexpr auto operator=(graph_part_view const&) noexcept -> graph_part_view& = default;
 
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t const>
   {
-    return { csr + head[u], csr + head[u + 1] };
+    return { csr + head[k], csr + head[k + 1] };
   }
 
+  /**
+   * @brief Iterate over each local vertex k.
+   * @param consumer A function taking a vertex_t k.
+   */
   template<std::invocable<vertex_t> Consumer>
-  constexpr void each_u(
+  constexpr void each_k(
     Consumer&& consumer) const noexcept
   {
-    for (vertex_t u = 0; u < part->local_n(); ++u)
-      consumer(u);
+    auto const local_n = part->local_n();
+    for (vertex_t k = 0; k < local_n; ++k)
+      consumer(k);
   }
 
+  /**
+   * @brief Iterate over each local vertex k and its corresponding global vertex u.
+   * @param consumer A function taking (vertex_t k, vertex_t u).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_ku(
+    Consumer&& consumer) const noexcept
+  {
+    each_k([&](vertex_t k) {
+      consumer(k, part->to_global(k));
+    });
+  }
+
+  /**
+   * @brief Iterate over each global neighbor v of local vertex k.
+   * @param k Local source vertex.
+   * @param consumer A function taking a vertex_t v.
+   */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_v(
-    vertex_t   u,
+    vertex_t   k,
     Consumer&& consumer) const noexcept
   {
-    for (vertex_t v : csr_range(u))
+    for (vertex_t v : csr_range(k))
       consumer(v);
   }
 
+  /**
+   * @brief Get the outdegree of local vertex k.
+   * @param k Local source vertex.
+   * @return The number of outgoing edges from k.
+   */
   [[nodiscard]] constexpr auto outdegree(
-    vertex_t u) const noexcept -> vertex_t
+    vertex_t k) const noexcept -> vertex_t
   {
-    return integral_cast<vertex_t>(head[u + 1] - head[u]);
+    return integral_cast<vertex_t>(head[k + 1] - head[k]);
   }
 
+  /**
+   * @brief Iterate over each local-global edge (k, v).
+   * @param consumer A function taking (vertex_t k, vertex_t v).
+   */
   template<std::invocable<vertex_t,
                           vertex_t> Consumer>
-  constexpr void each_uv(
+  constexpr void each_kv(
     Consumer&& consumer) const noexcept
   {
-    each_u([&](vertex_t u) {
-      each_v(u, [&](vertex_t v) {
-        consumer(u, v);
+    each_k([&](vertex_t k) {
+      each_v(k, [&](vertex_t v) {
+        consumer(k, v);
       });
     });
   }
 
+  /**
+   * @brief Iterate over each local-global-global edge (k, u, v).
+   * @param consumer A function taking (vertex_t k, vertex_t u, vertex_t v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_kuv(
+    Consumer&& consumer) const noexcept
+  {
+    each_ku([&](vertex_t k, vertex_t u) {
+      each_v(k, [&](vertex_t v) {
+        consumer(k, u, v);
+      });
+    });
+  }
+
+  /**
+   * @brief Perform basic checks on memory addressability and pointer/size consistency.
+   *
+   * This class follows the convention that a size is zero if and only if the
+   * corresponding pointer is nullptr.
+   */
   constexpr void debug_check() const noexcept
   {
-    DEBUG_ASSERT_POINTER(part);
-    DEBUG_ASSERT_GE(part->n, 0);
-    DEBUG_ASSERT_GE(part->local_n(), 0);
-    DEBUG_ASSERT_SIZE_POINTER(part->local_n(), head);
-    DEBUG_ASSERT_SIZE_POINTER(local_m, csr);
-    if (!std::is_constant_evaluated()) {
-      if (part->local_n() > 0) KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(head, (part->local_n() + 1) * sizeof(index_t));
+    auto const local_n = part->local_n();
+    if (KASPAN_MEMCHECK && !std::is_constant_evaluated()) {
+      if (local_n > 0) KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(head, (local_n + 1) * sizeof(index_t));
       if (local_m > 0) KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(csr, local_m * sizeof(vertex_t));
+    }
+    if (KASPAN_DEBUG) {
+      ASSERT_POINTER(part);
+      ASSERT_GE(part->n, 0);
+      ASSERT_GE(local_n, 0);
+      ASSERT_GE(local_m, 0);
+      ASSERT_SIZE_POINTER(local_n, head);
+      ASSERT_SIZE_POINTER(local_m, csr);
     }
   }
 
   constexpr void debug_validate() const noexcept
   {
-    // validate memory consistency
-    {
-      DEBUG_ASSERT_GE(part->local_n(), 0);
-      DEBUG_ASSERT_GE(local_m, 0);
-      DEBUG_ASSERT_SIZE_POINTER(part->local_n(), head);
-      DEBUG_ASSERT_SIZE_POINTER(local_m, csr);
-      DEBUG_ASSERT_EQ(head[part->local_n()], local_m);
-      if (!std::is_constant_evaluated()) {
-        if (part->local_n() > 0) KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(head, (part->local_n() + 1) * sizeof(index_t));
-        if (local_m > 0) KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(csr, local_m * sizeof(vertex_t));
-      }
+    auto const local_n = part->local_n();
+    if (KASPAN_MEMCHECK) {
+      if (local_n > 0) KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(head, (local_n + 1) * sizeof(index_t));
+      if (local_m > 0) KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(csr, local_m * sizeof(vertex_t));
     }
+    if (KASPAN_DEBUG) {
+      // validate memory consistency
+      debug_check();
 
-    if (part->local_n() > 0) {
-      // validate sorted head
-      {
-        IF(KASPAN_DEBUG, index_t last_offset = head[0]);
-        for (vertex_t u = 0; u < part->local_n(); ++u) {
-          DEBUG_ASSERT_LE(last_offset, head[u + 1]);
-          IF(KASPAN_DEBUG, last_offset = head[u + 1]);
-        }
-      }
+      // validate logical consistency
 
-      // validate sorted csr
-      {
-        each_u([&](vertex_t u) {
-          auto const range = csr_range(u);
-          for (size_t i = 1; i < range.size(); ++i) {
-            DEBUG_ASSERT_LE(range[i - 1], range[i]);
-          }
-        });
-      }
+      DEBUG_ASSERT_EQ(head[0], 0);
+      DEBUG_ASSERT_EQ(head[local_n], local_m);
+
+      index_t last_offset = 0;
+      each_k([&](auto k) {
+        ASSERT_LE(last_offset, head[k + 1]);
+        last_offset = head[k + 1];
+      });
+
+      vertex_t prev_k = 0;
+      vertex_t prev_v = 0;
+      each_kuv([&](auto k, auto u, auto v) {
+        ASSERT_LT(k, local_n);
+        ASSERT_LT(u, part->n);
+        ASSERT_LT(v, part->n);
+        ASSERT_LE(prev_k, k);
+        if (prev_k == k) ASSERT_LE(prev_v, v);
+        prev_k = k;
+        prev_v = v;
+      });
     }
   }
 };
@@ -150,7 +220,7 @@ struct graph_part
     vertex_t local_m)
     : part(part)
     , local_m(local_m)
-    , head(line_alloc<index_t>(part.local_n() + 1))
+    , head(line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1))
     , csr(line_alloc<vertex_t>(local_m))
   {
     debug_check();
@@ -197,38 +267,81 @@ struct graph_part
   }
 
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t const>
   {
-    return view().csr_range(u);
+    return view().csr_range(k);
   }
 
+  /**
+   * @brief Iterate over each local vertex k.
+   * @param consumer A function taking a vertex_t k.
+   */
   template<std::invocable<vertex_t> Consumer>
-  constexpr void each_u(
+  constexpr void each_k(
     Consumer&& consumer) const noexcept
   {
-    view().each_u(std::forward<Consumer>(consumer));
+    view().each_k(std::forward<Consumer>(consumer));
   }
 
-  template<std::invocable<vertex_t> Consumer>
-  constexpr void each_v(
-    vertex_t   u,
-    Consumer&& consumer) const noexcept
-  {
-    view().each_v(u, std::forward<Consumer>(consumer));
-  }
-
-  [[nodiscard]] constexpr auto outdegree(
-    vertex_t u) const noexcept -> vertex_t
-  {
-    return view().outdegree(u);
-  }
-
+  /**
+   * @brief Iterate over each local vertex k and its corresponding global vertex u.
+   * @param consumer A function taking (vertex_t k, vertex_t u).
+   */
   template<std::invocable<vertex_t,
                           vertex_t> Consumer>
-  constexpr void each_uv(
+  constexpr void each_ku(
     Consumer&& consumer) const noexcept
   {
-    view().each_uv(std::forward<Consumer>(consumer));
+    view().each_ku(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each global neighbor v of local vertex k.
+   * @param k Local source vertex.
+   * @param consumer A function taking a vertex_t v.
+   */
+  template<std::invocable<vertex_t> Consumer>
+  constexpr void each_v(
+    vertex_t   k,
+    Consumer&& consumer) const noexcept
+  {
+    view().each_v(k, std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Get the outdegree of local vertex k.
+   * @param k Local source vertex.
+   * @return The number of outgoing edges from k.
+   */
+  [[nodiscard]] constexpr auto outdegree(
+    vertex_t k) const noexcept -> vertex_t
+  {
+    return view().outdegree(k);
+  }
+
+  /**
+   * @brief Iterate over each local-global edge (k, v).
+   * @param consumer A function taking (vertex_t k, vertex_t v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_kv(
+    Consumer&& consumer) const noexcept
+  {
+    view().each_kv(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each local-global-global edge (k, u, v).
+   * @param consumer A function taking (vertex_t k, vertex_t u, vertex_t v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_kuv(
+    Consumer&& consumer) const noexcept
+  {
+    view().each_kuv(std::forward<Consumer>(consumer));
   }
 
   constexpr void debug_check() const noexcept

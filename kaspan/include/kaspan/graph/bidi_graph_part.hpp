@@ -4,22 +4,27 @@
 
 namespace kaspan {
 
+/**
+ * @brief A non-mutable view of a partitioned bidirectional graph.
+ *
+ * Reuses graph_part_view for each direction.
+ */
 template<world_part_concept Part>
 struct bidi_graph_part_view
 {
-  using part_t          = Part;
-  part_t const*  part       = nullptr;
-  vertex_t       local_m_fw = 0;
-  vertex_t       local_m_bw = 0;
+  using part_t             = Part;
+  part_t const* part       = nullptr; ///< The partition information
+  vertex_t      local_m_fw = 0;       ///< Number of local forward edges
+  vertex_t      local_m_bw = 0;       ///< Number of local backward edges
   struct
   {
-    index_t const*  head = nullptr;
-    vertex_t const* csr  = nullptr;
+    index_t const*  head = nullptr; ///< Local forward offsets
+    vertex_t const* csr  = nullptr; ///< Forward neighbors (global IDs)
   } fw{};
   struct
   {
-    index_t const*  head = nullptr;
-    vertex_t const* csr  = nullptr;
+    index_t const*  head = nullptr; ///< Local backward offsets
+    vertex_t const* csr  = nullptr; ///< Backward neighbors (global IDs)
   } bw{};
 
   constexpr bidi_graph_part_view() noexcept  = default;
@@ -29,12 +34,12 @@ struct bidi_graph_part_view
   constexpr bidi_graph_part_view(bidi_graph_part_view const&) noexcept = default;
 
   constexpr bidi_graph_part_view(
-    part_t const*  part,
-    vertex_t       local_m_fw,
-    vertex_t       local_m_bw,
-    index_t const* fw_head,
+    part_t const*   part,
+    vertex_t        local_m_fw,
+    vertex_t        local_m_bw,
+    index_t const*  fw_head,
     vertex_t const* fw_csr,
-    index_t const* bw_head,
+    index_t const*  bw_head,
     vertex_t const* bw_csr) noexcept
     : part(part)
     , local_m_fw(local_m_fw)
@@ -50,85 +55,159 @@ struct bidi_graph_part_view
   constexpr auto operator=(bidi_graph_part_view&&) noexcept -> bidi_graph_part_view&      = default;
   constexpr auto operator=(bidi_graph_part_view const&) noexcept -> bidi_graph_part_view& = default;
 
+  /**
+   * @brief Create a view of the forward partitioned graph.
+   */
   [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_part_view<part_t>
   {
     return { part, local_m_fw, fw.head, fw.csr };
   }
 
+  /**
+   * @brief Create a view of the backward partitioned graph.
+   */
   [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_part_view<part_t>
   {
     return { part, local_m_bw, bw.head, bw.csr };
   }
 
+  /**
+   * @brief Get the forward neighbors of local vertex k.
+   */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t const>
   {
-    return fw_view().csr_range(u);
+    return fw_view().csr_range(k);
   }
 
+  /**
+   * @brief Get the backward neighbors of local vertex k.
+   */
   [[nodiscard]] constexpr auto bw_csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t const>
   {
-    return bw_view().csr_range(u);
+    return bw_view().csr_range(k);
   }
 
+  /**
+   * @brief Iterate over each local vertex k.
+   */
   template<std::invocable<vertex_t> Consumer>
-  constexpr void each_u(
+  constexpr void each_k(
     Consumer&& consumer) const noexcept
   {
-    fw_view().each_u(std::forward<Consumer>(consumer));
+    fw_view().each_k(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each local vertex k and its corresponding global vertex u.
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_ku(
+    Consumer&& consumer) const noexcept
+  {
+    fw_view().each_ku(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each forward global neighbor v of local vertex k.
+   */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_v(
-    vertex_t   u,
+    vertex_t   k,
     Consumer&& consumer) const noexcept
   {
-    fw_view().each_v(u, std::forward<Consumer>(consumer));
+    fw_view().each_v(k, std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each backward global neighbor v of local vertex k.
+   */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_bw_v(
-    vertex_t   u,
+    vertex_t   k,
     Consumer&& consumer) const noexcept
   {
-    bw_view().each_v(u, std::forward<Consumer>(consumer));
+    bw_view().each_v(k, std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Get the outdegree of local vertex k.
+   */
   [[nodiscard]] constexpr auto outdegree(
-    vertex_t u) const noexcept -> vertex_t
+    vertex_t k) const noexcept -> vertex_t
   {
-    return fw_view().outdegree(u);
+    return fw_view().outdegree(k);
   }
 
+  /**
+   * @brief Get the indegree of local vertex k.
+   */
   [[nodiscard]] constexpr auto indegree(
-    vertex_t u) const noexcept -> vertex_t
+    vertex_t k) const noexcept -> vertex_t
   {
-    return bw_view().outdegree(u);
+    return bw_view().outdegree(k);
   }
 
+  /**
+   * @brief Iterate over each forward local-global edge (k, v).
+   */
   template<std::invocable<vertex_t,
                           vertex_t> Consumer>
-  constexpr void each_uv(
+  constexpr void each_kv(
     Consumer&& consumer) const noexcept
   {
-    fw_view().each_uv(std::forward<Consumer>(consumer));
+    fw_view().each_kv(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each backward local-global edge (k, v).
+   */
   template<std::invocable<vertex_t,
                           vertex_t> Consumer>
-  constexpr void each_bw_uv(
+  constexpr void each_bw_kv(
     Consumer&& consumer) const noexcept
   {
-    bw_view().each_uv(std::forward<Consumer>(consumer));
+    bw_view().each_kv(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each forward local-global-global edge (k, u, v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_kuv(
+    Consumer&& consumer) const noexcept
+  {
+    fw_view().each_kuv(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each backward local-global-global edge (k, u, v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_bw_kuv(
+    Consumer&& consumer) const noexcept
+  {
+    bw_view().each_kuv(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Perform basic checks via directional views.
+   */
   constexpr void debug_check() const noexcept
   {
     fw_view().debug_check();
     bw_view().debug_check();
   }
 
+  /**
+   * @brief Perform deep validation via directional views.
+   */
   constexpr void debug_validate() const noexcept
   {
     fw_view().debug_validate();
@@ -136,22 +215,25 @@ struct bidi_graph_part_view
   }
 };
 
+/**
+ * @brief An owning partitioned bidirectional graph structure.
+ */
 template<world_part_concept Part>
 struct bidi_graph_part
 {
   using part_t = Part;
-  part_t   part{};
-  vertex_t local_m_fw = 0;
-  vertex_t local_m_bw = 0;
+  part_t   part{};         ///< The partition info
+  vertex_t local_m_fw = 0; ///< Forward edge count
+  vertex_t local_m_bw = 0; ///< Backward edge count
   struct
   {
-    index_t*  head = nullptr;
-    vertex_t* csr  = nullptr;
+    index_t*  head = nullptr; ///< Forward offsets
+    vertex_t* csr  = nullptr; ///< Forward neighbors
   } fw{};
   struct
   {
-    index_t*  head = nullptr;
-    vertex_t* csr  = nullptr;
+    index_t*  head = nullptr; ///< Backward offsets
+    vertex_t* csr  = nullptr; ///< Backward neighbors
   } bw{};
 
   constexpr bidi_graph_part() noexcept = default;
@@ -163,9 +245,9 @@ struct bidi_graph_part
     : part(part)
     , local_m_fw(local_m_fw)
     , local_m_bw(local_m_bw)
-    , fw{ line_alloc<index_t>(part.local_n() + 1),
+    , fw{ line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1),
           line_alloc<vertex_t>(local_m_fw) }
-    , bw{ line_alloc<index_t>(part.local_n() + 1),
+    , bw{ line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1),
           line_alloc<vertex_t>(local_m_bw) }
   {
     debug_check();
@@ -212,79 +294,150 @@ struct bidi_graph_part
   }
   constexpr auto operator=(bidi_graph_part const&) noexcept -> bidi_graph_part& = delete;
 
+  /**
+   * @brief Create a non-mutable view of the partitioned bidirectional graph.
+   */
   [[nodiscard]] constexpr auto view() const noexcept -> bidi_graph_part_view<part_t>
   {
     return { &part, local_m_fw, local_m_bw, fw.head, fw.csr, bw.head, bw.csr };
   }
 
+  /**
+   * @brief Get the forward neighbors of local vertex k.
+   */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t const>
   {
-    return view().csr_range(u);
+    return view().csr_range(k);
   }
 
+  /**
+   * @brief Get the backward neighbors of local vertex k.
+   */
   [[nodiscard]] constexpr auto bw_csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t const>
+    vertex_t k) const noexcept -> std::span<vertex_t const>
   {
-    return view().bw_csr_range(u);
+    return view().bw_csr_range(k);
   }
 
+  /**
+   * @brief Iterate over each local vertex k.
+   */
   template<std::invocable<vertex_t> Consumer>
-  constexpr void each_u(
+  constexpr void each_k(
     Consumer&& consumer) const noexcept
   {
-    view().each_u(std::forward<Consumer>(consumer));
+    view().each_k(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each local vertex k and its corresponding global vertex u.
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_ku(
+    Consumer&& consumer) const noexcept
+  {
+    view().each_ku(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each forward neighbor v of local vertex k.
+   */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_v(
-    vertex_t   u,
+    vertex_t   k,
     Consumer&& consumer) const noexcept
   {
-    view().each_v(u, std::forward<Consumer>(consumer));
+    view().each_v(k, std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each backward neighbor v of local vertex k.
+   */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_bw_v(
-    vertex_t   u,
+    vertex_t   k,
     Consumer&& consumer) const noexcept
   {
-    view().each_bw_v(u, std::forward<Consumer>(consumer));
+    view().each_bw_v(k, std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Get the outdegree of local vertex k.
+   */
   [[nodiscard]] constexpr auto outdegree(
-    vertex_t u) const noexcept -> vertex_t
+    vertex_t k) const noexcept -> vertex_t
   {
-    return view().outdegree(u);
+    return view().outdegree(k);
   }
 
+  /**
+   * @brief Get the indegree of local vertex k.
+   */
   [[nodiscard]] constexpr auto indegree(
-    vertex_t u) const noexcept -> vertex_t
+    vertex_t k) const noexcept -> vertex_t
   {
-    return view().indegree(u);
+    return view().indegree(k);
   }
 
+  /**
+   * @brief Iterate over each forward local-global edge (k, v).
+   */
   template<std::invocable<vertex_t,
                           vertex_t> Consumer>
-  constexpr void each_uv(
+  constexpr void each_kv(
     Consumer&& consumer) const noexcept
   {
-    view().each_uv(std::forward<Consumer>(consumer));
+    view().each_kv(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each backward local-global edge (k, v).
+   */
   template<std::invocable<vertex_t,
                           vertex_t> Consumer>
-  constexpr void each_bw_uv(
+  constexpr void each_bw_kv(
     Consumer&& consumer) const noexcept
   {
-    view().each_bw_uv(std::forward<Consumer>(consumer));
+    view().each_bw_kv(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each forward local-global-global edge (k, u, v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_kuv(
+    Consumer&& consumer) const noexcept
+  {
+    view().each_kuv(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each backward local-global-global edge (k, u, v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_bw_kuv(
+    Consumer&& consumer) const noexcept
+  {
+    view().each_bw_kuv(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Perform basic checks via the view.
+   */
   constexpr void debug_check() const noexcept
   {
     view().debug_check();
   }
 
+  /**
+   * @brief Perform deep validation via the view.
+   */
   constexpr void debug_validate() const noexcept
   {
     view().debug_validate();

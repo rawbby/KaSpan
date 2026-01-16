@@ -4,19 +4,29 @@
 
 namespace kaspan {
 
+/**
+ * @brief A non-mutable view of a bidirectional graph in CSR format.
+ *
+ * Provides read-only access to both forward (fw) and backward (bw) edges.
+ * Reuses graph_view for each direction.
+ *
+ * Each direction follows the CSR format:
+ * - head: An array of offsets of size n + 1 (if n > 0).
+ * - csr:  An array of neighbor vertex IDs of size m.
+ */
 struct bidi_graph_view
 {
-  vertex_t n = 0;
-  vertex_t m = 0;
+  vertex_t n = 0; ///< Number of vertices
+  vertex_t m = 0; ///< Number of edges (in each direction)
   struct
   {
-    index_t const*  head = nullptr;
-    vertex_t const* csr  = nullptr;
+    index_t const*  head = nullptr; ///< Forward offsets
+    vertex_t const* csr  = nullptr; ///< Forward neighbors
   } fw{};
   struct
   {
-    index_t const*  head = nullptr;
-    vertex_t const* csr  = nullptr;
+    index_t const*  head = nullptr; ///< Backward offsets
+    vertex_t const* csr  = nullptr; ///< Backward neighbors
   } bw{};
 
   constexpr bidi_graph_view() noexcept  = default;
@@ -26,11 +36,11 @@ struct bidi_graph_view
   constexpr bidi_graph_view(bidi_graph_view const&) noexcept = default;
 
   constexpr bidi_graph_view(
-    vertex_t       n,
-    vertex_t       m,
-    index_t const* fw_head,
+    vertex_t        n,
+    vertex_t        m,
+    index_t const*  fw_head,
     vertex_t const* fw_csr,
-    index_t const* bw_head,
+    index_t const*  bw_head,
     vertex_t const* bw_csr) noexcept
     : n(n)
     , m(m)
@@ -45,28 +55,43 @@ struct bidi_graph_view
   constexpr auto operator=(bidi_graph_view&&) noexcept -> bidi_graph_view&      = default;
   constexpr auto operator=(bidi_graph_view const&) noexcept -> bidi_graph_view& = default;
 
+  /**
+   * @brief Create a view of the forward graph.
+   */
   [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_view
   {
     return { n, m, fw.head, fw.csr };
   }
 
+  /**
+   * @brief Create a view of the backward graph.
+   */
   [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_view
   {
     return { n, m, bw.head, bw.csr };
   }
 
+  /**
+   * @brief Get the forward neighbors of vertex u.
+   */
   [[nodiscard]] constexpr auto csr_range(
     vertex_t u) const noexcept -> std::span<vertex_t const>
   {
     return fw_view().csr_range(u);
   }
 
+  /**
+   * @brief Get the backward neighbors of vertex u.
+   */
   [[nodiscard]] constexpr auto bw_csr_range(
     vertex_t u) const noexcept -> std::span<vertex_t const>
   {
     return bw_view().csr_range(u);
   }
 
+  /**
+   * @brief Iterate over each vertex u.
+   */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_u(
     Consumer&& consumer) const noexcept
@@ -74,6 +99,9 @@ struct bidi_graph_view
     fw_view().each_u(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each forward neighbor v of vertex u.
+   */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_v(
     vertex_t   u,
@@ -82,6 +110,9 @@ struct bidi_graph_view
     fw_view().each_v(u, std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each backward neighbor v of vertex u.
+   */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_bw_v(
     vertex_t   u,
@@ -90,18 +121,27 @@ struct bidi_graph_view
     bw_view().each_v(u, std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Get the outdegree of vertex u.
+   */
   [[nodiscard]] constexpr auto outdegree(
     vertex_t u) const noexcept -> vertex_t
   {
     return fw_view().outdegree(u);
   }
 
+  /**
+   * @brief Get the indegree of vertex u.
+   */
   [[nodiscard]] constexpr auto indegree(
     vertex_t u) const noexcept -> vertex_t
   {
     return bw_view().outdegree(u);
   }
 
+  /**
+   * @brief Iterate over each forward edge (u, v).
+   */
   template<std::invocable<vertex_t,
                           vertex_t> Consumer>
   constexpr void each_uv(
@@ -110,6 +150,9 @@ struct bidi_graph_view
     fw_view().each_uv(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each backward edge (u, v).
+   */
   template<std::invocable<vertex_t,
                           vertex_t> Consumer>
   constexpr void each_bw_uv(
@@ -118,12 +161,18 @@ struct bidi_graph_view
     bw_view().each_uv(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Perform basic checks via directional views.
+   */
   constexpr void debug_check() const noexcept
   {
     fw_view().debug_check();
     bw_view().debug_check();
   }
 
+  /**
+   * @brief Perform deep validation via directional views.
+   */
   constexpr void debug_validate() const noexcept
   {
     fw_view().debug_validate();
@@ -131,19 +180,22 @@ struct bidi_graph_view
   }
 };
 
+/**
+ * @brief An owning bidirectional graph structure.
+ */
 struct bidi_graph
 {
-  vertex_t n = 0;
-  vertex_t m = 0;
+  vertex_t n = 0; ///< Number of vertices
+  vertex_t m = 0; ///< Number of edges (in each direction)
   struct
   {
-    index_t*  head = nullptr;
-    vertex_t* csr  = nullptr;
+    index_t*  head = nullptr; ///< Forward offsets
+    vertex_t* csr  = nullptr; ///< Forward neighbors
   } fw{};
   struct
   {
-    index_t*  head = nullptr;
-    vertex_t* csr  = nullptr;
+    index_t*  head = nullptr; ///< Backward offsets
+    vertex_t* csr  = nullptr; ///< Backward neighbors
   } bw{};
 
   constexpr bidi_graph() noexcept = default;
@@ -153,9 +205,9 @@ struct bidi_graph
     vertex_t m)
     : n(n)
     , m(m)
-    , fw{ line_alloc<index_t>(n + 1),
+    , fw{ line_alloc<index_t>(n == 0 ? 0 : n + 1),
           line_alloc<vertex_t>(m) }
-    , bw{ line_alloc<index_t>(n + 1),
+    , bw{ line_alloc<index_t>(n == 0 ? 0 : n + 1),
           line_alloc<vertex_t>(m) }
   {
     debug_check();
@@ -200,23 +252,35 @@ struct bidi_graph
   }
   constexpr auto operator=(bidi_graph const&) noexcept -> bidi_graph& = delete;
 
+  /**
+   * @brief Create a non-mutable view of the bidirectional graph.
+   */
   [[nodiscard]] constexpr auto view() const noexcept -> bidi_graph_view
   {
     return { n, m, fw.head, fw.csr, bw.head, bw.csr };
   }
 
+  /**
+   * @brief Get the forward neighbors of vertex u.
+   */
   [[nodiscard]] constexpr auto csr_range(
     vertex_t u) const noexcept -> std::span<vertex_t const>
   {
     return view().csr_range(u);
   }
 
+  /**
+   * @brief Get the backward neighbors of vertex u.
+   */
   [[nodiscard]] constexpr auto bw_csr_range(
     vertex_t u) const noexcept -> std::span<vertex_t const>
   {
     return view().bw_csr_range(u);
   }
 
+  /**
+   * @brief Iterate over each vertex u.
+   */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_u(
     Consumer&& consumer) const noexcept
@@ -224,6 +288,9 @@ struct bidi_graph
     view().each_u(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each forward neighbor v of vertex u.
+   */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_v(
     vertex_t   u,
@@ -232,6 +299,9 @@ struct bidi_graph
     view().each_v(u, std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each backward neighbor v of vertex u.
+   */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_bw_v(
     vertex_t   u,
@@ -240,18 +310,27 @@ struct bidi_graph
     view().each_bw_v(u, std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Get the outdegree of vertex u.
+   */
   [[nodiscard]] constexpr auto outdegree(
     vertex_t u) const noexcept -> vertex_t
   {
     return view().outdegree(u);
   }
 
+  /**
+   * @brief Get the indegree of vertex u.
+   */
   [[nodiscard]] constexpr auto indegree(
     vertex_t u) const noexcept -> vertex_t
   {
     return view().indegree(u);
   }
 
+  /**
+   * @brief Iterate over each forward edge (u, v).
+   */
   template<std::invocable<vertex_t,
                           vertex_t> Consumer>
   constexpr void each_uv(
@@ -260,6 +339,9 @@ struct bidi_graph
     view().each_uv(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Iterate over each backward edge (u, v).
+   */
   template<std::invocable<vertex_t,
                           vertex_t> Consumer>
   constexpr void each_bw_uv(
@@ -268,11 +350,17 @@ struct bidi_graph
     view().each_bw_uv(std::forward<Consumer>(consumer));
   }
 
+  /**
+   * @brief Perform basic checks via the view.
+   */
   constexpr void debug_check() const noexcept
   {
     view().debug_check();
   }
 
+  /**
+   * @brief Perform deep validation via the view.
+   */
   constexpr void debug_validate() const noexcept
   {
     view().debug_validate();
