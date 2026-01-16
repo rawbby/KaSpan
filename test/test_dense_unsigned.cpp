@@ -4,7 +4,6 @@
 #include <kaspan/util/arithmetic.hpp>
 
 #include <cstddef>
-#include <iostream>
 
 using namespace kaspan;
 
@@ -30,9 +29,7 @@ test_dense_unsigned_accessor()
 int
 main()
 {
-  std::cout << "Starting test_dense_unsigned..." << std::endl;
   test_dense_unsigned();
   test_dense_unsigned_accessor();
-  std::cout << "test_dense_unsigned passed!" << std::endl;
   return 0;
 }

@@ -133,7 +133,7 @@ public:
     std::invocable<Index> auto&& fn) const
   {
     DEBUG_ASSERT_LE(end, size_);
-    bits_ops::for_each<Index>(data(), end, std::forward<decltype(fn)>(fn));
+    bits_ops::each<Index>(data(), end, std::forward<decltype(fn)>(fn));
   }
 
   template<arithmetic_concept Index = size_t>
@@ -170,7 +170,7 @@ make_bits_clean(
   res.clear(round_up<64>(size64));
 
   if constexpr (KASPAN_DEBUG) {
-    bits_ops::for_each(res.data(), size64, [](u64 /* i */) {
+    bits_ops::each(res.data(), size64, [](u64 /* i */) {
       ASSERT(false, "this code should be unreachable");
     });
     for (u64 i = 0; i < size64; ++i) {
@@ -194,7 +194,7 @@ make_bits_filled(
 
   if constexpr (KASPAN_DEBUG) {
     u64 c = 0;
-    bits_ops::for_each(res.data(), size64, [&c](u64 i) {
+    bits_ops::each(res.data(), size64, [&c](u64 i) {
       ASSERT_EQ(i, c++);
     });
     for (u64 i = 0; i < size64; ++i) {

@@ -5,7 +5,6 @@
 #include <bit>
 #include <cstddef>
 #include <initializer_list>
-#include <iostream>
 #include <limits>
 #include <random>
 #include <vector>
@@ -58,9 +57,7 @@ test_random()
 int
 main()
 {
-  std::cout << "Starting test_dense_unsigned_ops..." << std::endl;
   test_basic();
   test_random();
-  std::cout << "test_dense_unsigned_ops passed!" << std::endl;
   return 0;
 }

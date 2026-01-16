@@ -91,7 +91,7 @@ struct bits_ops
 
   template<arithmetic_concept    Index = size_t,
            std::invocable<Index> fn_t>
-  static void for_each(
+  static void each(
     u64 const* data,
     Index      end,
     fn_t&&     fn)

@@ -2,8 +2,6 @@
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 
-#include <iostream>
-
 using namespace kaspan;
 
 void
@@ -35,9 +33,7 @@ test_stack_accessor()
 int
 main()
 {
-  std::cout << "Starting test_stack..." << std::endl;
   test_stack();
   test_stack_accessor();
-  std::cout << "test_stack passed!" << std::endl;
   return 0;
 }

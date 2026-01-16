@@ -1,4 +1,7 @@
 #include <kaspan/debug/assert.hpp>
+#include <kaspan/util/arithmetic.hpp>
+
+using namespace kaspan;
 
 constexpr int
 test_assertions()
@@ -49,10 +52,44 @@ test_assertions()
   return EXIT_SUCCESS;
 }
 
+constexpr int
+test_assert_cmp()
+{
+  return test_assertions();
+
+  constexpr auto i32_minus_1 = -1;
+  constexpr auto u32_1       = 1u;
+  constexpr auto u32_max     = std::numeric_limits<u32>::max();
+
+  // === Corner Case 1: signed < unsigned ===
+  // Standard: signed is converted unsigned:
+  // -1 < 1u evaluates as (4294967295u < 1u) which is false.
+  // Assert: should be arithmetically correct
+  ASSERT_NE(i32_minus_1, u32_1);
+  ASSERT_LT(i32_minus_1, u32_1);
+  ASSERT_LE(i32_minus_1, u32_1);
+  ASSERT_GT(u32_1, i32_minus_1);
+  ASSERT_GE(u32_1, i32_minus_1);
+
+  // === Corner Case 1: signed == unsigned ===
+  // Standard: signed is converted unsigned:
+  // -1 == UINT_MAX evaluates as (4294967295u == 4294967295u) which is true.
+  // Assert our macro "right" result (they are NOT equal)
+  ASSERT_NE(i32_minus_1, u32_max);
+  ASSERT_LT(i32_minus_1, u32_max);
+  ASSERT_LE(i32_minus_1, u32_max);
+  ASSERT_GT(u32_max, i32_minus_1);
+  ASSERT_GE(u32_max, i32_minus_1);
+
+  return EXIT_SUCCESS;
+}
+
 static_assert(test_assertions() == EXIT_SUCCESS);
+static_assert(test_assert_cmp() == EXIT_SUCCESS);
 
 int
 main()
 {
-  return test_assertions();
+  std::ignore = test_assertions();
+  std::ignore = test_assert_cmp();
 }

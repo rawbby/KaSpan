@@ -125,7 +125,7 @@ public:
     std::invocable<Index> auto&& fn) const
   {
     DEBUG_ASSERT_LE(end, size_);
-    bits_ops::for_each<Index>(data(), end, std::forward<decltype(fn)>(fn));
+    bits_ops::each<Index>(data(), end, std::forward<decltype(fn)>(fn));
   }
 
   template<arithmetic_concept Index = size_t>
