@@ -41,7 +41,7 @@ main(
     for (auto u : std::span{ beg, end }) {
       if (bgp.part.has_local(u)) {
         auto const k     = bgp.part.to_local(u);
-        tarjan_scc_id[u] = id;
+        tarjan_scc_id[k] = id;
       }
     }
   });
