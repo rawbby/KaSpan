@@ -1,8 +1,8 @@
-#include <../../../kaspan/include/kaspan/graph/base.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/valgrind.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
 #include <kaspan/scc/pivot.hpp>

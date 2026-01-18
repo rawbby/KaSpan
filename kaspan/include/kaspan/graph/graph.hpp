@@ -1,9 +1,7 @@
 #pragma once
 
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/debug/valgrind.hpp>
 #include <kaspan/graph/base.hpp>
-#include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/line.hpp>
 
 #include <concepts>

@@ -10,7 +10,7 @@
 namespace kaspan {
 
 template<part_concept Part>
-inline void
+void
 residual_scc(
   vertex_t const*            wcc_id,
   vertex_t*                  sub_scc_id,

@@ -28,9 +28,7 @@ wcc(
       }
     });
 
-    if (!wcc_id_changed) {
-      break;
-    }
+    if (!wcc_id_changed) break;
 
     g.each_u([&](auto u) {
       if (wcc_id[u] != u) { // u is no root
@@ -56,18 +54,6 @@ wcc(
         }
       }
     });
-  }
-
-  size_t wcc_count = 0;
-  for (index_t u = 0; u < g.n; ++u) {
-    if (u == wcc_id[u]) {
-      // root and first occ of this wcc, as id is min in component
-      // rename wcc to make the component ids continuous for easier partitioning
-      wcc_id[u] = wcc_count++;
-    } else {
-      // rename wcc according to root
-      wcc_id[u] = wcc_id[wcc_id[u]];
-    }
   }
 }
 

@@ -8,7 +8,6 @@
 #include <kaspan/graph/graph.hpp>
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/borrow.hpp>
-#include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/adapter/edgelist.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/mpi_basic.hpp>

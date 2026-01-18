@@ -3,7 +3,6 @@
 #include <kaspan/graph/bidi_graph.hpp>
 
 #include <kaspan/graph/base.hpp>
-#include <kaspan/graph/graph.hpp>
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/partion_graph.hpp>

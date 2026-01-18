@@ -1,7 +1,7 @@
-#include "kaspan/graph/single_part.hpp"
-
+#include <kaspan/graph/single_part.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/graph_part.hpp>
+
 #include <vector>
 
 using namespace kaspan;

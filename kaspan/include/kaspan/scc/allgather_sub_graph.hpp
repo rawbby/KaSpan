@@ -3,19 +3,9 @@
 #include <kaspan/graph/bidi_graph.hpp>
 
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/graph/balanced_slice_part.hpp>
 #include <kaspan/graph/base.hpp>
-#include <kaspan/graph/bidi_graph.hpp>
-#include <kaspan/graph/bidi_graph_part.hpp>
-#include <kaspan/graph/block_cyclic_part.hpp>
 #include <kaspan/graph/concept.hpp>
-#include <kaspan/graph/cyclic_part.hpp>
-#include <kaspan/graph/explicit_continuous_part.hpp>
-#include <kaspan/graph/explicit_sorted_part.hpp>
 #include <kaspan/graph/graph.hpp>
-#include <kaspan/graph/graph_part.hpp>
-#include <kaspan/graph/single_part.hpp>
-#include <kaspan/graph/trivial_slice_part.hpp>
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/memory/borrow.hpp>

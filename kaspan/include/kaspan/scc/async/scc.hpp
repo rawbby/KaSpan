@@ -21,7 +21,6 @@
 
 #include <briefkasten/aggregators.hpp>
 #include <briefkasten/buffered_queue.hpp>
-#include <briefkasten/grid_indirection.hpp>
 #include <briefkasten/indirection.hpp>
 #include <briefkasten/noop_indirection.hpp>
 #include <briefkasten/queue_builder.hpp>

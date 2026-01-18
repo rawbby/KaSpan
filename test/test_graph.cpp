@@ -1,5 +1,6 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/graph.hpp>
+
 #include <vector>
 
 using namespace kaspan;

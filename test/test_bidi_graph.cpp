@@ -1,6 +1,5 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
-#include <vector>
 
 using namespace kaspan;
 

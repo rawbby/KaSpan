@@ -1,6 +1,5 @@
 #pragma once
 
-#include <kaspan/graph/graph.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/util/integral_cast.hpp>
 

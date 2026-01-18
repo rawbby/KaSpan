@@ -1,5 +1,4 @@
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/result.hpp>
 
 #include <string>

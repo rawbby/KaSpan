@@ -1,7 +1,6 @@
 #pragma once
 
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/graph/balanced_slice_part.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/concept.hpp>
 #include <kaspan/graph/graph_part.hpp>
