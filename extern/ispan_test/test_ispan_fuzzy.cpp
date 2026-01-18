@@ -1,6 +1,6 @@
+#include <kaspan/test/fuzzy.hpp>
 #include <ispan/scc.hpp>
 #include <kaspan/debug/sub_process.hpp>
-#include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/scope_guard.hpp>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <../../../../kaspan/include/kaspan/graph/base.hpp>
+#include <kaspan/graph/base.hpp>
 
 #include <sys/stat.h>
 

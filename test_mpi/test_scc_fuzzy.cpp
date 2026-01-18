@@ -1,10 +1,10 @@
+#include <kaspan/test/fuzzy.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
-#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/scc/async/scc.hpp>
-#include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/scc.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 

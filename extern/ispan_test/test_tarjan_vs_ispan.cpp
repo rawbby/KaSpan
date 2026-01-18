@@ -1,6 +1,5 @@
-#include <../../kaspan/include/kaspan/graph/base.hpp>
+#include <kaspan/graph/base.hpp>
 #include <ispan/scc.hpp>
-#include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
