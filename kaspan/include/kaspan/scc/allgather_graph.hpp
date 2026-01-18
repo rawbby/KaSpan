@@ -42,12 +42,12 @@ namespace kaspan {
  * - result.m = m (global number of edges).
  * - CSR layout: fw_head[u]..fw_head[u+1]-1 indexes neighbors in fw_csr (analogous for bw_*).
  *
- * @tparam part_t Graph partition type satisfying world_part_concept and part_t::ordered.
+ * @tparam Part Graph partition type satisfying world_part_concept and Part::ordered.
  * @param graph_part Distributed graph partition (disjoint global ownership).
  * @return local_graph containing replicated forward and backward CSR on every rank.
  *
  * @pre Collective over MPI_COMM_WORLD; all ranks must call.
- * @pre part_t::ordered implies contiguous global vertex ranges; each global vertex is owned by exactly one rank.
+ * @pre Part::ordered implies contiguous global vertex ranges; each global vertex is owned by exactly one rank.
  * @pre Uses MPI-4 “_c” collectives: counts are MPI_Count; displacements are byte offsets (MPI_Aint).
  * @pre index_t and vertex_t must map to supported MPI basic types.
  *
@@ -57,12 +57,12 @@ namespace kaspan {
  * - Local work: O(n + m) (offset fix and backward construction).
  * - Communication: O(n + m) (all-gather of head and edges).
  */
-template<part_concept part_t>
-  requires(part_t::ordered())
+template<part_concept Part>
+  requires(Part::ordered())
 auto
 allgather_graph(
   index_t                 m,
-  graph_part_view<part_t> gpv) -> bidi_graph
+  graph_part_view<Part> gpv) -> bidi_graph
 {
   auto const n       = gpv.part->n();
   auto const local_n = gpv.part->local_n();
@@ -75,14 +75,14 @@ allgather_graph(
   // 1) Allgather fw_head
   {
     auto const root_part = gpv.part->world_part_of(0);
-    DEBUG_ASSERT_EQ(0, root_part.begin);
-    counts[0] = integral_cast<MPI_Count>(root_part.end + 1);
+    DEBUG_ASSERT_EQ(0, root_part.begin());
+    counts[0] = integral_cast<MPI_Count>(root_part.end() + 1);
     displs[0] = integral_cast<MPI_Aint>(0);
 
     for (i32 rank = 1; rank < mpi_basic::world_size; ++rank) {
       auto const rank_part = gpv.part->world_part_of(rank);
-      counts[rank]         = integral_cast<MPI_Count>(rank_part.end - rank_part.begin);
-      displs[rank]         = integral_cast<MPI_Aint>(rank_part.begin + 1);
+      counts[rank]         = integral_cast<MPI_Count>(rank_part.end() - rank_part.begin());
+      displs[rank]         = integral_cast<MPI_Aint>(rank_part.begin() + 1);
     }
 
     auto const* send_buffer = gpv.head + (mpi_basic::world_root ? 0 : 1);

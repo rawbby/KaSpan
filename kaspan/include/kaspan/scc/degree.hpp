@@ -35,21 +35,21 @@ degree(
   return 0;
 }
 
-template<part_concept part_t>
-  requires(part_t::continuous)
+template<part_concept Part>
+  requires(Part::continuous())
 index_t
 degree(
-  part_t const&  part,
+  Part const&  part,
   index_t const* head)
 {
   return degree(part.local_n(), head);
 }
 
-template<part_concept part_t>
-  requires(not part_t::continuous)
+template<part_concept Part>
+  requires(not Part::continuous())
 index_t
 degree(
-  part_t const&  part,
+  Part const&  part,
   index_t const* head)
 {
   index_t m = 0;

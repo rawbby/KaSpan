@@ -26,8 +26,7 @@ namespace kaspan {
 template<part_concept Part>
 struct graph_part_view
 {
-  using part_t          = Part;
-  part_t const* part    = nullptr;
+  Part const* part    = nullptr;
   index_t       local_m = 0;
   index_t*      head    = nullptr;
   vertex_t*     csr     = nullptr;
@@ -39,7 +38,7 @@ struct graph_part_view
   constexpr graph_part_view(graph_part_view const&) noexcept = default;
 
   constexpr graph_part_view(
-    part_t const* part,
+    Part const* part,
     index_t       local_m,
     index_t*      head,
     vertex_t*     csr) noexcept
@@ -210,8 +209,7 @@ struct graph_part_view
 template<part_concept Part>
 struct graph_part
 {
-  using part_t = Part;
-  part_t    part{};
+  Part    part{};
   index_t   local_m = 0;
   index_t*  head    = nullptr;
   vertex_t* csr     = nullptr;
@@ -219,7 +217,7 @@ struct graph_part
   constexpr graph_part() noexcept = default;
 
   graph_part(
-    part_t  part,
+    Part  part,
     index_t local_m)
     : part(std::move(part))
     , local_m(local_m)
@@ -264,7 +262,7 @@ struct graph_part
   }
   constexpr auto operator=(graph_part const&) noexcept -> graph_part& = delete;
 
-  [[nodiscard]] constexpr auto view() const noexcept -> graph_part_view<part_t>
+  [[nodiscard]] constexpr auto view() const noexcept -> graph_part_view<Part>
   {
     return { &part, local_m, head, csr };
   }

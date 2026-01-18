@@ -96,9 +96,9 @@ struct edge_frontier
   auto end()          { return recv_buffer.end();    }
   // clang-format on
 
-  template<part_concept part_t>
+  template<part_concept Part>
   auto comm(
-    part_t const& part) -> bool
+    Part const& part) -> bool
   {
     DEBUG_ASSERT_NE(mpi_edge_t, mpi_basic::datatype_null);
 

@@ -10,10 +10,10 @@
 
 namespace kaspan {
 
-template<part_concept part_t>
+template<part_concept Part>
 void
 color_scc_init_label(
-  part_t const& part,
+  Part const& part,
   vertex_t*     colors)
 {
   auto const local_n = part.local_n();
@@ -23,10 +23,10 @@ color_scc_init_label(
 }
 
 /// start with up to one pivot per rank
-template<part_concept part_t>
+template<part_concept Part>
 auto
 color_scc_step_multi(
-  bidi_graph_part_view<part_t> graph,
+  bidi_graph_part_view<Part> graph,
   vertex_t*                    scc_id,
   vertex_t*                    colors,
   vertex_t*                    active_array,
@@ -181,10 +181,10 @@ color_scc_step_multi(
   return local_decided_count;
 }
 
-template<part_concept part_t>
+template<part_concept Part>
 auto
 color_scc_step_multi(
-  bidi_graph_part_view<part_t> graph,
+  bidi_graph_part_view<Part> graph,
   vertex_t*                    scc_id,
   vertex_t*                    colors,
   vertex_t*                    active_array,
@@ -248,10 +248,10 @@ color_scc_step_multi(
   return local_decided_count + color_scc_step_multi(graph, scc_id, colors, active_array, active_storage, changed_storage, frontier, max_degree_vertex, on_decision);
 }
 
-template<part_concept part_t>
+template<part_concept Part>
 auto
 color_scc_step(
-  bidi_graph_part_view<part_t> graph,
+  bidi_graph_part_view<Part> graph,
   vertex_t*                    scc_id,
   vertex_t*                    colors,
   vertex_t*                    active_array,

@@ -161,7 +161,7 @@ tarjan(
   filter_t   filter        = no_filter,
   vertex_t   decided_count = 0) noexcept
 {
-  auto const      part = single_world_part{ g.n };
+  auto const      part = single_part{ g.n };
   graph_part_view gp{ &part, g.m, g.head, g.csr };
   tarjan(gp, callback, filter, decided_count);
 }

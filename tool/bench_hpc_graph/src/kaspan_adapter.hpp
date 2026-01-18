@@ -21,9 +21,9 @@ struct hpc_graph_data
 };
 
 // Convert from KaSpan GraphPart to HPCGraph dist_graph_t format
-template<kaspan::part_concept part_t>
+template<kaspan::part_concept Part>
 auto
-create_hpc_graph_from_graph_part(part_t const&           part,
+create_hpc_graph_from_graph_part(Part const&           part,
                                  kaspan::index_t         m,
                                  kaspan::index_t         local_fw_m,
                                  kaspan::index_t         local_bw_m,
@@ -41,7 +41,7 @@ create_hpc_graph_from_graph_part(part_t const&           part,
   data.g.n           = kaspan::integral_cast<uint64_t>(n);
   data.g.m           = kaspan::integral_cast<uint64_t>(m);
   data.g.n_local     = kaspan::integral_cast<uint64_t>(local_n);
-  data.g.n_offset    = kaspan::integral_cast<uint64_t>(part.begin); // Use begin instead of local_start()
+  data.g.n_offset    = kaspan::integral_cast<uint64_t>(part.begin()); // Use begin instead of local_start()
   data.g.n_ghost     = 0;
   data.g.n_total     = data.g.n_local; // no ghost vertices for now
   data.g.m_local_out = kaspan::integral_cast<uint64_t>(local_fw_m);
@@ -160,9 +160,9 @@ create_hpc_graph_from_graph_part(part_t const&           part,
 // Initialize ghost cells for HPCGraph adapter
 // This is an accelerator structure specific to HPCGraph and should be counted
 // as part of the algorithm benchmark time, not as graph conversion overhead
-template<kaspan::part_concept part_t>
+template<kaspan::part_concept Part>
 void
-initialize_ghost_cells(hpc_graph_data& data, part_t const& part, kaspan::index_t local_fw_m, kaspan::index_t local_bw_m)
+initialize_ghost_cells(hpc_graph_data& data, Part const& part, kaspan::index_t local_fw_m, kaspan::index_t local_bw_m)
 {
   kaspan::vertex_t const local_n = part.local_n();
 
@@ -171,14 +171,14 @@ initialize_ghost_cells(hpc_graph_data& data, part_t const& part, kaspan::index_t
   for (kaspan::index_t i = 0; i < local_fw_m; ++i) {
     uint64_t global_id = data.g.out_edges[i];
     // Check if it's not a local vertex
-    if (global_id < part.begin || global_id >= part.end) {
+    if (global_id < part.begin() || global_id >= part.end()) {
       ghost_set.insert(global_id);
     }
   }
   for (kaspan::index_t i = 0; i < local_bw_m; ++i) {
     uint64_t global_id = data.g.in_edges[i];
     // Check if it's not a local vertex
-    if (global_id < part.begin || global_id >= part.end) {
+    if (global_id < part.begin() || global_id >= part.end()) {
       ghost_set.insert(global_id);
     }
   }
@@ -268,9 +268,9 @@ initialize_ghost_cells(hpc_graph_data& data, part_t const& part, kaspan::index_t
 }
 
 // Convert from KaSpan local_graph_part to HPCGraph dist_graph_t format
-template<kaspan::part_concept part_t>
+template<kaspan::part_concept Part>
 auto
-create_hpc_graph_from_local_graph_part(part_t const&           part,
+create_hpc_graph_from_local_graph_part(Part const&           part,
                                        kaspan::index_t         m,
                                        kaspan::index_t         local_fw_m,
                                        kaspan::index_t         local_bw_m,

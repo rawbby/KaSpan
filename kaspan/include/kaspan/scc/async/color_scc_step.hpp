@@ -7,11 +7,11 @@
 
 namespace kaspan::async {
 
-template<part_concept part_t,
+template<part_concept Part,
          typename brief_queue_t>
 auto
 color_scc_step(
-  bidi_graph_part_view<part_t> graph,
+  bidi_graph_part_view<Part> graph,
   brief_queue_t&               mq,
   vertex_t*                    scc_id,
   vertex_t*                    colors,

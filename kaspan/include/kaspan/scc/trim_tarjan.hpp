@@ -63,11 +63,11 @@ choose_contains_fn(
 
 }
 
-template<part_concept part_t,
+template<part_concept Part,
          typename filter_t = decltype(no_filter)>
 vertex_t
 trim_tarjan(
-  part_t const&   part,
+  Part const&   part,
   index_t const*  fw_head,
   vertex_t const* fw_csr,
   index_t const*  bw_head,

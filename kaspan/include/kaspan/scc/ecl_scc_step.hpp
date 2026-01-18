@@ -32,10 +32,10 @@ namespace kaspan {
  * if fw_label and bw_label are equal, ecl-componen is scc component.
  */
 
-template<world_part_concept part_t>
+template<world_part_concept Part>
 void
 ecl_scc_init_lable(
-  part_t const& part,
+  Part const& part,
   vertex_t*     ecl_fw_label,
   vertex_t*     ecl_bw_label)
 {
@@ -47,10 +47,10 @@ ecl_scc_init_lable(
   }
 }
 
-template<world_part_concept part_t>
+template<world_part_concept Part>
 auto
 ecl_scc_step(
-  part_t const&   part,
+  Part const&   part,
   index_t const*  fw_head,
   vertex_t const* fw_csr,
   index_t const*  bw_head,

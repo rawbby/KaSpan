@@ -22,19 +22,19 @@
 namespace kaspan {
 
 /// from a global_graph get the degree of a partition
-template<part_concept part_t>
-  requires(part_t::continuous)
+template<part_concept Part>
+  requires(Part::continuous())
 auto
 partition_local_m(
   graph_view    g,
-  part_t const& part) -> index_t
+  Part const& part) -> index_t
 {
-  return part.local_n() > 0 ? g.head[part.end] - g.head[part.begin] : 0;
+  return part.local_n() > 0 ? g.head[part.end()] - g.head[part.begin()] : 0;
 }
 
 /// from a global_graph get the degree of a partition
 template<part_concept Part>
-  requires(!Part::continuous)
+  requires(!Part::continuous())
 auto
 partition_local_m(
   graph_view  g,
@@ -61,17 +61,17 @@ partition_local_m(
   return PACK(local_fw_m, local_bw_m);
 }
 
-template<part_concept part_t>
+template<part_concept Part>
 auto
 partition(
   graph_view g,
-  part_t     part) -> graph_part<part_t>
+  Part     part) -> graph_part<Part>
 {
   g.debug_validate();
   auto const local_n = part.local_n();
 
   auto const local_m = partition_local_m(g, part);
-  auto       gp      = graph_part<part_t>{ std::move(part), local_m };
+  auto       gp      = graph_part<Part>{ std::move(part), local_m };
 
   index_t pos = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -86,17 +86,17 @@ partition(
   return gp;
 }
 
-template<part_concept part_t>
+template<part_concept Part>
 auto
 partition(
   bidi_graph_view bg,
-  part_t          part) -> bidi_graph_part<part_t>
+  Part          part) -> bidi_graph_part<Part>
 {
   bg.debug_validate();
   auto const local_n                  = part.local_n();
   auto const [local_fw_m, local_bw_m] = partition_local_m(bg, part);
 
-  auto bgp = bidi_graph_part<part_t>{ std::move(part), local_fw_m, local_bw_m };
+  auto bgp = bidi_graph_part<Part>{ std::move(part), local_fw_m, local_bw_m };
 
   index_t fw_offset = 0;
   for (vertex_t k = 0; k < local_n; ++k) {

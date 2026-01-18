@@ -123,9 +123,6 @@ main(int argc, char** argv)
     auto const manifest = manifest::load(manifest_file);
     ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
     auto const part = balanced_slice_part{ integral_cast<vertex_t>(manifest.graph_node_count) };
-    {
-      integral_cast<vertex_t>(manifest.graph_node_count);
-    };
     auto const manifest_graph = load_graph_part_from_manifest(part, manifest);
     KASPAN_STATISTIC_POP();
     benchmark(manifest_graph, use_async, use_async_indirect);

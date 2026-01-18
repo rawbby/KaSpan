@@ -70,10 +70,10 @@ make_briefkasten_edge()
 }
 
 template<typename indirection_scheme_t,
-         part_concept part_t>
+         part_concept Part>
 void
 scc(
-  bidi_graph_part_view<part_t> graph,
+  bidi_graph_part_view<Part> graph,
   vertex_t*                    scc_id)
 {
   graph.debug_validate();

@@ -9,10 +9,10 @@ namespace kaspan {
 
 namespace async {
 
-template<world_part_concept part_t>
+template<world_part_concept Part>
 void
 ecl_scc_init_label(
-  part_t const& part,
+  Part const& part,
   vertex_t*     ecl_fw_label,
   vertex_t*     ecl_bw_label)
 {
@@ -24,11 +24,11 @@ ecl_scc_init_label(
   }
 }
 
-template<world_part_concept part_t,
+template<world_part_concept Part,
          typename brief_queue_t>
 auto
 ecl_scc_step(
-  bidi_graph_part_view<part_t> graph,
+  bidi_graph_part_view<Part> graph,
   brief_queue_t&               mq,
   vertex_t*                    scc_id,
   vertex_t*                    ecl_fw_label,

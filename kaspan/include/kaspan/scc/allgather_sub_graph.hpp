@@ -34,11 +34,11 @@
 namespace kaspan {
 namespace sub_graph {
 
-template<part_concept part_t,
+template<part_concept Part,
          class fn_t>
 auto
 allgather_sub_ids(
-  part_t const& part,
+  Part const& part,
   vertex_t      local_sub_n,
   fn_t&&        in_sub_graph)
 {
@@ -121,14 +121,14 @@ allgather_csr_degrees(
 
 }
 
-template<class part_t,
+template<class Part,
          class fn_t>
-  requires(part_t::ordered() and std::convertible_to<std::invoke_result_t<fn_t,
+  requires(Part::ordered() and std::convertible_to<std::invoke_result_t<fn_t,
                                                                         vertex_t>,
                                                    bool>)
 auto
 allgather_sub_graph(
-  part_t const&   part,
+  Part const&   part,
   vertex_t        local_sub_n,
   index_t const*  fw_head,
   vertex_t const* fw_csr,
@@ -180,14 +180,14 @@ allgather_sub_graph(
   return PACK(ids_inverse, bg);
 }
 
-template<class part_t,
+template<class Part,
          class fn_t>
-  requires(part_t::ordered() and std::convertible_to<std::invoke_result_t<fn_t,
+  requires(Part::ordered() and std::convertible_to<std::invoke_result_t<fn_t,
                                                                         vertex_t>,
                                                    bool>)
 auto
 allgather_fw_sub_graph(
-  part_t const&   part,
+  Part const&   part,
   vertex_t        local_sub_n,
   index_t const*  fw_head,
   vertex_t const* fw_csr,

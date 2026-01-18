@@ -14,12 +14,12 @@ check_p_p(
   Part const& p,
   Part const& p_)
 {
-  ASSERT_EQ(p.n, p_.n);
+  ASSERT_EQ(p.n(), p_.n());
   ASSERT_EQ(p.local_n(), p_.local_n());
-  ASSERT_EQ(p.begin, p_.begin);
-  ASSERT_EQ(p.end, p_.end);
-  ASSERT_EQ(p.world_rank, p_.world_rank);
-  ASSERT_EQ(p.world_size, p_.world_size);
+  ASSERT_EQ(p.begin(), p_.begin());
+  ASSERT_EQ(p.end(), p_.end());
+  ASSERT_EQ(p.world_rank(), p_.world_rank());
+  ASSERT_EQ(p.world_size(), p_.world_size());
   for (vertex_t k = 0; k < p.local_n(); ++k) {
     ASSERT_EQ(p.to_global(k), p.to_global(k), "k={}", k);
   }

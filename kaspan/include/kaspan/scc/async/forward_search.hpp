@@ -8,11 +8,11 @@
 
 namespace kaspan::async {
 
-template<part_concept part_t,
+template<part_concept Part,
          typename brief_queue_t>
 auto
 forward_search(
-  graph_part_view<part_t> graph,
+  graph_part_view<Part> graph,
   brief_queue_t&          mq,
   vertex_t const*         scc_id,
   u64*                    fw_reached_storage,

@@ -6,10 +6,10 @@
 
 namespace kaspan {
 
-template<bool InterleavedSupport, world_part_concept part_t>
+template<bool InterleavedSupport, world_part_concept Part>
 auto
 trim_1_first(
-  bidi_graph_part_view<part_t>         graph,
+  bidi_graph_part_view<Part>         graph,
   vertex_t*                            scc_id,
   vertex_t*                            outdegree,
   vertex_t*                            indegree,
@@ -113,10 +113,10 @@ trim_1_first(
   return return_t{ decided_count, max };
 }
 
-template<world_part_concept part_t>
+template<world_part_concept Part>
 auto
 trim_1(
-  bidi_graph_part_view<part_t> graph,
+  bidi_graph_part_view<Part> graph,
   vertex_t*                    scc_id,
   vertex_t const*              fw_degree,
   vertex_t const*              bw_degree) -> vertex_t

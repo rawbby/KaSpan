@@ -3,9 +3,9 @@
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/util/scope_guard.hpp>
 
-// template<world_part_concept part_t>
+// template<world_part_concept Part>
 // inline auto
-// wcc(part_t const& part,
+// wcc(Part const& part,
 //
 //     index_t const*  fw_head,
 //     vertex_t const*  fw_csr,

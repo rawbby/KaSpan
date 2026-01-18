@@ -88,9 +88,9 @@ struct vertex_frontier
   auto end()          { return recv_buffer.end();    }
   // clang-format on
 
-  template<part_concept part_t>
+  template<part_concept Part>
   auto comm(
-    part_t const& part) -> bool
+    Part const& part) -> bool
   {
     auto const send_count = mpi_basic::displs(send_counts, send_displs);
     DEBUG_ASSERT_EQ(send_count, send_buffer.size());

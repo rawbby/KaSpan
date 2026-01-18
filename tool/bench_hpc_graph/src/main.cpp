@@ -48,7 +48,7 @@ benchmark(
     else return kagen_res;
   }();
 
-  using part_t = std::remove_cvref_t<decltype(graph_part.part)>;
+  using Part = std::remove_cvref_t<decltype(graph_part.part)>;
 
   auto const m = [&]() -> index_t {
     if constexpr (requires { kagen_res.m; }) return kagen_res.m;
@@ -64,7 +64,7 @@ benchmark(
 
   // Create HPCGraph data structure from kaspan graph
   hpc_graph_data hpc_data;
-  part_t         part_copy;
+  Part           part;
   index_t        local_fw_m_copy = 0;
   index_t        local_bw_m_copy = 0;
   {
@@ -74,7 +74,7 @@ benchmark(
     KASPAN_STATISTIC_POP();
 
     // Save partitioning info (lightweight) before releasing kaspan memory
-    part_copy       = graph_part.part;
+    part       = std::move(graph_part.part);
     local_fw_m_copy = graph_part.local_fw_m;
     local_bw_m_copy = graph_part.local_bw_m;
   }
@@ -95,7 +95,7 @@ benchmark(
   // Initialize ghost cells as part of SCC benchmark
   // Ghost cells are an accelerator structure specific to HPCGraph
   KASPAN_STATISTIC_PUSH("ghost_init");
-  initialize_ghost_cells(hpc_data, part_copy, local_fw_m_copy, local_bw_m_copy);
+  initialize_ghost_cells(hpc_data, part, local_fw_m_copy, local_bw_m_copy);
   KASPAN_STATISTIC_POP();
 
   KASPAN_STATISTIC_PUSH("pivot");

@@ -1,5 +1,7 @@
-#include <kaspan/graph/graph_part.hpp>
+#include "kaspan/graph/single_part.hpp"
+
 #include <kaspan/debug/assert.hpp>
+#include <kaspan/graph/graph_part.hpp>
 #include <vector>
 
 using namespace kaspan;
@@ -7,8 +9,8 @@ using namespace kaspan;
 int main() {
     // Test empty graph_part
     {
-        single_world_part part(0);
-        graph_part<single_world_part> gp(part, 0);
+        single_part part(0);
+        graph_part gp(part, 0);
         ASSERT_EQ(gp.part.n(), 0);
         ASSERT_EQ(gp.local_m, 0);
         ASSERT_EQ(gp.head, nullptr);
@@ -22,8 +24,8 @@ int main() {
     {
         vertex_t n = 3;
         vertex_t m = 3;
-        single_world_part part(n);
-        graph_part<single_world_part> gp(part, m);
+        single_part part(n);
+        graph_part gp(part, m);
         
         // Setup CSR
         gp.head[0] = 0;

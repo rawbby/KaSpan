@@ -215,11 +215,11 @@ fuzzy_global_scc_id_and_graph(
   return PACK(scc_id, bg);
 }
 
-template<part_concept part_t>
+template<part_concept Part>
 auto
 fuzzy_local_scc_id_and_graph(
   u64           seed,
-  part_t const& part,
+  Part const& part,
   double        degree = -1.0)
 {
   auto const local_n = part.local_n();

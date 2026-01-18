@@ -19,13 +19,17 @@
 #include <vector>
 
 void
-usage(int /* argc */, char** argv)
+usage(
+  int /* argc */,
+  char** argv)
 {
   std::println("usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file <output_file>", argv[0]);
 }
 
 void
-benchmark(auto const& graph, kaspan::i32 alpha)
+benchmark(
+  auto const& graph,
+  kaspan::i32 alpha)
 {
   std::vector<kaspan::vertex_t> scc_id;
 
@@ -43,7 +47,9 @@ benchmark(auto const& graph, kaspan::i32 alpha)
 }
 
 int
-main(int argc, char** argv)
+main(
+  int    argc,
+  char** argv)
 {
   auto const* const kagen_option_string = kaspan::arg_select_optional_str(argc, argv, "--kagen_option_string");
   auto const* const manifest_file       = kaspan::arg_select_optional_str(argc, argv, "--manifest_file");
@@ -72,10 +78,11 @@ main(int argc, char** argv)
   if (kagen_option_string != nullptr) {
     auto const graph = [kagen_option_string] {
       KASPAN_STATISTIC_PUSH("kagen");
-      auto const [PS, FS, BS, m, bgp] = kaspan::kagen_graph_part(kagen_option_string);
+      auto const g = kaspan::kagen_graph_part(kagen_option_string);
+      auto const m = kaspan::mpi_basic::allreduce_single(g.local_fw_m, kaspan::mpi_basic::sum);
       KASPAN_STATISTIC_POP();
       KASPAN_STATISTIC_SCOPE("preprocessing");
-      return allgather_graph(m, bgp.fw_view());
+      return allgather_graph(m, g.fw_view());
     }();
     benchmark(graph, alpha);
   } else {

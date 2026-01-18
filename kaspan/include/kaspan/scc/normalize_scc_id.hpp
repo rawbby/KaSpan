@@ -18,10 +18,10 @@
 
 namespace kaspan {
 
-template<world_part_concept part_t>
+template<world_part_concept Part>
 void
 normalize_scc_id(
-  part_t const& part,
+  Part const& part,
   vertex_t*     scc_id)
 {
   KASPAN_STATISTIC_SCOPE("normalize_scc_id");

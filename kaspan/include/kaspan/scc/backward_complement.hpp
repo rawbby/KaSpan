@@ -78,8 +78,8 @@ backward_complement_graph_part(
 
   if (mpi_basic::world_size == 1) [[unlikely]] {
     g.local_bw_m = g.local_fw_m;
-    g.bw.head    = borrow_array<index_t>(local_n + 1);
-    g.bw.csr     = borrow_array<vertex_t>(g.local_bw_m);
+    g.bw.head    = line_alloc<index_t>(local_n + 1);
+    g.bw.csr     = line_alloc<vertex_t>(g.local_bw_m);
     backward_complement_graph(bidi_graph_view{ local_n, g.local_fw_m, g.fw.head, g.fw.csr, g.bw.head, g.bw.csr });
     return;
   }
@@ -124,7 +124,7 @@ backward_complement_graph_part(
   g.bw.head    = local_n > 0 ? line_alloc<index_t>(local_n + 1) : nullptr;
   g.bw.csr     = line_alloc<vertex_t>(g.local_bw_m);
 
-  edgelist_to_graph_part(g.art, recv_count, recv_buffer, g.bw.head, g.bw.csr);
+  edgelist_to_graph_part(g.part, recv_count, recv_buffer.data(), g.bw.head, g.bw.csr);
 }
 
 } // namespace kaspan

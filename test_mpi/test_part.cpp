@@ -47,24 +47,10 @@ test_consistency(
   }
   ASSERT_EQ(count, local_n);
 
-  if constexpr (requires {
-                  part.begin();
-                  part.end();
-                }) {
-    if constexpr (requires { Part::continuous(); }) {
-      if (Part::continuous()) {
-        ASSERT_EQ(part.end() - part.begin(), local_n);
-        for (vertex_t k = 0; k < local_n; ++k) {
-          ASSERT_EQ(part.to_global(k), part.begin() + k);
-        }
-      }
-    } else if constexpr (requires { part.continuous(); }) {
-      if (part.continuous()) {
-        ASSERT_EQ(part.end() - part.begin(), local_n);
-        for (vertex_t k = 0; k < local_n; ++k) {
-          ASSERT_EQ(part.to_global(k), part.begin() + k);
-        }
-      }
+  if constexpr (part.continuous()) {
+    ASSERT_EQ(part.end() - part.begin(), local_n);
+    for (vertex_t k = 0; k < local_n; ++k) {
+      ASSERT_EQ(part.to_global(k), part.begin() + k);
     }
   }
 }

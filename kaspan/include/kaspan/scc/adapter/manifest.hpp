@@ -255,11 +255,11 @@ load_graph_from_manifest(
   return g;
 }
 
-template<part_concept part_t>
+template<part_concept Part>
 static auto
 load_graph_part_from_manifest(
-  part_t const&   part,
-  manifest const& manifest) -> bidi_graph_part<part_t>
+  Part const&   part,
+  manifest const& manifest) -> bidi_graph_part<Part>
 {
   DEBUG_ASSERT_EQ(manifest.graph_node_count, part.n());
 
@@ -274,9 +274,9 @@ load_graph_part_from_manifest(
   auto const* bw_head_file = manifest.bw_head_path.c_str();
   auto const* bw_csr_file  = manifest.bw_csr_path.c_str();
 
-  ASSERT_LE(0, part.begin);
-  ASSERT_LE(part.begin, part.end);
-  ASSERT_LE(part.end, m);
+  ASSERT_LE(0, part.begin());
+  ASSERT_LE(part.begin(), part.end());
+  ASSERT_LE(part.end(), m);
 
   ASSERT_IN_RANGE(n, 0, std::numeric_limits<vertex_t>::max());
 
@@ -301,16 +301,16 @@ load_graph_part_from_manifest(
   auto bw_csr_access  = view_dense_unsigned(bw_csr_buffer.data(), m, csr_bytes, load_endian);
 
   auto const get_local_m = [=, &part](dense_unsigned_accessor<> const& head) -> index_t {
-    if constexpr (part_t::continuous) {
+    if constexpr (Part::continuous()) {
       if (local_n > 0) {
 
-        DEBUG_ASSERT_GE(head.get(part.begin), 0);
-        DEBUG_ASSERT_LE(head.get(part.begin), m);
+        DEBUG_ASSERT_GE(head.get(part.begin()), 0);
+        DEBUG_ASSERT_LE(head.get(part.begin()), m);
 
-        DEBUG_ASSERT_GE(head.get(part.end), 0);
-        DEBUG_ASSERT_LE(head.get(part.end), m);
+        DEBUG_ASSERT_GE(head.get(part.end()), 0);
+        DEBUG_ASSERT_LE(head.get(part.end()), m);
 
-        return head.get(part.end) - head.get(part.begin);
+        return head.get(part.end()) - head.get(part.begin());
       }
       return 0;
     } else {
@@ -341,7 +341,7 @@ load_graph_part_from_manifest(
   DEBUG_ASSERT_GE(local_bw_m, 0);
   DEBUG_ASSERT_LE(local_bw_m, m);
 
-  bidi_graph_part<part_t> result(part, local_fw_m, local_bw_m);
+  bidi_graph_part<Part> result(part, local_fw_m, local_bw_m);
 
   u64 pos = 0;
   for (u64 k = 0; k < local_n; ++k) {

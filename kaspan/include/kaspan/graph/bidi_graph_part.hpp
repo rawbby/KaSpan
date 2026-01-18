@@ -12,8 +12,7 @@ namespace kaspan {
 template<part_concept Part>
 struct bidi_graph_part_view
 {
-  using part_t             = Part;
-  part_t const* part       = nullptr; ///< The partition information
+  Part const* part       = nullptr; ///< The partition information
   index_t       local_fw_m = 0;       ///< Number of local forward edges
   index_t       local_bw_m = 0;       ///< Number of local backward edges
   struct
@@ -34,7 +33,7 @@ struct bidi_graph_part_view
   constexpr bidi_graph_part_view(bidi_graph_part_view const&) noexcept = default;
 
   constexpr bidi_graph_part_view(
-    part_t const* part,
+    Part const* part,
     index_t       local_fw_m,
     index_t       local_bw_m,
     index_t*      fw_head,
@@ -58,7 +57,7 @@ struct bidi_graph_part_view
   /**
    * @brief Create a view of the forward partitioned graph.
    */
-  [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_part_view<part_t>
+  [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_part_view<Part>
   {
     return { part, local_fw_m, fw.head, fw.csr };
   }
@@ -66,7 +65,7 @@ struct bidi_graph_part_view
   /**
    * @brief Create a view of the backward partitioned graph.
    */
-  [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_part_view<part_t>
+  [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_part_view<Part>
   {
     return { part, local_bw_m, bw.head, bw.csr };
   }
@@ -74,7 +73,7 @@ struct bidi_graph_part_view
   /**
    * @brief Create a view with forward and backward directions swapped.
    */
-  [[nodiscard]] constexpr auto inverse_view() const noexcept -> bidi_graph_part_view<part_t>
+  [[nodiscard]] constexpr auto inverse_view() const noexcept -> bidi_graph_part_view<Part>
   {
     return { part, local_bw_m, local_fw_m, bw.head, bw.csr, fw.head, fw.csr };
   }
@@ -229,8 +228,7 @@ struct bidi_graph_part_view
 template<part_concept Part>
 struct bidi_graph_part
 {
-  using part_t = Part;
-  part_t  part{};         ///< The partition info
+  Part  part{};         ///< The partition info
   index_t local_fw_m = 0; ///< Forward edge count
   index_t local_bw_m = 0; ///< Backward edge count
   struct
@@ -247,7 +245,7 @@ struct bidi_graph_part
   constexpr bidi_graph_part() noexcept = default;
 
   bidi_graph_part(
-    part_t  part,
+    Part  part,
     index_t local_fw_m,
     index_t local_bw_m)
     : part(std::move(part))
@@ -305,7 +303,7 @@ struct bidi_graph_part
   /**
    * @brief Create a non-mutable view of the partitioned bidirectional graph.
    */
-  [[nodiscard]] constexpr auto view() const noexcept -> bidi_graph_part_view<part_t>
+  [[nodiscard]] constexpr auto view() const noexcept -> bidi_graph_part_view<Part>
   {
     return { &part, local_fw_m, local_bw_m, fw.head, fw.csr, bw.head, bw.csr };
   }
@@ -313,7 +311,7 @@ struct bidi_graph_part
   /**
    * @brief Create a view of the forward partitioned graph.
    */
-  [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_part_view<part_t>
+  [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_part_view<Part>
   {
     return view().fw_view();
   }
@@ -321,7 +319,7 @@ struct bidi_graph_part
   /**
    * @brief Create a view of the backward partitioned graph.
    */
-  [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_part_view<part_t>
+  [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_part_view<Part>
   {
     return view().bw_view();
   }
