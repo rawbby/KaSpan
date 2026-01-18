@@ -33,7 +33,7 @@ struct edge64_less
     edge64 const& lhs,
     edge64 const& rhs) const noexcept -> bool
   {
-    return lhs.u < rhs.u or (lhs.u == rhs.u and lhs.v < rhs.v);
+    return lhs.u < rhs.u || (lhs.u == rhs.u && lhs.v < rhs.v);
   }
 
   static constexpr auto min_value() -> edge64
@@ -53,7 +53,7 @@ struct edge64_greater
     edge64 const& lhs,
     edge64 const& rhs) const noexcept -> bool
   {
-    return lhs.u > rhs.u or (lhs.u == rhs.u and lhs.v > rhs.v);
+    return lhs.u > rhs.u || (lhs.u == rhs.u && lhs.v > rhs.v);
   }
 
   static constexpr auto min_value() -> edge64
@@ -129,7 +129,7 @@ struct local_sort_adapter
 
   [[nodiscard]] auto has_next() const -> bool
   {
-    return not buffer.empty();
+    return !buffer.empty();
   }
 
   auto next() -> edge64
@@ -174,7 +174,7 @@ struct extern_sort_adapter
 
   [[nodiscard]] auto has_next() const -> bool
   {
-    return not storage.empty();
+    return !storage.empty();
   }
 
   auto next() -> edge64
@@ -225,7 +225,7 @@ convert_graph(
 
     std::string line;
     while (std::getline(in, line)) {
-      if (line.empty() or line[0] == '%' or line[0] == '#' or (line[0] == '/' and line[1] == '/')) {
+      if (line.empty() || line[0] == '%' || line[0] == '#' || (line[0] == '/' && line[1] == '/')) {
         continue;
       }
 
@@ -235,7 +235,7 @@ convert_graph(
       max_node = std::max(std::max(v, u), max_node);
       has_self_loops |= u == v;
     }
-    ASSERT(not in.bad());
+    ASSERT(!in.bad());
 
     sort();
     m          = sort.size();
@@ -263,7 +263,7 @@ convert_graph(
     while (sort.has_next()) {
       auto const [u, v] = sort.next();
 
-      if (u == last_u and v == last_v) {
+      if (u == last_u && v == last_v) {
         has_duplicates = true;
       }
       last_u = u;
@@ -287,14 +287,14 @@ convert_graph(
 
   in.clear();
   in.seekg(0);
-  DEBUG_ASSERT(not sort.has_next());
+  DEBUG_ASSERT(!sort.has_next());
   sort.clear();
 
   // second pass backward
   {
     std::string line;
     while (std::getline(in, line)) {
-      if (line.empty() or line[0] == '%' or line[0] == '#' or (line[0] == '/' and line[1] == '/')) {
+      if (line.empty() || line[0] == '%' || line[0] == '#' || (line[0] == '/' && line[1] == '/')) {
         continue;
       }
 
@@ -302,7 +302,7 @@ convert_graph(
       sort.push(edge64{ v, u });
     }
 
-    ASSERT(not in.bad());
+    ASSERT(!in.bad());
     sort();
 
     auto head_buffer = file_buffer::create_w<true>(bw_head_path.c_str(), (n + 1) * head_bytes);

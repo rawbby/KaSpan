@@ -69,7 +69,7 @@ struct vertex_frontier
 
   [[nodiscard]] auto has_next() const -> bool
   {
-    return not recv_buffer.empty();
+    return !recv_buffer.empty();
   }
 
   auto next() -> vertex_t

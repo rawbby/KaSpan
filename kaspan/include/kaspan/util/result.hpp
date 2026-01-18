@@ -36,10 +36,10 @@ class result final
   static constexpr bool value_is_void_v = std::is_same_v<V, std::monostate>;
 
   template<class T>
-  static constexpr bool value_convertible_v = std::convertible_to<T&&, V> and not std::convertible_to<T&&, error_code>;
+  static constexpr bool value_convertible_v = std::convertible_to<T&&, V> && !std::convertible_to<T&&, error_code>;
 
   template<class T>
-  static constexpr bool error_convertible_v = std::convertible_to<T&&, error_code> and not std::convertible_to<T&&, V>;
+  static constexpr bool error_convertible_v = std::convertible_to<T&&, error_code> && !std::convertible_to<T&&, V>;
 
 public:
   using value_type = V;
@@ -158,7 +158,7 @@ public:
     F&& mapper) const
   {
     using R = result<std::invoke_result_t<F, V const&>>;
-    if (not has_value()) {
+    if (!has_value()) {
       return R::failure(error());
     }
     return R::success(std::invoke(std::forward<F>(mapper), value()));
@@ -169,7 +169,7 @@ public:
     F&& consumer) const
   {
     using R = std::invoke_result_t<F, V const&>;
-    if (not has_value()) {
+    if (!has_value()) {
       return R::failure(error());
     }
     return std::invoke(std::forward<F>(consumer), value());
@@ -213,12 +213,12 @@ public:
 
 #define RESULT_ASSERT_1(COND) RESULT_ASSERT_2(COND, ASSERTION_ERROR)
 #define RESULT_ASSERT_2(COND, ERROR_CODE)                                                                                                                                          \
-  if (not(COND)) { /* NOLINT(*-simplify-boolean-expr) */                                                                                                                           \
+  if (!(COND)) { /* NOLINT(*-simplify-boolean-expr) */                                                                                                                             \
     return error_code::ERROR_CODE;                                                                                                                                                 \
   }                                                                                                                                                                                \
   ((void)0)
 #define RESULT_ASSERT_3(COND, ERROR_CODE, ERROR_STRING)                                                                                                                            \
-  if (not(COND)) { /* NOLINT(*-simplify-boolean-expr) */                                                                                                                           \
+  if (!(COND)) { /* NOLINT(*-simplify-boolean-expr) */                                                                                                                             \
     perror(ERROR_STRING);                                                                                                                                                          \
     return (error_code::ERROR_CODE);                                                                                                                                               \
   }                                                                                                                                                                                \

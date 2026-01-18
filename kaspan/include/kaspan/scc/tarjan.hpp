@@ -48,7 +48,7 @@ tarjan(
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
 
   for (vertex_t local_root = 0; local_root < local_n; ++local_root) {
-    if (not filter(local_root)) {
+    if (!filter(local_root)) {
       continue;
     }
 
@@ -61,7 +61,7 @@ tarjan(
     on_stack.set(local_root);
     dfs.push({ local_root, gp.head[local_root] });
 
-    while (not dfs.empty()) {
+    while (!dfs.empty()) {
 
       auto [local_u, it] = dfs.back();
       if (it < gp.head[local_u + 1]) {
@@ -70,7 +70,7 @@ tarjan(
 
         if (gp.part->has_local(v)) { // ignore non local edges
           auto const local_v = gp.part->to_local(v);
-          if (not filter(local_v)) {
+          if (!filter(local_v)) {
             continue;
           }
 
@@ -83,7 +83,7 @@ tarjan(
             dfs.push({ local_v, gp.head[local_v] });
           }
 
-          else if (on_stack.get(local_v) and v_index < low[local_u]) {
+          else if (on_stack.get(local_v) && v_index < low[local_u]) {
             low[local_u] = v_index;
           }
         }
@@ -113,7 +113,7 @@ tarjan(
       }
 
       dfs.pop();
-      if (not dfs.empty()) {
+      if (!dfs.empty()) {
         auto const local_p = dfs.back().local_u;
         low[local_p]       = std::min(low[local_p], low[local_u]);
       }

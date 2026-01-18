@@ -48,7 +48,7 @@ wcc(
       }
     }
 
-    if (not color_changed) break;
+    if (!color_changed) break;
 
     for (kaspan::vertex_t u = 0; u < n; ++u) {
       if (color[u] != u) { // u is no root
@@ -58,7 +58,7 @@ wcc(
         // 'climb' roots till real root is found
 
         kaspan::index_t depth = 0;
-        while (color[r] != r and depth < 100) {
+        while (color[r] != r && depth < 100) {
           r = color[r];
           depth++;
         }

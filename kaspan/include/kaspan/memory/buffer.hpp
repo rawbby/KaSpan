@@ -130,9 +130,9 @@ make_buffer(std::convertible_to<u64> auto... sizes) noexcept(false) -> buffer
 template<typename... Ts, std::same_as<void> Disambiguator = void>
 auto
 make_buffer(std::convertible_to<u64> auto... sizes) noexcept(false) -> buffer
-  requires(sizeof...(Ts) == sizeof...(sizes) and sizeof...(sizes) > 1)
+  requires(sizeof...(Ts) == sizeof...(sizes) && sizeof...(sizes) > 1)
 {
-  static_assert(((sizeof(Ts) > 0) and ...));
+  static_assert(((sizeof(Ts) > 0) && ...));
   static_assert(std::same_as<void, Disambiguator>);
   return buffer{ (line_align_up(sizes * sizeof(Ts)) + ...) };
 }

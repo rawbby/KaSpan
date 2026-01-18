@@ -53,7 +53,7 @@ ecl_scc_step(
       auto const label = edge.v;
       DEBUG_ASSERT(part.has_local(u));
       auto const k = part.to_local(u);
-      if (scc_id[k] == scc_id_undecided and label < ecl_fw_label[k]) {
+      if (scc_id[k] == scc_id_undecided && label < ecl_fw_label[k]) {
         ecl_fw_label[k] = label;
         fw_changed.set(k);
         if (!fw_active.get(k)) {
@@ -70,7 +70,7 @@ ecl_scc_step(
       auto const label = edge.v;
       DEBUG_ASSERT(part.has_local(u));
       auto const k = part.to_local(u);
-      if (scc_id[k] == scc_id_undecided and label < ecl_bw_label[k]) {
+      if (scc_id[k] == scc_id_undecided && label < ecl_bw_label[k]) {
         ecl_bw_label[k] = label;
         bw_changed.set(k);
         if (!bw_active.get(k)) {
@@ -108,7 +108,7 @@ ecl_scc_step(
         for (auto v : graph.fw_csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (scc_id[l] == scc_id_undecided and label_k < ecl_fw_label[l]) {
+            if (scc_id[l] == scc_id_undecided && label_k < ecl_fw_label[l]) {
               ecl_fw_label[l] = label_k;
               fw_changed.set(l);
               if (!fw_active.get(l)) {
@@ -122,7 +122,7 @@ ecl_scc_step(
       }
 
       mq.poll_throttled(on_bw_message);
-      if (fw_active_stack.empty() and mq.terminate(on_bw_message)) {
+      if (fw_active_stack.empty() && mq.terminate(on_bw_message)) {
         break;
       }
     }
@@ -136,7 +136,7 @@ ecl_scc_step(
       fw_changed.unset(k);
       auto const label_k = ecl_fw_label[k];
       for (auto v : graph.fw_csr_range(k)) {
-        if (not part.has_local(v) and label_k < v) {
+        if (!part.has_local(v) && label_k < v) {
           mq.post_message_blocking(edge{ v, label_k }, part.world_rank_of(v), on_fw_message);
         }
       }
@@ -153,7 +153,7 @@ ecl_scc_step(
         for (auto v : graph.bw_csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (scc_id[l] == scc_id_undecided and label_k < ecl_bw_label[l]) {
+            if (scc_id[l] == scc_id_undecided && label_k < ecl_bw_label[l]) {
               ecl_bw_label[l] = label_k;
               bw_changed.set(l);
               if (!bw_active.get(l)) {
@@ -167,7 +167,7 @@ ecl_scc_step(
       }
 
       mq.poll_throttled(on_fw_message);
-      if (bw_active_stack.empty() and mq.terminate(on_fw_message)) {
+      if (bw_active_stack.empty() && mq.terminate(on_fw_message)) {
         break;
       }
     }
@@ -181,13 +181,13 @@ ecl_scc_step(
       bw_changed.unset(k);
       auto const label_k = ecl_bw_label[k];
       for (auto v : graph.bw_csr_range(k)) {
-        if (not part.has_local(v) and label_k < v) {
+        if (!part.has_local(v) && label_k < v) {
           mq.post_message_blocking(edge{ v, label_k }, part.world_rank_of(v), on_bw_message);
         }
       }
     });
 
-    if (!mpi_basic::allreduce_single(fw_pushed or bw_pushed, mpi_basic::lor)) {
+    if (!mpi_basic::allreduce_single(fw_pushed || bw_pushed, mpi_basic::lor)) {
       break;
     }
   }

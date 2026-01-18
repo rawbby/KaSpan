@@ -46,7 +46,7 @@ degree(
 }
 
 template<part_concept Part>
-  requires(not Part::continuous())
+  requires(!Part::continuous())
 index_t
 degree(
   Part const&    part,

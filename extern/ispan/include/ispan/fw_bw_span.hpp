@@ -45,7 +45,7 @@ fw_span(
     if (is_top_down) { // TOP DOWN STRATEGY
 
       for (auto u = local_beg; u < local_end; ++u) {
-        if (scc_id[u] == kaspan::scc_id_undecided and fw_sa[u] == level) {
+        if (scc_id[u] == kaspan::scc_id_undecided && fw_sa[u] == level) {
 
           auto const beg = fw_head[u];
           auto const end = fw_head[u + 1];
@@ -382,7 +382,7 @@ bw_span(
 
       break;
     }
-    if (is_top_down and next_work * alpha > m) {
+    if (is_top_down && next_work * alpha > m) {
       is_top_down = false;
     } else if (level > 50) {
       is_top_down_queue = true;
@@ -410,7 +410,7 @@ bw_span(
 
         kaspan::vertex_t num_sa = 0;
         for (kaspan::vertex_t i = 0; i < n; ++i) {
-          if (fw_sa[i] != depth_unset and bw_sa[i] == depth_unset and (sa_compress[i / 32] & 1 << (i % 32)) != 0) {
+          if (fw_sa[i] != depth_unset && bw_sa[i] == depth_unset && (sa_compress[i / 32] & 1 << (i % 32)) != 0) {
             bw_sa[i] = kaspan::integral_cast<depth_t>(level + 1);
             num_sa += 1;
           }

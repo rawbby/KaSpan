@@ -17,7 +17,7 @@ verify(
   double          d)
 {
   g.debug_validate();
-  if (g.n > 1 and d >= 0.0) {
+  if (g.n > 1 && d >= 0.0) {
     ASSERT_GE(static_cast<double>(g.m) / g.n, d, "fuzzy generator should generate at least an average degree of d");
   }
   tarjan(g, [&](auto const* beg, auto const* end) {
@@ -32,7 +32,7 @@ int
 main()
 {
   constexpr auto clamp_degree = [](vertex_t n, double d) {
-    if (n < 2 or d == -1) {
+    if (n < 2 || d == -1) {
       return -1.0;
     }
     auto const min_d = std::log(std::max(1.0, std::log(static_cast<double>(n))));

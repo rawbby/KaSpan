@@ -83,7 +83,7 @@ fuzzy_global_scc_id_and_graph(
   double   d = -1.0)
 {
   DEBUG_ASSERT_GE(n, 0);
-  DEBUG_ASSERT(d == -1.0 or d >= 0.0);
+  DEBUG_ASSERT(d == -1.0 || d >= 0.0);
 
   auto rng = std::mt19937{ seed };
 
@@ -112,7 +112,7 @@ fuzzy_global_scc_id_and_graph(
   auto comps = std::map<vertex_t, std::vector<vertex_t>>{};
   auto reps  = make_stack<vertex_t>(n);
   for (vertex_t v = 0; v < n; ++v) {
-    if (v == 0 or start_new(rng)) {
+    if (v == 0 || start_new(rng)) {
       reps.push(v);
       comps[v].push_back(v);
       scc_id[v] = v;
@@ -126,7 +126,7 @@ fuzzy_global_scc_id_and_graph(
 
   auto edges        = std::set<edge_t>{};
   auto try_add_edge = [&](auto u, auto v) {
-    if (u != v and edges.emplace(u, v).second) {
+    if (u != v && edges.emplace(u, v).second) {
       ++fw_degree[u];
       ++bw_degree[v];
     }

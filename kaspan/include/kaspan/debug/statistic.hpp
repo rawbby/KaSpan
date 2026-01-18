@@ -83,7 +83,7 @@ kaspan_statistic_add(
   char const* name,
   u64         value)
 {
-  DEBUG_ASSERT(not g_kaspan_statistic_stack.empty());
+  DEBUG_ASSERT(!g_kaspan_statistic_stack.empty());
   auto const parent = g_kaspan_statistic_stack.back();
   g_kaspan_statistic_entries.emplace_back(parent, name, value);
 }
@@ -124,7 +124,7 @@ kaspan_statistic_mpi_write_json(
       auto const self_nit = nit;
       ++nit;
       while (nit < nend) {
-        while (eit < entries.size() and entries[eit].parent == self_nit) {
+        while (eit < entries.size() && entries[eit].parent == self_nit) {
           os << ',' << '"' << entries[eit].name << '"' << ':' << entries[eit].value;
           ++eit;
         }
@@ -132,7 +132,7 @@ kaspan_statistic_mpi_write_json(
         os << ',';
         self(self, nit, nodes[nit].end, eit);
       }
-      while (eit < entries.size() and entries[eit].parent == self_nit) {
+      while (eit < entries.size() && entries[eit].parent == self_nit) {
         os << ',' << '"' << entries[eit].name << '"' << ':' << entries[eit].value;
         ++eit;
       }
@@ -145,7 +145,7 @@ kaspan_statistic_mpi_write_json(
     bool   first_root = true;
     while (nit < nodes.size()) {
       DEBUG_ASSERT(nodes[nit].parent == SIZE_MAX);
-      if (not first_root) {
+      if (!first_root) {
         os << ',';
       }
       first_root = false;

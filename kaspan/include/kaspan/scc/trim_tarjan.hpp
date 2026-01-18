@@ -100,7 +100,7 @@ trim_tarjan(
 
         auto const out_degree = fw_head[k + 1] - fw_head[k];
         auto const in_degree  = bw_head[k + 1] - bw_head[k];
-        if (in_degree > 0 and out_degree > 0) {
+        if (in_degree > 0 && out_degree > 0) {
           return;
         }
         scc_id[k] = part.to_global(k);
@@ -122,9 +122,9 @@ trim_tarjan(
           auto const end = fw_head[k + 1];
           for (auto it = beg; it < end; ++it) {
             auto const u = fw_csr[it];
-            if (not contains(component, u) and (not part.has_local(u) or filter(part.to_local(u)))) {
+            if (!contains(component, u) && (!part.has_local(u) || filter(part.to_local(u)))) {
               ++out_degree;
-              if (in_degree > 0 and out_degree > 0) {
+              if (in_degree > 0 && out_degree > 0) {
                 return;
               }
             }
@@ -137,9 +137,9 @@ trim_tarjan(
           auto const end = bw_head[k + 1];
           for (auto it = beg; it < end; ++it) {
             auto const u = bw_csr[it];
-            if (not contains(component, u) and (not part.has_local(u) or filter(part.to_local(u)))) {
+            if (!contains(component, u) && (!part.has_local(u) || filter(part.to_local(u)))) {
               ++in_degree;
-              if (in_degree > 0 and out_degree > 0) {
+              if (in_degree > 0 && out_degree > 0) {
                 return;
               }
             }

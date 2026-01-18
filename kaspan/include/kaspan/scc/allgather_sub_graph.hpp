@@ -104,7 +104,7 @@ allgather_csr_degrees(
     for (index_t it = beg; it < end; ++it) {
       auto const        v  = csr[it];
       auto const* const jt = std::lower_bound(ids_inverse, ids_inverse + sub_n, v);
-      if (jt != ids_inverse + sub_n and *jt == v) {
+      if (jt != ids_inverse + sub_n && *jt == v) {
         local_sub_csr.push(integral_cast<vertex_t>(std::distance(ids_inverse, jt)));
         ++deg;
       }
@@ -122,9 +122,9 @@ allgather_csr_degrees(
 
 template<class Part,
          class fn_t>
-  requires(Part::ordered() and std::convertible_to<std::invoke_result_t<fn_t,
-                                                                        vertex_t>,
-                                                   bool>)
+  requires(Part::ordered() && std::convertible_to<std::invoke_result_t<fn_t,
+                                                                       vertex_t>,
+                                                  bool>)
 auto
 allgather_sub_graph(
   Part const&     part,
@@ -181,9 +181,9 @@ allgather_sub_graph(
 
 template<class Part,
          class fn_t>
-  requires(Part::ordered() and std::convertible_to<std::invoke_result_t<fn_t,
-                                                                        vertex_t>,
-                                                   bool>)
+  requires(Part::ordered() && std::convertible_to<std::invoke_result_t<fn_t,
+                                                                       vertex_t>,
+                                                  bool>)
 auto
 allgather_fw_sub_graph(
   Part const&     part,

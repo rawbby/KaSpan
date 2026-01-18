@@ -54,7 +54,7 @@ test_basic_construction_and_access()
   ASSERT_EQ(r1.value(), 42);
 
   result<int> r2 = error_code::ALLOCATION_ERROR;
-  ASSERT(not r2.has_value());
+  ASSERT(!r2.has_value());
   ASSERT_EQ(r2.error(), error_code::ALLOCATION_ERROR);
 
   // void_result tests
@@ -63,7 +63,7 @@ test_basic_construction_and_access()
   ASSERT_EQ(v_ok.error_or_ok(), error_code::OK);
 
   constexpr void_result v_fail = void_result::failure(error_code::IO_ERROR);
-  ASSERT(not v_fail.has_value());
+  ASSERT(!v_fail.has_value());
   ASSERT_EQ(v_fail.error_or_ok(), error_code::IO_ERROR);
 }
 
@@ -99,7 +99,7 @@ test_map_and_and_then()
   auto              rf2 = rf.map([](int) {
     return 1;
   });
-  ASSERT(not rf2.has_value());
+  ASSERT(!rf2.has_value());
   ASSERT_EQ(rf2.error(), error_code::DESERIALIZE_ERROR);
 
   // and_then: consumer returns result<std::string>
@@ -117,7 +117,7 @@ test_map_and_and_then()
   auto              neg_res = neg.and_then([](int) -> result<std::string> {
     return std::string("unused");
   });
-  ASSERT(not neg_res.has_value());
+  ASSERT(!neg_res.has_value());
   ASSERT_EQ(neg_res.error(), error_code::MEMORY_MAPPING_ERROR);
 }
 

@@ -36,7 +36,7 @@ await_messages(
   do {
     on_progress();
     mq.poll_throttled(on_message);
-  } while (not mq.terminate(on_message, on_progress));
+  } while (!mq.terminate(on_message, on_progress));
 }
 
 void

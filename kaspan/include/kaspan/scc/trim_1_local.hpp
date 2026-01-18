@@ -127,7 +127,7 @@ trim_1(
   vertex_t    decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
     if (scc_id[k] == scc_id_undecided) {
-      if (not fw_degree[k] or not bw_degree[k]) {
+      if (!fw_degree[k] || !bw_degree[k]) {
         scc_id[k] = part.to_global(k);
         ++decided_count;
       }

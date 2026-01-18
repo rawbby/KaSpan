@@ -87,7 +87,7 @@ residual_scc(
           for (; beg < end; ++beg) {
             auto const sub_v = sub_bw_csr[beg];
 
-            if (sub_scc_id[sub_v] == kaspan::scc_id_undecided and sub_fw_sa[sub_v] == sub_u) {
+            if (sub_scc_id[sub_v] == kaspan::scc_id_undecided && sub_fw_sa[sub_v] == sub_u) {
               // if sub_v is undecided and reached in fw search
               // add sub_v to queue and set scc id of sub_v
 

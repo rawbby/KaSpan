@@ -87,7 +87,7 @@ ecl_scc_step(
 
   auto const saturate_direction = [&](index_t const* head, vertex_t const* csr, vertex_t* ecl_lable) {
     DEBUG_ASSERT(active_stack.empty());
-    DEBUG_ASSERT(not frontier.has_next());
+    DEBUG_ASSERT(!frontier.has_next());
 
     active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
     std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
@@ -102,7 +102,7 @@ ecl_scc_step(
       // this step iterates local until satuation
       // to reduce communication overhead.
 
-      while (not active_stack.empty()) {
+      while (!active_stack.empty()) {
         auto const k = active_stack.back();
         active_stack.pop();
 
@@ -110,10 +110,10 @@ ecl_scc_step(
         for (auto v : csr_range(head, csr, k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (label < ecl_lable[l] and scc_id[l] == scc_id_undecided) {
+            if (label < ecl_lable[l] && scc_id[l] == scc_id_undecided) {
               ecl_lable[l] = label;
               changed.set(l);
-              if (not active.get(l)) {
+              if (!active.get(l)) {
                 active.set(l);
                 active_stack.push(l);
               }
@@ -131,7 +131,7 @@ ecl_scc_step(
       changed.for_each(local_n, [&](auto&& k) {
         auto const label_k = ecl_lable[k];
         for (auto v : csr_range(head, csr, k)) {
-          if (label_k < v and not part.has_local(v)) {
+          if (label_k < v && !part.has_local(v)) {
             DEBUG_ASSERT_NE(part.world_rank_of(v), mpi_basic::world_rank);
             frontier.push(part.world_rank_of(v), { v, label_k });
           }
@@ -144,7 +144,7 @@ ecl_scc_step(
       // if no messages to exchange (globally)
       // the labels converged.
 
-      if (not frontier.comm(part)) {
+      if (!frontier.comm(part)) {
         break;
       }
 
@@ -155,10 +155,10 @@ ecl_scc_step(
         DEBUG_ASSERT(part.has_local(u));
         auto const k = part.to_local(u);
 
-        if (label < ecl_lable[k] and scc_id[k] == scc_id_undecided) {
+        if (label < ecl_lable[k] && scc_id[k] == scc_id_undecided) {
           ecl_lable[k] = label;
           changed.set(k);
-          if (not active.get(k)) {
+          if (!active.get(k)) {
             active.set(k);
             active_stack.push(k);
           }

@@ -33,7 +33,7 @@ backward_complement_graph(
     std::memset(g.bw.head, 0, (g.n + 1) * sizeof(index_t));
   }
   index_t it = 0;
-  DEBUG_ASSERT(g.n == 0 or g.fw.head[0] == 0);
+  DEBUG_ASSERT(g.n == 0 || g.fw.head[0] == 0);
   for (vertex_t u = 0; u < g.n; ++u) {
     DEBUG_ASSERT_IN_RANGE(g.fw.head[u], 0, g.fw.head[u + 1] + 1);
     auto const end = g.fw.head[u + 1];

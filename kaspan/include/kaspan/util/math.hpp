@@ -16,7 +16,7 @@ floordiv(
   T x,
   T base) noexcept -> T
 {
-  if (not std::is_constant_evaluated()) {
+  if (!std::is_constant_evaluated()) {
     DEBUG_ASSERT_GT(base, 0);
   }
   return x / base;
@@ -28,7 +28,7 @@ ceildiv(
   T x,
   T base) noexcept -> T
 {
-  if (not std::is_constant_evaluated()) {
+  if (!std::is_constant_evaluated()) {
     DEBUG_ASSERT_GT(base, 0);
     DEBUG_ASSERT_LE(x, std::numeric_limits<T>::max() - base + 1);
   }
@@ -41,7 +41,7 @@ remainder(
   T x,
   T base) noexcept -> T
 {
-  if (not std::is_constant_evaluated()) {
+  if (!std::is_constant_evaluated()) {
     DEBUG_ASSERT_GT(base, 0);
   }
   return x % base;
@@ -53,7 +53,7 @@ round_down(
   T x,
   T base) noexcept -> T
 {
-  if (not std::is_constant_evaluated()) {
+  if (!std::is_constant_evaluated()) {
     DEBUG_ASSERT_GT(base, 0);
   }
   return x - (x % base);
@@ -65,7 +65,7 @@ round_up(
   T x,
   T base) noexcept -> T
 {
-  if (not std::is_constant_evaluated()) {
+  if (!std::is_constant_evaluated()) {
     DEBUG_ASSERT_GT(base, 0);
     DEBUG_ASSERT_LE(x, std::numeric_limits<T>::max() - base + 1);
   }
@@ -80,7 +80,7 @@ clip(
   T lo,
   T hi) noexcept
 {
-  if (not std::is_constant_evaluated()) {
+  if (!std::is_constant_evaluated()) {
     DEBUG_ASSERT_LE(lo, hi);
   }
   return x < lo ? lo : (x > hi ? hi : x);
@@ -110,7 +110,7 @@ ceildiv(
   T x) noexcept -> T
 {
   static_assert(base > 0);
-  if (not std::is_constant_evaluated()) {
+  if (!std::is_constant_evaluated()) {
     DEBUG_ASSERT_LE(x, std::numeric_limits<T>::max() - base + 1);
   }
   if constexpr (base == 1) {
@@ -162,7 +162,7 @@ round_up(
   T x) noexcept -> T
 {
   static_assert(base > 0);
-  if (not std::is_constant_evaluated()) {
+  if (!std::is_constant_evaluated()) {
     DEBUG_ASSERT_LE(x, std::numeric_limits<T>::max() - base + 1);
   }
   if constexpr (base == 1) {

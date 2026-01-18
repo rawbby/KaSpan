@@ -46,7 +46,7 @@ color_scc_step_multi(
   // This partitions the graph into components that are supersets of SCCs.
   // Each vertex v gets the minimum ID of a vertex u that can reach it (u -> v).
   {
-    if (local_pivot != local_n and scc_id[local_pivot] == scc_id_undecided) {
+    if (local_pivot != local_n && scc_id[local_pivot] == scc_id_undecided) {
       colors[local_pivot] = part.to_global(local_pivot);
       active.set(local_pivot);
       changed.set(local_pivot);
@@ -54,7 +54,7 @@ color_scc_step_multi(
     }
 
     while (true) {
-      while (not active_stack.empty()) {
+      while (!active_stack.empty()) {
         auto const k = active_stack.back();
         active_stack.pop();
 
@@ -62,10 +62,10 @@ color_scc_step_multi(
         for (auto v : graph.csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (scc_id[l] == scc_id_undecided and label < colors[l]) {
+            if (scc_id[l] == scc_id_undecided && label < colors[l]) {
               colors[l] = label;
               changed.set(l);
-              if (not active.get(l)) {
+              if (!active.get(l)) {
                 active.set(l);
                 active_stack.push(l);
               }
@@ -78,24 +78,24 @@ color_scc_step_multi(
       changed.for_each(local_n, [&](auto&& k) {
         auto const label_k = colors[k];
         for (auto v : graph.csr_range(k)) {
-          // if (label_k < v and not part.has_local(v)) {
+          // if (label_k < v && ! part.has_local(v)) {
           frontier.push(part.world_rank_of(v), { v, label_k });
           //}
         }
       });
       changed.clear(local_n);
 
-      if (not frontier.comm(part)) {
+      if (!frontier.comm(part)) {
         break;
       }
 
       while (frontier.has_next()) {
         auto const [u, label] = frontier.next();
         auto const k          = part.to_local(u);
-        if (scc_id[k] == scc_id_undecided and label < colors[k]) {
+        if (scc_id[k] == scc_id_undecided && label < colors[k]) {
           colors[k] = label;
           changed.set(k);
-          if (not active.get(k)) {
+          if (!active.get(k)) {
             active.set(k);
             active_stack.push(k);
           }
@@ -112,7 +112,7 @@ color_scc_step_multi(
   {
     DEBUG_ASSERT(active_stack.empty());
 
-    if (local_pivot != local_n and scc_id[local_pivot] == scc_id_undecided and colors[local_pivot] == part.to_global(local_pivot)) {
+    if (local_pivot != local_n && scc_id[local_pivot] == scc_id_undecided && colors[local_pivot] == part.to_global(local_pivot)) {
       active.set(local_pivot);
       changed.set(local_pivot);
       active_stack.push(local_pivot);
@@ -123,7 +123,7 @@ color_scc_step_multi(
     }
 
     while (true) {
-      while (not active_stack.empty()) {
+      while (!active_stack.empty()) {
         auto const k = active_stack.back();
         active_stack.pop();
 
@@ -131,12 +131,12 @@ color_scc_step_multi(
         for (auto v : graph.bw_csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (scc_id[l] == scc_id_undecided and colors[l] == pivot) {
+            if (scc_id[l] == scc_id_undecided && colors[l] == pivot) {
               scc_id[l] = pivot;
               on_decision(l);
               ++local_decided_count;
               changed.set(l);
-              if (not active.get(l)) {
+              if (!active.get(l)) {
                 active.set(l);
                 active_stack.push(l);
               }
@@ -150,26 +150,26 @@ color_scc_step_multi(
       changed.for_each(local_n, [&](auto&& k) {
         auto const pivot = colors[k];
         for (auto v : graph.bw_csr_range(k)) {
-          if (not part.has_local(v)) {
+          if (!part.has_local(v)) {
             frontier.push(part.world_rank_of(v), { v, pivot });
           }
         }
       });
       changed.clear(local_n);
 
-      if (not frontier.comm(part)) {
+      if (!frontier.comm(part)) {
         break;
       }
 
       while (frontier.has_next()) {
         auto const [u, pivot] = frontier.next();
         auto const k          = part.to_local(u);
-        if (scc_id[k] == scc_id_undecided and colors[k] == pivot) {
+        if (scc_id[k] == scc_id_undecided && colors[k] == pivot) {
           scc_id[k] = pivot;
           on_decision(k);
           ++local_decided_count;
           changed.set(k);
-          if (not active.get(k)) {
+          if (!active.get(k)) {
             active.set(k);
             active_stack.push(k);
           }
@@ -201,7 +201,7 @@ color_scc_step_multi(
   auto const count_degree = [=, &part](vertex_t k, graph_view const g) {
     index_t degree = 0;
     for (auto u : g.csr_range(k)) {
-      degree += integral_cast<index_t>(not part.has_local(u) || scc_id[part.to_local(u)] == scc_id_undecided);
+      degree += integral_cast<index_t>(!part.has_local(u) || scc_id[part.to_local(u)] == scc_id_undecided);
     }
     return degree;
   };
@@ -293,7 +293,7 @@ color_scc_step(
     });
 
     while (true) {
-      while (not active_stack.empty()) {
+      while (!active_stack.empty()) {
         auto const k = active_stack.back();
         active_stack.pop();
 
@@ -301,10 +301,10 @@ color_scc_step(
         for (auto v : graph.csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (scc_id[l] == scc_id_undecided and label < colors[l]) {
+            if (scc_id[l] == scc_id_undecided && label < colors[l]) {
               colors[l] = label;
               changed.set(l);
-              if (not active.get(l)) {
+              if (!active.get(l)) {
                 active.set(l);
                 active_stack.push(l);
               }
@@ -317,24 +317,24 @@ color_scc_step(
       changed.for_each(local_n, [&](auto&& k) {
         auto const label_k = colors[k];
         for (auto v : graph.csr_range(k)) {
-          if (label_k < v and not part.has_local(v)) {
+          if (label_k < v && !part.has_local(v)) {
             frontier.push(part.world_rank_of(v), { v, label_k });
           }
         }
       });
       changed.clear(local_n);
 
-      if (not frontier.comm(part)) {
+      if (!frontier.comm(part)) {
         break;
       }
 
       while (frontier.has_next()) {
         auto const [u, label] = frontier.next();
         auto const k          = part.to_local(u);
-        if (scc_id[k] == scc_id_undecided and label < colors[k]) {
+        if (scc_id[k] == scc_id_undecided && label < colors[k]) {
           colors[k] = label;
           changed.set(k);
-          if (not active.get(k)) {
+          if (!active.get(k)) {
             active.set(k);
             active_stack.push(k);
           }
@@ -365,7 +365,7 @@ color_scc_step(
     });
 
     while (true) {
-      while (not active_stack.empty()) {
+      while (!active_stack.empty()) {
         auto const k = active_stack.back();
         active_stack.pop();
         active.unset(k);
@@ -374,12 +374,12 @@ color_scc_step(
         for (auto v : graph.bw_csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (scc_id[l] == scc_id_undecided and colors[l] == pivot) {
+            if (scc_id[l] == scc_id_undecided && colors[l] == pivot) {
               scc_id[l] = pivot;
               on_decision(l);
               ++local_decided_count;
               changed.set(l);
-              if (not active.get(l)) {
+              if (!active.get(l)) {
                 active.set(l);
                 active_stack.push(l);
               }
@@ -391,26 +391,26 @@ color_scc_step(
       changed.for_each(local_n, [&](auto&& k) {
         auto const pivot = colors[k];
         for (auto v : graph.bw_csr_range(k)) {
-          if (not part.has_local(v)) {
+          if (!part.has_local(v)) {
             frontier.push(part.world_rank_of(v), { v, pivot });
           }
         }
       });
       changed.clear(local_n);
 
-      if (not frontier.comm(part)) {
+      if (!frontier.comm(part)) {
         break;
       }
 
       while (frontier.has_next()) {
         auto const [u, pivot] = frontier.next();
         auto const k          = part.to_local(u);
-        if (scc_id[k] == scc_id_undecided and colors[k] == pivot) {
+        if (scc_id[k] == scc_id_undecided && colors[k] == pivot) {
           scc_id[k] = pivot;
           on_decision(k);
           ++local_decided_count;
           changed.set(k);
-          if (not active.get(k)) {
+          if (!active.get(k)) {
             active.set(k);
             active_stack.push(k);
           }

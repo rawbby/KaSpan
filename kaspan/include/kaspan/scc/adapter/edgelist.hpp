@@ -32,7 +32,7 @@ sorted_edgelist_to_graph(
   head[0]     = 0;
   index_t end = 0;
   for (vertex_t u = 0; u < n; ++u) {
-    while (end < m and edgelist[end].u == u) {
+    while (end < m && edgelist[end].u == u) {
       csr[end] = edgelist[end].v;
       ++end;
     }
@@ -68,7 +68,7 @@ sorted_edgelist_to_graph_part(
   index_t end        = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
     auto const u = part.to_global(k);
-    while (end < local_m and edgelist[end].u == u) {
+    while (end < local_m && edgelist[end].u == u) {
       csr[end] = edgelist[end].v;
       ++end;
     }

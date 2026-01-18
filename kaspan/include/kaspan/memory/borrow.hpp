@@ -15,7 +15,7 @@
 namespace kaspan {
 
 template<typename T>
-  requires(std::is_trivially_copyable_v<T> and std::is_trivially_constructible_v<T> and std::is_trivially_destructible_v<T>)
+  requires(std::is_trivially_copyable_v<T> && std::is_trivially_constructible_v<T> && std::is_trivially_destructible_v<T>)
 class array : public buffer
 {
 public:
@@ -274,7 +274,7 @@ make_array_filled(
 
 template<typename T = byte,
          arithmetic_concept Count>
-  requires(std::is_trivially_copyable_v<T> and std::is_trivially_constructible_v<T> and std::is_trivially_destructible_v<T>)
+  requires(std::is_trivially_copyable_v<T> && std::is_trivially_constructible_v<T> && std::is_trivially_destructible_v<T>)
 static auto
 borrow_array(
   void** memory,

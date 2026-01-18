@@ -30,8 +30,8 @@ main()
   static_assert(f64_concept<double>);
 
   static_assert(byte_concept<byte>);
-  static_assert(not i8_concept<byte>);
-  static_assert(not u8_concept<byte>);
+  static_assert(!i8_concept<byte>);
+  static_assert(!u8_concept<byte>);
   static_assert(i8_concept<std::int8_t>);
   static_assert(u8_concept<std::uint8_t>);
   static_assert(i16_concept<std::int16_t>);
@@ -41,8 +41,8 @@ main()
   static_assert(i64_concept<std::int64_t>);
   static_assert(u64_concept<std::uint64_t>);
 
-  static_assert(not has_uint128_t or u128_concept<u128>);
-  static_assert(not has_int128_t or i128_concept<i128>);
+  static_assert(!has_uint128_t || u128_concept<u128>);
+  static_assert(!has_int128_t || i128_concept<i128>);
 
   static_assert(std::same_as<byte, byte>);
   static_assert(std::same_as<u8, std::uint8_t>);
@@ -67,7 +67,7 @@ main()
   static_assert(float_concept<f32>);
   static_assert(float_concept<f64>);
 
-  static_assert(not unsigned_concept<byte>);
+  static_assert(!unsigned_concept<byte>);
   static_assert(unsigned_concept<u8>);
   static_assert(unsigned_concept<u16>);
   static_assert(unsigned_concept<u32>);
@@ -78,7 +78,7 @@ main()
   static_assert(signed_concept<i32>);
   static_assert(signed_concept<i64>);
 
-  static_assert(not integral_concept<byte>);
+  static_assert(!integral_concept<byte>);
   static_assert(integral_concept<u8>);
   static_assert(integral_concept<u16>);
   static_assert(integral_concept<u32>);
@@ -88,7 +88,7 @@ main()
   static_assert(integral_concept<i32>);
   static_assert(integral_concept<i64>);
 
-  static_assert(not arithmetic_concept<byte>);
+  static_assert(!arithmetic_concept<byte>);
   static_assert(arithmetic_concept<u8>);
   static_assert(arithmetic_concept<u16>);
   static_assert(arithmetic_concept<u32>);
@@ -103,8 +103,8 @@ main()
   static_assert(has_uint128_t == u128_concept<u128>);
   static_assert(has_int128_t == i128_concept<i128>);
 
-  static_assert(has_uint128_t or std::is_same_v<u128, std::monostate>);
-  static_assert(has_int128_t or std::is_same_v<i128, std::monostate>);
+  static_assert(has_uint128_t || std::is_same_v<u128, std::monostate>);
+  static_assert(has_int128_t || std::is_same_v<i128, std::monostate>);
 
   static_assert(u32_concept<u32>);
   static_assert(u32_concept<u32&>);
@@ -190,17 +190,17 @@ main()
   static_assert(arithmetic_concept<f64 const volatile&>);
   static_assert(arithmetic_concept<f64 const volatile&&>);
 
-  static_assert(not f32_concept<f64>);
-  static_assert(not f64_concept<f32>);
-  static_assert(not i32_concept<i64>);
-  static_assert(not i64_concept<i32>);
-  static_assert(not u32_concept<u64>);
-  static_assert(not u64_concept<u32>);
+  static_assert(!f32_concept<f64>);
+  static_assert(!f64_concept<f32>);
+  static_assert(!i32_concept<i64>);
+  static_assert(!i64_concept<i32>);
+  static_assert(!u32_concept<u64>);
+  static_assert(!u64_concept<u32>);
 
-  static_assert(not integral_concept<f64>);
-  static_assert(not integral_concept<f32>);
-  static_assert(not float_concept<i64>);
-  static_assert(not float_concept<i32>);
-  static_assert(not float_concept<u64>);
-  static_assert(not float_concept<u32>);
+  static_assert(!integral_concept<f64>);
+  static_assert(!integral_concept<f32>);
+  static_assert(!float_concept<i64>);
+  static_assert(!float_concept<i32>);
+  static_assert(!float_concept<u64>);
+  static_assert(!float_concept<u32>);
 }

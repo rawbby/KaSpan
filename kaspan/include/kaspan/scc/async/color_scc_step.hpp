@@ -43,9 +43,9 @@ color_scc_step(
         auto const label = edge.v;
         DEBUG_ASSERT(part.has_local(u));
         auto const k = part.to_local(u);
-        if (scc_id[k] == scc_id_undecided and label < colors[k]) {
+        if (scc_id[k] == scc_id_undecided && label < colors[k]) {
           colors[k] = label;
-          if (not active.get(k)) {
+          if (!active.get(k)) {
             active.set(k);
             active_stack.push(k);
           }
@@ -62,7 +62,7 @@ color_scc_step(
     mq.reactivate();
 
     while (true) {
-      while (not active_stack.empty()) {
+      while (!active_stack.empty()) {
         auto const k = active_stack.back();
         active_stack.pop();
         active.unset(k);
@@ -71,9 +71,9 @@ color_scc_step(
         for (auto v : graph.csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (scc_id[l] == scc_id_undecided and label < colors[l]) {
+            if (scc_id[l] == scc_id_undecided && label < colors[l]) {
               colors[l] = label;
-              if (not active.get(l)) {
+              if (!active.get(l)) {
                 active.set(l);
                 active_stack.push(l);
               }
@@ -86,7 +86,7 @@ color_scc_step(
       }
 
       mq.poll_throttled(on_message);
-      if (active_stack.empty() and mq.terminate(on_message)) {
+      if (active_stack.empty() && mq.terminate(on_message)) {
         break;
       }
     }
@@ -101,10 +101,10 @@ color_scc_step(
         auto const pivot = edge.v;
         DEBUG_ASSERT(part.has_local(u));
         auto const k = part.to_local(u);
-        if (scc_id[k] == scc_id_undecided and colors[k] == pivot) {
+        if (scc_id[k] == scc_id_undecided && colors[k] == pivot) {
           scc_id[k] = pivot;
           ++local_decided_count;
-          if (not active.get(k)) {
+          if (!active.get(k)) {
             active.set(k);
             active_stack.push(k);
           }
@@ -128,7 +128,7 @@ color_scc_step(
     mq.reactivate();
 
     while (true) {
-      while (not active_stack.empty()) {
+      while (!active_stack.empty()) {
         auto const k = active_stack.back();
         active_stack.pop();
         active.unset(k);
@@ -137,10 +137,10 @@ color_scc_step(
         for (auto v : graph.bw_csr_range(k)) {
           if (part.has_local(v)) {
             auto const l = part.to_local(v);
-            if (scc_id[l] == scc_id_undecided and colors[l] == pivot) {
+            if (scc_id[l] == scc_id_undecided && colors[l] == pivot) {
               scc_id[l] = pivot;
               ++local_decided_count;
-              if (not active.get(l)) {
+              if (!active.get(l)) {
                 active.set(l);
                 active_stack.push(l);
               }
@@ -153,7 +153,7 @@ color_scc_step(
       }
 
       mq.poll_throttled(on_message);
-      if (active_stack.empty() and mq.terminate(on_message)) {
+      if (active_stack.empty() && mq.terminate(on_message)) {
         break;
       }
     }

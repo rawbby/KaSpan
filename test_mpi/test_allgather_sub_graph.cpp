@@ -90,7 +90,7 @@ main(
 
     auto const [super_ids, bg] = allgather_sub_graph(bgp.part, local_sub_n, bgp.fw.head, bgp.fw.csr, bgp.bw.head, bgp.bw.csr, [&](vertex_t k) {
       auto const u = bgp.part.to_global(k);
-      return u == 1 or u == 2 or u == 4;
+      return u == 1 || u == 2 || u == 4;
     });
 
     ASSERT_EQ(bg.n, 3);

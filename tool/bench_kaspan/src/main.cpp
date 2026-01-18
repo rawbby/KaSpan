@@ -62,7 +62,7 @@ benchmark(
   auto       scc_id  = make_array<vertex_t>(local_n);
 
   MPI_Barrier(MPI_COMM_WORLD);
-  if (not use_async) {
+  if (!use_async) {
     KASPAN_CALLGRIND_START_INSTRUMENTATION();
     scc(graph.view(), scc_id.data());
     KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
@@ -106,7 +106,7 @@ main(
 
   auto const use_async          = arg_select_flag(argc, argv, "--async");
   auto const use_async_indirect = arg_select_flag(argc, argv, "--async_indirect");
-  if (use_async_indirect and not use_async) {
+  if (use_async_indirect && !use_async) {
     usage(argc, argv);
   }
 

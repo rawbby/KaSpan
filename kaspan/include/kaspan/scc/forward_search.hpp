@@ -31,7 +31,7 @@ forward_search(
       DEBUG_ASSERT(part.has_local(u));
       auto const k = part.to_local(u);
 
-      if (fw_reached.get(k) or scc_id[k] != scc_id_undecided) {
+      if (fw_reached.get(k) || scc_id[k] != scc_id_undecided) {
         continue;
       }
 

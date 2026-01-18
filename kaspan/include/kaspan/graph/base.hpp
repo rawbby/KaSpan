@@ -45,7 +45,7 @@ edge_less(
   edge_t const& lhs,
   edge_t const& rhs) -> bool
 {
-  return lhs.u < rhs.u or (lhs.u == rhs.u and lhs.v < rhs.v);
+  return lhs.u < rhs.u || (lhs.u == rhs.u && lhs.v < rhs.v);
 }
 
 inline mpi_basic::Datatype mpi_edge_t = mpi_basic::datatype_null;
@@ -135,7 +135,7 @@ degree_max_reduce(
   for (int i = 0; i < *len; ++i) {
     auto const& a = inout[i];
     auto const& b = in[i];
-    if (b.degree_product > a.degree_product or (b.degree_product == a.degree_product and b.u > a.u)) {
+    if (b.degree_product > a.degree_product || (b.degree_product == a.degree_product && b.u > a.u)) {
       inout[i] = b;
     }
   }

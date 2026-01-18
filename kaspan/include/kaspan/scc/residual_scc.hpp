@@ -28,7 +28,7 @@ residual_scc(
   size_t decision_count = 0;
 
   for (vertex_t root = 0; root < local_n; ++root) {
-    if (sub_scc_id[root] == scc_id_undecided and part.has_local(wcc_id[root])) {
+    if (sub_scc_id[root] == scc_id_undecided && part.has_local(wcc_id[root])) {
 
       auto const id = sub_ids_inverse[root]; // directly use the global id so later no translation is needed
 
@@ -38,14 +38,14 @@ residual_scc(
       // fw search
       fw_reach.emplace(root);
       queue.emplace_back(root);
-      while (not queue.empty()) {
+      while (!queue.empty()) {
         auto const u = queue.back();
         queue.pop_back();
 
         for (auto const v_global : graph.fw_view().csr_range(u)) {
           if (part.has_local(v_global)) {
             auto const v = part.to_local(v_global);
-            if (sub_scc_id[v] == scc_id_undecided and fw_reach.emplace(v).second) {
+            if (sub_scc_id[v] == scc_id_undecided && fw_reach.emplace(v).second) {
               queue.emplace_back(v);
             }
           }
@@ -54,14 +54,14 @@ residual_scc(
 
       // bw search
       queue.emplace_back(root);
-      while (not queue.empty()) {
+      while (!queue.empty()) {
         auto const u = queue.back();
         queue.pop_back();
 
         for (auto const v_global : graph.bw_view().csr_range(u)) {
           if (part.has_local(v_global)) {
             auto const v = part.to_local(v_global);
-            if (sub_scc_id[v] == scc_id_undecided and fw_reach.contains(v)) {
+            if (sub_scc_id[v] == scc_id_undecided && fw_reach.contains(v)) {
               queue.emplace_back(v);
               sub_scc_id[v] = id;
               ++decision_count;

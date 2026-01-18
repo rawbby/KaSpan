@@ -33,7 +33,7 @@ backward_search(
     for (auto v : env.message) {
       DEBUG_ASSERT(part.has_local(v));
       auto const k = part.to_local(v);
-      if (fw_reached.get(k) and scc_id[k] == scc_id_undecided) {
+      if (fw_reached.get(k) && scc_id[k] == scc_id_undecided) {
         scc_id[k] = id;
         min_u     = std::min(min_u, v);
         ++decided_count;
@@ -44,7 +44,7 @@ backward_search(
 
   if (part.has_local(root)) {
     auto const k = part.to_local(root);
-    if (fw_reached.get(k) and scc_id[k] == scc_id_undecided) {
+    if (fw_reached.get(k) && scc_id[k] == scc_id_undecided) {
       scc_id[k] = id;
       min_u     = std::min(min_u, root);
       ++decided_count;
@@ -56,14 +56,14 @@ backward_search(
   mq.reactivate();
 
   while (true) {
-    while (not active_stack.empty()) {
+    while (!active_stack.empty()) {
       auto const k = active_stack.back();
       active_stack.pop();
 
       for (auto v : graph.csr_range(k)) {
         if (part.has_local(v)) {
           auto const l = part.to_local(v);
-          if (fw_reached.get(l) and scc_id[l] == scc_id_undecided) {
+          if (fw_reached.get(l) && scc_id[l] == scc_id_undecided) {
             scc_id[l] = id;
             min_u     = std::min(min_u, v);
             ++decided_count;
@@ -77,7 +77,7 @@ backward_search(
     }
 
     mq.poll_throttled(on_message);
-    if (active_stack.empty() and mq.terminate(on_message)) {
+    if (active_stack.empty() && mq.terminate(on_message)) {
       break;
     }
   }

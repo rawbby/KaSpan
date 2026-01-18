@@ -17,7 +17,7 @@ trim_1_first(
 
   size_t decided_count = 0;
   for (auto u = local_beg; u < local_end; ++u) {
-    if (fw_head[u + 1] - fw_head[u] == 0 or bw_head[u + 1] - bw_head[u] == 0) {
+    if (fw_head[u + 1] - fw_head[u] == 0 || bw_head[u + 1] - bw_head[u] == 0) {
       scc_id[u] = kaspan::scc_id_singular;
       ++decided_count;
     }
