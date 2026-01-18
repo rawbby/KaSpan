@@ -121,8 +121,7 @@ backward_complement_graph_part(
   mpi_basic::alltoallv(send_stack.data(), send_counts, send_displs, recv_buffer.data(), recv_counts, recv_displs, mpi_edge_t);
 
   g.local_bw_m = recv_count;
-  g.bw.head    = local_n > 0 ? line_alloc<index_t>(local_n + 1) : nullptr;
-  g.bw.csr     = line_alloc<vertex_t>(g.local_bw_m);
+  g.bw.csr  = line_alloc<vertex_t>(g.local_bw_m);
 
   edgelist_to_graph_part(g.part, recv_count, recv_buffer.data(), g.bw.head, g.bw.csr);
 }

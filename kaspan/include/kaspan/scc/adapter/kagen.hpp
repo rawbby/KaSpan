@@ -37,11 +37,14 @@ kagen_graph_part(
   auto const local_fw_m = integral_cast<index_t>(ka_graph.NumberOfLocalEdges());
   auto const vertex_end = integral_cast<vertex_t>(ka_graph.vertex_range.second);
 
-  auto g = bidi_graph_part<explicit_sorted_part>{};
-  g.part = { global_n, vertex_end };
-  g.local_fw_m = local_fw_m;
+  auto g = bidi_graph_part<explicit_sorted_part>{ { global_n, vertex_end }, local_fw_m, 0 };
 
-  g.fw_view().debug_validate();
+  if (local_n > 0) {
+    auto const& xadj   = ka_graph.xadj;
+    auto const& adjncy = ka_graph.adjncy;
+    std::copy(xadj.begin(), xadj.end(), g.fw.head);
+    std::copy(adjncy.begin(), adjncy.end(), g.fw.csr);
+  }
 
   backward_complement_graph_part(g);
   g.debug_validate();
