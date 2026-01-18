@@ -3,7 +3,18 @@
 #include "kaspan/graph/graph_part.hpp"
 
 #include <kaspan/graph/graph.hpp>
-#include <kaspan/graph/part.hpp>
+#include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/bidi_graph.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/graph/block_cyclic_part.hpp>
+#include <kaspan/graph/concept.hpp>
+#include <kaspan/graph/cyclic_part.hpp>
+#include <kaspan/graph/explicit_continuous_part.hpp>
+#include <kaspan/graph/explicit_sorted_part.hpp>
+#include <kaspan/graph/graph.hpp>
+#include <kaspan/graph/graph_part.hpp>
+#include <kaspan/graph/single_part.hpp>
+#include <kaspan/graph/trivial_slice_part.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/backward_complement.hpp>
 #include <kaspan/scc/base.hpp>
@@ -46,14 +57,14 @@ namespace kaspan {
  * - Local work: O(n + m) (offset fix and backward construction).
  * - Communication: O(n + m) (all-gather of head and edges).
  */
-template<world_part_concept part_t>
-  requires(part_t::ordered)
+template<part_concept part_t>
+  requires(part_t::ordered())
 auto
 allgather_graph(
   index_t                 m,
   graph_part_view<part_t> gpv) -> bidi_graph
 {
-  auto const n       = gpv.part->n;
+  auto const n       = gpv.part->n();
   auto const local_n = gpv.part->local_n();
 
   auto bg = bidi_graph{ n, m };

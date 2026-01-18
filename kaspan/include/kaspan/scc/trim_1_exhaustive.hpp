@@ -12,7 +12,7 @@ namespace kaspan {
 /// scc_id[k] != undecided || valid(degree[k]).
 /// notice: you can pass a vertex_frontier with interleaved support,
 /// but its not needed nor adviced performance wise.
-template<bool InterleavedSupport = false, world_part_concept Part>
+template<bool InterleavedSupport = false, part_concept Part>
 auto
 trim_1_exhaustive(
   graph_part_view<Part>                graph,
@@ -51,7 +51,7 @@ trim_1_exhaustive(
   return decided_count;
 }
 
-template<world_part_concept Part>
+template<part_concept Part>
 auto
 trim_1_exhaustive(
   bidi_graph_part_view<Part> graph,
@@ -90,7 +90,7 @@ trim_1_exhaustive(
 /// will initilise these appropriately.
 /// notice: you can pass a vertex_frontier with interleaved support,
 /// but its not needed nor adviced performance wise.
-template<bool Interleaved = false, world_part_concept Part>
+template<bool Interleaved = false, part_concept Part>
 auto
 trim_1_exhaustive_first(
   bidi_graph_part_view<Part>    graph,
@@ -163,7 +163,7 @@ namespace interleaved {
 /// trim_1_exhaustive iteratevely trims both directions, forward and backward, interleaved.
 /// To do that scc_id must be valid and degree must be valid if:
 /// scc_id[k] != undecided || (valid(indegree[k]) && valid(outdegree[k])).
-template<world_part_concept Part>
+template<part_concept Part>
 auto
 trim_1_exhaustive(
   bidi_graph_part_view<Part> graph,
@@ -220,7 +220,7 @@ trim_1_exhaustive(
 /// trim_1_exhaustive_first iteratively trims vertices with indegree/outdegree of zero.
 /// It assumes to run on a fresh graph with uninitialised scc_id/indegree/outdegree and
 /// will initilise these appropriately.
-template<world_part_concept Part>
+template<part_concept Part>
 auto
 trim_1_exhaustive_first(
   bidi_graph_part_view<Part> graph,

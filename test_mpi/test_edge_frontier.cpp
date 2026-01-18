@@ -2,7 +2,18 @@
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/scc/base.hpp>
 #include <kaspan/scc/edge_frontier.hpp>
-#include <kaspan/graph/part.hpp>
+#include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/bidi_graph.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/graph/block_cyclic_part.hpp>
+#include <kaspan/graph/concept.hpp>
+#include <kaspan/graph/cyclic_part.hpp>
+#include <kaspan/graph/explicit_continuous_part.hpp>
+#include <kaspan/graph/explicit_sorted_part.hpp>
+#include <kaspan/graph/graph.hpp>
+#include <kaspan/graph/graph_part.hpp>
+#include <kaspan/graph/single_part.hpp>
+#include <kaspan/graph/trivial_slice_part.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
@@ -24,7 +35,7 @@ test_trivial_hard_coded()
   ASSERT_EQ(front.recv_buffer.size(), 0);
   ASSERT_EQ(front.send_buffer.size(), 0);
 
-  for (vertex_t u = 0; u < part.n; ++u) {
+  for (vertex_t u = 0; u < part.n(); ++u) {
     auto const r = part.world_rank_of(u);
     ASSERT_EQ(r, u);
     front.push(r, { u, 0 });

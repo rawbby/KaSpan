@@ -2,7 +2,18 @@
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/scc/base.hpp>
-#include <kaspan/graph/part.hpp>
+#include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/bidi_graph.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/graph/block_cyclic_part.hpp>
+#include <kaspan/graph/concept.hpp>
+#include <kaspan/graph/cyclic_part.hpp>
+#include <kaspan/graph/explicit_continuous_part.hpp>
+#include <kaspan/graph/explicit_sorted_part.hpp>
+#include <kaspan/graph/graph.hpp>
+#include <kaspan/graph/graph_part.hpp>
+#include <kaspan/graph/single_part.hpp>
+#include <kaspan/graph/trivial_slice_part.hpp>
 #include <kaspan/util/pp.hpp>
 
 #include <algorithm>
@@ -42,7 +53,7 @@ edgelist_to_graph(
   sorted_edgelist_to_graph(n, m, edgelist, head, csr);
 }
 
-template<world_part_concept part_t>
+template<part_concept part_t>
 void
 sorted_edgelist_to_graph_part(
   part_t const& part,
@@ -66,7 +77,7 @@ sorted_edgelist_to_graph_part(
   DEBUG_ASSERT_EQ(end, local_m);
 }
 
-template<world_part_concept part_t>
+template<part_concept part_t>
 void
 edgelist_to_graph_part(
   part_t const& part,

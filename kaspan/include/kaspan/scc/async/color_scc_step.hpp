@@ -7,7 +7,7 @@
 
 namespace kaspan::async {
 
-template<world_part_concept part_t,
+template<part_concept part_t,
          typename brief_queue_t>
 auto
 color_scc_step(

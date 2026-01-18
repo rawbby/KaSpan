@@ -41,13 +41,23 @@ usage(
 
 void
 benchmark(
-  auto&& graph_part)
+  auto&& kagen_res)
 {
+  auto& graph_part = [&]() -> auto& {
+    if constexpr (requires { kagen_res.bgp; }) return kagen_res.bgp;
+    else return kagen_res;
+  }();
+
   using part_t = std::remove_cvref_t<decltype(graph_part.part)>;
 
-  KASPAN_STATISTIC_ADD("n", graph_part.part.n);
+  auto const m = [&]() -> index_t {
+    if constexpr (requires { kagen_res.m; }) return kagen_res.m;
+    else return graph_part.local_fw_m + graph_part.local_bw_m;
+  }();
+
+  KASPAN_STATISTIC_ADD("n", graph_part.part.n());
   KASPAN_STATISTIC_ADD("local_n", graph_part.part.local_n());
-  KASPAN_STATISTIC_ADD("m", graph_part.m);
+  KASPAN_STATISTIC_ADD("m", m);
   KASPAN_STATISTIC_ADD("local_fw_m", graph_part.local_fw_m);
   KASPAN_STATISTIC_ADD("local_bw_m", graph_part.local_bw_m);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
@@ -60,7 +70,7 @@ benchmark(
   {
     KASPAN_STATISTIC_PUSH("adapter");
     hpc_data = create_hpc_graph_from_graph_part(
-      graph_part.part, graph_part.m, graph_part.local_fw_m, graph_part.local_bw_m, graph_part.fw_head, graph_part.fw_csr, graph_part.bw_head, graph_part.bw_csr);
+      graph_part.part, m, graph_part.local_fw_m, graph_part.local_bw_m, graph_part.fw.head, graph_part.fw.csr, graph_part.bw.head, graph_part.bw.csr);
     KASPAN_STATISTIC_POP();
 
     // Save partitioning info (lightweight) before releasing kaspan memory
@@ -73,7 +83,7 @@ benchmark(
 
   // Release kaspan memory before SCC benchmark to ensure fair memory measurement
   // This prevents double allocation and allows accurate memory footprint measurement
-  graph_part = std::remove_cvref_t<decltype(graph_part)>{}; // Explicitly release the kaspan graph memory
+  kagen_res = std::remove_cvref_t<decltype(kagen_res)>{}; // Explicitly release the kaspan graph memory
 
   KASPAN_STATISTIC_ADD("memory_after_release", get_resident_set_bytes());
 
@@ -144,10 +154,9 @@ main(
 
   if (kagen_option_string != nullptr) {
     KASPAN_STATISTIC_PUSH("kagen");
-    auto kagen_graph  = kagen_graph_part(kagen_option_string);
-    auto part_storage = std::move(kagen_graph.part_storage);
+    auto kagen_res = kagen_graph_part(kagen_option_string);
     KASPAN_STATISTIC_POP();
-    benchmark(std::move(kagen_graph));
+    benchmark(std::move(kagen_res));
   } else {
     KASPAN_STATISTIC_PUSH("load");
     auto const manifest = manifest::load(manifest_file);

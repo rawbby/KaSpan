@@ -20,25 +20,22 @@ main(int argc, char** argv)
   mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();
 
-  auto const graph_part = kagen_graph_part("rmat;directed;N=16;M=18;a=0.25;b=0.25;c=0.25");
-  DEBUG_ASSERT_VALID_GRAPH_PART(graph_part.part, graph_part.fw_head, graph_part.fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH_PART(graph_part.part, graph_part.bw_head, graph_part.bw_csr);
+  auto const [PS, FS, BS, m, bgp] = kagen_graph_part("rmat;directed;N=16;M=18;a=0.25;b=0.25;c=0.25");
+  bgp.debug_validate();
 
-  auto const graph = allgather_graph(graph_part.part, graph_part.m, graph_part.local_fw_m, graph_part.fw_head, graph_part.fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH(graph.n, graph.fw_head, graph.fw_csr);
-  DEBUG_ASSERT_VALID_GRAPH(graph.n, graph.bw_head, graph.bw_csr);
+  auto const graph = allgather_graph(m, bgp.fw_view());
+  graph.debug_validate();
 
-  auto const scc_id_buffer = make_buffer<vertex_t>(graph_part.part.local_n());
-  auto*      scc_id_access = scc_id_buffer.data();
-  auto*      kaspan_scc_id = borrow_array_clean<vertex_t>(&scc_id_access, graph_part.part.local_n());
-  scc(graph_part.part, graph_part.fw_head, graph_part.fw_csr, graph_part.bw_head, graph_part.bw_csr, kaspan_scc_id);
+  auto const local_n       = bgp.part.local_n();
+  auto       kaspan_scc_id = make_array<vertex_t>(local_n);
+  scc(bgp.view(), kaspan_scc_id.data());
 
   std::vector<vertex_t> ispan_scc_id;
-  scc(graph.n, graph.m, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, 12, &ispan_scc_id);
+  scc(graph.n, graph.m, graph.fw.head, graph.fw.csr, graph.bw.head, graph.bw.csr, 12, &ispan_scc_id);
 
-  ASSERT_EQ(ispan_scc_id.size(), graph_part.part.n);
-  for (vertex_t k = 0; k < graph_part.part.local_n(); ++k) {
-    auto const u = graph_part.part.to_global(k);
+  ASSERT_EQ(ispan_scc_id.size(), bgp.part.n());
+  for (vertex_t k = 0; k < local_n; ++k) {
+    auto const u = bgp.part.to_global(k);
     ASSERT_EQ(kaspan_scc_id[k], ispan_scc_id[u]);
   }
 }

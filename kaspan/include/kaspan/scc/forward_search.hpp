@@ -5,7 +5,7 @@
 
 namespace kaspan {
 
-template<bool InterleavedSupport = false, world_part_concept Part>
+template<bool InterleavedSupport = false, part_concept Part>
 void
 forward_search(
   graph_part_view<Part>                graph,

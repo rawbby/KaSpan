@@ -9,7 +9,7 @@ int main() {
     {
         single_world_part part(0);
         graph_part<single_world_part> gp(part, 0);
-        ASSERT_EQ(gp.part.n, 0);
+        ASSERT_EQ(gp.part.n(), 0);
         ASSERT_EQ(gp.local_m, 0);
         ASSERT_EQ(gp.head, nullptr);
         ASSERT_EQ(gp.csr, nullptr);

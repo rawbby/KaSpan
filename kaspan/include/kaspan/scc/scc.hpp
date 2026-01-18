@@ -17,7 +17,7 @@
 
 namespace kaspan {
 
-template<world_part_concept Part>
+template<part_concept Part>
 void
 scc(
   bidi_graph_part_view<Part> graph,
@@ -27,7 +27,7 @@ scc(
   auto const& part = *graph.part;
   KASPAN_STATISTIC_SCOPE("scc");
 
-  auto const n       = part.n;
+  auto const n       = part.n();
   auto const local_n = part.local_n();
 
   auto outdegree     = make_array<vertex_t>(local_n);
@@ -152,7 +152,7 @@ scc(
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
 
-    DEBUG_ASSERT_EQ(global_decided, part.n);
+    DEBUG_ASSERT_EQ(global_decided, part.n());
   }
 }
 

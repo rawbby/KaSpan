@@ -9,7 +9,7 @@ namespace kaspan {
  *
  * Reuses graph_part_view for each direction.
  */
-template<world_part_concept Part>
+template<part_concept Part>
 struct bidi_graph_part_view
 {
   using part_t             = Part;
@@ -226,7 +226,7 @@ struct bidi_graph_part_view
 /**
  * @brief An owning partitioned bidirectional graph structure.
  */
-template<world_part_concept Part>
+template<part_concept Part>
 struct bidi_graph_part
 {
   using part_t = Part;
@@ -255,8 +255,8 @@ struct bidi_graph_part
     , local_bw_m(local_bw_m)
     , fw{ line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1),
           line_alloc<vertex_t>(local_fw_m) }
-    , bw{ line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1),
-          line_alloc<vertex_t>(local_bw_m) }
+  , bw{ line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1),
+        line_alloc<vertex_t>(local_bw_m) }
   {
     debug_check();
   }

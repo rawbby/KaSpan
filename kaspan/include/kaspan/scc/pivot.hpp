@@ -24,7 +24,7 @@ allreduce_pivot(
 /// If no vertex is decided locally this should not be a problem.
 /// This pivot selection finds the undecided global vertex with the heightest initial degree product.
 /// This pivot selection ignores degree reduction due to decided neighbours.
-template<world_part_concept part_t>
+template<part_concept part_t>
 auto
 select_pivot_from_head(
   bidi_graph_part_view<part_t> graph,
@@ -50,7 +50,7 @@ select_pivot_from_head(
 /// If no vertex is decided locally this should not be a problem.
 /// This is an optimized pivot selection that profits from and up-to-date
 /// degree arrays. It is not only faster but also more accurate.
-template<world_part_concept part_t>
+template<part_concept part_t>
 auto
 select_pivot_from_degree(
   part_t const&   part,

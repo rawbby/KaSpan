@@ -1,8 +1,9 @@
 #pragma once
 
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/debug/valgrind.hpp>
-#include <kaspan/graph/part.hpp>
+#include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/concept.hpp>
+#include <kaspan/graph/graph_part.hpp>
 #include <kaspan/memory/line.hpp>
 #include <kaspan/scc/base.hpp>
 
@@ -22,7 +23,7 @@ namespace kaspan {
  *         The neighbors of local vertex k are stored in csr[head[k]] to csr[head[k+1]-1].
  * - csr:  An array of neighbor vertex global IDs of size local_m.
  */
-template<world_part_concept Part>
+template<part_concept Part>
 struct graph_part_view
 {
   using part_t          = Part;
@@ -159,7 +160,7 @@ struct graph_part_view
     }
     if (KASPAN_DEBUG) {
       ASSERT_POINTER(part);
-      ASSERT_GE(part->n, 0);
+      ASSERT_GE(part->n(), 0);
       ASSERT_GE(local_n, 0);
       ASSERT_GE(local_m, 0);
       ASSERT_SIZE_POINTER(local_n, head);
@@ -195,8 +196,8 @@ struct graph_part_view
       vertex_t prev_v = 0;
       each_kuv([&](auto k, auto u, auto v) {
         ASSERT_LT(k, local_n);
-        ASSERT_LT(u, part->n);
-        ASSERT_LT(v, part->n);
+        ASSERT_LT(u, part->n());
+        ASSERT_LT(v, part->n());
         ASSERT_LE(prev_k, k);
         if (prev_k == k) ASSERT_LE(prev_v, v);
         prev_k = k;
@@ -206,7 +207,7 @@ struct graph_part_view
   }
 };
 
-template<world_part_concept Part>
+template<part_concept Part>
 struct graph_part
 {
   using part_t = Part;

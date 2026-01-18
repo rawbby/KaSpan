@@ -31,40 +31,49 @@ usage(int /* argc */, char** argv)
 }
 
 void
-benchmark(auto const& graph, bool use_async, bool use_async_indirect)
+benchmark(auto const& res, bool use_async, bool use_async_indirect)
 {
+  auto const& graph = [&]() -> auto const& {
+    if constexpr (requires { res.bgp; }) return res.bgp;
+    else return res;
+  }();
+
+  auto const m = [&]() -> index_t {
+    if constexpr (requires { res.m; }) return res.m;
+    else return graph.local_fw_m + graph.local_bw_m; // fallback for manifest_graph where m is globally known but not in bgp
+  }();
+
   KASPAN_STATISTIC_ADD("async", use_async);
   KASPAN_STATISTIC_ADD("async_indirect", use_async_indirect);
 
-  KASPAN_STATISTIC_ADD("n", graph.part.n);
+  KASPAN_STATISTIC_ADD("n", graph.part.n());
   KASPAN_STATISTIC_ADD("local_n", graph.part.local_n());
-  KASPAN_STATISTIC_ADD("m", graph.m);
+  KASPAN_STATISTIC_ADD("m", m);
   KASPAN_STATISTIC_ADD("local_fw_m", graph.local_fw_m);
   KASPAN_STATISTIC_ADD("local_bw_m", graph.local_bw_m);
 
   // pre-allocate scc_id buffer
-  auto  scc_id_buffer = make_buffer<vertex_t>(graph.part.local_n());
-  auto* scc_id_access = scc_id_buffer.data();
-  auto* scc_id        = borrow_array_clean<vertex_t>(&scc_id_access, graph.part.local_n());
+  auto const local_n = graph.part.local_n();
+  auto       scc_id  = make_array<vertex_t>(local_n);
 
   MPI_Barrier(MPI_COMM_WORLD);
   if (not use_async) {
     KASPAN_CALLGRIND_START_INSTRUMENTATION();
-    scc(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+    scc(graph.view(), scc_id.data());
     KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
   } else if (use_async_indirect) {
     KASPAN_CALLGRIND_START_INSTRUMENTATION();
-    async::scc<briefkasten::GridIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+    async::scc<briefkasten::GridIndirectionScheme>(graph.view(), scc_id.data());
     KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
   } else {
     KASPAN_CALLGRIND_START_INSTRUMENTATION();
-    async::scc<briefkasten::NoopIndirectionScheme>(graph.part, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, scc_id);
+    async::scc<briefkasten::NoopIndirectionScheme>(graph.view(), scc_id.data());
     KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
   }
 
 #if KASPAN_STATISTIC
   vertex_t local_component_count = 0;
-  for (vertex_t k = 0; k < graph.part.local_n(); ++k) {
+  for (vertex_t k = 0; k < local_n; ++k) {
     if (scc_id[k] == graph.part.to_global(k)) {
       ++local_component_count;
     }

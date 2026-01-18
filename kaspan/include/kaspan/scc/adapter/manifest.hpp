@@ -1,5 +1,6 @@
 #pragma once
 
+#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/memory/accessor/dense_unsigned_accessor.hpp>
 #include <kaspan/memory/file_buffer.hpp>
 #include <kaspan/graph/graph.hpp>
@@ -196,7 +197,7 @@ struct manifest
 
 static auto
 load_graph_from_manifest(
-  manifest const& manifest) -> local_graph
+  manifest const& manifest) -> bidi_graph
 {
   auto const  n            = manifest.graph_node_count;
   auto const  m            = manifest.graph_edge_count;
@@ -229,50 +230,40 @@ load_graph_from_manifest(
   auto const bw_head_access = view_dense_unsigned(bw_head_buffer.data(), n + 1, head_bytes, load_endian);
   auto const bw_csr_access  = view_dense_unsigned(bw_csr_buffer.data(), m, csr_bytes, load_endian);
 
-  auto g = local_graph{};
-
-  g.storage    = make_graph_buffer(n, m);
-  auto* memory = g.storage.data();
-
-  g.n       = integral_cast<vertex_t>(n);
-  g.m       = integral_cast<index_t>(m);
-  g.fw_head = (n > 0) ? borrow_array<index_t>(&memory, n + 1) : nullptr;
-  g.fw_csr  = borrow_array<vertex_t>(&memory, m);
-  g.bw_head = (n > 0) ? borrow_array<index_t>(&memory, n + 1) : nullptr;
-  g.bw_csr  = borrow_array<vertex_t>(&memory, m);
+  bidi_graph g(integral_cast<vertex_t>(n), integral_cast<index_t>(m));
 
   for (vertex_t i = 0; i < n + 1; ++i) {
     DEBUG_ASSERT_IN_RANGE(fw_head_access.get(i), 0, m + 1);
-    g.fw_head[i] = integral_cast<index_t>(fw_head_access.get(i));
+    g.fw.head[i] = integral_cast<index_t>(fw_head_access.get(i));
   }
 
   for (index_t i = 0; i < m; ++i) {
     DEBUG_ASSERT_IN_RANGE(fw_csr_access.get(i), 0, n);
-    g.fw_csr[i] = integral_cast<vertex_t>(fw_csr_access.get(i));
+    g.fw.csr[i] = integral_cast<vertex_t>(fw_csr_access.get(i));
   }
 
   for (vertex_t i = 0; i < n + 1; ++i) {
     DEBUG_ASSERT_IN_RANGE(bw_head_access.get(i), 0, m + 1);
-    g.bw_head[i] = integral_cast<index_t>(bw_head_access.get(i));
+    g.bw.head[i] = integral_cast<index_t>(bw_head_access.get(i));
   }
 
   for (index_t i = 0; i < m; ++i) {
     DEBUG_ASSERT_IN_RANGE(bw_csr_access.get(i), 0, n);
-    g.bw_csr[i] = integral_cast<vertex_t>(bw_csr_access.get(i));
+    g.bw.csr[i] = integral_cast<vertex_t>(bw_csr_access.get(i));
   }
 
   return g;
 }
 
-template<world_part_concept part_t>
+template<part_concept part_t>
 static auto
 load_graph_part_from_manifest(
   part_t const&   part,
-  manifest const& manifest) -> local_graph_part<part_t>
+  manifest const& manifest) -> bidi_graph_part<part_t>
 {
-  DEBUG_ASSERT_EQ(manifest.graph_node_count, part.n);
+  DEBUG_ASSERT_EQ(manifest.graph_node_count, part.n());
 
-  auto const  n            = part.n;
+  auto const  n            = part.n();
   auto const  local_n      = part.local_n();
   auto const  m            = manifest.graph_edge_count;
   auto const  head_bytes   = manifest.graph_head_bytes;
@@ -309,7 +300,7 @@ load_graph_part_from_manifest(
   auto bw_head_access = view_dense_unsigned(bw_head_buffer.data(), n + 1, head_bytes, load_endian);
   auto bw_csr_access  = view_dense_unsigned(bw_csr_buffer.data(), m, csr_bytes, load_endian);
 
-  auto const local_m = [=, &part](dense_unsigned_accessor<> const& head) -> index_t {
+  auto const get_local_m = [=, &part](dense_unsigned_accessor<> const& head) -> index_t {
     if constexpr (part_t::continuous) {
       if (local_n > 0) {
 
@@ -342,49 +333,40 @@ load_graph_part_from_manifest(
     }
   };
 
-  local_graph_part<part_t> result;
-  result.m          = m;
-  result.local_fw_m = local_m(fw_head_access);
-  result.local_bw_m = local_m(bw_head_access);
+  auto const local_fw_m = get_local_m(fw_head_access);
+  auto const local_bw_m = get_local_m(bw_head_access);
 
-  DEBUG_ASSERT_GE(result.local_fw_m, 0);
-  DEBUG_ASSERT_LE(result.local_fw_m, result.m);
-  DEBUG_ASSERT_GE(result.local_bw_m, 0);
-  DEBUG_ASSERT_LE(result.local_bw_m, result.m);
+  DEBUG_ASSERT_GE(local_fw_m, 0);
+  DEBUG_ASSERT_LE(local_fw_m, m);
+  DEBUG_ASSERT_GE(local_bw_m, 0);
+  DEBUG_ASSERT_LE(local_bw_m, m);
 
-  result.storage     = make_graph_buffer(local_n, result.local_fw_m, result.local_bw_m);
-  auto* graph_memory = result.storage.data();
-
-  result.fw_head = (local_n > 0) ? borrow_array<index_t>(&graph_memory, local_n + 1) : nullptr;
-  result.bw_head = (local_n > 0) ? borrow_array<index_t>(&graph_memory, local_n + 1) : nullptr;
-  result.fw_csr  = borrow_array<vertex_t>(&graph_memory, result.local_fw_m);
-  result.bw_csr  = borrow_array<vertex_t>(&graph_memory, result.local_bw_m);
+  bidi_graph_part<part_t> result(part, local_fw_m, local_bw_m);
 
   u64 pos = 0;
   for (u64 k = 0; k < local_n; ++k) {
     auto const index  = part.to_global(k);
     auto const begin  = fw_head_access.get(index);
     auto const end    = fw_head_access.get(index + 1);
-    result.fw_head[k] = pos;
+    result.fw.head[k] = pos;
     for (auto it = begin; it != end; ++it) {
-      result.fw_csr[pos++] = fw_csr_access.get(it);
+      result.fw.csr[pos++] = fw_csr_access.get(it);
     }
   }
-  result.fw_head[local_n] = pos;
+  if (local_n > 0) result.fw.head[local_n] = pos;
 
   pos = 0;
   for (u64 k = 0; k < local_n; ++k) {
     auto const index  = part.to_global(k);
     auto const begin  = bw_head_access.get(index);
     auto const end    = bw_head_access.get(index + 1);
-    result.bw_head[k] = pos;
+    result.bw.head[k] = pos;
     for (auto it = begin; it != end; ++it) {
-      result.bw_csr[pos++] = bw_csr_access.get(it);
+      result.bw.csr[pos++] = bw_csr_access.get(it);
     }
   }
-  result.bw_head[local_n] = pos;
+  if (local_n > 0) result.bw.head[local_n] = pos;
 
-  result.part = std::move(part);
   return result;
 }
 

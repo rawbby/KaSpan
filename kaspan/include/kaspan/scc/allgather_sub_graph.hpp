@@ -1,10 +1,21 @@
 #pragma once
 
-#include "kaspan/graph/bidi_graph.hpp"
+#include <kaspan/graph/bidi_graph.hpp>
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/graph.hpp>
-#include <kaspan/graph/part.hpp>
+#include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/bidi_graph.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/graph/block_cyclic_part.hpp>
+#include <kaspan/graph/concept.hpp>
+#include <kaspan/graph/cyclic_part.hpp>
+#include <kaspan/graph/explicit_continuous_part.hpp>
+#include <kaspan/graph/explicit_sorted_part.hpp>
+#include <kaspan/graph/graph.hpp>
+#include <kaspan/graph/graph_part.hpp>
+#include <kaspan/graph/single_part.hpp>
+#include <kaspan/graph/trivial_slice_part.hpp>
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/memory/borrow.hpp>
@@ -23,7 +34,7 @@
 namespace kaspan {
 namespace sub_graph {
 
-template<world_part_concept part_t,
+template<part_concept part_t,
          class fn_t>
 auto
 allgather_sub_ids(
@@ -53,10 +64,10 @@ allgather_sub_ids(
   return PACK(sub_n, super_ids, local_super_ids);
 }
 
-template<class part_t>
+template<part_concept Part>
 auto
 allgather_csr_degrees(
-  part_t const&   part,
+  Part const&   part,
   vertex_t        local_sub_n,
   index_t const*  head,
   vertex_t const* csr,
@@ -112,7 +123,7 @@ allgather_csr_degrees(
 
 template<class part_t,
          class fn_t>
-  requires(part_t::ordered and std::convertible_to<std::invoke_result_t<fn_t,
+  requires(part_t::ordered() and std::convertible_to<std::invoke_result_t<fn_t,
                                                                         vertex_t>,
                                                    bool>)
 auto
@@ -171,7 +182,7 @@ allgather_sub_graph(
 
 template<class part_t,
          class fn_t>
-  requires(part_t::ordered and std::convertible_to<std::invoke_result_t<fn_t,
+  requires(part_t::ordered() and std::convertible_to<std::invoke_result_t<fn_t,
                                                                         vertex_t>,
                                                    bool>)
 auto

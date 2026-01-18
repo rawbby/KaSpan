@@ -25,7 +25,7 @@ no_filter(
  * @param[in] decided_count number of vertices filtered out (must match filter)
  * @return number of strongly connected components
  */
-template<world_part_concept Part,
+template<part_concept Part,
          typename callback_t,
          typename filter_t = decltype(no_filter)>
 void

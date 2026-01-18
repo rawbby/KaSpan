@@ -30,7 +30,7 @@ benchmark(auto const& graph, kaspan::i32 alpha)
   std::vector<kaspan::vertex_t> scc_id;
 
   KASPAN_CALLGRIND_START_INSTRUMENTATION();
-  scc(graph.n, graph.m, graph.fw_head, graph.fw_csr, graph.bw_head, graph.bw_csr, alpha, &scc_id);
+  scc(graph.n, graph.m, graph.fw.head, graph.fw.csr, graph.bw.head, graph.bw.csr, alpha, &scc_id);
   KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
 
   IF_KASPAN_STATISTIC(size_t global_component_count = 0;)
@@ -72,10 +72,10 @@ main(int argc, char** argv)
   if (kagen_option_string != nullptr) {
     auto const graph = [kagen_option_string] {
       KASPAN_STATISTIC_PUSH("kagen");
-      auto const graph_part = kaspan::kagen_graph_part(kagen_option_string);
+      auto const [PS, FS, BS, m, bgp] = kaspan::kagen_graph_part(kagen_option_string);
       KASPAN_STATISTIC_POP();
       KASPAN_STATISTIC_SCOPE("preprocessing");
-      return allgather_graph(graph_part.part, graph_part.m, graph_part.local_fw_m, graph_part.fw_head, graph_part.fw_csr);
+      return allgather_graph(m, bgp.fw_view());
     }();
     benchmark(graph, alpha);
   } else {

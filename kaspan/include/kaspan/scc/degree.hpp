@@ -1,7 +1,18 @@
 #pragma once
 
 #include <kaspan/scc/base.hpp>
-#include <kaspan/graph/part.hpp>
+#include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/bidi_graph.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/graph/block_cyclic_part.hpp>
+#include <kaspan/graph/concept.hpp>
+#include <kaspan/graph/cyclic_part.hpp>
+#include <kaspan/graph/explicit_continuous_part.hpp>
+#include <kaspan/graph/explicit_sorted_part.hpp>
+#include <kaspan/graph/graph.hpp>
+#include <kaspan/graph/graph_part.hpp>
+#include <kaspan/graph/single_part.hpp>
+#include <kaspan/graph/trivial_slice_part.hpp>
 
 namespace kaspan {
 
@@ -24,7 +35,7 @@ degree(
   return 0;
 }
 
-template<world_part_concept part_t>
+template<part_concept part_t>
   requires(part_t::continuous)
 index_t
 degree(
@@ -34,7 +45,7 @@ degree(
   return degree(part.local_n(), head);
 }
 
-template<world_part_concept part_t>
+template<part_concept part_t>
   requires(not part_t::continuous)
 index_t
 degree(

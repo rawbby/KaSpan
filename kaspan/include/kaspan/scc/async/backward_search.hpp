@@ -10,7 +10,7 @@
 
 namespace kaspan::async {
 
-template<world_part_concept part_t,
+template<part_concept part_t,
          typename brief_queue_t>
 auto
 backward_search(
@@ -27,7 +27,7 @@ backward_search(
   auto        fw_reached    = view_bits(fw_reached_storage, local_n);
   auto        active_stack  = view_stack<vertex_t>(active_storage, local_n);
   vertex_t    decided_count = 0;
-  vertex_t    min_u         = part.n;
+  vertex_t    min_u         = part.n();
 
   auto on_message = [&](auto env) {
     for (auto v : env.message) {

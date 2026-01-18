@@ -1,11 +1,11 @@
 #pragma once
 
-#include "kaspan/graph/bidi_graph.hpp"
-
 #include <kaspan/debug/assert.hpp>
+#include <kaspan/graph/bidi_graph.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/graph/concept.hpp>
 #include <kaspan/graph/graph.hpp>
-#include <kaspan/graph/part.hpp>
-#include <kaspan/memory/accessor/stack_accessor.hpp>
+#include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/adapter/edgelist.hpp>
@@ -20,36 +20,26 @@
 
 namespace kaspan {
 
-/**
- * Inplace complement bw_head + bw_csr from fw_head + fw_csr for n vertices.
- * Runs in linear time (O(n+2m)) and zero extra memory.
- *
- * @param[in] n number of vertices in graph
- * @param[in] fw_head valid head array of graph
- * @param[in] fw_csr valid csr array of graph
- * @param[out] bw_head (maybe uninitialized) pre-allocated head array of size n + 1
- * @param[out] bw_csr (maybe uninitialized) pre-allocated csr array of size m
- */
 inline void
 backward_complement_graph(
-  bidi_graph_view bg)
+  bidi_graph_view g)
 {
-  bg.fw_view().debug_validate();
-  bg.bw_view().debug_check();
+  g.fw_view().debug_validate();
+  g.bw_view().debug_check();
 
   // === zero bw_head and count indegrees in-place ===
   // after this loop: bw_head[0] == 0 and for every vertex v, bw_head[v + 1] == indegree(v)
-  if (bg.n > 0) {
-    std::memset(bg.bw.head, 0, (bg.n + 1) * sizeof(index_t));
+  if (g.n > 0) {
+    std::memset(g.bw.head, 0, (g.n + 1) * sizeof(index_t));
   }
   index_t it = 0;
-  DEBUG_ASSERT(bg.n == 0 or bg.fw.head[0] == 0);
-  for (vertex_t u = 0; u < bg.n; ++u) {
-    DEBUG_ASSERT_IN_RANGE(bg.fw.head[u], 0, bg.fw.head[u + 1] + 1);
-    auto const end = bg.fw.head[u + 1];
+  DEBUG_ASSERT(g.n == 0 or g.fw.head[0] == 0);
+  for (vertex_t u = 0; u < g.n; ++u) {
+    DEBUG_ASSERT_IN_RANGE(g.fw.head[u], 0, g.fw.head[u + 1] + 1);
+    auto const end = g.fw.head[u + 1];
     for (; it < end; ++it) {
-      DEBUG_ASSERT_IN_RANGE(bg.fw.csr[it], 0, bg.n);
-      ++bg.bw.head[bg.fw.csr[it] + 1];
+      DEBUG_ASSERT_IN_RANGE(g.fw.csr[it], 0, g.n);
+      ++g.bw.head[g.fw.csr[it] + 1];
     }
   }
 
@@ -57,10 +47,10 @@ backward_complement_graph(
   // after the loop: bw_head[u + 1] == sum_{k < u} indegree(k)
   // thus bw_head[v + 1] = row_begin(v) for the transposed graph
   index_t acc = 0;
-  for (vertex_t u = 0; u < bg.n; ++u) {
-    DEBUG_ASSERT_IN_RANGE(bg.bw.head[u + 1], 0, bg.fw.head[bg.n] + 1);
-    auto const indegree = bg.bw.head[u + 1];
-    bg.bw.head[u + 1]   = acc;
+  for (vertex_t u = 0; u < g.n; ++u) {
+    DEBUG_ASSERT_IN_RANGE(g.bw.head[u + 1], 0, g.fw.head[g.n] + 1);
+    auto const indegree = g.bw.head[u + 1];
+    g.bw.head[u + 1]    = acc;
     acc += indegree;
   }
 
@@ -68,104 +58,73 @@ backward_complement_graph(
   // for each edge (u,v), write u at bw_csr[bw_head[v + 1]] and increment that cursor
   // upon completion, each cursor advanced by indegree(v), so bw_head[v + 1] == row_end(v)
   it = 0;
-  for (vertex_t u = 0; u < bg.n; ++u) {
-    auto const end = bg.fw.head[u + 1];
+  for (vertex_t u = 0; u < g.n; ++u) {
+    auto const end = g.fw.head[u + 1];
     for (; it < end; ++it) {
-      bg.bw.csr[bg.bw.head[bg.fw.csr[it] + 1]++] = u;
+      g.bw.csr[g.bw.head[g.fw.csr[it] + 1]++] = u;
     }
   }
 
-  bg.bw_view().debug_validate();
+  g.bw_view().debug_validate();
 }
 
-/**
- * Inplace complement bw_head + bw_csr from fw_head + fw_csr for n vertices.
- * Runs in linear time (O(n+2m)) and zero extra memory.
- *
- * @param[in] part the partition of the graph stored
- * @param[in] local_m the number of forward edges of graph partition (= head[part.local_n()])
- * @param[in] head valid forward head array of graph partition
- * @param[in] csr valid forward csr array of graph partition
- */
-template<world_part_concept part_t>
-auto
+template<part_concept Part>
+void
 backward_complement_graph_part(
-  part_t const&   part,
-  index_t         local_m,
-  index_t const*  head,
-  vertex_t const* csr)
+  bidi_graph_part<Part>& g)
 {
-  struct
-  {
-    buffer    storage;
-    index_t   local_m = 0;
-    index_t*  head    = nullptr;
-    vertex_t* csr     = nullptr;
-  } result;
-
-  auto const local_n = part.local_n();
-  DEBUG_ASSERT_EQ(local_m, head[local_n]);
+  auto const local_n = g.part.local_n();
+  DEBUG_ASSERT_EQ(g.local_fw_m, g.fw.head[local_n]);
 
   if (mpi_basic::world_size == 1) [[unlikely]] {
-    result.local_m = local_m;
-    result.storage = make_fw_graph_buffer(local_n, local_m);
-    auto* memory   = result.storage.data();
-    result.head    = borrow_array<index_t>(&memory, local_n + 1);
-    result.csr     = borrow_array<vertex_t>(&memory, local_m);
-    backward_complement_graph(local_n, head, csr, result.head, result.csr);
-    return result;
+    g.local_bw_m = g.local_fw_m;
+    g.bw.head    = borrow_array<index_t>(local_n + 1);
+    g.bw.csr     = borrow_array<vertex_t>(g.local_bw_m);
+    backward_complement_graph(bidi_graph_view{ local_n, g.local_fw_m, g.fw.head, g.fw.csr, g.bw.head, g.bw.csr });
+    return;
   }
 
-  auto  send_stack_buffer = make_buffer<edge_t>(local_m);
-  void* send_stack_memory = send_stack_buffer.data();
-
-  auto send_stack                     = view_stack<edge_t>(send_stack_memory, local_m);
+  auto send_stack                     = make_stack<edge_t>(g.local_fw_m);
   auto [sb, send_counts, send_displs] = mpi_basic::counts_and_displs();
   std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
 
   index_t it = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
-    auto const u   = part.to_global(k);
-    auto const end = head[k + 1];
+    auto const u   = g.part.to_global(k);
+    auto const end = g.fw.head[k + 1];
     for (; it < end; ++it) {
-      auto const v = csr[it];
+      auto const v = g.fw.csr[it];
       send_stack.push({ v, u });
-      ++send_counts[part.world_rank_of(v)];
+      ++send_counts[g.part.world_rank_of(v)];
     }
   }
 
-  i8 any_edges = local_m > 0 ? 1 : 0;
+  i8 any_edges = g.local_fw_m > 0 ? 1 : 0;
   mpi_basic::allreduce_inplace(&any_edges, 1, mpi_basic::lor);
 
   if (any_edges == 0) [[unlikely]] {
-    result.local_m = 0;
-    result.storage = make_graph_buffer(local_n, 0);
-    auto* memory   = result.storage.data();
-    result.head    = borrow_array_clean<index_t>(&memory, local_n + 1);
-    result.csr     = nullptr;
-    return result;
+    g.local_bw_m = 0;
+    g.bw.head    = local_n > 0 ? line_alloc<index_t>(local_n + 1) : nullptr;
+    g.bw.csr     = nullptr;
+    return;
   }
 
   auto [rb, recv_counts, recv_displs] = mpi_basic::counts_and_displs();
   mpi_basic::alltoallv_counts(send_counts, recv_counts);
   auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
-  mpi_basic::inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&part](edge_t const& e) {
-    return part.world_rank_of(e.u);
+  mpi_basic::inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&](edge_t const& e) {
+    return g.part.world_rank_of(e.u);
   });
 
-  auto  recv_buffer = make_buffer<edge_t>(recv_count);
-  auto* recv_access = static_cast<edge_t*>(recv_buffer.data());
+  auto recv_buffer = make_array<edge_t>(recv_count);
 
-  mpi_basic::alltoallv(send_stack.data(), send_counts, send_displs, recv_access, recv_counts, recv_displs, mpi_edge_t);
+  mpi_basic::alltoallv(send_stack.data(), send_counts, send_displs, recv_buffer.data(), recv_counts, recv_displs, mpi_edge_t);
 
-  result.local_m = recv_count;
-  result.storage = make_fw_graph_buffer(local_n, result.local_m);
-  auto* mem      = result.storage.data();
-  result.head    = borrow_array<index_t>(&mem, local_n + 1);
-  result.csr     = borrow_array<vertex_t>(&mem, result.local_m);
+  g.local_bw_m = recv_count;
+  g.bw.head    = local_n > 0 ? line_alloc<index_t>(local_n + 1) : nullptr;
+  g.bw.csr     = line_alloc<vertex_t>(g.local_bw_m);
 
-  edgelist_to_graph_part(part, recv_count, recv_access, result.head, result.csr);
-  return result;
+  edgelist_to_graph_part(g.art, recv_count, recv_buffer, g.bw.head, g.bw.csr);
 }
 
 } // namespace kaspan

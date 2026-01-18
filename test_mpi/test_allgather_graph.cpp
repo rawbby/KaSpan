@@ -32,7 +32,7 @@ check_gp_gp(
   bidi_graph_part_view<Part> bgpv_)
 {
   check_p_p(*bgpv.part, *bgpv_.part);
-  ASSERT_EQ(bgpv.part->n, bgpv_.part->n);
+  ASSERT_EQ(bgpv.part->n(), bgpv_.part->n());
   ASSERT_EQ(bgpv.part->local_n(), bgpv_.part->local_n());
   ASSERT_EQ(bgpv.local_fw_m, bgpv_.local_fw_m);
   ASSERT_EQ(bgpv.local_bw_m, bgpv_.local_bw_m);

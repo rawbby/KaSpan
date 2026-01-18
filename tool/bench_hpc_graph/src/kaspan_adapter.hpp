@@ -21,7 +21,7 @@ struct hpc_graph_data
 };
 
 // Convert from KaSpan GraphPart to HPCGraph dist_graph_t format
-template<kaspan::world_part_concept part_t>
+template<kaspan::part_concept part_t>
 auto
 create_hpc_graph_from_graph_part(part_t const&           part,
                                  kaspan::index_t         m,
@@ -35,7 +35,7 @@ create_hpc_graph_from_graph_part(part_t const&           part,
   hpc_graph_data data;
 
   kaspan::vertex_t const local_n = part.local_n();
-  kaspan::vertex_t const n       = part.n;
+  kaspan::vertex_t const n       = part.n();
 
   // Initialize dist_graph_t structure
   data.g.n           = kaspan::integral_cast<uint64_t>(n);
@@ -160,7 +160,7 @@ create_hpc_graph_from_graph_part(part_t const&           part,
 // Initialize ghost cells for HPCGraph adapter
 // This is an accelerator structure specific to HPCGraph and should be counted
 // as part of the algorithm benchmark time, not as graph conversion overhead
-template<kaspan::world_part_concept part_t>
+template<kaspan::part_concept part_t>
 void
 initialize_ghost_cells(hpc_graph_data& data, part_t const& part, kaspan::index_t local_fw_m, kaspan::index_t local_bw_m)
 {
@@ -268,7 +268,7 @@ initialize_ghost_cells(hpc_graph_data& data, part_t const& part, kaspan::index_t
 }
 
 // Convert from KaSpan local_graph_part to HPCGraph dist_graph_t format
-template<kaspan::world_part_concept part_t>
+template<kaspan::part_concept part_t>
 auto
 create_hpc_graph_from_local_graph_part(part_t const&           part,
                                        kaspan::index_t         m,

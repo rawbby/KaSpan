@@ -19,6 +19,63 @@
 
 namespace kaspan {
 
+template<part_concept Part>
+void
+test_validate_scc_id(
+  graph_part_view<Part> gpv,
+  vertex_t const*       scc_id_orig,
+  vertex_t const*       scc_id)
+{
+  auto const& part    = *gpv.part;
+  auto const  local_n = part.local_n();
+
+  gpv.each_k([&](auto k) {
+    if (scc_id_orig[k] != scc_id[k]) {
+
+      auto const [beg, end] = [&] -> std::pair<vertex_t, vertex_t> {
+        if (local_n <= 50) return { 0, local_n };
+        if (k < 25) return { 0, 50 };
+        if (k > local_n - 25) return { local_n - 50, local_n };
+        return { k - 25, k + 25 };
+      }();
+
+      auto const w = static_cast<vertex_t>(std::log10(std::max(2, part.to_global(end)) - 1) + 1);
+      auto const p = std::string{ " " } + std::string(w, ' ');
+      auto const m = std::string{ " " } + std::string(w, '^');
+
+      std::stringstream idx_stream;
+      std::stringstream ref_stream;
+      std::stringstream rlt_stream;
+      std::stringstream mrk_stream;
+
+      idx_stream << "  index       :";
+      ref_stream << "  scc_id_orig :";
+      rlt_stream << "  scc_id      :";
+      mrk_stream << "               ";
+
+      for (vertex_t it = beg; it < end; ++it) {
+        idx_stream << ' ' << std::right << std::setw(w) << part.to_global(it);
+        ref_stream << ' ' << std::right << std::setw(w) << scc_id_orig[it];
+        rlt_stream << ' ' << std::right << std::setw(w) << scc_id[it];
+        mrk_stream << (scc_id_orig[it] == scc_id[it] ? p : m);
+      }
+
+      ASSERT_EQ(scc_id_orig[k],
+                scc_id[k],
+                "k={}; u={}; n={}; rank={}; size={};\n{}\n{}\n{}\n{}",
+                k,
+                part.to_global(k),
+                part.n(),
+                mpi_basic::world_rank,
+                mpi_basic::world_size,
+                idx_stream.str(),
+                ref_stream.str(),
+                rlt_stream.str(),
+                mrk_stream.str());
+    }
+  });
+}
+
 inline auto
 fuzzy_global_scc_id_and_graph(
   u64      seed,
@@ -158,7 +215,7 @@ fuzzy_global_scc_id_and_graph(
   return PACK(scc_id, bg);
 }
 
-template<world_part_concept part_t>
+template<part_concept part_t>
 auto
 fuzzy_local_scc_id_and_graph(
   u64           seed,
@@ -167,7 +224,7 @@ fuzzy_local_scc_id_and_graph(
 {
   auto const local_n = part.local_n();
 
-  auto [scc_id, bg] = fuzzy_global_scc_id_and_graph(seed, part.n, degree);
+  auto [scc_id, bg] = fuzzy_global_scc_id_and_graph(seed, part.n(), degree);
 
   auto scc_id_part = make_array<vertex_t>(local_n);
   auto bgp         = partition(bg.view(), part);

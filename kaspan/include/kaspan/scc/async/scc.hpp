@@ -70,7 +70,7 @@ make_briefkasten_edge()
 }
 
 template<typename indirection_scheme_t,
-         world_part_concept part_t>
+         part_concept part_t>
 void
 scc(
   bidi_graph_part_view<part_t> graph,
@@ -80,7 +80,7 @@ scc(
   auto const& part = *graph.part;
   KASPAN_STATISTIC_SCOPE("scc");
 
-  auto const n       = part.n;
+  auto const n       = part.n();
   auto const local_n = part.local_n();
 
   auto outdegree = make_array<vertex_t>(local_n);

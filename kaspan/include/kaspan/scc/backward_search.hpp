@@ -9,7 +9,7 @@
 
 namespace kaspan {
 
-template<bool InterleavedSupport = false, world_part_concept Part>
+template<bool InterleavedSupport = false, part_concept Part>
 auto
 backward_search(
   graph_part_view<Part>                graph,
@@ -24,7 +24,7 @@ backward_search(
   auto        fw_reached    = view_bits(fw_reached_storage, local_n);
 
   vertex_t decided_count = 0;
-  vertex_t min_u         = part.n;
+  vertex_t min_u         = part.n();
 
   if (part.has_local(pivot)) {
     frontier.local_push(pivot);

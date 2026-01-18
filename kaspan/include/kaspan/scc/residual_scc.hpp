@@ -9,7 +9,7 @@
 
 namespace kaspan {
 
-template<world_part_concept Part>
+template<part_concept Part>
 inline void
 residual_scc(
   vertex_t const*             wcc_id,
