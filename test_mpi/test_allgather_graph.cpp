@@ -2,6 +2,8 @@
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/graph.hpp>
+#include <kaspan/graph/trivial_slice_part.hpp>
+#include <kaspan/graph/balanced_slice_part.hpp>
 #include <kaspan/scc/allgather_graph.hpp>
 #include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/partion_graph.hpp>

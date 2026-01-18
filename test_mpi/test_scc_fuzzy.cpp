@@ -1,7 +1,7 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/graph/base.hpp>
-#include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/graph/balanced_slice_part.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/scc/async/scc.hpp>
 #include <kaspan/scc/fuzzy.hpp>
