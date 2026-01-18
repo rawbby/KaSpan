@@ -15,6 +15,96 @@
 
 using namespace kaspan;
 
+template<typename Part>
+void
+test_consistency(
+  Part const& part)
+{
+  vertex_t const n       = part.n();
+  vertex_t const local_n = part.local_n();
+  i32 const      rank    = part.world_rank();
+
+  // local -> global -> local
+  for (vertex_t k = 0; k < local_n; ++k) {
+    vertex_t const u = part.to_global(k);
+    ASSERT(part.has_local(u));
+    ASSERT_EQ(part.to_local(u), k);
+    ASSERT_EQ(part.world_rank_of(u), rank);
+  }
+
+  // global -> local -> global
+  vertex_t count = 0;
+  for (vertex_t u = 0; u < n; ++u) {
+    if (part.has_local(u)) {
+      vertex_t const k = part.to_local(u);
+      ASSERT_LT(k, local_n);
+      ASSERT_EQ(part.to_global(k), u);
+      ASSERT_EQ(part.world_rank_of(u), rank);
+      ++count;
+    } else {
+      ASSERT_NE(part.world_rank_of(u), rank);
+    }
+  }
+  ASSERT_EQ(count, local_n);
+
+  if constexpr (requires {
+                  part.begin();
+                  part.end();
+                }) {
+    if constexpr (requires { Part::continuous(); }) {
+      if (Part::continuous()) {
+        ASSERT_EQ(part.end() - part.begin(), local_n);
+        for (vertex_t k = 0; k < local_n; ++k) {
+          ASSERT_EQ(part.to_global(k), part.begin() + k);
+        }
+      }
+    } else if constexpr (requires { part.continuous(); }) {
+      if (part.continuous()) {
+        ASSERT_EQ(part.end() - part.begin(), local_n);
+        for (vertex_t k = 0; k < local_n; ++k) {
+          ASSERT_EQ(part.to_global(k), part.begin() + k);
+        }
+      }
+    }
+  }
+}
+
+template<typename Part>
+void
+test_partition(
+  Part const& part)
+{
+  test_consistency(part);
+  test_consistency(part.view());
+  for (i32 r = 0; r < part.world_size(); ++r) {
+    test_consistency(part.world_part_of(r));
+  }
+}
+
+void
+test_all_partitions()
+{
+  for (vertex_t n = 0; n < 100; ++n) {
+    test_partition(single_part{ n });
+    test_partition(cyclic_part{ n });
+    test_partition(block_cyclic_part{ n });    // default block size
+    test_partition(block_cyclic_part{ n, 1 }); // minimum block size
+    test_partition(block_cyclic_part{ n, 7 }); // arbitrary block size
+    test_partition(trivial_slice_part{ n });
+    test_partition(balanced_slice_part{ n });
+
+    // Explicit partitions
+    {
+      balanced_slice_part      balanced{ n };
+      explicit_continuous_part cont{ n, balanced.begin(), balanced.end() };
+      test_partition(cont);
+
+      explicit_sorted_part sorted{ n, balanced.end() };
+      test_partition(sorted);
+    }
+  }
+}
+
 template<bool sorted_variant>
 void
 test_explicit_continuous_part()
@@ -82,7 +172,6 @@ main(
   static_assert(part_view_concept<block_cyclic_part_view>);
   static_assert(part_view_concept<trivial_slice_part_view>);
   static_assert(part_view_concept<balanced_slice_part_view>);
-  static_assert(part_view_concept<balanced_slice_part_view>);
   static_assert(part_view_concept<explicit_continuous_part_view>);
   static_assert(part_view_concept<explicit_sorted_part_view>);
 
@@ -91,7 +180,6 @@ main(
   static_assert(part_concept<block_cyclic_part>);
   static_assert(part_concept<trivial_slice_part>);
   static_assert(part_concept<balanced_slice_part>);
-  static_assert(part_concept<balanced_slice_part>);
   static_assert(part_concept<explicit_continuous_part>);
   static_assert(part_concept<explicit_sorted_part>);
 
@@ -99,4 +187,6 @@ main(
     test_explicit_continuous_part<false>();
     test_explicit_continuous_part<true>();
   }
+
+  test_all_partitions();
 }

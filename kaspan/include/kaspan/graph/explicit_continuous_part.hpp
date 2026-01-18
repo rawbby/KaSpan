@@ -12,18 +12,15 @@ public:
   constexpr explicit_continuous_part_view() noexcept = default;
   constexpr explicit_continuous_part_view(
     vertex_t        n,
-    vertex_t        ln,
-    vertex_t        b,
-    vertex_t        e,
     i32             r,
     vertex_t const* p) noexcept
     : n_(n)
-    , local_n_(ln)
-    , begin_(b)
-    , end_(e)
     , world_rank_(r)
     , part_(p)
   {
+    begin_   = part_[2 * r];
+    end_     = part_[2 * r + 1];
+    local_n_ = end_ - begin_;
   }
 
   [[nodiscard]] constexpr auto n() const noexcept -> vertex_t
@@ -72,6 +69,14 @@ public:
   [[nodiscard]] constexpr auto world_rank() const noexcept -> i32
   {
     return world_rank_;
+  }
+
+  [[nodiscard]] constexpr auto world_rank_of(
+    vertex_t i) const noexcept -> i32
+  {
+    for (i32 r = 0; r < mpi_basic::world_size; ++r)
+      if (i >= part_[2 * r] && i < part_[2 * r + 1]) return r;
+    return -1;
   }
 
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t
@@ -196,19 +201,19 @@ public:
     vertex_t i) const noexcept -> i32
   {
     for (i32 r = 0; r < mpi_basic::world_size; ++r)
-      if (world_part_of(r).has_local(i)) return r;
+      if (i >= part_[2 * r] && i < part_[2 * r + 1]) return r;
     return -1;
   }
 
   [[nodiscard]] constexpr auto world_part_of(
     i32 r) const noexcept -> explicit_continuous_part_view
   {
-    return { n_, local_n_, part_[2 * r], part_[2 * r + 1], r, part_ };
+    return { n_, r, part_ };
   }
 
   [[nodiscard]] constexpr auto view() const noexcept -> explicit_continuous_part_view
   {
-    return { n_, local_n_, begin_, end_, mpi_basic::world_rank, part_ };
+    return { n_, mpi_basic::world_rank, part_ };
   }
 
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t

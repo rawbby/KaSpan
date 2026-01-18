@@ -13,18 +13,15 @@ public:
   constexpr explicit_sorted_part_view() noexcept = default;
   constexpr explicit_sorted_part_view(
     vertex_t        n,
-    vertex_t        ln,
-    vertex_t        b,
-    vertex_t        e,
     i32             r,
     vertex_t const* p) noexcept
     : n_(n)
-    , local_n_(ln)
-    , begin_(b)
-    , end_(e)
     , world_rank_(r)
     , part_(p)
   {
+    begin_   = r == 0 ? 0 : part_[r - 1];
+    end_     = part_[r];
+    local_n_ = end_ - begin_;
   }
 
   [[nodiscard]] constexpr auto n() const noexcept -> vertex_t
@@ -75,6 +72,29 @@ public:
     return world_rank_;
   }
 
+  [[nodiscard]] constexpr auto world_rank_of(
+    vertex_t i) const noexcept -> i32
+  {
+    DEBUG_ASSERT_IN_RANGE(i, 0, n());
+
+    // initial guess based on
+    // a trivial slice partition
+    auto r = i * mpi_basic::world_size / n_;
+
+    if (r > 0 && i < part_[r - 1]) {
+      // downwards correction
+      --r;
+      while (r > 0 && i < part_[r - 1])
+        --r;
+    } else {
+      // upwards correction
+      while (r < mpi_basic::world_size - 1 && i >= part_[r])
+        ++r;
+    }
+
+    return static_cast<i32>(r);
+  }
+
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t
   {
     return begin_;
@@ -109,10 +129,8 @@ public:
     : n_(n)
     , part_(line_alloc<vertex_t>(mpi_basic::world_size))
   {
-    constexpr auto root_begin = static_cast<vertex_t>(0);
-
     mpi_basic::allgather(e, part_);
-    begin_   = mpi_basic::world_rank == 0 ? root_begin : part_[mpi_basic::world_rank - 1];
+    begin_   = mpi_basic::world_rank == 0 ? 0 : part_[mpi_basic::world_rank - 1];
     end_     = part_[mpi_basic::world_rank];
     local_n_ = end_ - begin_;
   }
@@ -209,8 +227,7 @@ public:
         --r;
     } else {
       // upwards correction
-      auto const last = mpi_basic::world_size - 1;
-      while (r < last && i >= part_[r])
+      while (r < mpi_basic::world_size - 1 && i >= part_[r])
         ++r;
     }
 
@@ -220,15 +237,12 @@ public:
   [[nodiscard]] constexpr auto world_part_of(
     i32 r) const noexcept -> explicit_sorted_part_view
   {
-    constexpr auto root_begin = static_cast<vertex_t>(0);
-    auto const     begin      = r == 0 ? root_begin : part_[r - 1];
-    auto const     end        = part_[r];
-    return { n_, local_n_, begin, end, r, part_ };
+    return { n_, r, part_ };
   }
 
   [[nodiscard]] constexpr auto view() const noexcept -> explicit_sorted_part_view
   {
-    return { n_, local_n_, begin_, end_, mpi_basic::world_rank, part_ };
+    return { n_, mpi_basic::world_rank, part_ };
   }
 
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t
