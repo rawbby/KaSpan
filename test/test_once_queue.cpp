@@ -24,7 +24,7 @@ main()
   ASSERT_EQ(queue.size(), 3);
   ASSERT_EQ(queue.data()[2], 3);
 
-  int data[10];
+  int                      data[10];
   once_queue_accessor<int> oqa(data, 10);
   oqa.push_back(42);
   ASSERT_EQ(oqa.size(), 1);

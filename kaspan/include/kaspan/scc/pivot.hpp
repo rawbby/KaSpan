@@ -1,7 +1,7 @@
 #pragma once
 
 #include <kaspan/debug/debug.hpp>
-#include <kaspan/scc/base.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
@@ -28,7 +28,7 @@ template<part_concept Part>
 auto
 select_pivot_from_head(
   bidi_graph_part_view<Part> graph,
-  vertex_t const*              scc_id) -> vertex_t
+  vertex_t const*            scc_id) -> vertex_t
 {
   auto const& part = *graph.part;
   degree_t    local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
@@ -53,7 +53,7 @@ select_pivot_from_head(
 template<part_concept Part>
 auto
 select_pivot_from_degree(
-  Part const&   part,
+  Part const&     part,
   vertex_t const* scc_id,
   vertex_t const* outdegree,
   vertex_t const* indegree) -> vertex_t

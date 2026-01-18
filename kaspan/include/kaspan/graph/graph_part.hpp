@@ -2,10 +2,10 @@
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/concept.hpp>
 #include <kaspan/graph/graph_part.hpp>
 #include <kaspan/memory/line.hpp>
-#include <kaspan/scc/base.hpp>
 
 #include <concepts>
 #include <span>
@@ -27,9 +27,9 @@ template<part_concept Part>
 struct graph_part_view
 {
   Part const* part    = nullptr;
-  index_t       local_m = 0;
-  index_t*      head    = nullptr;
-  vertex_t*     csr     = nullptr;
+  index_t     local_m = 0;
+  index_t*    head    = nullptr;
+  vertex_t*   csr     = nullptr;
 
   constexpr graph_part_view() noexcept  = default;
   constexpr ~graph_part_view() noexcept = default;
@@ -39,9 +39,9 @@ struct graph_part_view
 
   constexpr graph_part_view(
     Part const* part,
-    index_t       local_m,
-    index_t*      head,
-    vertex_t*     csr) noexcept
+    index_t     local_m,
+    index_t*    head,
+    vertex_t*   csr) noexcept
     : part(part)
     , local_m(local_m)
     , head(head)
@@ -209,7 +209,7 @@ struct graph_part_view
 template<part_concept Part>
 struct graph_part
 {
-  Part    part{};
+  Part      part{};
   index_t   local_m = 0;
   index_t*  head    = nullptr;
   vertex_t* csr     = nullptr;
@@ -217,7 +217,7 @@ struct graph_part
   constexpr graph_part() noexcept = default;
 
   graph_part(
-    Part  part,
+    Part    part,
     index_t local_m)
     : part(std::move(part))
     , local_m(local_m)

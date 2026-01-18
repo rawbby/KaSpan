@@ -62,7 +62,12 @@ extern int  procid, nprocs;
 extern bool verbose, debug, verify;
 
 int
-run_harmonic(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* distances, uint64_t root)
+run_harmonic(
+  dist_graph_t* g,
+  mpi_data_t*   comm,
+  queue_data_t* q,
+  uint64_t*     distances,
+  uint64_t      root)
 {
   if (debug) {
     printf("Task %d run_harmonic() start\n", procid);
@@ -103,8 +108,7 @@ run_harmonic(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* dista
       for (int64_t i = 0; i < q->queue_size; ++i) {
         uint64_t vert       = q->queue[i];
         uint64_t vert_index = get_value(&g->map, vert);
-        if (distances[vert_index] != HC_NOT_VISITED && distances[vert_index] != HC_VISITED)
-          continue;
+        if (distances[vert_index] != HC_NOT_VISITED && distances[vert_index] != HC_VISITED) continue;
         distances[vert_index] = distance;
 
         uint64_t  in_degree = in_degree(g, vert_index);
@@ -114,10 +118,8 @@ run_harmonic(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* dista
           if (distances[in_index] == HC_NOT_VISITED) {
             distances[in_index] = HC_VISITED;
 
-            if (in_index < g->n_local)
-              add_vid_to_queue(&tq, q, g->local_unmap[in_index]);
-            else
-              add_vid_to_send(&tq, q, in_index);
+            if (in_index < g->n_local) add_vid_to_queue(&tq, q, g->local_unmap[in_index]);
+            else add_vid_to_send(&tq, q, in_index);
           }
         }
       }
@@ -148,10 +150,14 @@ run_harmonic(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* dista
 }
 
 int
-harmonic_output(dist_graph_t* g, uint64_t num_to_output, uint64_t* input_list, double* centralities, char* output_file)
+harmonic_output(
+  dist_graph_t* g,
+  uint64_t      num_to_output,
+  uint64_t*     input_list,
+  double*       centralities,
+  char*         output_file)
 {
-  if (verbose)
-    printf("Task %d centralities to %s\n", procid, output_file);
+  if (verbose) printf("Task %d centralities to %s\n", procid, output_file);
 
   if (procid == 0) {
     std::ofstream outfile;
@@ -165,14 +171,16 @@ harmonic_output(dist_graph_t* g, uint64_t num_to_output, uint64_t* input_list, d
     outfile.close();
   }
 
-  if (verbose)
-    printf("Task %d done writing centralities\n", procid);
+  if (verbose) printf("Task %d done writing centralities\n", procid);
 
   return 0;
 }
 
 double
-harmonic_calc(dist_graph_t* g, uint64_t* distances, uint64_t root)
+harmonic_calc(
+  dist_graph_t* g,
+  uint64_t*     distances,
+  uint64_t      root)
 {
   double   my_hc = 0.0;
   uint64_t count = 0;
@@ -185,14 +193,19 @@ harmonic_calc(dist_graph_t* g, uint64_t* distances, uint64_t root)
   double global_hc = 0.0;
   MPI_Allreduce(&my_hc, &global_hc, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-  if (procid == 0)
-    printf("Vertex %lu - Harmonic Centrality %lf\n", root, global_hc);
+  if (procid == 0) printf("Vertex %lu - Harmonic Centrality %lf\n", root, global_hc);
 
   return global_hc;
 }
 
 int
-harmonic_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, char* output_file, uint64_t num_to_output, uint64_t* input_list)
+harmonic_dist(
+  dist_graph_t* g,
+  mpi_data_t*   comm,
+  queue_data_t* q,
+  char*         output_file,
+  uint64_t      num_to_output,
+  uint64_t*     input_list)
 {
   if (debug) {
     printf("Task %d harmonic_dist() start\n", procid);
@@ -212,8 +225,7 @@ harmonic_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, char* output_f
 
   MPI_Barrier(MPI_COMM_WORLD);
   elt = omp_get_wtime() - elt;
-  if (procid == 0)
-    printf("Harmonic time %9.6f (s)\n", elt);
+  if (procid == 0) printf("Harmonic time %9.6f (s)\n", elt);
 
   if (output) {
     harmonic_output(g, num_to_output, input_list, centralities, output_file);
@@ -221,7 +233,6 @@ harmonic_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, char* output_f
 
   free(distances);
 
-  if (debug)
-    printf("Task %d harmonic_dist() success\n", procid);
+  if (debug) printf("Task %d harmonic_dist() success\n", procid);
   return 0;
 }

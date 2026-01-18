@@ -1,10 +1,10 @@
+#include <../../../kaspan/include/kaspan/graph/base.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/valgrind.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/pivot.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/integral_cast.hpp>
@@ -74,7 +74,7 @@ benchmark(
     KASPAN_STATISTIC_POP();
 
     // Save partitioning info (lightweight) before releasing kaspan memory
-    part       = std::move(graph_part.part);
+    part            = std::move(graph_part.part);
     local_fw_m_copy = graph_part.local_fw_m;
     local_bw_m_copy = graph_part.local_bw_m;
   }

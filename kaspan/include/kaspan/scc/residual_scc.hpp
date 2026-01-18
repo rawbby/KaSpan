@@ -1,7 +1,7 @@
 #pragma once
 
 #include <kaspan/debug/statistic.hpp>
-#include <kaspan/scc/base.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/util/scope_guard.hpp>
 
@@ -12,10 +12,10 @@ namespace kaspan {
 template<part_concept Part>
 inline void
 residual_scc(
-  vertex_t const*             wcc_id,
-  vertex_t*                   sub_scc_id,
-  bidi_graph_part_view<Part>  graph,
-  vertex_t const*             sub_ids_inverse)
+  vertex_t const*            wcc_id,
+  vertex_t*                  sub_scc_id,
+  bidi_graph_part_view<Part> graph,
+  vertex_t const*            sub_ids_inverse)
 {
   KASPAN_STATISTIC_SCOPE("residual_scc");
 

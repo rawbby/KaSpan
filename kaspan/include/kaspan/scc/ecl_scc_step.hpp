@@ -1,11 +1,7 @@
 #pragma once
 
-#include <kaspan/memory/accessor/bits_accessor.hpp>
-#include <kaspan/memory/accessor/stack_accessor.hpp>
-#include <kaspan/scc/base.hpp>
-#include <kaspan/scc/edge_frontier.hpp>
-#include <kaspan/graph/graph.hpp>
 #include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/block_cyclic_part.hpp>
@@ -17,6 +13,9 @@
 #include <kaspan/graph/graph_part.hpp>
 #include <kaspan/graph/single_part.hpp>
 #include <kaspan/graph/trivial_slice_part.hpp>
+#include <kaspan/memory/accessor/bits_accessor.hpp>
+#include <kaspan/memory/accessor/stack_accessor.hpp>
+#include <kaspan/scc/edge_frontier.hpp>
 
 #include <functional>
 
@@ -36,8 +35,8 @@ template<world_part_concept Part>
 void
 ecl_scc_init_lable(
   Part const& part,
-  vertex_t*     ecl_fw_label,
-  vertex_t*     ecl_bw_label)
+  vertex_t*   ecl_fw_label,
+  vertex_t*   ecl_bw_label)
 {
   auto const local_n = part.local_n();
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -50,7 +49,7 @@ ecl_scc_init_lable(
 template<world_part_concept Part>
 auto
 ecl_scc_step(
-  Part const&   part,
+  Part const&     part,
   index_t const*  fw_head,
   vertex_t const* fw_csr,
   index_t const*  bw_head,

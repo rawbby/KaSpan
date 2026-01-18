@@ -1,11 +1,12 @@
 #pragma once
 
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/graph_part.hpp>
-#include <kaspan/scc/base.hpp>
 
 namespace kaspan {
 
-template<bool InterleavedSupport = false, part_concept Part>
+template<bool         InterleavedSupport = false,
+         part_concept Part>
 void
 forward_search(
   graph_part_view<Part>                graph,
@@ -14,9 +15,9 @@ forward_search(
   u64*                                 fw_reached_storage,
   vertex_t                             pivot)
 {
-  auto const& part          = *graph.part;
-  auto const  local_n       = part.local_n();
-  auto        fw_reached    = view_bits(fw_reached_storage, local_n);
+  auto const& part       = *graph.part;
+  auto const  local_n    = part.local_n();
+  auto        fw_reached = view_bits(fw_reached_storage, local_n);
 
   DEBUG_ASSERT_NOT(frontier.has_next());
   if (part.has_local(pivot)) {

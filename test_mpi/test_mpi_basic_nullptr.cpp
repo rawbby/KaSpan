@@ -1,7 +1,7 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
 using namespace kaspan;
@@ -140,7 +140,9 @@ test_alltoallv_all_zero()
 }
 
 int
-main(int argc, char** argv)
+main(
+  int    argc,
+  char** argv)
 {
   mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();

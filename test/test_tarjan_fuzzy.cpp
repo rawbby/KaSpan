@@ -1,5 +1,5 @@
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/scc/base.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/tarjan.hpp>
 

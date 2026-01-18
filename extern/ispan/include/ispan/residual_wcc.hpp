@@ -3,7 +3,13 @@
 #include <ispan/util.hpp>
 
 static void
-wcc(kaspan::index_t* wcc_id, kaspan::index_t const* fw_head, kaspan::index_t const* fw_csr, kaspan::index_t const* bw_head, kaspan::index_t const* bw_csr, kaspan::vertex_t n)
+wcc(
+  kaspan::index_t*       wcc_id,
+  kaspan::index_t const* fw_head,
+  kaspan::index_t const* fw_csr,
+  kaspan::index_t const* bw_head,
+  kaspan::index_t const* bw_csr,
+  kaspan::vertex_t       n)
 {
   // use different internal name
   auto* color = wcc_id;
@@ -42,8 +48,7 @@ wcc(kaspan::index_t* wcc_id, kaspan::index_t const* fw_head, kaspan::index_t con
       }
     }
 
-    if (not color_changed)
-      break;
+    if (not color_changed) break;
 
     for (kaspan::vertex_t u = 0; u < n; ++u) {
       if (color[u] != u) { // u is no root

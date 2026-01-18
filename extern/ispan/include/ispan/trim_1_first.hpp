@@ -5,12 +5,13 @@
 #include <ispan/util.hpp>
 
 inline void
-trim_1_first(kaspan::vertex_t*      scc_id,
-             kaspan::index_t const* fw_head,
-             kaspan::index_t const* bw_head,
-             kaspan::vertex_t       local_beg,
-             kaspan::vertex_t       local_end,
-             kaspan::vertex_t       step)
+trim_1_first(
+  kaspan::vertex_t*      scc_id,
+  kaspan::index_t const* fw_head,
+  kaspan::index_t const* bw_head,
+  kaspan::vertex_t       local_beg,
+  kaspan::vertex_t       local_end,
+  kaspan::vertex_t       step)
 {
   KASPAN_STATISTIC_SCOPE("trim_1_first");
 

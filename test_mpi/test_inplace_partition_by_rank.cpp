@@ -1,9 +1,9 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/mpi_basic.hpp>
@@ -25,7 +25,11 @@ struct item
 };
 
 static void
-check_case(item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts, MPI_Aint* send_displs)
+check_case(
+  item*            send_buffer,
+  MPI_Count        send_count,
+  MPI_Count const* send_counts,
+  MPI_Aint*        send_displs)
 {
   ASSERT_IN_RANGE(mpi_basic::world_rank, 0, mpi_basic::world_size);
 
@@ -66,7 +70,9 @@ check_case(item* send_buffer, MPI_Count send_count, MPI_Count const* send_counts
 }
 
 int
-main(int argc, char** argv)
+main(
+  int    argc,
+  char** argv)
 {
   mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();

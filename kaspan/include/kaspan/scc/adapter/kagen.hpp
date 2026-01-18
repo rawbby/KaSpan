@@ -1,6 +1,5 @@
 #pragma once
 
-#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/balanced_slice_part.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>

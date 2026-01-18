@@ -1,7 +1,7 @@
 #pragma once
 
-#include <kaspan/scc/base.hpp>
 #include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/block_cyclic_part.hpp>
@@ -39,7 +39,7 @@ template<part_concept Part>
   requires(Part::continuous())
 index_t
 degree(
-  Part const&  part,
+  Part const&    part,
   index_t const* head)
 {
   return degree(part.local_n(), head);
@@ -49,7 +49,7 @@ template<part_concept Part>
   requires(not Part::continuous())
 index_t
 degree(
-  Part const&  part,
+  Part const&    part,
   index_t const* head)
 {
   index_t m = 0;

@@ -56,7 +56,9 @@ extern int  procid, nprocs;
 extern bool verbose, debug, verify, output;
 
 void
-init_queue_data(dist_graph_t* g, queue_data_t* q)
+init_queue_data(
+  dist_graph_t* g,
+  queue_data_t* q)
 {
   if (debug) {
     printf("Task %d init_queue_data() start\n", procid);
@@ -66,8 +68,7 @@ init_queue_data(dist_graph_t* g, queue_data_t* q)
   q->queue            = (uint64_t*)malloc(queue_size * sizeof(uint64_t));
   q->queue_next       = (uint64_t*)malloc(queue_size * sizeof(uint64_t));
   q->queue_send       = (uint64_t*)malloc(queue_size * sizeof(uint64_t));
-  if (q->queue == NULL || q->queue_next == NULL || q->queue_send == NULL)
-    throw_err("init_queue_data(), unable to allocate resources\n", procid);
+  if (q->queue == NULL || q->queue_next == NULL || q->queue_send == NULL) throw_err("init_queue_data(), unable to allocate resources\n", procid);
 
   q->queue_size = 0;
   q->next_size  = 0;
@@ -78,7 +79,8 @@ init_queue_data(dist_graph_t* g, queue_data_t* q)
 }
 
 void
-clear_queue_data(queue_data_t* q)
+clear_queue_data(
+  queue_data_t* q)
 {
   if (debug) {
     printf("Task %d clear_queque_data() start\n", procid);
@@ -92,7 +94,8 @@ clear_queue_data(queue_data_t* q)
 }
 
 void
-init_comm_data(mpi_data_t* comm)
+init_comm_data(
+  mpi_data_t* comm)
 {
   if (debug) {
     printf("Task %d init_comm_data() start\n", procid);
@@ -122,7 +125,8 @@ init_comm_data(mpi_data_t* comm)
 }
 
 void
-clear_comm_data(mpi_data_t* comm)
+clear_comm_data(
+  mpi_data_t* comm)
 {
   if (debug) {
     printf("Task %d clear_comm_data() start\n", procid);
@@ -143,7 +147,8 @@ clear_comm_data(mpi_data_t* comm)
 }
 
 void
-clear_thread_queue_comm_data(mpi_data_t* comm)
+clear_thread_queue_comm_data(
+  mpi_data_t* comm)
 {
   if (debug) {
     printf("Task %d clear_thread_queue_comm_data() start\n", procid);
@@ -164,7 +169,8 @@ clear_thread_queue_comm_data(mpi_data_t* comm)
 }
 
 void
-init_thread_queue(thread_queue_t* tq)
+init_thread_queue(
+  thread_queue_t* tq)
 {
   tq->tid = omp_get_thread_num();
   if (debug) {
@@ -173,8 +179,7 @@ init_thread_queue(thread_queue_t* tq)
 
   tq->thread_queue = (uint64_t*)malloc(THREAD_QUEUE_SIZE * sizeof(uint64_t));
   tq->thread_send  = (uint64_t*)malloc(THREAD_QUEUE_SIZE * sizeof(uint64_t));
-  if (tq->thread_queue == NULL || tq->thread_send == NULL)
-    throw_err("init_thread_queue(), unable to allocate resources\n", procid, tq->tid);
+  if (tq->thread_queue == NULL || tq->thread_send == NULL) throw_err("init_thread_queue(), unable to allocate resources\n", procid, tq->tid);
 
   tq->tid               = omp_get_thread_num();
   tq->thread_queue_size = 0;
@@ -185,7 +190,8 @@ init_thread_queue(thread_queue_t* tq)
 }
 
 void
-clear_thread_queue(thread_queue_t* tq)
+clear_thread_queue(
+  thread_queue_t* tq)
 {
   if (debug) {
     printf("Task %d Thread %d clear_thread_queue() start\n", procid, tq->tid);
@@ -198,7 +204,8 @@ clear_thread_queue(thread_queue_t* tq)
 }
 
 void
-init_thread_comm(thread_comm_t* tc)
+init_thread_comm(
+  thread_comm_t* tc)
 {
   tc->tid = omp_get_thread_num();
   if (debug) {
@@ -226,7 +233,8 @@ init_thread_comm(thread_comm_t* tc)
 }
 
 void
-clear_thread_comm(thread_comm_t* tc)
+clear_thread_comm(
+  thread_comm_t* tc)
 {
   free(tc->v_to_rank);
   free(tc->sendcounts_thread);
@@ -237,7 +245,8 @@ clear_thread_comm(thread_comm_t* tc)
 }
 
 void
-init_thread_comm_flt(thread_comm_t* tc)
+init_thread_comm_flt(
+  thread_comm_t* tc)
 {
   tc->tid = omp_get_thread_num();
   if (debug) {
@@ -266,7 +275,8 @@ init_thread_comm_flt(thread_comm_t* tc)
 }
 
 void
-clear_thread_comm_flt(thread_comm_t* tc)
+clear_thread_comm_flt(
+  thread_comm_t* tc)
 {
   free(tc->v_to_rank);
   free(tc->sendcounts_thread);
@@ -277,7 +287,8 @@ clear_thread_comm_flt(thread_comm_t* tc)
 }
 
 void
-init_sendbuf_vid_data(mpi_data_t* comm)
+init_sendbuf_vid_data(
+  mpi_data_t* comm)
 {
   if (debug) {
     printf("Task %d init_sendbuf_vid_data() start\n", procid);
@@ -294,8 +305,7 @@ init_sendbuf_vid_data(mpi_data_t* comm)
   comm->sendbuf_vert     = (uint64_t*)malloc(comm->total_send * sizeof(uint64_t));
   comm->sendbuf_data     = (uint64_t*)malloc(comm->total_send * sizeof(uint64_t));
   comm->sendbuf_data_flt = NULL;
-  if (comm->sendbuf_vert == NULL || comm->sendbuf_data == NULL)
-    throw_err("init_sendbuf_vid_data(), unable to allocate resources\n", procid);
+  if (comm->sendbuf_vert == NULL || comm->sendbuf_data == NULL) throw_err("init_sendbuf_vid_data(), unable to allocate resources\n", procid);
 
   comm->global_queue_size  = 0;
   uint64_t task_queue_size = comm->total_send;
@@ -307,7 +317,8 @@ init_sendbuf_vid_data(mpi_data_t* comm)
 }
 
 void
-init_recvbuf_vid_data(mpi_data_t* comm)
+init_recvbuf_vid_data(
+  mpi_data_t* comm)
 {
   if (debug) {
     printf("Task %d init_recvbuf_vid_data() start\n", procid);
@@ -328,8 +339,7 @@ init_recvbuf_vid_data(mpi_data_t* comm)
   comm->recvbuf_vert     = (uint64_t*)malloc(comm->total_recv * sizeof(uint64_t));
   comm->recvbuf_data     = (uint64_t*)malloc(comm->total_recv * sizeof(uint64_t));
   comm->recvbuf_data_flt = NULL;
-  if (comm->recvbuf_vert == NULL || comm->recvbuf_data == NULL)
-    throw_err("init_recvbuf_vid_data() unable to allocate comm buffers", procid);
+  if (comm->recvbuf_vert == NULL || comm->recvbuf_data == NULL) throw_err("init_recvbuf_vid_data() unable to allocate comm buffers", procid);
 
   if (debug) {
     printf("Task %d init_recvbuf_vid_data() success\n", procid);
@@ -337,7 +347,8 @@ init_recvbuf_vid_data(mpi_data_t* comm)
 }
 
 void
-init_sendbuf_vid_data_flt(mpi_data_t* comm)
+init_sendbuf_vid_data_flt(
+  mpi_data_t* comm)
 {
   if (debug) {
     printf("Task %d init_sendbuf_vid_data_flt() start\n", procid);
@@ -354,8 +365,7 @@ init_sendbuf_vid_data_flt(mpi_data_t* comm)
   comm->sendbuf_vert     = (uint64_t*)malloc(comm->total_send * sizeof(uint64_t));
   comm->sendbuf_data     = NULL;
   comm->sendbuf_data_flt = (double*)malloc(comm->total_send * sizeof(double));
-  if (comm->sendbuf_vert == NULL || comm->sendbuf_data_flt == NULL)
-    throw_err("init_sendbuf_vid_data_flt(), unable to allocate resources\n", procid);
+  if (comm->sendbuf_vert == NULL || comm->sendbuf_data_flt == NULL) throw_err("init_sendbuf_vid_data_flt(), unable to allocate resources\n", procid);
 
   comm->global_queue_size  = 0;
   uint64_t task_queue_size = comm->total_send;
@@ -367,7 +377,8 @@ init_sendbuf_vid_data_flt(mpi_data_t* comm)
 }
 
 void
-init_recvbuf_vid_data_flt(mpi_data_t* comm)
+init_recvbuf_vid_data_flt(
+  mpi_data_t* comm)
 {
   if (debug) {
     printf("Task %d init_recvbuf_vid_data_flt() start\n", procid);
@@ -388,8 +399,7 @@ init_recvbuf_vid_data_flt(mpi_data_t* comm)
   comm->recvbuf_vert     = (uint64_t*)malloc(comm->total_recv * sizeof(uint64_t));
   comm->recvbuf_data     = NULL;
   comm->recvbuf_data_flt = (double*)malloc(comm->total_recv * sizeof(double));
-  if (comm->recvbuf_vert == NULL || comm->recvbuf_data_flt == NULL)
-    throw_err("init_recvbuf_vid_data_flt() unable to allocate comm buffers", procid);
+  if (comm->recvbuf_vert == NULL || comm->recvbuf_data_flt == NULL) throw_err("init_recvbuf_vid_data_flt() unable to allocate comm buffers", procid);
 
   if (debug) {
     printf("Task %d init_recvbuf_vid_data_flt() success\n", procid);
@@ -397,7 +407,8 @@ init_recvbuf_vid_data_flt(mpi_data_t* comm)
 }
 
 void
-clear_recvbuf_vid_data(mpi_data_t* comm)
+clear_recvbuf_vid_data(
+  mpi_data_t* comm)
 {
   free(comm->recvbuf_vert);
   free(comm->recvbuf_data);
@@ -409,19 +420,16 @@ clear_recvbuf_vid_data(mpi_data_t* comm)
 }
 
 void
-clear_allbuf_vid_data(mpi_data_t* comm)
+clear_allbuf_vid_data(
+  mpi_data_t* comm)
 {
   free(comm->sendbuf_vert);
   free(comm->recvbuf_vert);
 
-  if (comm->sendbuf_data != NULL)
-    free(comm->sendbuf_data);
-  if (comm->recvbuf_data != NULL)
-    free(comm->recvbuf_data);
-  if (comm->sendbuf_data_flt != NULL)
-    free(comm->sendbuf_data_flt);
-  if (comm->recvbuf_data_flt != NULL)
-    free(comm->recvbuf_data_flt);
+  if (comm->sendbuf_data != NULL) free(comm->sendbuf_data);
+  if (comm->recvbuf_data != NULL) free(comm->recvbuf_data);
+  if (comm->sendbuf_data_flt != NULL) free(comm->sendbuf_data_flt);
+  if (comm->recvbuf_data_flt != NULL) free(comm->recvbuf_data_flt);
 
   for (int32_t i = 0; i < nprocs; ++i)
     comm->sendcounts[i] = 0;

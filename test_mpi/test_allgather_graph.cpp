@@ -1,8 +1,8 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/graph.hpp>
 #include <kaspan/scc/allgather_graph.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/partion_graph.hpp>
 

@@ -1,9 +1,9 @@
 #pragma once
 
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
-#include <kaspan/scc/base.hpp>
 
 namespace kaspan::async {
 
@@ -12,12 +12,12 @@ template<part_concept Part,
 auto
 color_scc_step(
   bidi_graph_part_view<Part> graph,
-  brief_queue_t&               mq,
-  vertex_t*                    scc_id,
-  vertex_t*                    colors,
-  vertex_t*                    active_array,
-  u64*                         active_storage,
-  vertex_t                     decided_count = 0) -> vertex_t
+  brief_queue_t&             mq,
+  vertex_t*                  scc_id,
+  vertex_t*                  colors,
+  vertex_t*                  active_array,
+  u64*                       active_storage,
+  vertex_t                   decided_count = 0) -> vertex_t
 {
   auto const& part         = *graph.part;
   auto const  local_n      = part.local_n();

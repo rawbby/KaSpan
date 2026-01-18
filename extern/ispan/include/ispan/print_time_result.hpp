@@ -7,7 +7,9 @@
 #include <iostream>
 
 inline void
-print_time_result(kaspan::index_t run_times, double* avg_time)
+print_time_result(
+  kaspan::index_t run_times,
+  double*         avg_time)
 {
   if (run_times > 0) {
     for (kaspan::index_t i = 0; i < 15; ++i)

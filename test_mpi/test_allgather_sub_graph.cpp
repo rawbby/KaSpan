@@ -1,7 +1,7 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
-#include <kaspan/graph/graph.hpp>
 #include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/block_cyclic_part.hpp>
@@ -17,7 +17,6 @@
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/allgather_sub_graph.hpp>
 #include <kaspan/scc/backward_complement.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/partion_graph.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
@@ -41,13 +40,13 @@ main(
   if (mpi_basic::world_size == 3) {
     ASSERT_EQ(mpi_basic::allreduce_single(mpi_basic::world_rank, MPI_SUM), 0 + 1 + 2);
 
-    auto bg_          = bidi_graph{ 6, 10 };
-    bg_.fw.head[0]    = 0; //
-    bg_.fw.head[1]    = 2; // *
-    bg_.fw.head[2]    = 5; // *
-    bg_.fw.head[3]    = 6; //
-    bg_.fw.head[4]    = 6; // *
-    bg_.fw.head[5]    = 9; //
+    auto bg_           = bidi_graph{ 6, 10 };
+    bg_.fw.head[0]     = 0; //
+    bg_.fw.head[1]     = 2; // *
+    bg_.fw.head[2]     = 5; // *
+    bg_.fw.head[3]     = 6; //
+    bg_.fw.head[4]     = 6; // *
+    bg_.fw.head[5]     = 9; //
     bg_.fw.head[bg_.n] = bg_.m;
 
     bg_.fw.csr[0] = 3; // 0 3

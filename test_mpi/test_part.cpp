@@ -1,6 +1,7 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/block_cyclic_part.hpp>
 #include <kaspan/graph/concept.hpp>
 #include <kaspan/graph/cyclic_part.hpp>
@@ -8,7 +9,6 @@
 #include <kaspan/graph/explicit_sorted_part.hpp>
 #include <kaspan/graph/single_part.hpp>
 #include <kaspan/graph/trivial_slice_part.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 #include <kaspan/util/scope_guard.hpp>

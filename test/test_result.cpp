@@ -11,12 +11,14 @@ using namespace kaspan;
 namespace {
 
 constexpr auto
-int_success(int v) -> result<int>
+int_success(
+  int v) -> result<int>
 {
   return result<int>(v);
 }
 constexpr auto
-int_failure(error_code e) -> result<int>
+int_failure(
+  error_code e) -> result<int>
 {
   return result<int>(e);
 }
@@ -33,7 +35,8 @@ foo_fail() -> result<int>
 }
 
 constexpr auto
-make_string_success(std::string s) -> result<std::string>
+make_string_success(
+  std::string s) -> result<std::string>
 {
   return result<std::string>(std::move(s));
 }

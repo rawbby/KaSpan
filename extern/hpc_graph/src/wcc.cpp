@@ -61,7 +61,12 @@ extern int  procid, nprocs;
 extern bool verbose, debug, verify, output;
 
 int
-wcc_bfs(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc, uint64_t root)
+wcc_bfs(
+  dist_graph_t* g,
+  mpi_data_t*   comm,
+  queue_data_t* q,
+  uint64_t*     wcc,
+  uint64_t      root)
 {
   if (debug) {
     printf("procid %d wcc_bfs() start\n", procid);
@@ -91,10 +96,8 @@ wcc_bfs(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc, uint6
 
 #pragma omp for
     for (uint64_t i = 0; i < g->n_local; ++i)
-      if (out_degree(g, i) == 0 && in_degree(g, i) == 0)
-        wcc[i] = g->local_unmap[i];
-      else
-        wcc[i] = WCC_NOT_VISITED;
+      if (out_degree(g, i) == 0 && in_degree(g, i) == 0) wcc[i] = g->local_unmap[i];
+      else wcc[i] = WCC_NOT_VISITED;
 #pragma omp for
     for (uint64_t i = g->n_local; i < g->n_total; ++i)
       wcc[i] = WCC_NOT_VISITED;
@@ -108,8 +111,7 @@ wcc_bfs(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc, uint6
       for (uint64_t i = 0; i < q->queue_size; ++i) {
         uint64_t vert       = q->queue[i];
         uint64_t vert_index = get_value(&g->map, vert);
-        if (wcc[vert_index] == root)
-          continue;
+        if (wcc[vert_index] == root) continue;
         wcc[vert_index] = root;
 
         uint64_t  out_degree = out_degree(g, vert_index);
@@ -119,10 +121,8 @@ wcc_bfs(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc, uint6
           if (wcc[out_index] == WCC_NOT_VISITED) {
             wcc[out_index] = WCC_VISITED;
 
-            if (out_index < g->n_local)
-              add_vid_to_queue(&tq, q, g->local_unmap[out_index]);
-            else
-              add_vid_to_send(&tq, q, out_index);
+            if (out_index < g->n_local) add_vid_to_queue(&tq, q, g->local_unmap[out_index]);
+            else add_vid_to_send(&tq, q, out_index);
           }
         }
 
@@ -133,10 +133,8 @@ wcc_bfs(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc, uint6
           if (wcc[in_index] == WCC_NOT_VISITED) {
             wcc[in_index] = WCC_VISITED;
 
-            if (in_index < g->n_local)
-              add_vid_to_queue(&tq, q, g->local_unmap[in_index]);
-            else
-              add_vid_to_send(&tq, q, in_index);
+            if (in_index < g->n_local) add_vid_to_queue(&tq, q, g->local_unmap[in_index]);
+            else add_vid_to_send(&tq, q, in_index);
           }
         }
       }
@@ -167,7 +165,11 @@ wcc_bfs(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc, uint6
 }
 
 int
-wcc_color(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc)
+wcc_color(
+  dist_graph_t* g,
+  mpi_data_t*   comm,
+  queue_data_t* q,
+  uint64_t*     wcc)
 {
   if (debug) {
     printf("Task %d wcc_color() start\n", procid);
@@ -204,8 +206,7 @@ wcc_color(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc)
 
 #pragma omp for
     for (uint64_t i = g->n_local; i < g->n_total; ++i)
-      if (wcc[i] == WCC_NOT_VISITED)
-        wcc[i] = g->ghost_unmap[i - g->n_local];
+      if (wcc[i] == WCC_NOT_VISITED) wcc[i] = g->ghost_unmap[i - g->n_local];
 
     empty_queue(&tq, q);
 #pragma omp barrier
@@ -250,8 +251,7 @@ wcc_color(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc)
           }
         }
 
-        if (send)
-          add_vid_to_send(&tq, q, vert_index);
+        if (send) add_vid_to_send(&tq, q, vert_index);
       }
 
       empty_send(&tq, q);
@@ -322,7 +322,9 @@ wcc_color(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* wcc)
 }
 
 int
-wcc_verify(dist_graph_t* g, uint64_t* wcc)
+wcc_verify(
+  dist_graph_t* g,
+  uint64_t*     wcc)
 {
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -332,10 +334,8 @@ wcc_verify(dist_graph_t* g, uint64_t* wcc)
   for (uint64_t i = 0; i < g->n; ++i)
     counts[i] = 0;
   for (uint64_t i = 0; i < g->n_local; ++i)
-    if (wcc[i] != WCC_NOT_VISITED)
-      ++counts[wcc[i]];
-    else
-      ++unassigned;
+    if (wcc[i] != WCC_NOT_VISITED) ++counts[wcc[i]];
+    else ++unassigned;
 
   MPI_Allreduce(MPI_IN_PLACE, counts, (int32_t)g->n, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 
@@ -344,12 +344,10 @@ wcc_verify(dist_graph_t* g, uint64_t* wcc)
   for (uint64_t i = 0; i < g->n; ++i)
     if (counts[i]) {
       ++num_wccs;
-      if (counts[i] > max_wcc)
-        max_wcc = counts[i];
+      if (counts[i] > max_wcc) max_wcc = counts[i];
     }
 
-  if (procid == 0)
-    printf("Num CCs: %lu, Max CC: %lu, Unassigned %lu\n", num_wccs, max_wcc, unassigned);
+  if (procid == 0) printf("Num CCs: %lu, Max CC: %lu, Unassigned %lu\n", num_wccs, max_wcc, unassigned);
 
   free(counts);
 
@@ -357,10 +355,12 @@ wcc_verify(dist_graph_t* g, uint64_t* wcc)
 }
 
 int
-wcc_output(dist_graph_t* g, uint64_t* wcc, char* output_file)
+wcc_output(
+  dist_graph_t* g,
+  uint64_t*     wcc,
+  char*         output_file)
 {
-  if (verbose)
-    printf("Task %d wcc assignments to %s\n", procid, output_file);
+  if (verbose) printf("Task %d wcc assignments to %s\n", procid, output_file);
 
   uint64_t* global_wcc = (uint64_t*)malloc(g->n * sizeof(uint64_t));
 
@@ -372,10 +372,8 @@ wcc_output(dist_graph_t* g, uint64_t* wcc, char* output_file)
   for (uint64_t i = 0; i < g->n_local; ++i)
     global_wcc[g->local_unmap[i]] = wcc[i];
 
-  if (procid == 0)
-    MPI_Reduce(MPI_IN_PLACE, global_wcc, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
-  else
-    MPI_Reduce(global_wcc, global_wcc, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
+  if (procid == 0) MPI_Reduce(MPI_IN_PLACE, global_wcc, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
+  else MPI_Reduce(global_wcc, global_wcc, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
 
   if (procid == 0) {
     if (debug)
@@ -396,14 +394,18 @@ wcc_output(dist_graph_t* g, uint64_t* wcc, char* output_file)
 
   free(global_wcc);
 
-  if (verbose)
-    printf("Task %d done writing assignments\n", procid);
+  if (verbose) printf("Task %d done writing assignments\n", procid);
 
   return 0;
 }
 
 int
-wcc_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t root, char* output_file)
+wcc_dist(
+  dist_graph_t* g,
+  mpi_data_t*   comm,
+  queue_data_t* q,
+  uint64_t      root,
+  char*         output_file)
 {
   if (debug) {
     printf("Task %d wcc_dist() start\n", procid);
@@ -418,8 +420,7 @@ wcc_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t root, char
 
   MPI_Barrier(MPI_COMM_WORLD);
   elt = omp_get_wtime() - elt;
-  if (procid == 0)
-    printf("WCC time %9.6f (s)\n", elt);
+  if (procid == 0) printf("WCC time %9.6f (s)\n", elt);
 
   if (output) {
     wcc_output(g, wcc, output_file);
@@ -431,7 +432,6 @@ wcc_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t root, char
 
   free(wcc);
 
-  if (debug)
-    printf("Task %d wcc_dist() success\n", procid);
+  if (debug) printf("Task %d wcc_dist() success\n", procid);
   return 0;
 }

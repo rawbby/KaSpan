@@ -1,6 +1,6 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
-#include <kaspan/scc/base.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/mpi_basic.hpp>
@@ -16,7 +16,9 @@
 using namespace kaspan;
 
 void
-await_messages(auto& mq, auto&& on_message)
+await_messages(
+  auto&  mq,
+  auto&& on_message)
 {
   constexpr auto timeout_8s = integral_cast<i64>(8'000'000'000LL);
 
@@ -200,7 +202,9 @@ test_single_self_message()
 }
 
 int
-main(int argc, char** argv)
+main(
+  int    argc,
+  char** argv)
 {
   mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();

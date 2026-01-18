@@ -1,7 +1,7 @@
 #pragma once
 
-#include <kaspan/memory/buffer.hpp>
 #include <kaspan/graph/graph.hpp>
+#include <kaspan/memory/buffer.hpp>
 #include <kaspan/util/integral_cast.hpp>
 
 #include <comms.h>
@@ -23,14 +23,15 @@ struct hpc_graph_data
 // Convert from KaSpan GraphPart to HPCGraph dist_graph_t format
 template<kaspan::part_concept Part>
 auto
-create_hpc_graph_from_graph_part(Part const&           part,
-                                 kaspan::index_t         m,
-                                 kaspan::index_t         local_fw_m,
-                                 kaspan::index_t         local_bw_m,
-                                 kaspan::index_t const*  fw_head,
-                                 kaspan::vertex_t const* fw_csr,
-                                 kaspan::index_t const*  bw_head,
-                                 kaspan::vertex_t const* bw_csr) -> hpc_graph_data
+create_hpc_graph_from_graph_part(
+  Part const&             part,
+  kaspan::index_t         m,
+  kaspan::index_t         local_fw_m,
+  kaspan::index_t         local_bw_m,
+  kaspan::index_t const*  fw_head,
+  kaspan::vertex_t const* fw_csr,
+  kaspan::index_t const*  bw_head,
+  kaspan::vertex_t const* bw_csr) -> hpc_graph_data
 {
   hpc_graph_data data;
 
@@ -162,7 +163,11 @@ create_hpc_graph_from_graph_part(Part const&           part,
 // as part of the algorithm benchmark time, not as graph conversion overhead
 template<kaspan::part_concept Part>
 void
-initialize_ghost_cells(hpc_graph_data& data, Part const& part, kaspan::index_t local_fw_m, kaspan::index_t local_bw_m)
+initialize_ghost_cells(
+  hpc_graph_data& data,
+  Part const&     part,
+  kaspan::index_t local_fw_m,
+  kaspan::index_t local_bw_m)
 {
   kaspan::vertex_t const local_n = part.local_n();
 
@@ -270,21 +275,23 @@ initialize_ghost_cells(hpc_graph_data& data, Part const& part, kaspan::index_t l
 // Convert from KaSpan local_graph_part to HPCGraph dist_graph_t format
 template<kaspan::part_concept Part>
 auto
-create_hpc_graph_from_local_graph_part(Part const&           part,
-                                       kaspan::index_t         m,
-                                       kaspan::index_t         local_fw_m,
-                                       kaspan::index_t         local_bw_m,
-                                       kaspan::index_t const*  fw_head,
-                                       kaspan::vertex_t const* fw_csr,
-                                       kaspan::index_t const*  bw_head,
-                                       kaspan::vertex_t const* bw_csr) -> hpc_graph_data
+create_hpc_graph_from_local_graph_part(
+  Part const&             part,
+  kaspan::index_t         m,
+  kaspan::index_t         local_fw_m,
+  kaspan::index_t         local_bw_m,
+  kaspan::index_t const*  fw_head,
+  kaspan::vertex_t const* fw_csr,
+  kaspan::index_t const*  bw_head,
+  kaspan::vertex_t const* bw_csr) -> hpc_graph_data
 {
   return create_hpc_graph_from_graph_part(part, m, local_fw_m, local_bw_m, fw_head, fw_csr, bw_head, bw_csr);
 }
 
 // Cleanup function for HPCGraphData
 inline void
-destroy_hpc_graph_data(hpc_graph_data* data)
+destroy_hpc_graph_data(
+  hpc_graph_data* data)
 {
   clear_map(&data->g.map);
   clear_comm_data(&data->comm);

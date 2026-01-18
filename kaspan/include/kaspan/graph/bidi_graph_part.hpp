@@ -13,8 +13,8 @@ template<part_concept Part>
 struct bidi_graph_part_view
 {
   Part const* part       = nullptr; ///< The partition information
-  index_t       local_fw_m = 0;       ///< Number of local forward edges
-  index_t       local_bw_m = 0;       ///< Number of local backward edges
+  index_t     local_fw_m = 0;       ///< Number of local forward edges
+  index_t     local_bw_m = 0;       ///< Number of local backward edges
   struct
   {
     index_t*  head = nullptr; ///< Local forward offsets
@@ -34,12 +34,12 @@ struct bidi_graph_part_view
 
   constexpr bidi_graph_part_view(
     Part const* part,
-    index_t       local_fw_m,
-    index_t       local_bw_m,
-    index_t*      fw_head,
-    vertex_t*     fw_csr,
-    index_t*      bw_head,
-    vertex_t*     bw_csr) noexcept
+    index_t     local_fw_m,
+    index_t     local_bw_m,
+    index_t*    fw_head,
+    vertex_t*   fw_csr,
+    index_t*    bw_head,
+    vertex_t*   bw_csr) noexcept
     : part(part)
     , local_fw_m(local_fw_m)
     , local_bw_m(local_bw_m)
@@ -228,7 +228,7 @@ struct bidi_graph_part_view
 template<part_concept Part>
 struct bidi_graph_part
 {
-  Part  part{};         ///< The partition info
+  Part    part{};         ///< The partition info
   index_t local_fw_m = 0; ///< Forward edge count
   index_t local_bw_m = 0; ///< Backward edge count
   struct
@@ -245,7 +245,7 @@ struct bidi_graph_part
   constexpr bidi_graph_part() noexcept = default;
 
   bidi_graph_part(
-    Part  part,
+    Part    part,
     index_t local_fw_m,
     index_t local_bw_m)
     : part(std::move(part))

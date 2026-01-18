@@ -1,7 +1,7 @@
 #pragma once
 
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/graph_part.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/util/mpi_basic.hpp>
@@ -15,12 +15,12 @@ template<part_concept Part,
 auto
 backward_search(
   graph_part_view<Part> graph,
-  brief_queue_t&          mq,
-  vertex_t*               scc_id,
-  u64*                    fw_reached_storage,
-  vertex_t*               active_storage,
-  vertex_t                root,
-  vertex_t                id) -> vertex_t
+  brief_queue_t&        mq,
+  vertex_t*             scc_id,
+  u64*                  fw_reached_storage,
+  vertex_t*             active_storage,
+  vertex_t              root,
+  vertex_t              id) -> vertex_t
 {
   auto const& part          = *graph.part;
   auto const  local_n       = part.local_n();

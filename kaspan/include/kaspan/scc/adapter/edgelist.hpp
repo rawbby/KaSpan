@@ -1,8 +1,8 @@
 #pragma once
 
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/block_cyclic_part.hpp>
@@ -56,7 +56,7 @@ edgelist_to_graph(
 template<part_concept Part>
 void
 sorted_edgelist_to_graph_part(
-  Part const& part,
+  Part const&   part,
   vertex_t      local_m,
   edge_t const* edgelist,
   index_t*      head,
@@ -81,10 +81,10 @@ template<part_concept Part>
 void
 edgelist_to_graph_part(
   Part const& part,
-  vertex_t      local_m,
-  edge_t*       edgelist,
-  index_t*      head,
-  vertex_t*     csr)
+  vertex_t    local_m,
+  edge_t*     edgelist,
+  index_t*    head,
+  vertex_t*   csr)
 {
   std::sort(edgelist, edgelist + local_m, edge_less);
   sorted_edgelist_to_graph_part(part, local_m, edgelist, head, csr);

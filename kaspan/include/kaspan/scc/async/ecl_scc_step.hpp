@@ -1,9 +1,9 @@
 #pragma once
 
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
-#include <kaspan/scc/base.hpp>
 
 namespace kaspan {
 
@@ -13,8 +13,8 @@ template<world_part_concept Part>
 void
 ecl_scc_init_label(
   Part const& part,
-  vertex_t*     ecl_fw_label,
-  vertex_t*     ecl_bw_label)
+  vertex_t*   ecl_fw_label,
+  vertex_t*   ecl_bw_label)
 {
   auto const local_n = part.local_n();
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -29,17 +29,17 @@ template<world_part_concept Part,
 auto
 ecl_scc_step(
   bidi_graph_part_view<Part> graph,
-  brief_queue_t&               mq,
-  vertex_t*                    scc_id,
-  vertex_t*                    ecl_fw_label,
-  vertex_t*                    ecl_bw_label,
-  vertex_t*                    fw_active_array,
-  vertex_t*                    bw_active_array,
-  bits_accessor                fw_active,
-  bits_accessor                bw_active,
-  bits_accessor                fw_changed,
-  bits_accessor                bw_changed,
-  vertex_t                     decided_count = 0) -> vertex_t
+  brief_queue_t&             mq,
+  vertex_t*                  scc_id,
+  vertex_t*                  ecl_fw_label,
+  vertex_t*                  ecl_bw_label,
+  vertex_t*                  fw_active_array,
+  vertex_t*                  bw_active_array,
+  bits_accessor              fw_active,
+  bits_accessor              bw_active,
+  bits_accessor              fw_changed,
+  bits_accessor              bw_changed,
+  vertex_t                   decided_count = 0) -> vertex_t
 {
   auto const& part    = *graph.part;
   auto const  local_n = part.local_n();

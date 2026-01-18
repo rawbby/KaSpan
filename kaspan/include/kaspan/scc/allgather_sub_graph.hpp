@@ -3,8 +3,8 @@
 #include <kaspan/graph/bidi_graph.hpp>
 
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/graph/graph.hpp>
 #include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/block_cyclic_part.hpp>
@@ -20,7 +20,6 @@
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
@@ -39,8 +38,8 @@ template<part_concept Part,
 auto
 allgather_sub_ids(
   Part const& part,
-  vertex_t      local_sub_n,
-  fn_t&&        in_sub_graph)
+  vertex_t    local_sub_n,
+  fn_t&&      in_sub_graph)
 {
   auto const local_n = part.local_n();
 
@@ -67,7 +66,7 @@ allgather_sub_ids(
 template<part_concept Part>
 auto
 allgather_csr_degrees(
-  Part const&   part,
+  Part const&     part,
   vertex_t        local_sub_n,
   index_t const*  head,
   vertex_t const* csr,
@@ -128,7 +127,7 @@ template<class Part,
                                                    bool>)
 auto
 allgather_sub_graph(
-  Part const&   part,
+  Part const&     part,
   vertex_t        local_sub_n,
   index_t const*  fw_head,
   vertex_t const* fw_csr,
@@ -187,7 +186,7 @@ template<class Part,
                                                    bool>)
 auto
 allgather_fw_sub_graph(
-  Part const&   part,
+  Part const&     part,
   vertex_t        local_sub_n,
   index_t const*  fw_head,
   vertex_t const* fw_csr,

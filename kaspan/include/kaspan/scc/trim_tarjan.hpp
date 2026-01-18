@@ -67,7 +67,7 @@ template<part_concept Part,
          typename filter_t = decltype(no_filter)>
 vertex_t
 trim_tarjan(
-  Part const&   part,
+  Part const&     part,
   index_t const*  fw_head,
   vertex_t const* fw_csr,
   index_t const*  bw_head,

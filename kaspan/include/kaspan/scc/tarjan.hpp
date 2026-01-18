@@ -1,13 +1,12 @@
 #pragma once
 
-#include "kaspan/graph/graph_part.hpp"
-
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/graph/graph.hpp>
+#include <kaspan/graph/graph_part.hpp>
+#include <kaspan/graph/single_part.hpp>
 #include <kaspan/memory/accessor/bits.hpp>
 #include <kaspan/memory/accessor/stack.hpp>
-#include <kaspan/memory/buffer.hpp>
 
 namespace kaspan {
 
@@ -18,13 +17,6 @@ no_filter(
   return true;
 }
 
-/**
- * @param[in] part partition of the graph to work on
- * @param[in] head head buffer of size local_n+1 pointing into csr entries
- * @param[in] csr compressed sparse row of the local partition of the graph
- * @param[in] decided_count number of vertices filtered out (must match filter)
- * @return number of strongly connected components
- */
 template<part_concept Part,
          typename callback_t,
          typename filter_t = decltype(no_filter)>
@@ -43,28 +35,13 @@ tarjan(
     index_t  it;
   };
 
-  auto const local_n = gp.part->local_n();
-
-#if KASPAN_DEBUG
-  // Validate decided_count is consistent with filter
-  vertex_t filtered_out_count = 0;
-  for (vertex_t k = 0; k < local_n; ++k) {
-    if (not filter(k)) {
-      ++filtered_out_count;
-    }
-  }
-  DEBUG_ASSERT_EQ(filtered_out_count, decided_count);
-#endif
-
+  auto const local_n         = gp.part->local_n();
   auto const undecided_count = local_n - decided_count;
 
   vertex_t index_count = 0;
 
-  auto  buffer = make_buffer<vertex_t, vertex_t, vertex_t, frame>(local_n, local_n, undecided_count, undecided_count);
-  void* memory = buffer.data();
-
-  auto index    = borrow_array_filled<vertex_t>(&memory, index_undecided, local_n);
-  auto low      = borrow_array_clean<vertex_t>(&memory, local_n);
+  auto index    = make_array_filled<vertex_t>(index_undecided, local_n);
+  auto low      = make_array_clean<vertex_t>(local_n);
   auto on_stack = make_bits_clean(local_n);
   auto st       = make_stack<vertex_t>(undecided_count);
   auto dfs      = make_stack<frame>(undecided_count);
@@ -144,26 +121,18 @@ tarjan(
   }
 }
 
-/**
- * @param[in] n number of vertices in the graph
- * @param[in] head head buffer of size n+1 pointing into csr entries
- * @param[in] csr compressed sparse row of the graph
- * @param[out] scc_id map vertex to strongly connected component id
- * @param[in] decided_count number of vertices filtered out (must match filter)
- * @return number of strongly connected components
- */
-template<typename callback_t,
-         typename filter_t = decltype(no_filter)>
+template<typename Callback,
+         typename Filter = decltype(no_filter)>
 void
 tarjan(
   graph_view g,
-  callback_t callback,
-  filter_t   filter        = no_filter,
+  Callback   callback,
+  Filter     filter        = no_filter,
   vertex_t   decided_count = 0) noexcept
 {
-  auto const      part = single_part{ g.n };
-  graph_part_view gp{ &part, g.m, g.head, g.csr };
-  tarjan(gp, callback, filter, decided_count);
+  auto const part = single_part{ g.n };
+  auto const gv   = graph_part_view{ &part, g.m, g.head, g.csr };
+  tarjan(gv, callback, filter, decided_count);
 }
 
 } // namespace kaspan

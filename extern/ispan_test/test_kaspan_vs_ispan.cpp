@@ -1,3 +1,4 @@
+#include <../../kaspan/include/kaspan/graph/base.hpp>
 #include <ispan/scc.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/graph/graph.hpp>
@@ -5,7 +6,6 @@
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
 #include <kaspan/scc/allgather_graph.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/scc.hpp>
 
 #include <mpi.h>

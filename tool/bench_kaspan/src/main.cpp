@@ -2,10 +2,10 @@
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/debug/valgrind.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
 #include <kaspan/scc/async/scc.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/scc.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/integral_cast.hpp>
@@ -24,14 +24,19 @@
 using namespace kaspan;
 
 void
-usage(int /* argc */, char** argv)
+usage(
+  int /* argc */,
+  char** argv)
 {
   std::println("usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file <output_file> [--async [--async_indirect]] [--trim_tarjan]",
                argv[0]);
 }
 
 void
-benchmark(auto const& res, bool use_async, bool use_async_indirect)
+benchmark(
+  auto const& res,
+  bool        use_async,
+  bool        use_async_indirect)
 {
   auto const& graph = [&]() -> auto const& {
     if constexpr (requires { res.bgp; }) return res.bgp;
@@ -86,7 +91,9 @@ benchmark(auto const& res, bool use_async, bool use_async_indirect)
 }
 
 int
-main(int argc, char** argv)
+main(
+  int    argc,
+  char** argv)
 {
   auto const* const kagen_option_string = arg_select_optional_str(argc, argv, "--kagen_option_string");
   auto const* const manifest_file       = arg_select_optional_str(argc, argv, "--manifest_file");
@@ -122,7 +129,7 @@ main(int argc, char** argv)
     KASPAN_STATISTIC_PUSH("load");
     auto const manifest = manifest::load(manifest_file);
     ASSERT_LT(manifest.graph_node_count, std::numeric_limits<vertex_t>::max());
-    auto const part = balanced_slice_part{ integral_cast<vertex_t>(manifest.graph_node_count) };
+    auto const part           = balanced_slice_part{ integral_cast<vertex_t>(manifest.graph_node_count) };
     auto const manifest_graph = load_graph_part_from_manifest(part, manifest);
     KASPAN_STATISTIC_POP();
     benchmark(manifest_graph, use_async, use_async_indirect);

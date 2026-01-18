@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kaspan/scc/base.hpp>
+#include <kaspan/graph/base.hpp>
 
 namespace kaspan {
 

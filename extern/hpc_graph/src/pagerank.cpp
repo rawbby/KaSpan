@@ -61,7 +61,11 @@ extern int  procid, nprocs;
 extern bool verbose, debug, verify;
 
 int
-run_pagerank(dist_graph_t* g, mpi_data_t* comm, double*& pageranks, uint32_t num_iter)
+run_pagerank(
+  dist_graph_t* g,
+  mpi_data_t*   comm,
+  double*&      pageranks,
+  uint32_t      num_iter)
 {
   if (debug) {
     printf("Task %d run_pagerank() start\n", procid);
@@ -89,8 +93,7 @@ run_pagerank(dist_graph_t* g, mpi_data_t* comm, double*& pageranks, uint32_t num
     for (uint64_t i = 0; i < g->n_local; ++i) {
       pageranks[i]        = (1.0 / (double)g->n);
       uint64_t out_degree = out_degree(g, i);
-      if (out_degree > 0)
-        pageranks[i] /= (double)out_degree;
+      if (out_degree > 0) pageranks[i] /= (double)out_degree;
       else {
         pageranks[i] /= (double)g->n;
         sum_noouts_next += pageranks[i];
@@ -170,8 +173,7 @@ run_pagerank(dist_graph_t* g, mpi_data_t* comm, double*& pageranks, uint32_t num
         vert_pagerank += ((1.0 - DAMPING_FACTOR) / (double)g->n);
 
         uint64_t out_degree = out_degree(g, vert_index);
-        if (out_degree > 0)
-          vert_pagerank /= (double)out_degree;
+        if (out_degree > 0) vert_pagerank /= (double)out_degree;
         else {
           vert_pagerank /= (double)g->n;
           sum_noouts_next += vert_pagerank;
@@ -222,10 +224,12 @@ run_pagerank(dist_graph_t* g, mpi_data_t* comm, double*& pageranks, uint32_t num
 }
 
 int
-pagerank_output(dist_graph_t* g, double* pageranks, char* output_file)
+pagerank_output(
+  dist_graph_t* g,
+  double*       pageranks,
+  char*         output_file)
 {
-  if (debug)
-    printf("Task %d pageranks to %s\n", procid, output_file);
+  if (debug) printf("Task %d pageranks to %s\n", procid, output_file);
 
   double* global_pageranks = (double*)malloc(g->n * sizeof(double));
 
@@ -237,16 +241,12 @@ pagerank_output(dist_graph_t* g, double* pageranks, char* output_file)
   for (uint64_t i = 0; i < g->n_local; ++i) {
     uint64_t out_degree = out_degree(g, i);
     assert(g->local_unmap[i] < g->n);
-    if (out_degree > 0)
-      global_pageranks[g->local_unmap[i]] = pageranks[i] * (double)out_degree;
-    else
-      global_pageranks[g->local_unmap[i]] = pageranks[i] * (double)g->n;
+    if (out_degree > 0) global_pageranks[g->local_unmap[i]] = pageranks[i] * (double)out_degree;
+    else global_pageranks[g->local_unmap[i]] = pageranks[i] * (double)g->n;
   }
 
-  if (procid == 0)
-    MPI_Reduce(MPI_IN_PLACE, global_pageranks, (int32_t)g->n, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-  else
-    MPI_Reduce(global_pageranks, global_pageranks, (int32_t)g->n, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  if (procid == 0) MPI_Reduce(MPI_IN_PLACE, global_pageranks, (int32_t)g->n, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  else MPI_Reduce(global_pageranks, global_pageranks, (int32_t)g->n, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
   if (procid == 0) {
     if (debug)
@@ -267,14 +267,15 @@ pagerank_output(dist_graph_t* g, double* pageranks, char* output_file)
 
   free(global_pageranks);
 
-  if (debug)
-    printf("Task %d done writing pageranks\n", procid);
+  if (debug) printf("Task %d done writing pageranks\n", procid);
 
   return 0;
 }
 
 int
-pagerank_verify(dist_graph_t* g, double* pageranks)
+pagerank_verify(
+  dist_graph_t* g,
+  double*       pageranks)
 {
   if (debug) {
     printf("Task %d pagerank_verify() start\n", procid);
@@ -289,16 +290,12 @@ pagerank_verify(dist_graph_t* g, double* pageranks)
 #pragma omp parallel for
   for (uint64_t i = 0; i < g->n_local; ++i) {
     uint64_t out_degree = out_degree(g, i);
-    if (out_degree > 0)
-      global_pageranks[g->local_unmap[i]] = pageranks[i] * (double)out_degree;
-    else
-      global_pageranks[g->local_unmap[i]] = pageranks[i] * (double)g->n;
+    if (out_degree > 0) global_pageranks[g->local_unmap[i]] = pageranks[i] * (double)out_degree;
+    else global_pageranks[g->local_unmap[i]] = pageranks[i] * (double)g->n;
   }
 
-  if (procid == 0)
-    MPI_Reduce(MPI_IN_PLACE, global_pageranks, (int32_t)g->n, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-  else
-    MPI_Reduce(global_pageranks, global_pageranks, (int32_t)g->n, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  if (procid == 0) MPI_Reduce(MPI_IN_PLACE, global_pageranks, (int32_t)g->n, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  else MPI_Reduce(global_pageranks, global_pageranks, (int32_t)g->n, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
   if (procid == 0) {
     double pr_sum = 0.0;
@@ -318,7 +315,11 @@ pagerank_verify(dist_graph_t* g, double* pageranks)
 }
 
 int
-pagerank_dist(dist_graph_t* g, mpi_data_t* comm, uint32_t num_iter, char* output_file)
+pagerank_dist(
+  dist_graph_t* g,
+  mpi_data_t*   comm,
+  uint32_t      num_iter,
+  char*         output_file)
 {
   if (debug) {
     printf("Task %d pagerank_dist() start\n", procid);
@@ -332,8 +333,7 @@ pagerank_dist(dist_graph_t* g, mpi_data_t* comm, uint32_t num_iter, char* output
 
   MPI_Barrier(MPI_COMM_WORLD);
   elt = omp_get_wtime() - elt;
-  if (procid == 0)
-    printf("PageRank time %9.6f (s)\n", elt);
+  if (procid == 0) printf("PageRank time %9.6f (s)\n", elt);
 
   if (output) {
     pagerank_output(g, pageranks, output_file);
@@ -345,7 +345,6 @@ pagerank_dist(dist_graph_t* g, mpi_data_t* comm, uint32_t num_iter, char* output
 
   free(pageranks);
 
-  if (debug)
-    printf("Task %d pagerank_dist() success\n", procid);
+  if (debug) printf("Task %d pagerank_dist() success\n", procid);
   return 0;
 }

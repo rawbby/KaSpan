@@ -1,15 +1,16 @@
 #pragma once
 
 #include <kaspan/debug/assert.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/graph_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/vertex_frontier.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
 namespace kaspan {
 
-template<bool InterleavedSupport = false, part_concept Part>
+template<bool         InterleavedSupport = false,
+         part_concept Part>
 auto
 backward_search(
   graph_part_view<Part>                graph,
@@ -19,9 +20,9 @@ backward_search(
   vertex_t                             pivot,
   auto&&                               on_decision = [](vertex_t) {}) -> vertex_t
 {
-  auto const& part          = *graph.part;
-  auto const  local_n       = part.local_n();
-  auto        fw_reached    = view_bits(fw_reached_storage, local_n);
+  auto const& part       = *graph.part;
+  auto const  local_n    = part.local_n();
+  auto        fw_reached = view_bits(fw_reached_storage, local_n);
 
   vertex_t decided_count = 0;
   vertex_t min_u         = part.n();

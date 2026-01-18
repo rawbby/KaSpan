@@ -1,13 +1,12 @@
-#include "kaspan/scc/fuzzy.hpp"
-
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/allgather_graph.hpp>
 #include <kaspan/scc/async/scc.hpp>
-#include <kaspan/scc/base.hpp>
+#include <kaspan/scc/fuzzy.hpp>
 #include <kaspan/scc/scc.hpp>
 #include <kaspan/scc/tarjan.hpp>
 

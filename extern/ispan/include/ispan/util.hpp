@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kaspan/scc/base.hpp>
+#include <../../../../kaspan/include/kaspan/graph/base.hpp>
 
 #include <sys/stat.h>
 
@@ -13,10 +13,10 @@ constexpr inline depth_t depth_unset = -1;
 constexpr inline kaspan::vertex_t scc_id_largest = kaspan::scc_id_undecided - 2;
 
 inline off_t
-fsize(char const* filename)
+fsize(
+  char const* filename)
 {
   struct stat st{};
-  if (stat(filename, &st) == 0)
-    return st.st_size;
+  if (stat(filename, &st) == 0) return st.st_size;
   return -1;
 }

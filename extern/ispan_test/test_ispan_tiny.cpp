@@ -1,7 +1,7 @@
-#include <kaspan/graph/bidi_graph.hpp>
+#include <../../kaspan/include/kaspan/graph/base.hpp>
 #include <ispan/scc.hpp>
 #include <kaspan/debug/sub_process.hpp>
-#include <kaspan/scc/base.hpp>
+#include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/util/scope_guard.hpp>
 
 #include <cstdio>

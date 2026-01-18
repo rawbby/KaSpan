@@ -1,9 +1,9 @@
 #pragma once
 
 #include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/graph/graph.hpp>
 #include <kaspan/memory/accessor/dense_unsigned_accessor.hpp>
 #include <kaspan/memory/file_buffer.hpp>
-#include <kaspan/graph/graph.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/result.hpp>
@@ -258,7 +258,7 @@ load_graph_from_manifest(
 template<part_concept Part>
 static auto
 load_graph_part_from_manifest(
-  Part const&   part,
+  Part const&     part,
   manifest const& manifest) -> bidi_graph_part<Part>
 {
   DEBUG_ASSERT_EQ(manifest.graph_node_count, part.n());

@@ -1,16 +1,16 @@
 #pragma once
 
-#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kamping/mpi_datatype.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
+#include <kaspan/graph/base.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/memory/accessor/bits.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/scc/allgather_sub_graph.hpp>
 #include <kaspan/scc/async/backward_search.hpp>
 #include <kaspan/scc/async/color_scc_step.hpp>
 #include <kaspan/scc/async/forward_search.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/color_scc_step.hpp>
 #include <kaspan/scc/pivot.hpp>
 #include <kaspan/scc/tarjan.hpp>
@@ -74,7 +74,7 @@ template<typename indirection_scheme_t,
 void
 scc(
   bidi_graph_part_view<Part> graph,
-  vertex_t*                    scc_id)
+  vertex_t*                  scc_id)
 {
   graph.debug_validate();
   auto const& part = *graph.part;
@@ -167,8 +167,7 @@ scc(
   {
     KASPAN_STATISTIC_SCOPE("residual");
 
-    auto [sub_ids_inverse, sub_graph] =
-      allgather_fw_sub_graph(part, local_n - local_decided, graph.fw.head, graph.fw.csr, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
+    auto [sub_ids_inverse, sub_graph] = allgather_fw_sub_graph(part, local_n - local_decided, graph.fw.head, graph.fw.csr, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
 
     if (sub_graph.n) {
       tarjan(sub_graph.view(), [&](auto const* beg, auto const* end) {

@@ -1,23 +1,11 @@
 #pragma once
 
-#include "kaspan/graph/graph_part.hpp"
-
-#include <kaspan/graph/graph.hpp>
-#include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
-#include <kaspan/graph/bidi_graph_part.hpp>
-#include <kaspan/graph/block_cyclic_part.hpp>
 #include <kaspan/graph/concept.hpp>
-#include <kaspan/graph/cyclic_part.hpp>
-#include <kaspan/graph/explicit_continuous_part.hpp>
 #include <kaspan/graph/explicit_sorted_part.hpp>
-#include <kaspan/graph/graph.hpp>
 #include <kaspan/graph/graph_part.hpp>
-#include <kaspan/graph/single_part.hpp>
-#include <kaspan/graph/trivial_slice_part.hpp>
-#include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/backward_complement.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/mpi_basic.hpp>
@@ -61,7 +49,7 @@ template<part_concept Part>
   requires(Part::ordered())
 auto
 allgather_graph(
-  index_t                 m,
+  index_t               m,
   graph_part_view<Part> gpv) -> bidi_graph
 {
   auto const n       = gpv.part->n();
@@ -95,7 +83,7 @@ allgather_graph(
   {
     // rank 0: edges count = fw_head[end0], displ = 0
     auto vertex_it = integral_cast<vertex_t>(counts[0]); // start at first vertex of rank 1
-    auto offset    = bg.fw.head[vertex_it - 1];      // head at boundary (rank 0 end)
+    auto offset    = bg.fw.head[vertex_it - 1];          // head at boundary (rank 0 end)
     counts[0]      = integral_cast<MPI_Count>(offset);   // edge elements of rank 0
     displs[0]      = integral_cast<MPI_Aint>(0);
 

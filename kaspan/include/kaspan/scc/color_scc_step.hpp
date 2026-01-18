@@ -1,10 +1,10 @@
 #pragma once
 
+#include <kaspan/graph/base.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/edge_frontier.hpp>
-#include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 
@@ -14,7 +14,7 @@ template<part_concept Part>
 void
 color_scc_init_label(
   Part const& part,
-  vertex_t*     colors)
+  vertex_t*   colors)
 {
   auto const local_n = part.local_n();
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -27,14 +27,14 @@ template<part_concept Part>
 auto
 color_scc_step_multi(
   bidi_graph_part_view<Part> graph,
-  vertex_t*                    scc_id,
-  vertex_t*                    colors,
-  vertex_t*                    active_array,
-  u64*                         active_storage,
-  u64*                         changed_storage,
-  edge_frontier&               frontier,
-  vertex_t                     local_pivot,
-  auto&&                       on_decision = [](vertex_t) {}) -> vertex_t
+  vertex_t*                  scc_id,
+  vertex_t*                  colors,
+  vertex_t*                  active_array,
+  u64*                       active_storage,
+  u64*                       changed_storage,
+  edge_frontier&             frontier,
+  vertex_t                   local_pivot,
+  auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
   auto const& part         = *graph.part;
   auto const  local_n      = part.local_n();
@@ -185,13 +185,13 @@ template<part_concept Part>
 auto
 color_scc_step_multi(
   bidi_graph_part_view<Part> graph,
-  vertex_t*                    scc_id,
-  vertex_t*                    colors,
-  vertex_t*                    active_array,
-  u64*                         active_storage,
-  u64*                         changed_storage,
-  edge_frontier&               frontier,
-  auto&&                       on_decision = [](vertex_t) {}) -> vertex_t
+  vertex_t*                  scc_id,
+  vertex_t*                  colors,
+  vertex_t*                  active_array,
+  u64*                       active_storage,
+  u64*                       changed_storage,
+  edge_frontier&             frontier,
+  auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
   auto const& part    = *graph.part;
   auto const  local_n = part.local_n();
@@ -252,14 +252,14 @@ template<part_concept Part>
 auto
 color_scc_step(
   bidi_graph_part_view<Part> graph,
-  vertex_t*                    scc_id,
-  vertex_t*                    colors,
-  vertex_t*                    active_array,
-  u64*                         active_storage,
-  u64*                         changed_storage,
-  edge_frontier&               frontier,
-  vertex_t                     decided_count = 0,
-  auto&&                       on_decision   = [](vertex_t) {}) -> vertex_t
+  vertex_t*                  scc_id,
+  vertex_t*                  colors,
+  vertex_t*                  active_array,
+  u64*                       active_storage,
+  u64*                       changed_storage,
+  edge_frontier&             frontier,
+  vertex_t                   decided_count = 0,
+  auto&&                     on_decision   = [](vertex_t) {}) -> vertex_t
 {
   auto const& part         = *graph.part;
   auto const  local_n      = part.local_n();

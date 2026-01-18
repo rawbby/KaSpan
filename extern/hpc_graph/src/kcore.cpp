@@ -62,7 +62,13 @@ extern bool verbose, debug, verify;
 #define MAX_ITER 10000u
 
 int
-run_kcore(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* kcores, uint32_t num_iter, bool run_approx)
+run_kcore(
+  dist_graph_t* g,
+  mpi_data_t*   comm,
+  queue_data_t* q,
+  uint64_t*     kcores,
+  uint32_t      num_iter,
+  bool          run_approx)
 {
   if (debug) {
     printf("Task %d run_kcore() start\n", procid);
@@ -75,8 +81,7 @@ run_kcore(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* kcores, 
 
   uint64_t global_changes = g->n_local;
   uint32_t iter           = 0;
-  if (!run_approx)
-    num_iter = MAX_ITER;
+  if (!run_approx) num_iter = MAX_ITER;
 
   for (int32_t i = 0; i < nprocs; ++i)
     comm->sendcounts_temp[i] = 0;
@@ -176,8 +181,7 @@ run_kcore(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* kcores, 
         while (new_kcore > 2 && counts[new_kcore] < new_kcore)
           --new_kcore;
 
-        if (new_kcore != vert_kcore)
-          ++global_changes;
+        if (new_kcore != vert_kcore) ++global_changes;
 
         assert(new_kcore <= vert_kcore);
 
@@ -218,10 +222,12 @@ run_kcore(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* kcores, 
 }
 
 int
-kcore_output(dist_graph_t* g, uint64_t* kcores, char* output_file)
+kcore_output(
+  dist_graph_t* g,
+  uint64_t*     kcores,
+  char*         output_file)
 {
-  if (debug)
-    printf("Task %d kcores to %s\n", procid, output_file);
+  if (debug) printf("Task %d kcores to %s\n", procid, output_file);
 
   uint64_t* global_kcores = (uint64_t*)malloc(g->n * sizeof(uint64_t));
 
@@ -233,10 +239,8 @@ kcore_output(dist_graph_t* g, uint64_t* kcores, char* output_file)
   for (uint64_t i = 0; i < g->n_local; ++i)
     global_kcores[g->local_unmap[i]] = kcores[i];
 
-  if (procid == 0)
-    MPI_Reduce(MPI_IN_PLACE, global_kcores, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
-  else
-    MPI_Reduce(global_kcores, global_kcores, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
+  if (procid == 0) MPI_Reduce(MPI_IN_PLACE, global_kcores, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
+  else MPI_Reduce(global_kcores, global_kcores, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
 
   if (procid == 0) {
     if (debug)
@@ -257,14 +261,16 @@ kcore_output(dist_graph_t* g, uint64_t* kcores, char* output_file)
 
   free(global_kcores);
 
-  if (debug)
-    printf("Task %d done writing kcores\n", procid);
+  if (debug) printf("Task %d done writing kcores\n", procid);
 
   return 0;
 }
 
 int
-kcore_verify(dist_graph_t* g, uint64_t* kcores, uint64_t num_to_output)
+kcore_verify(
+  dist_graph_t* g,
+  uint64_t*     kcores,
+  uint64_t      num_to_output)
 {
   if (debug) {
     printf("Task %d kcore_verify() start\n", procid);
@@ -281,10 +287,8 @@ kcore_verify(dist_graph_t* g, uint64_t* kcores, uint64_t num_to_output)
   for (uint64_t i = 0; i < g->n_local; ++i)
     global_kcores[g->local_unmap[i]] = kcores[i];
 
-  if (procid == 0)
-    MPI_Reduce(MPI_IN_PLACE, global_kcores, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
-  else
-    MPI_Reduce(global_kcores, global_kcores, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
+  if (procid == 0) MPI_Reduce(MPI_IN_PLACE, global_kcores, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
+  else MPI_Reduce(global_kcores, global_kcores, (int32_t)g->n, MPI_UINT64_T, MPI_MIN, 0, MPI_COMM_WORLD);
 
   if (procid == 0) {
 #pragma omp parallel for
@@ -319,7 +323,13 @@ kcore_verify(dist_graph_t* g, uint64_t* kcores, uint64_t num_to_output)
 }
 
 int
-kcore_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint32_t num_iter, char* output_file, bool run_approx)
+kcore_dist(
+  dist_graph_t* g,
+  mpi_data_t*   comm,
+  queue_data_t* q,
+  uint32_t      num_iter,
+  char*         output_file,
+  bool          run_approx)
 {
   if (debug) {
     printf("Task %d kcore_dist() start\n", procid);
@@ -333,8 +343,7 @@ kcore_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint32_t num_iter
 
   MPI_Barrier(MPI_COMM_WORLD);
   elt = omp_get_wtime() - elt;
-  if (procid == 0)
-    printf("Kcore time %9.6f (s)\n", elt);
+  if (procid == 0) printf("Kcore time %9.6f (s)\n", elt);
 
   if (output) {
     kcore_output(g, kcores, output_file);
@@ -346,7 +355,6 @@ kcore_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint32_t num_iter
 
   free(kcores);
 
-  if (debug)
-    printf("Task %d kcore_dist() success\n", procid);
+  if (debug) printf("Task %d kcore_dist() success\n", procid);
   return 0;
 }

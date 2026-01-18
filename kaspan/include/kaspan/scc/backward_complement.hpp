@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kaspan/debug/assert.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/concept.hpp>
@@ -9,7 +10,6 @@
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/adapter/edgelist.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
@@ -121,7 +121,7 @@ backward_complement_graph_part(
   mpi_basic::alltoallv(send_stack.data(), send_counts, send_displs, recv_buffer.data(), recv_counts, recv_displs, mpi_edge_t);
 
   g.local_bw_m = recv_count;
-  g.bw.csr  = line_alloc<vertex_t>(g.local_bw_m);
+  g.bw.csr     = line_alloc<vertex_t>(g.local_bw_m);
 
   edgelist_to_graph_part(g.part, recv_count, recv_buffer.data(), g.bw.head, g.bw.csr);
 }

@@ -3,9 +3,9 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/scc/allgather_sub_graph.hpp>
 #include <kaspan/scc/backward_search.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/color_scc_step.hpp>
 #include <kaspan/scc/forward_search.hpp>
 #include <kaspan/scc/pivot.hpp>
@@ -99,17 +99,16 @@ scc(
 
       do {
 
-        local_decided += color_scc_step(
-          graph, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier_edge, local_decided, [&](vertex_t k) {
-            decided_stack.push(k);
-          });
+        local_decided += color_scc_step(graph, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier_edge, local_decided, [&](vertex_t k) {
+          decided_stack.push(k);
+        });
         local_decided += trim_1_exhaustive(graph, scc_id, outdegree.data(), indegree.data(), frontier, decided_stack.begin(), decided_stack.end());
         decided_stack.clear();
 
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
-        local_decided += color_scc_step(
-          graph.inverse_view(), scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier_edge, local_decided, [&](vertex_t k) {
+        local_decided +=
+          color_scc_step(graph.inverse_view(), scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier_edge, local_decided, [&](vertex_t k) {
             decided_stack.push(k);
           });
         local_decided += trim_1_exhaustive(graph, scc_id, outdegree.data(), indegree.data(), frontier, decided_stack.begin(), decided_stack.end());

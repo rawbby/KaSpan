@@ -23,14 +23,15 @@
 #include <vector>
 
 inline void
-scc(kaspan::vertex_t              n,
-    kaspan::vertex_t              m,
-    kaspan::index_t const*        fw_head,
-    kaspan::vertex_t const*       fw_csr,
-    kaspan::index_t const*        bw_head,
-    kaspan::vertex_t const*       bw_csr,
-    int                           alpha,
-    std::vector<kaspan::index_t>* scc_id_out = nullptr)
+scc(
+  kaspan::vertex_t              n,
+  kaspan::vertex_t              m,
+  kaspan::index_t const*        fw_head,
+  kaspan::vertex_t const*       fw_csr,
+  kaspan::index_t const*        bw_head,
+  kaspan::vertex_t const*       bw_csr,
+  int                           alpha,
+  std::vector<kaspan::index_t>* scc_id_out = nullptr)
 {
   KASPAN_STATISTIC_SCOPE("scc");
   KASPAN_STATISTIC_PUSH("alloc");
@@ -42,12 +43,10 @@ scc(kaspan::vertex_t              n,
   SCOPE_GUARD(delete[] work_comm);
 
   kaspan::vertex_t s = n / 32;
-  if (n % 32 != 0)
-    s += 1;
+  if (n % 32 != 0) s += 1;
 
   kaspan::vertex_t t = s / kaspan::mpi_basic::world_size;
-  if (s % kaspan::mpi_basic::world_size != 0)
-    t += 1;
+  if (s % kaspan::mpi_basic::world_size != 0) t += 1;
 
   kaspan::vertex_t const step          = t * 32;
   kaspan::vertex_t const virtual_count = t * kaspan::mpi_basic::world_size * 32;
@@ -169,8 +168,7 @@ scc(kaspan::vertex_t              n,
     KASPAN_STATISTIC_SCOPE("post_processing");
     MPI_Allreduce(MPI_IN_PLACE, sub_scc_id, sub_n, kaspan::mpi_vertex_t, MPI_MIN, MPI_COMM_WORLD);
     for (kaspan::index_t sub_u = 0; sub_u < sub_n; ++sub_u) {
-      if (sub_scc_id[sub_u] != kaspan::scc_id_undecided)
-        scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
+      if (sub_scc_id[sub_u] != kaspan::scc_id_undecided) scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
     }
     KASPAN_STATISTIC_ADD("memory", kaspan::get_resident_set_bytes());
   }

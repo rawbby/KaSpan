@@ -1,11 +1,11 @@
 #pragma once
 
-#include "kaspan/graph/bidi_graph.hpp"
+#include <kaspan/graph/bidi_graph.hpp>
 
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/graph.hpp>
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/buffer.hpp>
-#include <kaspan/scc/base.hpp>
 #include <kaspan/scc/partion_graph.hpp>
 #include <kaspan/util/arithmetic.hpp>
 
@@ -218,9 +218,9 @@ fuzzy_global_scc_id_and_graph(
 template<part_concept Part>
 auto
 fuzzy_local_scc_id_and_graph(
-  u64           seed,
+  u64         seed,
   Part const& part,
-  double        degree = -1.0)
+  double      degree = -1.0)
 {
   auto const local_n = part.local_n();
 

@@ -3,17 +3,18 @@
 #include <kaspan/util/scope_guard.hpp>
 
 inline void
-residual_scc(kaspan::index_t const*  sub_wcc_id,
-             kaspan::index_t*        sub_scc_id,
-             kaspan::index_t const*  sub_fw_head,
-             kaspan::index_t const*  sub_bw_head,
-             kaspan::vertex_t const* sub_fw_csr,
-             kaspan::vertex_t const* sub_bw_csr,
-             kaspan::vertex_t*       sub_fw_sa,
-             kaspan::vertex_t        sub_n,
-             kaspan::vertex_t const* sub_wcc_fq,
-             kaspan::vertex_t        sub_wcc_fq_size,
-             kaspan::vertex_t const* sub_vertices)
+residual_scc(
+  kaspan::index_t const*  sub_wcc_id,
+  kaspan::index_t*        sub_scc_id,
+  kaspan::index_t const*  sub_fw_head,
+  kaspan::index_t const*  sub_bw_head,
+  kaspan::vertex_t const* sub_fw_csr,
+  kaspan::vertex_t const* sub_bw_csr,
+  kaspan::vertex_t*       sub_fw_sa,
+  kaspan::vertex_t        sub_n,
+  kaspan::vertex_t const* sub_wcc_fq,
+  kaspan::vertex_t        sub_wcc_fq_size,
+  kaspan::vertex_t const* sub_vertices)
 {
   KASPAN_STATISTIC_SCOPE("residual_scc");
   size_t decided_count = 0;
@@ -51,28 +52,24 @@ residual_scc(kaspan::index_t const*  sub_wcc_id,
 
         // fw search
         q[tail++] = sub_u;
-        if (tail == sub_n)
-          tail = 0;
+        if (tail == sub_n) tail = 0;
         while (head != tail) {
           auto const temp_v = q[head++];
-          if (head == sub_n)
-            head = 0;
+          if (head == sub_n) head = 0;
 
           auto       beg = sub_fw_head[temp_v];
           auto const end = sub_fw_head[temp_v + 1];
           for (; beg < end; ++beg) {
             auto const sub_v = sub_fw_csr[beg];
 
-            if (sub_scc_id[sub_v] != kaspan::scc_id_undecided)
-              continue;
+            if (sub_scc_id[sub_v] != kaspan::scc_id_undecided) continue;
 
             if (sub_fw_sa[sub_v] != sub_u) {
               // if sub_v was not yet reached
               // add sub_v to queue and mark sub_v reached
 
               q[tail++] = sub_v;
-              if (tail == sub_n)
-                tail = 0;
+              if (tail == sub_n) tail = 0;
               sub_fw_sa[sub_v] = sub_u;
             }
           }
@@ -80,12 +77,10 @@ residual_scc(kaspan::index_t const*  sub_wcc_id,
 
         // bw search
         q[tail++] = sub_u;
-        if (tail == sub_n)
-          tail = 0;
+        if (tail == sub_n) tail = 0;
         while (head != tail) {
           auto const temp_v = q[head++];
-          if (head == sub_n)
-            head = 0;
+          if (head == sub_n) head = 0;
 
           auto       beg = sub_bw_head[temp_v];
           auto const end = sub_bw_head[temp_v + 1];
@@ -97,8 +92,7 @@ residual_scc(kaspan::index_t const*  sub_wcc_id,
               // add sub_v to queue and set scc id of sub_v
 
               q[tail++] = sub_v;
-              if (tail == sub_n)
-                tail = 0;
+              if (tail == sub_n) tail = 0;
               sub_scc_id[sub_v] = id;
               ++decided_count;
             }

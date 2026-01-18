@@ -1,8 +1,8 @@
 #pragma once
 
-#include <kaspan/memory/accessor/once_queue_accessor.hpp>
-#include <kaspan/scc/base.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/memory/accessor/once_queue_accessor.hpp>
 #include <kaspan/scc/vertex_frontier.hpp>
 
 namespace kaspan {
@@ -12,7 +12,8 @@ namespace kaspan {
 /// scc_id[k] != undecided || valid(degree[k]).
 /// notice: you can pass a vertex_frontier with interleaved support,
 /// but its not needed nor adviced performance wise.
-template<bool InterleavedSupport = false, part_concept Part>
+template<bool         InterleavedSupport = false,
+         part_concept Part>
 auto
 trim_1_exhaustive(
   graph_part_view<Part>                graph,
@@ -90,7 +91,8 @@ trim_1_exhaustive(
 /// will initilise these appropriately.
 /// notice: you can pass a vertex_frontier with interleaved support,
 /// but its not needed nor adviced performance wise.
-template<bool Interleaved = false, part_concept Part>
+template<bool         Interleaved = false,
+         part_concept Part>
 auto
 trim_1_exhaustive_first(
   bidi_graph_part_view<Part>    graph,

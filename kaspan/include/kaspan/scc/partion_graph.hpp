@@ -1,23 +1,12 @@
 #pragma once
 
-#include "kaspan/graph/bidi_graph.hpp"
-
-#include <kaspan/graph/bidi_graph_part.hpp>
-#include <kaspan/graph/graph_part.hpp>
-#include <kaspan/graph/balanced_slice_part.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
-#include <kaspan/graph/block_cyclic_part.hpp>
 #include <kaspan/graph/concept.hpp>
-#include <kaspan/graph/cyclic_part.hpp>
-#include <kaspan/graph/explicit_continuous_part.hpp>
 #include <kaspan/graph/explicit_sorted_part.hpp>
 #include <kaspan/graph/graph.hpp>
 #include <kaspan/graph/graph_part.hpp>
-#include <kaspan/graph/single_part.hpp>
-#include <kaspan/graph/trivial_slice_part.hpp>
-#include <kaspan/scc/base.hpp>
-#include <kaspan/util/pp.hpp>
 
 namespace kaspan {
 
@@ -26,7 +15,7 @@ template<part_concept Part>
   requires(Part::continuous())
 auto
 partition_local_m(
-  graph_view    g,
+  graph_view  g,
   Part const& part) -> index_t
 {
   return part.local_n() > 0 ? g.head[part.end()] - g.head[part.begin()] : 0;
@@ -65,7 +54,7 @@ template<part_concept Part>
 auto
 partition(
   graph_view g,
-  Part     part) -> graph_part<Part>
+  Part       part) -> graph_part<Part>
 {
   g.debug_validate();
   auto const local_n = part.local_n();
@@ -90,7 +79,7 @@ template<part_concept Part>
 auto
 partition(
   bidi_graph_view bg,
-  Part          part) -> bidi_graph_part<Part>
+  Part            part) -> bidi_graph_part<Part>
 {
   bg.debug_validate();
   auto const local_n                  = part.local_n();

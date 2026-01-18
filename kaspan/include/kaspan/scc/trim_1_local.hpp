@@ -1,15 +1,16 @@
 #pragma once
 
-#include <kaspan/scc/base.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/scc/vertex_frontier.hpp>
 
 namespace kaspan {
 
-template<bool InterleavedSupport, world_part_concept Part>
+template<bool               InterleavedSupport,
+         world_part_concept Part>
 auto
 trim_1_first(
-  bidi_graph_part_view<Part>         graph,
+  bidi_graph_part_view<Part>           graph,
   vertex_t*                            scc_id,
   vertex_t*                            outdegree,
   vertex_t*                            indegree,
@@ -117,9 +118,9 @@ template<world_part_concept Part>
 auto
 trim_1(
   bidi_graph_part_view<Part> graph,
-  vertex_t*                    scc_id,
-  vertex_t const*              fw_degree,
-  vertex_t const*              bw_degree) -> vertex_t
+  vertex_t*                  scc_id,
+  vertex_t const*            fw_degree,
+  vertex_t const*            bw_degree) -> vertex_t
 {
   auto const& part          = *graph.part;
   auto const  local_n       = part.local_n();
