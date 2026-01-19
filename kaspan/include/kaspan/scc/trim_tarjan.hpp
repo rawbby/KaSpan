@@ -87,8 +87,8 @@ trim_tarjan(
       if (clen == 1) {
         auto const k = component[0];
 
-        auto const out_degree = fw_head[k + 1] - fw_head[k];
-        auto const in_degree  = bw_head[k + 1] - bw_head[k];
+        auto const out_degree = integral_cast<vertex_t>(fw_head[k + 1] - fw_head[k]);
+        auto const in_degree  = integral_cast<vertex_t>(bw_head[k + 1] - bw_head[k]);
         if (in_degree > 0 && out_degree > 0) {
           return;
         }

@@ -55,7 +55,7 @@ fw_span(
             if (scc_id[v] == kaspan::scc_id_undecided && fw_sa[v] == depth_unset) {
               fw_sa[v] = kaspan::integral_cast<depth_t>(level + 1);
               sa_compress[v / 32] |= kaspan::integral_cast<kaspan::index_t>(1) << (v % 32);
-              next_work += fw_head[v + 1] - fw_head[v];
+              next_work += kaspan::integral_cast<kaspan::index_t>(fw_head[v + 1] - fw_head[v]);
               fq_comm[front_count] = v;
               ++front_count;
             }
@@ -70,7 +70,7 @@ fw_span(
 
           auto const beg = bw_head[u];
           auto const end = bw_head[u + 1];
-          next_work += end - beg;
+          next_work += kaspan::integral_cast<kaspan::index_t>(end - beg);
           for (auto it = beg; it < end; ++it) {
             auto const v = bw_csr[it];
 
@@ -87,7 +87,7 @@ fw_span(
 
     } else { // TOP DOWN QUEUE STRATEGY
 
-      auto* q = new kaspan::index_t[queue_size]{};
+      auto* q = new kaspan::vertex_t[queue_size]{};
       SCOPE_GUARD(delete[] q);
 
       kaspan::index_t head = 0;
@@ -256,7 +256,7 @@ bw_span(
   kaspan::vertex_t  root,
   double            alpha,
   kaspan::vertex_t  n,
-  kaspan::vertex_t  m,
+  kaspan::index_t   m,
   kaspan::vertex_t  step,
   kaspan::vertex_t* fq_comm,
   unsigned int*     sa_compress)
@@ -273,7 +273,7 @@ bw_span(
 
   while (true) {
     kaspan::index_t front_count = 0;
-    int             next_work   = 0;
+    kaspan::index_t next_work   = 0;
     if (is_top_down) {
       for (auto u = local_beg; u < local_end; u++) {
         if (bw_sa[u] == level) {
@@ -285,7 +285,7 @@ bw_span(
 
             if (bw_sa[v] == depth_unset && fw_sa[v] != depth_unset) {
               bw_sa[v] = kaspan::integral_cast<depth_t>(level + 1);
-              next_work += bw_head[v + 1] - bw_head[v];
+              next_work += kaspan::integral_cast<kaspan::index_t>(bw_head[v + 1] - bw_head[v]);
               fq_comm[front_count] = v;
               front_count++;
               scc_id[v] = scc_id_largest;
@@ -295,14 +295,14 @@ bw_span(
           }
         }
       }
-      work_comm[kaspan::mpi_basic::world_rank] = next_work;
+      work_comm[kaspan::mpi_basic::world_rank] = kaspan::integral_cast<int>(next_work);
     } else if (!is_top_down_queue) {
       for (auto u = local_beg; u < local_end; u++) {
         if (bw_sa[u] == depth_unset && fw_sa[u] != depth_unset) {
 
           auto const beg = fw_head[u];
           auto const end = fw_head[u + 1];
-          next_work += end - beg;
+          next_work += kaspan::integral_cast<kaspan::index_t>(end - beg);
           for (auto it = beg; it < end; it++) {
             auto const v = fw_csr[it];
 
@@ -318,10 +318,10 @@ bw_span(
           }
         }
       }
-      work_comm[kaspan::mpi_basic::world_rank] = next_work;
+      work_comm[kaspan::mpi_basic::world_rank] = kaspan::integral_cast<int>(next_work);
     } else {
 
-      auto* q = new kaspan::index_t[queue_size]{};
+      auto* q = new kaspan::vertex_t[queue_size]{};
       SCOPE_GUARD(delete[] q);
 
       kaspan::index_t head = 0;

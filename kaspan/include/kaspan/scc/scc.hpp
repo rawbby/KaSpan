@@ -29,7 +29,6 @@ scc(
 
   auto const n       = part.n();
   auto const m       = mpi_basic::allreduce_single(graph.local_fw_m, mpi_basic::sum);
-  auto const d       = m / (n / 100); // avg. degree in percent
   auto const local_n = part.local_n();
 
   auto outdegree     = make_array<vertex_t>(local_n);

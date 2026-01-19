@@ -25,13 +25,13 @@
 inline void
 scc(
   kaspan::vertex_t              n,
-  kaspan::vertex_t              m,
+  kaspan::index_t               m,
   kaspan::index_t const*        fw_head,
   kaspan::vertex_t const*       fw_csr,
   kaspan::index_t const*        bw_head,
   kaspan::vertex_t const*       bw_csr,
   int                           alpha,
-  std::vector<kaspan::index_t>* scc_id_out = nullptr)
+  std::vector<kaspan::vertex_t>* scc_id_out = nullptr)
 {
   KASPAN_STATISTIC_SCOPE("scc");
   KASPAN_STATISTIC_PUSH("alloc");
@@ -56,22 +56,22 @@ scc(
   auto* sa_compress = new unsigned int[s]{};
   SCOPE_GUARD(delete[] sa_compress);
 
-  auto* sub_vertices = new kaspan::index_t[virtual_count]{};
+  auto* sub_vertices = new kaspan::vertex_t[virtual_count]{};
   SCOPE_GUARD(delete[] sub_vertices);
 
-  auto* sub_wcc_fq = new kaspan::index_t[virtual_count]{};
+  auto* sub_wcc_fq = new kaspan::vertex_t[virtual_count]{};
   SCOPE_GUARD(delete[] sub_wcc_fq);
 
   auto* sub_vertices_inverse = new kaspan::vertex_t[n + 1]{};
   SCOPE_GUARD(delete[] sub_vertices_inverse);
 
-  auto* sub_fw_head = new kaspan::vertex_t[n + 1]{};
+  auto* sub_fw_head = new kaspan::index_t[n + 1]{};
   SCOPE_GUARD(delete[] sub_fw_head);
 
   auto* sub_fw_csr = new kaspan::vertex_t[m + 1]{};
   SCOPE_GUARD(delete[] sub_fw_csr);
 
-  auto* sub_bw_head = new kaspan::vertex_t[n + 1]{};
+  auto* sub_bw_head = new kaspan::index_t[n + 1]{};
   SCOPE_GUARD(delete[] sub_bw_head);
 
   auto* sub_bw_csr = new kaspan::vertex_t[m + 1]{};
@@ -131,7 +131,7 @@ scc(
     MPI_IN_PLACE, scc_id, n, kaspan::mpi_vertex_t,
     MPI_MIN, MPI_COMM_WORLD);
   // clang-format on
-  kaspan::index_t sub_n = 0;
+  kaspan::vertex_t sub_n = 0;
   gfq_origin(
     // input
     n,
@@ -178,6 +178,6 @@ scc(
   get_scc_result(scc_id, n);
   if (scc_id_out != nullptr) {
     scc_id_out->resize(n);
-    std::memcpy(scc_id_out->data(), scc_id, n * sizeof(kaspan::index_t));
+    std::memcpy(scc_id_out->data(), scc_id, n * sizeof(kaspan::vertex_t));
   }
 }

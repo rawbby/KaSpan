@@ -16,11 +16,11 @@ trim_1_normal(
   size_t decided_count = 0;
   for (kaspan::vertex_t vert_id = vert_beg; vert_id < vert_end; ++vert_id) {
     if (scc_id[vert_id] == kaspan::scc_id_undecided) {
-      int             my_beg     = fw_head[vert_id];
-      int             my_end     = fw_head[vert_id + 1];
-      kaspan::index_t out_degree = 0;
+      kaspan::index_t my_beg     = fw_head[vert_id];
+      kaspan::index_t my_end     = fw_head[vert_id + 1];
+      kaspan::vertex_t out_degree = 0;
       for (; my_beg < my_end; ++my_beg) {
-        kaspan::index_t w = fw_csr[my_beg];
+        kaspan::vertex_t w = fw_csr[my_beg];
         if (scc_id[w] == kaspan::scc_id_undecided && w != vert_id) {
           out_degree = 1;
           break;
@@ -31,11 +31,11 @@ trim_1_normal(
         ++decided_count;
         continue;
       }
-      kaspan::index_t in_degree = 0;
+      kaspan::vertex_t in_degree = 0;
       my_beg                    = bw_head[vert_id];
       my_end                    = bw_head[vert_id + 1];
       for (; my_beg < my_end; ++my_beg) {
-        kaspan::index_t w = bw_csr[my_beg];
+        kaspan::vertex_t w = bw_csr[my_beg];
         if (scc_id[w] == kaspan::scc_id_undecided && w != vert_id) {
           in_degree = 1;
           break;

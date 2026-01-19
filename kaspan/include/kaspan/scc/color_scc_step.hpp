@@ -199,9 +199,9 @@ color_scc_step_multi(
   auto        changed = view_bits(changed_storage, local_n);
 
   auto const count_degree = [=, &part](vertex_t k, graph_view const g) {
-    index_t degree = 0;
+    vertex_t degree = 0;
     for (auto u : g.csr_range(k)) {
-      degree += integral_cast<index_t>(!part.has_local(u) || scc_id[part.to_local(u)] == scc_id_undecided);
+      degree += integral_cast<vertex_t>(!part.has_local(u) || scc_id[part.to_local(u)] == scc_id_undecided);
     }
     return degree;
   };
@@ -232,7 +232,7 @@ color_scc_step_multi(
         continue;
       }
 
-      auto const degree_product = in_degree * out_degree;
+      auto const degree_product = integral_cast<index_t>(in_degree) * out_degree;
       if (degree_product > max_degree_product) {
         max_degree_product = degree_product;
         max_degree_vertex  = k;

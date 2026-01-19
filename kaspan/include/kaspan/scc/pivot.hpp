@@ -3,6 +3,7 @@
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 
@@ -35,7 +36,7 @@ select_pivot_from_head(
 
   for (vertex_t k = 0; k < part.local_n(); ++k) {
     if (scc_id[k] == scc_id_undecided) {
-      auto const degree_product = graph.outdegree(k) * graph.indegree(k);
+      auto const degree_product = integral_cast<index_t>(graph.outdegree(k)) * graph.indegree(k);
       if (degree_product > local_max.degree_product) [[unlikely]]
         local_max = degree_t{ degree_product, part.to_global(k) };
     }
@@ -62,7 +63,7 @@ select_pivot_from_degree(
 
   for (vertex_t k = 0; k < part.local_n(); ++k) {
     if (scc_id[k] == scc_id_undecided) {
-      auto const degree_product = outdegree[k] * indegree[k];
+      auto const degree_product = integral_cast<index_t>(outdegree[k]) * indegree[k];
       if (degree_product > local_max.degree_product) [[unlikely]]
         local_max = degree_t{ degree_product, part.to_global(k) };
     }

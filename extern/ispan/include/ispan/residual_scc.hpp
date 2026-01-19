@@ -4,8 +4,8 @@
 
 inline void
 residual_scc(
-  kaspan::index_t const*  sub_wcc_id,
-  kaspan::index_t*        sub_scc_id,
+  kaspan::vertex_t const* sub_wcc_id,
+  kaspan::vertex_t*       sub_scc_id,
   kaspan::index_t const*  sub_fw_head,
   kaspan::index_t const*  sub_bw_head,
   kaspan::vertex_t const* sub_fw_csr,
@@ -25,7 +25,7 @@ residual_scc(
   kaspan::index_t const rank_wcc_beg = kaspan::mpi_basic::world_rank * step;
   kaspan::index_t const rank_wcc_end = rank_wcc_beg + step;
 
-  auto* q = new kaspan::index_t[sub_n]{};
+  auto* q = new kaspan::vertex_t[sub_n]{};
   SCOPE_GUARD(delete[] q);
 
   kaspan::index_t head = 0;

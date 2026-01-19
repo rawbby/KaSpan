@@ -90,7 +90,7 @@ allgather_csr_degrees(
     auto const beg = head[k];
     auto const end = head[k + 1];
 
-    index_t deg = 0;
+    vertex_t deg = 0;
     for (index_t it = beg; it < end; ++it) {
       auto const        v  = csr[it];
       auto const* const jt = std::lower_bound(ids_inverse, ids_inverse + sub_n, v);
@@ -119,7 +119,7 @@ allgather_csr_with_degrees(
   vertex_t const* local_ids_inverse,
   vertex_t        sub_n,
   vertex_t const* ids_inverse,
-  vertex_t const* sub_outdegree)
+  vertex_t const*  sub_outdegree)
 {
   index_t local_sub_m = 0;
   for (vertex_t i = 0; i < local_sub_n; ++i) {
@@ -140,7 +140,7 @@ allgather_csr_with_degrees(
     auto const k      = part.to_local(u);
     auto const beg    = head[k];
     auto const end    = head[k + 1];
-    vertex_t   found  = 0;
+    vertex_t    found  = 0;
 
     for (index_t it = beg; it < end; ++it) {
       auto const        v  = csr[it];
@@ -287,7 +287,7 @@ allgather_fw_sub_graph_with_degrees(
   if (sub_n > 0) {
     auto [tmp_c, counts, displs] = mpi_basic::counts_and_displs();
 
-    auto sub_outdegrees = make_array<index_t>(sub_n + 1);
+    auto sub_outdegrees = make_array<vertex_t>(sub_n + 1);
     sub_outdegrees[0]   = 0;
 
     auto local_sub_outdegree = make_stack<vertex_t>(local_sub_n);

@@ -4,7 +4,7 @@
 
 static void
 gfq_origin(
-  kaspan::index_t const   n,
+  kaspan::vertex_t const   n,
   kaspan::vertex_t const* scc_id,
   kaspan::index_t const*  fw_head,
   kaspan::vertex_t const* fw_csr,
@@ -14,9 +14,9 @@ gfq_origin(
   kaspan::vertex_t& sub_n,
   kaspan::vertex_t* sub_vertices,
   kaspan::vertex_t* sub_vertices_inverse,
-  kaspan::vertex_t* sub_fw_head,
+  kaspan::index_t*  sub_fw_head,
   kaspan::vertex_t* sub_fw_csr,
-  kaspan::vertex_t* sub_bw_head,
+  kaspan::index_t*  sub_bw_head,
   kaspan::vertex_t* sub_bw_csr)
 {
   sub_n = 0;

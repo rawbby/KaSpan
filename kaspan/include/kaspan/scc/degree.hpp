@@ -2,19 +2,20 @@
 
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/concept.hpp>
+#include <kaspan/util/integral_cast.hpp>
 
 namespace kaspan {
 
-inline index_t
+inline vertex_t
 degree(
   index_t const* head,
   vertex_t       u)
 {
-  return head[u - 1] - head[u];
+  return integral_cast<vertex_t>(head[u + 1] - head[u]);
 }
 
 inline index_t
-degree(
+total_degree(
   vertex_t       n,
   index_t const* head)
 {
@@ -31,7 +32,7 @@ degree(
   Part const&    part,
   index_t const* head)
 {
-  return degree(part.local_n(), head);
+  return total_degree(part.local_n(), head);
 }
 
 template<part_concept Part>
