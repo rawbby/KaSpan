@@ -137,7 +137,8 @@ scc(
     KASPAN_STATISTIC_SCOPE("residual");
     auto const undecided_filter = SCC_ID_UNDECIDED_FILTER(local_n, scc_id);
 
-    auto [sub_ids_inverse, sub_graph] = allgather_fw_sub_graph(part, local_n - local_decided, graph.fw.head, graph.fw.csr, undecided_filter);
+    auto [sub_ids_inverse, sub_graph, sub_indegree] =
+      allgather_fw_sub_graph_with_degrees(part, local_n - local_decided, graph.fw.head, graph.fw.csr, outdegree.data(), indegree.data(), undecided_filter);
 
     if (sub_graph.n) {
       tarjan(sub_graph.view(), [&](auto const* beg, auto const* end) {

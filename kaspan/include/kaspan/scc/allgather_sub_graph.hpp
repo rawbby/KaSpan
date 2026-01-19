@@ -108,6 +108,57 @@ allgather_csr_degrees(
   return PACK(buffer, sub_m, counts, displs, local_sub_csr, local_sub_degrees);
 }
 
+template<part_concept Part>
+auto
+allgather_csr_with_degrees(
+  Part const&     part,
+  vertex_t        local_sub_n,
+  index_t const*  head,
+  vertex_t const* csr,
+
+  vertex_t const* local_ids_inverse,
+  vertex_t        sub_n,
+  vertex_t const* ids_inverse,
+  vertex_t const* sub_outdegree)
+{
+  index_t local_sub_m = 0;
+  for (vertex_t i = 0; i < local_sub_n; ++i) {
+    local_sub_m += sub_outdegree[i];
+  }
+
+  auto  buffer = make_buffer<MPI_Count, MPI_Aint, vertex_t>(mpi_basic::world_size, mpi_basic::world_size, local_sub_m);
+  void* memory = buffer.data();
+
+  auto [counts, displs] = mpi_basic::counts_and_displs(&memory);
+  auto local_sub_csr    = borrow_stack<vertex_t>(&memory, local_sub_m);
+
+  for (vertex_t i = 0; i < local_sub_n; ++i) {
+    auto const deg = sub_outdegree[i];
+    if (deg == 0) continue;
+
+    auto const u      = local_ids_inverse[i];
+    auto const k      = part.to_local(u);
+    auto const beg    = head[k];
+    auto const end    = head[k + 1];
+    vertex_t   found  = 0;
+
+    for (index_t it = beg; it < end; ++it) {
+      auto const        v  = csr[it];
+      auto const* const jt = std::lower_bound(ids_inverse, ids_inverse + sub_n, v);
+      if (jt != ids_inverse + sub_n && *jt == v) {
+        local_sub_csr.push(integral_cast<vertex_t>(std::distance(ids_inverse, jt)));
+        if (++found == deg) break;
+      }
+    }
+    DEBUG_ASSERT_EQ(found, deg);
+  }
+
+  mpi_basic::allgather_counts(local_sub_csr.size(), counts);
+  auto const sub_m = integral_cast<index_t>(mpi_basic::displs(counts, displs));
+
+  return PACK(buffer, sub_m, counts, displs, local_sub_csr);
+}
+
 }
 
 template<class Part,
@@ -210,6 +261,70 @@ allgather_fw_sub_graph(
   }
 
   return PACK(super_ids, g);
+}
+
+template<class Part,
+         class fn_t>
+  requires(Part::ordered() && std::convertible_to<std::invoke_result_t<fn_t,
+                                                                       vertex_t>,
+                                                  bool>)
+auto
+allgather_fw_sub_graph_with_degrees(
+  Part const&     part,
+  vertex_t        local_sub_n,
+  index_t const*  fw_head,
+  vertex_t const* fw_csr,
+  vertex_t const* local_outdegree,
+  vertex_t const* local_indegree,
+  fn_t&&          in_sub_graph)
+{
+  auto [sub_n, super_ids, local_super_ids] = sub_graph::allgather_sub_ids(part, local_sub_n, in_sub_graph);
+
+  auto g = graph{};
+
+  auto sub_indegree = make_array<vertex_t>(local_sub_n);
+
+  if (sub_n > 0) {
+    auto [tmp_c, counts, displs] = mpi_basic::counts_and_displs();
+
+    auto sub_outdegrees = make_array<index_t>(sub_n + 1);
+    sub_outdegrees[0]   = 0;
+
+    auto local_sub_outdegree = make_stack<vertex_t>(local_sub_n);
+    auto local_sub_indegree  = make_stack<vertex_t>(local_sub_n);
+
+    auto const local_n = part.local_n();
+    for (vertex_t k = 0; k < local_n; ++k) {
+      if (in_sub_graph(k)) {
+        local_sub_outdegree.push(local_outdegree[k]);
+        local_sub_indegree.push(local_indegree[k]);
+      }
+    }
+
+    mpi_basic::allgather_counts(local_sub_n, counts);
+    auto const recv_count = mpi_basic::displs(counts, displs);
+    DEBUG_ASSERT_EQ(sub_n, recv_count);
+
+    mpi_basic::allgatherv<vertex_t>(local_sub_outdegree.data(), local_sub_n, sub_outdegrees.data() + 1, counts, displs);
+
+    for (vertex_t u = 0; u < sub_n; ++u) {
+      sub_outdegrees[u + 1] = sub_outdegrees[u] + sub_outdegrees[u + 1];
+    }
+
+    auto [tmp_c2, sub_m, csr_counts, csr_displs, local_sub_fw_csr] =
+      sub_graph::allgather_csr_with_degrees(part, local_sub_n, fw_head, fw_csr, local_super_ids, sub_n, super_ids.data(), local_sub_outdegree.data());
+
+    DEBUG_ASSERT_EQ(sub_outdegrees[sub_n], sub_m);
+
+    g = graph{ sub_n, sub_m };
+    std::copy(sub_outdegrees.data(), sub_outdegrees.data() + sub_n + 1, g.head);
+
+    mpi_basic::allgatherv<vertex_t>(local_sub_fw_csr.data(), local_sub_fw_csr.size(), g.csr, csr_counts, csr_displs);
+
+    std::copy(local_sub_indegree.data(), local_sub_indegree.data() + local_sub_n, sub_indegree.data());
+  }
+
+  return PACK(super_ids, g, sub_indegree);
 }
 
 } // namespace kaspan
