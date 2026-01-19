@@ -19,7 +19,7 @@ public:
       local_n_ = n_;
       return;
     }
-    local_n_ = static_cast<vertex_t>(r) >= n_ ? 0 : (n_ - static_cast<vertex_t>(r) + mpi_basic::world_size - 1) / mpi_basic::world_size;
+    local_n_ = integral_cast<vertex_t>(r) >= n_ ? 0 : (n_ - integral_cast<vertex_t>(r) + mpi_basic::world_size - 1) / mpi_basic::world_size;
   }
 
   [[nodiscard]] constexpr auto n() const noexcept -> vertex_t
@@ -36,21 +36,21 @@ public:
     vertex_t i) const noexcept -> vertex_t
   {
     if (mpi_basic::world_size == 1) return i;
-    return (i - static_cast<vertex_t>(world_rank_)) / mpi_basic::world_size;
+    return (i - integral_cast<vertex_t>(world_rank_)) / mpi_basic::world_size;
   }
 
   [[nodiscard]] constexpr auto to_global(
     vertex_t k) const noexcept -> vertex_t
   {
     if (mpi_basic::world_size == 1) return k;
-    return static_cast<vertex_t>(world_rank_) + k * mpi_basic::world_size;
+    return integral_cast<vertex_t>(world_rank_) + k * mpi_basic::world_size;
   }
 
   [[nodiscard]] constexpr auto has_local(
     vertex_t i) const noexcept -> bool
   {
     if (mpi_basic::world_size == 1) return true;
-    return (i % mpi_basic::world_size) == static_cast<vertex_t>(world_rank_);
+    return (i % mpi_basic::world_size) == integral_cast<vertex_t>(world_rank_);
   }
 
   [[nodiscard]] static constexpr auto continuous() noexcept -> bool
@@ -77,7 +77,7 @@ public:
     vertex_t i) noexcept -> i32
   {
     if (mpi_basic::world_size == 1) return 0;
-    return static_cast<i32>(i % mpi_basic::world_size);
+    return integral_cast<i32>(i % mpi_basic::world_size);
   }
 
 private:

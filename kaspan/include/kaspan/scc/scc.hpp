@@ -28,6 +28,8 @@ scc(
   KASPAN_STATISTIC_SCOPE("scc");
 
   auto const n       = part.n();
+  auto const m       = mpi_basic::allreduce_single(graph.local_fw_m, mpi_basic::sum);
+  auto const d       = m / (n / 100); // avg. degree in percent
   auto const local_n = part.local_n();
 
   auto outdegree     = make_array<vertex_t>(local_n);
@@ -60,67 +62,75 @@ scc(
   DEBUG_ASSERT_GE(decided_threshold, 0);
 
   if (global_decided < decided_threshold) {
-    {
-      KASPAN_STATISTIC_SCOPE("forward_backward_search");
+    KASPAN_STATISTIC_SCOPE("forward_backward_search");
 
-      // as degree arrays are up to date we can use this more
-      // accurate degree information for a better pivot selection
-      auto pivot = select_pivot_from_degree(part, scc_id, outdegree.data(), indegree.data());
+    // as degree arrays are up to date we can use this more
+    // accurate degree information for a better pivot selection
+    auto pivot = select_pivot_from_degree(part, scc_id, outdegree.data(), indegree.data());
 
-      auto bitvector   = make_bits_clean(local_n);
-      auto fb_frontier = vertex_frontier<>::create(local_n);
+    auto bitvector   = make_bits_clean(local_n);
+    auto fb_frontier = vertex_frontier<>::create(local_n);
 
-      forward_search(graph.fw_view(), fb_frontier, scc_id, bitvector.data(), pivot);
-      local_decided += backward_search(graph.bw_view(), fb_frontier, scc_id, bitvector.data(), pivot, [&](vertex_t k) {
-        decided_stack.push(k);
-      });
-      local_decided += trim_1_exhaustive(graph, scc_id, outdegree.data(), indegree.data(), frontier, decided_stack.begin(), decided_stack.end());
-      decided_stack.clear();
+    forward_search(graph.fw_view(), fb_frontier, scc_id, bitvector.data(), pivot);
+    local_decided += backward_search(graph.bw_view(), fb_frontier, scc_id, bitvector.data(), pivot, [&](vertex_t k) {
+      decided_stack.push(k);
+    });
 
-      auto const prev_global_decided = global_decided;
+    auto const prev_global_decided = global_decided;
 
-      global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-      KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
-      KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
-    }
+    global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+    KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
+    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   }
 
   if (global_decided < decided_threshold) {
-    {
-      KASPAN_STATISTIC_SCOPE("color");
+    KASPAN_STATISTIC_SCOPE("color");
 
-      auto colors        = make_array<vertex_t>(local_n);
-      auto active_array  = make_array<vertex_t>(local_n - local_decided);
-      auto active        = make_bits_clean(local_n);
-      auto changed       = make_bits_clean(local_n);
-      auto frontier_edge = edge_frontier::create(local_n);
+    auto colors        = make_array<vertex_t>(local_n);
+    auto active_array  = make_array<vertex_t>(local_n - local_decided);
+    auto active        = make_bits_clean(local_n);
+    auto changed       = make_bits_clean(local_n);
+    auto frontier_edge = edge_frontier::create(local_n);
 
-      auto const prev_global_decided = global_decided;
+    vertex_t iterations = 0;
 
-      do {
+    auto const prev_global_decided = global_decided;
 
-        local_decided += color_scc_step(graph, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier_edge, local_decided, [&](vertex_t k) {
+    do {
+
+      local_decided += color_scc_step(graph, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier_edge, local_decided, [&](vertex_t k) {
+        decided_stack.push(k);
+      });
+
+      global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+      ++iterations;
+
+      if (global_decided < decided_threshold) break;
+
+      local_decided +=
+        color_scc_step(graph.inverse_view(), scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier_edge, local_decided, [&](vertex_t k) {
           decided_stack.push(k);
         });
-        local_decided += trim_1_exhaustive(graph, scc_id, outdegree.data(), indegree.data(), frontier, decided_stack.begin(), decided_stack.end());
-        decided_stack.clear();
 
-        global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+      global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+      ++iterations;
 
-        local_decided +=
-          color_scc_step(graph.inverse_view(), scc_id, colors.data(), active_array.data(), active.data(), changed.data(), frontier_edge, local_decided, [&](vertex_t k) {
-            decided_stack.push(k);
-          });
-        local_decided += trim_1_exhaustive(graph, scc_id, outdegree.data(), indegree.data(), frontier, decided_stack.begin(), decided_stack.end());
-        decided_stack.clear();
+    } while (global_decided < decided_threshold);
 
-        global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+    KASPAN_STATISTIC_ADD("iterations", iterations);
+    KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
+    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
+  }
 
-      } while (global_decided < decided_threshold);
+  if (!decided_stack.empty()) {
+    KASPAN_STATISTIC_SCOPE("trim_1_exhaustive");
+    local_decided += trim_1_exhaustive(graph, scc_id, outdegree.data(), indegree.data(), frontier, decided_stack.begin(), decided_stack.end());
+    decided_stack.clear();
 
-      KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
-      KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
-    }
+    auto const prev_global_decided = global_decided;
+
+    global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+    KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
   }
 
   {

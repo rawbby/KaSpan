@@ -82,7 +82,7 @@ public:
     auto const base = n_ / mpi_basic::world_size;
     if (base == 0) return mpi_basic::world_size - 1;
     auto const r = i / base;
-    return (r >= mpi_basic::world_size) ? mpi_basic::world_size - 1 : static_cast<i32>(r);
+    return (r >= mpi_basic::world_size) ? mpi_basic::world_size - 1 : integral_cast<i32>(r);
   }
 
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t
@@ -178,7 +178,7 @@ public:
     auto const base = n_ / mpi_basic::world_size;
     if (base == 0) return mpi_basic::world_size - 1;
     auto const r = i / base;
-    return (r >= mpi_basic::world_size) ? mpi_basic::world_size - 1 : static_cast<i32>(r);
+    return (r >= mpi_basic::world_size) ? mpi_basic::world_size - 1 : integral_cast<i32>(r);
   }
 
   [[nodiscard]] constexpr auto world_part_of(

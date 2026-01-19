@@ -92,7 +92,7 @@ public:
         ++r;
     }
 
-    return static_cast<i32>(r);
+    return integral_cast<i32>(r);
   }
 
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t

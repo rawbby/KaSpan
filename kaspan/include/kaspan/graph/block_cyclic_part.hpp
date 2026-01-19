@@ -27,12 +27,12 @@ public:
     }
     auto const us         = mpi_basic::world_size;
     auto const num_blocks = (n_ + block_size_ - 1) / block_size_;
-    if (num_blocks <= static_cast<vertex_t>(r)) {
+    if (num_blocks <= integral_cast<vertex_t>(r)) {
       local_n_ = 0;
       return;
     }
-    auto const owned_blocks     = (num_blocks - static_cast<vertex_t>(r) + us - 1) / us;
-    auto const last_owned_block = static_cast<vertex_t>(r) + (owned_blocks - 1) * us;
+    auto const owned_blocks     = (num_blocks - integral_cast<vertex_t>(r) + us - 1) / us;
+    auto const last_owned_block = integral_cast<vertex_t>(r) + (owned_blocks - 1) * us;
     auto const last_block_size  = (last_owned_block == num_blocks - 1) ? n_ - last_owned_block * block_size_ : block_size_;
     local_n_                    = (owned_blocks - 1) * block_size_ + last_block_size;
   }
@@ -58,14 +58,14 @@ public:
     vertex_t k) const noexcept -> vertex_t
   {
     if (mpi_basic::world_size == 1) return k;
-    return (k / block_size_) * (block_size_ * mpi_basic::world_size) + (static_cast<vertex_t>(world_rank_) * block_size_) + (k % block_size_);
+    return (k / block_size_) * (block_size_ * mpi_basic::world_size) + (integral_cast<vertex_t>(world_rank_) * block_size_) + (k % block_size_);
   }
 
   [[nodiscard]] constexpr auto has_local(
     vertex_t i) const noexcept -> bool
   {
     if (mpi_basic::world_size == 1) return true;
-    return (i / block_size_) % mpi_basic::world_size == static_cast<vertex_t>(world_rank_);
+    return (i / block_size_) % mpi_basic::world_size == integral_cast<vertex_t>(world_rank_);
   }
 
   [[nodiscard]] static constexpr auto continuous() noexcept -> bool
@@ -92,7 +92,7 @@ public:
     vertex_t i) const noexcept -> i32
   {
     if (mpi_basic::world_size == 1) return 0;
-    return static_cast<i32>(i / block_size_ % mpi_basic::world_size);
+    return integral_cast<i32>(i / block_size_ % mpi_basic::world_size);
   }
 
 private:
@@ -121,7 +121,7 @@ public:
       return;
     }
     auto const num_blocks = (n_ + block_size_ - 1) / block_size_;
-    if (num_blocks <= static_cast<vertex_t>(mpi_basic::world_rank)) {
+    if (num_blocks <= integral_cast<vertex_t>(mpi_basic::world_rank)) {
       local_n_ = 0;
       return;
     }

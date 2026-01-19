@@ -88,8 +88,8 @@ public:
     auto const base  = n_ / mpi_basic::world_size;
     auto const rem   = n_ % mpi_basic::world_size;
     auto const split = rem * (base + 1);
-    if (i < split) return static_cast<i32>(i / (base + 1));
-    return static_cast<i32>(rem + (i - split) / base);
+    if (i < split) return integral_cast<i32>(i / (base + 1));
+    return integral_cast<i32>(rem + (i - split) / base);
   }
 
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t
