@@ -106,9 +106,7 @@ struct edge_frontier
     recv_buffer.resize(recv_offset + recv_count);
     auto* recv_memory = recv_buffer.data() + recv_offset;
 
-    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](edge_t const& e) {
-      return part.world_rank_of(e.u);
-    });
+    mpi_basic::inplace_partition_by_rank(send_buffer.data(), send_counts, send_displs, [&part](edge_t const& e) { return part.world_rank_of(e.u); });
 
     mpi_basic::alltoallv(send_buffer.data(), send_counts, send_displs, recv_memory, recv_counts, recv_displs, mpi_edge_t);
 

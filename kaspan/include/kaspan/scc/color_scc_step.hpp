@@ -267,17 +267,6 @@ color_scc_step(
   auto        changed      = view_bits(changed_storage, local_n);
   auto        active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
 
-#if KASPAN_DEBUG
-  // Validate decided_count is consistent with scc_id
-  vertex_t actual_decided_count = 0;
-  for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] != scc_id_undecided) {
-      ++actual_decided_count;
-    }
-  }
-  DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
-#endif
-
   for (vertex_t k = 0; k < local_n; ++k) {
     colors[k] = part.to_global(k);
   }

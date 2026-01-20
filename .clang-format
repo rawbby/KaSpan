@@ -5,7 +5,7 @@ UseTab: Never
 MaxEmptyLinesToKeep: 1
 BreakBeforeBinaryOperators: None
 AllowShortFunctionsOnASingleLine: Empty
-AllowShortLambdasOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: All
 Standard: Latest
 AlignConsecutiveAssignments:
   Enabled: true
