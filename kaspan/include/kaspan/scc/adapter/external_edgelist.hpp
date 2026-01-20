@@ -382,7 +382,7 @@ convert_graph(
   if (file_size < mem_bytes) {
     return convert_graph_internal::convert_graph<convert_graph_internal::local_sort_adapter>(input_file, file_size, graph_name);
   }
-  return convert_graph_internal::convert_graph<convert_graph_internal::extern_sort_adapter>(input_file, file_size, graph_name);
+  return convert_graph_internal::convert_graph<convert_graph_internal::extern_sort_adapter>(input_file, mem_bytes, graph_name);
 }
 
 } // namespace kaspan
