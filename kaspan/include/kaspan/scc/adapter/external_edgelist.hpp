@@ -201,8 +201,10 @@ convert_graph(
   std::string const code = input_file.substr(0, input_file.find_first_of('.'));
   std::string const name = graph_name.empty() ? code : graph_name;
 
+  std::println("[CONVERT] pre file open");
   std::ifstream in{ input_file };
   ASSERT(in);
+  std::println("[CONVERT] post file open");
 
   u64  m              = 0;
   u64  n              = 0;
@@ -217,7 +219,9 @@ convert_graph(
   std::string const bw_head_path  = code + ".bw.head.bin";
   std::string const bw_csr_path   = code + ".bw.csr.bin";
 
+  std::println("[CONVERT] pre sorter creation");
   sorter_t sort{ mem_bytes };
+  std::println("[CONVERT] post sorter creation");
 
   // first pass for forward
   {
