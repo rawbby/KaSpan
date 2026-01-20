@@ -219,7 +219,7 @@ convert_graph(
   std::string const bw_head_path  = code + ".bw.head.bin";
   std::string const bw_csr_path   = code + ".bw.csr.bin";
 
-  std::println("[CONVERT] pre sorter creation");
+  std::println("[CONVERT] pre sorter creation (bytes: {})", mem_bytes);
   sorter_t sort{ mem_bytes };
   std::println("[CONVERT] post sorter creation");
 
