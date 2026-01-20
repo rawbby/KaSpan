@@ -243,8 +243,10 @@ convert_graph(
     head_bytes = representing_bytes(m);
     csr_bytes  = representing_bytes(max_node);
 
+    std::println("[CONVERT] pre file buffer");
     auto head_buffer = file_buffer::create_w<true>(fw_head_path.c_str(), (n + 1) * head_bytes);
     auto csr_buffer  = file_buffer::create_w<true>(fw_csr_path.c_str(), m * csr_bytes);
+    std::println("[CONVERT] post file buffer");
 
     auto head = view_dense_unsigned(head_buffer.data(), n + 1, head_bytes);
     auto csr  = view_dense_unsigned(csr_buffer.data(), m, csr_bytes);
