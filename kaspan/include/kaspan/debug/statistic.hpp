@@ -1,7 +1,5 @@
 #pragma once
 
-#include "kaspan/memory/accessor/vector.hpp"
-
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/memory/borrow.hpp>
@@ -25,8 +23,8 @@ namespace kaspan {
 
 struct statistic_entry
 {
-  size_t      parent;
   char const* name;
+  size_t      parent;
   u64         value;
 };
 
@@ -36,21 +34,30 @@ struct statistic_node
   using unit      = std::chrono::nanoseconds;
   using timestamp = unit::rep;
 
-  size_t      parent;
-  size_t      end;
-  char const* name;
-  timestamp   duration;
+  char const* name     = nullptr;
+  size_t      parent   = 0;
+  size_t      end      = 0;
+  timestamp   duration = 0;
+
+  constexpr statistic_node() noexcept  = default;
+  constexpr ~statistic_node() noexcept = default;
 
   statistic_node(
+    char const* name,
     size_t      parent,
-    size_t      end,
-    char const* name)
-    : parent(parent)
+    size_t      end)
+    : name(name)
+    , parent(parent)
     , end(end)
-    , name(name)
     , duration(now())
   {
   }
+
+  constexpr statistic_node(statistic_node const&) noexcept = default;
+  constexpr statistic_node(statistic_node&&) noexcept      = default;
+
+  constexpr auto operator=(statistic_node const&) noexcept -> statistic_node& = default;
+  constexpr auto operator=(statistic_node&&) noexcept -> statistic_node&      = default;
 
   static timestamp now()
   {
@@ -64,16 +71,19 @@ struct statistic_node
 };
 
 inline auto g_kaspan_statistic_nodes = [] {
-  auto result = vector<statistic_node>{};
+  auto result = std::vector<statistic_node>{};
+  result.reserve((8 * 1024 + sizeof(statistic_node) - 1) / sizeof(statistic_node));
   return result;
 }();
 inline auto g_kaspan_statistic_entries = [] {
-  auto result = vector<statistic_entry>{};
+  auto result = std::vector<statistic_entry>{};
+  result.reserve((8 * 1024 + sizeof(statistic_entry) - 1) / sizeof(statistic_entry));
   return result;
 }();
 inline auto g_kaspan_statistic_stack = [] {
-  auto result = vector<size_t>{};
-  result.push_back(SIZE_MAX); // sentinel
+  auto result = std::vector<size_t>{};
+  result.reserve((8 * 1024 + sizeof(size_t) - 1) / sizeof(size_t));
+  result.emplace_back(SIZE_MAX); // sentinel
   return result;
 }();
 
@@ -84,7 +94,7 @@ kaspan_statistic_add(
 {
   DEBUG_ASSERT(!g_kaspan_statistic_stack.empty());
   auto const parent = g_kaspan_statistic_stack.back();
-  g_kaspan_statistic_entries.emplace_back(parent, name, value);
+  g_kaspan_statistic_entries.emplace_back(name, parent, value);
 }
 
 inline void
@@ -93,7 +103,7 @@ kaspan_statistic_push(
 {
   auto const new_parent = g_kaspan_statistic_nodes.size();
   auto const old_parent = g_kaspan_statistic_stack.back();
-  g_kaspan_statistic_nodes.emplace_back(old_parent, new_parent, name);
+  g_kaspan_statistic_nodes.emplace_back(name, old_parent, new_parent);
   g_kaspan_statistic_stack.emplace_back(new_parent);
 }
 
