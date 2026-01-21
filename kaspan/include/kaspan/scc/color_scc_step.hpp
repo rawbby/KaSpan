@@ -4,7 +4,7 @@
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
-#include <kaspan/scc/edge_frontier.hpp>
+#include <kaspan/scc/frontier.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 
@@ -32,7 +32,7 @@ color_scc_step_multi(
   vertex_t*                  active_array,
   u64*                       active_storage,
   u64*                       changed_storage,
-  edge_frontier&             frontier,
+  frontier_view<edge_t>      frontier,
   vertex_t                   local_pivot,
   auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
@@ -190,7 +190,7 @@ color_scc_step_multi(
   vertex_t*                  active_array,
   u64*                       active_storage,
   u64*                       changed_storage,
-  edge_frontier&             frontier,
+  frontier_view<edge_t>      frontier,
   auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
   auto const& part    = *graph.part;
@@ -257,7 +257,7 @@ color_scc_step(
   vertex_t*                  active_array,
   u64*                       active_storage,
   u64*                       changed_storage,
-  edge_frontier&             frontier,
+  frontier_view<edge_t>      frontier,
   vertex_t                   decided_count = 0,
   auto&&                     on_decision   = [](vertex_t) {}) -> vertex_t
 {

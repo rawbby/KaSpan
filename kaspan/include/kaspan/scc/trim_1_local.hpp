@@ -2,7 +2,7 @@
 
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
-#include <kaspan/scc/vertex_frontier.hpp>
+#include <kaspan/scc/frontier.hpp>
 
 namespace kaspan {
 
@@ -14,7 +14,7 @@ trim_1_first(
   vertex_t*                            scc_id,
   vertex_t*                            outdegree,
   vertex_t*                            indegree,
-  vertex_frontier<InterleavedSupport>& frontier)
+  frontier_view<vertex_t, InterleavedSupport> frontier)
 {
   struct return_t
   {

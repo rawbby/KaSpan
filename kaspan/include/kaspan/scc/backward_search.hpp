@@ -4,7 +4,7 @@
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/graph_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
-#include <kaspan/scc/vertex_frontier.hpp>
+#include <kaspan/scc/frontier.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
 namespace kaspan {
@@ -14,7 +14,7 @@ template<bool         InterleavedSupport = false,
 auto
 backward_search(
   graph_part_view<Part>                graph,
-  vertex_frontier<InterleavedSupport>& frontier,
+  frontier_view<vertex_t, InterleavedSupport> frontier,
   vertex_t*                            scc_id,
   u64*                                 fw_reached_storage,
   vertex_t                             pivot,

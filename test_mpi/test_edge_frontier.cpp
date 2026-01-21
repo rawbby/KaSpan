@@ -3,7 +3,7 @@
 #include <kaspan/graph/balanced_slice_part.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/trivial_slice_part.hpp>
-#include <kaspan/scc/edge_frontier.hpp>
+#include <kaspan/scc/frontier.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
@@ -15,15 +15,16 @@ test_trivial_hard_coded()
   auto const part = trivial_slice_part{ mpi_basic::world_size };
   ASSERT_EQ(part.local_n(), 1);
 
-  auto front = edge_frontier::create();
+  auto front_obj = frontier{};
+  auto front     = front_obj.view<edge_t>();
 
-  ASSERT_EQ(front.recv_buffer.size(), 0);
-  ASSERT_EQ(front.send_buffer.size(), 0);
+  ASSERT_EQ(front.size(), 0);
+  ASSERT_EQ(front_obj.send_buffer.size(), 0);
 
   ASSERT_NOT(front.comm(part));
 
-  ASSERT_EQ(front.recv_buffer.size(), 0);
-  ASSERT_EQ(front.send_buffer.size(), 0);
+  ASSERT_EQ(front.size(), 0);
+  ASSERT_EQ(front_obj.send_buffer.size(), 0);
 
   for (vertex_t u = 0; u < part.n(); ++u) {
     auto const r = part.world_rank_of(u);
@@ -32,27 +33,27 @@ test_trivial_hard_coded()
   }
 
   for (i32 r = 0; r < mpi_basic::world_size; ++r) {
-    ASSERT_EQ(front.send_counts[r], 1);
+    ASSERT_EQ(front_obj.send_counts[r], 1);
   }
 
-  ASSERT_EQ(front.recv_buffer.size(), 0);
-  ASSERT_EQ(front.send_buffer.size(), mpi_basic::world_size);
+  ASSERT_EQ(front.size(), 0);
+  ASSERT_EQ(front_obj.send_buffer.size(), mpi_basic::world_size * 2);
 
   ASSERT(front.comm(part));
   for (i32 r = 0; r < mpi_basic::world_size; ++r) {
-    ASSERT_EQ(front.send_counts[r], 0);
-    ASSERT_EQ(front.recv_counts[r], 1);
-    ASSERT_EQ(front.send_displs[r], r);
-    ASSERT_EQ(front.recv_displs[r], r);
+    ASSERT_EQ(front_obj.send_counts[r], 0);
+    ASSERT_EQ(front_obj.recv_counts[r], 1);
+    ASSERT_EQ(front_obj.send_displs[r], r);
+    ASSERT_EQ(front_obj.recv_displs[r], r);
   }
 
-  ASSERT_EQ(front.recv_buffer.size(), mpi_basic::world_size);
-  ASSERT_EQ(front.send_buffer.size(), 0);
+  ASSERT_EQ(front.size(), mpi_basic::world_size);
+  ASSERT_EQ(front_obj.send_buffer.size(), 0);
 
   ASSERT_NOT(front.comm(part));
 
-  ASSERT_EQ(front.recv_buffer.size(), mpi_basic::world_size);
-  ASSERT_EQ(front.send_buffer.size(), 0);
+  ASSERT_EQ(front.size(), mpi_basic::world_size);
+  ASSERT_EQ(front_obj.send_buffer.size(), 0);
 
   i32 message_count = 0;
   while (front.has_next()) {

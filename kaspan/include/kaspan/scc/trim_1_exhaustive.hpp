@@ -3,14 +3,14 @@
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/memory/accessor/once_queue_accessor.hpp>
-#include <kaspan/scc/vertex_frontier.hpp>
+#include <kaspan/scc/frontier.hpp>
 
 namespace kaspan {
 
 /// trim_1_exhaustive iteratevely trims one direction, either forward or backward, exhaustive.
 /// To do that scc_id must be valid and degree must be valid if:
 /// scc_id[k] != undecided || valid(degree[k]).
-/// notice: you can pass a vertex_frontier with interleaved support,
+/// notice: you can pass a frontier_view with interleaved support,
 /// but its not needed nor adviced performance wise.
 template<bool         InterleavedSupport = false,
          part_concept Part>
@@ -19,7 +19,7 @@ trim_1_exhaustive(
   graph_part_view<Part>                graph,
   vertex_t*                            scc_id,
   vertex_t*                            degree,
-  vertex_frontier<InterleavedSupport>& frontier) -> vertex_t
+  frontier_view<vertex_t, InterleavedSupport> frontier) -> vertex_t
 {
   auto const& part          = *graph.part;
   vertex_t    decided_count = 0;
@@ -59,7 +59,7 @@ trim_1_exhaustive(
   vertex_t*                  scc_id,
   vertex_t*                  outdegree,
   vertex_t*                  indegree,
-  vertex_frontier<>&         frontier,
+  frontier_view<vertex_t>    frontier,
   vertex_t*                  decided_beg,
   vertex_t*                  decided_end) -> vertex_t
 {
@@ -99,7 +99,7 @@ trim_1_exhaustive_first(
   vertex_t*                     scc_id,
   vertex_t*                     outdegree,
   vertex_t*                     indegree,
-  vertex_frontier<Interleaved>& frontier) -> vertex_t
+  frontier_view<vertex_t, Interleaved> frontier) -> vertex_t
 {
   auto const& part          = *graph.part;
   auto const  local_n       = part.local_n();
@@ -172,7 +172,7 @@ trim_1_exhaustive(
   vertex_t*                  scc_id,
   vertex_t*                  outdegree,
   vertex_t*                  indegree,
-  vertex_frontier&           frontier) -> vertex_t
+  frontier_view<vertex_t, true> frontier) -> vertex_t
   requires(signed_concept<vertex_t>)
 {
   auto const& part          = *graph.part;
@@ -229,7 +229,7 @@ trim_1_exhaustive_first(
   vertex_t*                  scc_id,
   vertex_t*                  outdegree,
   vertex_t*                  indegree,
-  vertex_frontier&           frontier) -> vertex_t
+  frontier_view<vertex_t, true> frontier) -> vertex_t
   requires(signed_concept<vertex_t>)
 {
   auto const& part          = *graph.part;

@@ -2,6 +2,7 @@
 
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/graph_part.hpp>
+#include <kaspan/scc/frontier.hpp>
 
 namespace kaspan {
 
@@ -10,7 +11,7 @@ template<bool         InterleavedSupport = false,
 void
 forward_search(
   graph_part_view<Part>                graph,
-  vertex_frontier<InterleavedSupport>& frontier,
+  frontier_view<vertex_t, InterleavedSupport> frontier,
   vertex_t const*                      scc_id,
   u64*                                 fw_reached_storage,
   vertex_t                             pivot)
