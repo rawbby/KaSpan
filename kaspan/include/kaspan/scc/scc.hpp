@@ -44,7 +44,7 @@ scc(
   // notice: trim_1_exhaustive_first has a side effect by initializing scc_id with scc_id undecided
   // if trim_1_exhaustive_first is removed one has to initialize scc_id with scc_id_undecided manually!
   KASPAN_STATISTIC_PUSH("trim_1_exhaustive_first");
-  vertex_t local_decided  = trim_1_exhaustive_first(graph, scc_id, outdegree.data(), indegree.data(), front.view<vertex_t>());
+  vertex_t local_decided = trim_1_exhaustive_first(graph, scc_id, outdegree.data(), indegree.data(), front.view<vertex_t>());
   vertex_t global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("decided_count", global_decided);
   KASPAN_STATISTIC_POP();
@@ -113,7 +113,7 @@ scc(
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   }
 
-  if (!decided_stack.empty()) {
+  {
     KASPAN_STATISTIC_SCOPE("trim_1_exhaustive");
     local_decided += trim_1_exhaustive(graph, scc_id, outdegree.data(), indegree.data(), front.view<vertex_t>(), decided_stack.begin(), decided_stack.end());
     decided_stack.clear();

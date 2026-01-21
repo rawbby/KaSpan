@@ -159,7 +159,7 @@ struct frontier_view
     auto const mpi_type = std::is_same_v<T, vertex_t> ? mpi_vertex_t : mpi_edge_t;
 
     auto const send_count = mpi_basic::displs(send_counts, send_displs);
-    DEBUG_ASSERT_EQ(send_count, send_buffer->size() / element_count);
+    DEBUG_ASSERT_EQ(send_count * element_count, send_buffer->size());
 
     if (0 == mpi_basic::allreduce_single(send_count, mpi_basic::sum)) {
       return false;
