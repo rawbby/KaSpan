@@ -3,6 +3,7 @@
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/memory/accessor/vector.hpp>
 #include <kaspan/util/scope_guard.hpp>
 
 #include <unordered_set>
@@ -22,7 +23,7 @@ residual_scc(
   auto       part    = graph.part;
   auto const local_n = part.local_n();
 
-  std::vector<vertex_t>        queue;
+  vector<vertex_t>             queue;
   std::unordered_set<vertex_t> fw_reach;
 
   size_t decision_count = 0;
@@ -37,7 +38,7 @@ residual_scc(
 
       // fw search
       fw_reach.emplace(root);
-      queue.emplace_back(root);
+      queue.push_back(root);
       while (!queue.empty()) {
         auto const u = queue.back();
         queue.pop_back();
@@ -46,14 +47,14 @@ residual_scc(
           if (part.has_local(v_global)) {
             auto const v = part.to_local(v_global);
             if (sub_scc_id[v] == scc_id_undecided && fw_reach.emplace(v).second) {
-              queue.emplace_back(v);
+              queue.push_back(v);
             }
           }
         }
       }
 
       // bw search
-      queue.emplace_back(root);
+      queue.push_back(root);
       while (!queue.empty()) {
         auto const u = queue.back();
         queue.pop_back();
@@ -62,7 +63,7 @@ residual_scc(
           if (part.has_local(v_global)) {
             auto const v = part.to_local(v_global);
             if (sub_scc_id[v] == scc_id_undecided && fw_reach.contains(v)) {
-              queue.emplace_back(v);
+              queue.push_back(v);
               sub_scc_id[v] = id;
               ++decision_count;
             }

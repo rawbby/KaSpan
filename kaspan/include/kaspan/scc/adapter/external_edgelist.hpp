@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kaspan/memory/accessor/vector.hpp"
+
 #include <kaspan/graph/base.hpp>
 #include <kaspan/memory/accessor/dense_unsigned_accessor.hpp>
 #include <kaspan/memory/buffer.hpp>
@@ -103,7 +105,7 @@ parse_uv(
 
 struct local_sort_adapter
 {
-  std::vector<edge64> buffer{};
+  vector<edge64> buffer{};
 
   explicit local_sort_adapter(
     u64 memory)

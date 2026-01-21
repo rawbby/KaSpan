@@ -180,8 +180,8 @@ private:
   void grow()
   {
     if (capacity_ == 0) [[unlikely]] {
-      // minimum capacity of 64 Mibi Bytes
-      reserve(64 * 1024 * 1024);
+      // minimum capacity of 48 Kibi Bytes
+      reserve(48 * 1024);
     } else {
       // doubling strategy
       reserve(capacity_ << 1);

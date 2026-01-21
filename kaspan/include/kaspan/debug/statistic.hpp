@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kaspan/memory/accessor/vector.hpp"
+
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/memory/borrow.hpp>
@@ -62,19 +64,16 @@ struct statistic_node
 };
 
 inline auto g_kaspan_statistic_nodes = [] {
-  auto result = std::vector<statistic_node>{};
-  result.reserve(1024);
+  auto result = vector<statistic_node>{};
   return result;
 }();
 inline auto g_kaspan_statistic_entries = [] {
-  auto result = std::vector<statistic_entry>{};
-  result.reserve(1024);
+  auto result = vector<statistic_entry>{};
   return result;
 }();
 inline auto g_kaspan_statistic_stack = [] {
-  auto result = std::vector<size_t>{};
-  result.reserve(64);
-  result.emplace_back(SIZE_MAX); // sentinel
+  auto result = vector<size_t>{};
+  result.push_back(SIZE_MAX); // sentinel
   return result;
 }();
 
