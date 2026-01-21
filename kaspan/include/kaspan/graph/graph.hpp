@@ -106,11 +106,7 @@ struct graph_view
   constexpr void each_uv(
     Consumer&& consumer) const noexcept
   {
-    each_u([&](vertex_t u) {
-      each_v(u, [&](vertex_t v) {
-        consumer(u, v);
-      });
-    });
+    each_u([&](vertex_t u) { each_v(u, [&](vertex_t v) { consumer(u, v); }); });
   }
 
   /**

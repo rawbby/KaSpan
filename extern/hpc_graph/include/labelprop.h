@@ -50,15 +50,24 @@
 #include "dist_graph.h"
 
 int
-run_labelprop(dist_graph_t* g, mpi_data_t* comm, uint64_t*& labels, uint32_t num_iter);
+run_labelprop(dist_graph_t* g,
+              mpi_data_t*   comm,
+              uint64_t*&    labels,
+              uint32_t      num_iter);
 
 int
-labelprop_verify(dist_graph_t* g, uint64_t* labels);
+labelprop_verify(dist_graph_t* g,
+                 uint64_t*     labels);
 
 int
-labelprop_output(dist_graph_t* g, uint64_t* labels, char* output_file);
+labelprop_output(dist_graph_t* g,
+                 uint64_t*     labels,
+                 char*         output_file);
 
 int
-labelprop_dist(dist_graph_t* g, mpi_data_t* comm, uint32_t num_iter, char* output_file);
+labelprop_dist(dist_graph_t* g,
+               mpi_data_t*   comm,
+               uint32_t      num_iter,
+               char*         output_file);
 
 #endif

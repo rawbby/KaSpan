@@ -25,8 +25,8 @@ test_validate_scc_id(
   vertex_t const*       scc_id_orig,
   vertex_t const*       scc_id)
 {
-  auto part    = gpv.part;
-  auto const  local_n = part.local_n();
+  auto       part    = gpv.part;
+  auto const local_n = part.local_n();
 
   gpv.each_k([&](auto k) {
     if (scc_id_orig[k] != scc_id[k]) {
@@ -217,9 +217,9 @@ fuzzy_global_scc_id_and_graph(
 template<part_view_concept Part>
 auto
 fuzzy_local_scc_id_and_graph(
-  u64         seed,
-  Part  part,
-  double      degree = -1.0)
+  u64    seed,
+  Part   part,
+  double degree = -1.0)
 {
   auto const local_n = part.local_n();
 
@@ -228,9 +228,7 @@ fuzzy_local_scc_id_and_graph(
   auto scc_id_part = make_array<vertex_t>(local_n);
   auto bgp         = partition(bg.view(), part);
 
-  bgp.each_k([&](auto k) {
-    scc_id_part[k] = scc_id[part.to_global(k)];
-  });
+  bgp.each_k([&](auto k) { scc_id_part[k] = scc_id[part.to_global(k)]; });
 
   return PACK(scc_id_part, bgp);
 }

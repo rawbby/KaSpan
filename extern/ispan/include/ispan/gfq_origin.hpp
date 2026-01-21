@@ -4,7 +4,7 @@
 
 static void
 gfq_origin(
-  kaspan::vertex_t const   n,
+  kaspan::vertex_t const  n,
   kaspan::vertex_t const* scc_id,
   kaspan::index_t const*  fw_head,
   kaspan::vertex_t const* fw_csr,

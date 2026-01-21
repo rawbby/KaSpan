@@ -31,8 +31,8 @@ select_pivot_from_head(
   bidi_graph_part_view<Part> graph,
   vertex_t const*            scc_id) -> vertex_t
 {
-  auto part = graph.part;
-  degree_t    local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
+  auto     part = graph.part;
+  degree_t local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
 
   for (vertex_t k = 0; k < part.local_n(); ++k) {
     if (scc_id[k] == scc_id_undecided) {
@@ -54,7 +54,7 @@ select_pivot_from_head(
 template<part_view_concept Part>
 auto
 select_pivot_from_degree(
-  Part    part,
+  Part            part,
   vertex_t const* scc_id,
   vertex_t const* outdegree,
   vertex_t const* indegree) -> vertex_t

@@ -19,8 +19,8 @@ residual_scc(
 {
   KASPAN_STATISTIC_SCOPE("residual_scc");
 
-  auto part = graph.part;
-  auto const  local_n = part.local_n();
+  auto       part    = graph.part;
+  auto const local_n = part.local_n();
 
   std::vector<vertex_t>        queue;
   std::unordered_set<vertex_t> fw_reach;

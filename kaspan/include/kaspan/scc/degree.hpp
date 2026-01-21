@@ -29,7 +29,7 @@ template<part_view_concept Part>
   requires(Part::continuous())
 index_t
 degree(
-  Part    part,
+  Part           part,
   index_t const* head)
 {
   return total_degree(part.local_n(), head);
@@ -39,7 +39,7 @@ template<part_view_concept Part>
   requires(!Part::continuous())
 index_t
 degree(
-  Part   part,
+  Part           part,
   index_t const* head)
 {
   index_t m = 0;

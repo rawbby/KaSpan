@@ -10,11 +10,12 @@ template<bool               InterleavedSupport,
          world_part_concept Part>
 auto
 trim_1_first(
-  bidi_graph_part_view<Part>           graph,
-  vertex_t*                            scc_id,
-  vertex_t*                            outdegree,
-  vertex_t*                            indegree,
-  frontier_view<vertex_t, InterleavedSupport> frontier)
+  bidi_graph_part_view<Part>        graph,
+  vertex_t*                         scc_id,
+  vertex_t*                         outdegree,
+  vertex_t*                         indegree,
+  frontier_view<vertex_t,
+                InterleavedSupport> frontier)
 {
   struct return_t
   {
@@ -22,9 +23,9 @@ trim_1_first(
     degree   max{};
   };
 
-  auto part = graph.part;
-  auto const  local_n       = part.local_n();
-  vertex_t    decided_count = 0;
+  auto       part          = graph.part;
+  auto const local_n       = part.local_n();
+  vertex_t   decided_count = 0;
 
   // initial trim forward
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -122,9 +123,9 @@ trim_1(
   vertex_t const*            fw_degree,
   vertex_t const*            bw_degree) -> vertex_t
 {
-  auto part = graph.part;
-  auto const  local_n       = part.local_n();
-  vertex_t    decided_count = 0;
+  auto       part          = graph.part;
+  auto const local_n       = part.local_n();
+  vertex_t   decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
     if (scc_id[k] == scc_id_undecided) {
       if (!fw_degree[k] || !bw_degree[k]) {

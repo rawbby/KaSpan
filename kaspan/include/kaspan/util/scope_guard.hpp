@@ -38,18 +38,8 @@ private:
   fn_t fn;
 };
 
-#define SCOPE_GUARD_1(F0)                                                                                                                                                          \
-  [[maybe_unused]] auto const CAT(guard, __COUNTER__) = kaspan::scope_guard([&] {                                                                                                  \
-    F0;                                                                                                                                                                            \
-  })
-#define SCOPE_GUARD_2(F0, F_)                                                                                                                                                      \
-  [[maybe_unused]] auto const CAT(guard, __COUNTER__) = kaspan::scope_guard(                                                                                                       \
-    [&] {                                                                                                                                                                          \
-      F0;                                                                                                                                                                          \
-    },                                                                                                                                                                             \
-    [&] {                                                                                                                                                                          \
-      F_;                                                                                                                                                                          \
-    })
+#define SCOPE_GUARD_1(F0) [[maybe_unused]] auto const CAT(guard, __COUNTER__) = kaspan::scope_guard([&] { F0; })
+#define SCOPE_GUARD_2(F0, F_) [[maybe_unused]] auto const CAT(guard, __COUNTER__) = kaspan::scope_guard([&] { F0; }, [&] { F_; })
 #define SCOPE_GUARD(...) CAT(SCOPE_GUARD_, ARGS_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
 } // namespace kaspan

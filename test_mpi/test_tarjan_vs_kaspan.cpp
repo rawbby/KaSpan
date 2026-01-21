@@ -1,4 +1,3 @@
-#include <kaspan/test/fuzzy.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/graph/base.hpp>
@@ -8,6 +7,7 @@
 #include <kaspan/scc/async/scc.hpp>
 #include <kaspan/scc/scc.hpp>
 #include <kaspan/scc/tarjan.hpp>
+#include <kaspan/test/fuzzy.hpp>
 
 #include <briefkasten/noop_indirection.hpp>
 

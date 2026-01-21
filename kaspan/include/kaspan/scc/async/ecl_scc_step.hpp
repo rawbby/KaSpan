@@ -41,8 +41,8 @@ ecl_scc_step(
   bits_accessor              bw_changed,
   vertex_t                   decided_count = 0) -> vertex_t
 {
-  auto part = graph.part;
-  auto const  local_n = part.local_n();
+  auto       part    = graph.part;
+  auto const local_n = part.local_n();
 
   auto fw_active_stack = view_stack<vertex_t>(fw_active_array, local_n);
   auto bw_active_stack = view_stack<vertex_t>(bw_active_array, local_n);
@@ -83,15 +83,11 @@ ecl_scc_step(
 
   fw_active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
   std::memcpy(fw_changed.data(), fw_active.data(), (local_n + 7) >> 3);
-  fw_active.for_each(local_n, [&](auto k) {
-    fw_active_stack.push(k);
-  });
+  fw_active.for_each(local_n, [&](auto k) { fw_active_stack.push(k); });
 
   bw_active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
   std::memcpy(bw_changed.data(), bw_active.data(), (local_n + 7) >> 3);
-  bw_active.for_each(local_n, [&](auto k) {
-    bw_active_stack.push(k);
-  });
+  bw_active.for_each(local_n, [&](auto k) { bw_active_stack.push(k); });
 
   mpi_basic::barrier();
   mq.reactivate();

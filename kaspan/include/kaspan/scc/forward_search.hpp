@@ -15,9 +15,9 @@ forward_search(
   u64*                    fw_reached_storage,
   vertex_t                pivot)
 {
-  auto part = graph.part;
-  auto const  local_n    = part.local_n();
-  auto        fw_reached = view_bits(fw_reached_storage, local_n);
+  auto       part       = graph.part;
+  auto const local_n    = part.local_n();
+  auto       fw_reached = view_bits(fw_reached_storage, local_n);
 
   DEBUG_ASSERT_NOT(frontier.has_next());
   if (part.has_local(pivot)) {

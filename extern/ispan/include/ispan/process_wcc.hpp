@@ -6,10 +6,10 @@
 
 inline void
 process_wcc(
-  kaspan::vertex_t       n,
-  kaspan::vertex_t*      wcc_fq,
+  kaspan::vertex_t        n,
+  kaspan::vertex_t*       wcc_fq,
   kaspan::vertex_t const* wcc_id,
-  kaspan::vertex_t&      wcc_fq_size)
+  kaspan::vertex_t&       wcc_fq_size)
 {
   wcc_fq_size = 0;
   for (kaspan::vertex_t i = 0; i < n; ++i)

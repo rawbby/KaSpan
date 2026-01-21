@@ -1,6 +1,6 @@
-#include <kaspan/graph/single_part.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/graph_part.hpp>
+#include <kaspan/graph/single_part.hpp>
 
 #include <vector>
 
@@ -45,9 +45,7 @@ main()
     ASSERT_EQ(gp.outdegree(0), 2);
 
     std::vector<vertex_t> neighbors;
-    gp.each_v(0, [&](vertex_t v) {
-      neighbors.push_back(v);
-    });
+    gp.each_v(0, [&](vertex_t v) { neighbors.push_back(v); });
     ASSERT_EQ(neighbors.size(), 2);
     ASSERT_EQ(neighbors[0], 1);
     ASSERT_EQ(neighbors[1], 2);

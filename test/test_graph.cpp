@@ -48,9 +48,7 @@ main()
     ASSERT_EQ(range0[1], 2);
 
     std::vector<std::pair<vertex_t, vertex_t>> edges;
-    g.each_uv([&](vertex_t u, vertex_t v) {
-      edges.push_back({ u, v });
-    });
+    g.each_uv([&](vertex_t u, vertex_t v) { edges.push_back({ u, v }); });
 
     ASSERT_EQ(edges.size(), 3);
     ASSERT_EQ(edges[0].first, 0);

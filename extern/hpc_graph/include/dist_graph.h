@@ -101,10 +101,12 @@ struct graph_gen_data_t
 struct mpi_data_t;
 
 int
-create_graph(graph_gen_data_t* ggi, dist_graph_t* g);
+create_graph(graph_gen_data_t* ggi,
+             dist_graph_t*     g);
 
 int
-create_graph_serial(graph_gen_data_t* ggi, dist_graph_t* g);
+create_graph_serial(graph_gen_data_t* ggi,
+                    dist_graph_t*     g);
 
 int
 clear_graph(dist_graph_t* g);
@@ -113,13 +115,18 @@ int
 relabel_edges(dist_graph_t* g);
 
 int
-relabel_edges(dist_graph_t* g, int32_t* global_parts);
+relabel_edges(dist_graph_t* g,
+              int32_t*      global_parts);
 
 int
-repart_graph(dist_graph_t* g, mpi_data_t* comm, char* part_file);
+repart_graph(dist_graph_t* g,
+             mpi_data_t*   comm,
+             char*         part_file);
 
 void
-repart_graph(dist_graph_t* g, mpi_data_t* comm, int32_t* local_parts);
+repart_graph(dist_graph_t* g,
+             mpi_data_t*   comm,
+             int32_t*      local_parts);
 
 int
 get_max_degree_vert(dist_graph_t* g);

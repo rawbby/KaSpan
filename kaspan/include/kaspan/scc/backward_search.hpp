@@ -19,9 +19,9 @@ backward_search(
   vertex_t                pivot,
   auto&&                  on_decision = [](vertex_t) {}) -> vertex_t
 {
-  auto part = graph.part;
-  auto const  local_n    = part.local_n();
-  auto        fw_reached = view_bits(fw_reached_storage, local_n);
+  auto       part       = graph.part;
+  auto const local_n    = part.local_n();
+  auto       fw_reached = view_bits(fw_reached_storage, local_n);
 
   vertex_t decided_count = 0;
   vertex_t min_u         = part.n();

@@ -50,15 +50,30 @@
 #include "dist_graph.h"
 
 int
-run_harmonic(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, uint64_t* distances, uint64_t root);
+run_harmonic(dist_graph_t* g,
+             mpi_data_t*   comm,
+             queue_data_t* q,
+             uint64_t*     distances,
+             uint64_t      root);
 
 int
-harmonic_output(dist_graph_t* g, uint64_t num_to_output, uint64_t* input_list, double* centralities, char* output_file);
+harmonic_output(dist_graph_t* g,
+                uint64_t      num_to_output,
+                uint64_t*     input_list,
+                double*       centralities,
+                char*         output_file);
 
 double
-harmonic_calc(dist_graph_t* g, uint64_t* distances, uint64_t root);
+harmonic_calc(dist_graph_t* g,
+              uint64_t*     distances,
+              uint64_t      root);
 
 int
-harmonic_dist(dist_graph_t* g, mpi_data_t* comm, queue_data_t* q, char* output_file, uint64_t num_to_output, uint64_t* input_list);
+harmonic_dist(dist_graph_t* g,
+              mpi_data_t*   comm,
+              queue_data_t* q,
+              char*         output_file,
+              uint64_t      num_to_output,
+              uint64_t*     input_list);
 
 #endif

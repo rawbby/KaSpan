@@ -50,14 +50,18 @@
 #include "dist_graph.h"
 
 int
-load_graph_edges_32(char* input_filename, graph_gen_data_t* ggi);
+load_graph_edges_32(char*             input_filename,
+                    graph_gen_data_t* ggi);
 int
-load_graph_edges_64(char* input_filename, graph_gen_data_t* ggi);
+load_graph_edges_64(char*             input_filename,
+                    graph_gen_data_t* ggi);
 
 int
-exchange_out_edges(graph_gen_data_t* ggi, mpi_data_t* comm);
+exchange_out_edges(graph_gen_data_t* ggi,
+                   mpi_data_t*       comm);
 
 int
-exchange_in_edges(graph_gen_data_t* ggi, mpi_data_t* comm);
+exchange_in_edges(graph_gen_data_t* ggi,
+                  mpi_data_t*       comm);
 
 #endif

@@ -111,9 +111,7 @@ backward_complement_graph_part(
   auto [rb, recv_counts, recv_displs] = mpi_basic::counts_and_displs();
   mpi_basic::alltoallv_counts(send_counts, recv_counts);
   auto const recv_count = mpi_basic::displs(recv_counts, recv_displs);
-  mpi_basic::inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&](edge_t const& e) {
-    return g.part.world_rank_of(e.u);
-  });
+  mpi_basic::inplace_partition_by_rank(send_stack.data(), send_counts, send_displs, [&](edge_t const& e) { return g.part.world_rank_of(e.u); });
 
   auto recv_buffer = make_array<edge_t>(recv_count);
 

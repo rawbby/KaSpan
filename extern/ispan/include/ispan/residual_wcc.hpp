@@ -4,12 +4,12 @@
 
 static void
 wcc(
-  kaspan::vertex_t*      wcc_id,
-  kaspan::index_t const* fw_head,
+  kaspan::vertex_t*       wcc_id,
+  kaspan::index_t const*  fw_head,
   kaspan::vertex_t const* fw_csr,
-  kaspan::index_t const* bw_head,
+  kaspan::index_t const*  bw_head,
   kaspan::vertex_t const* bw_csr,
-  kaspan::vertex_t       n)
+  kaspan::vertex_t        n)
 {
   // use different internal name
   auto* color = wcc_id;

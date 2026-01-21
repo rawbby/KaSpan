@@ -12,7 +12,7 @@ namespace kaspan {
 /// scc_id[k] != undecided || valid(degree[k]).
 /// notice: you can pass a frontier_view with interleaved support,
 /// but its not needed nor adviced performance wise.
-template<bool         InterleavedSupport = false,
+template<bool              InterleavedSupport = false,
          part_view_concept Part>
 auto
 trim_1_exhaustive(
@@ -22,8 +22,8 @@ trim_1_exhaustive(
   frontier_view<vertex_t,
                 InterleavedSupport> frontier) -> vertex_t
 {
-  auto part = graph.part;
-  vertex_t    decided_count = 0;
+  auto     part          = graph.part;
+  vertex_t decided_count = 0;
 
   do {
     while (frontier.has_next()) {
@@ -63,8 +63,8 @@ trim_1_exhaustive(
   vertex_t*                  decided_beg,
   vertex_t*                  decided_end) -> vertex_t
 {
-  auto part = graph.part;
-  vertex_t    decided_count = 0;
+  auto     part          = graph.part;
+  vertex_t decided_count = 0;
 
   // from all decided
   for (auto it = decided_beg; it != decided_end; ++it) {
@@ -89,7 +89,7 @@ trim_1_exhaustive(
 /// will initilise these appropriately.
 /// notice: you can pass a vertex_frontier with interleaved support,
 /// but its not needed nor adviced performance wise.
-template<bool         Interleaved = false,
+template<bool              Interleaved = false,
          part_view_concept Part>
 auto
 trim_1_exhaustive_first(
@@ -100,9 +100,9 @@ trim_1_exhaustive_first(
   frontier_view<vertex_t,
                 Interleaved> frontier) -> vertex_t
 {
-  auto part = graph.part;
-  auto const  local_n       = part.local_n();
-  vertex_t    decided_count = 0;
+  auto       part          = graph.part;
+  auto const local_n       = part.local_n();
+  vertex_t   decided_count = 0;
 
   // == initial indegree trim ==
   // We get the initial indegree right from the head array
@@ -173,8 +173,8 @@ trim_1_exhaustive(
                 true>        frontier) -> vertex_t
   requires(signed_concept<vertex_t>)
 {
-  auto part = graph.part;
-  vertex_t    decided_count = 0;
+  auto     part          = graph.part;
+  vertex_t decided_count = 0;
 
   do {
     while (frontier.has_next()) {
@@ -229,9 +229,9 @@ trim_1_exhaustive_first(
                 true>        frontier) -> vertex_t
   requires(signed_concept<vertex_t>)
 {
-  auto part = graph.part;
-  auto const  local_n       = part.local_n();
-  vertex_t    decided_count = 0;
+  auto       part          = graph.part;
+  auto const local_n       = part.local_n();
+  vertex_t   decided_count = 0;
 
   for (vertex_t k = 0; k < local_n; ++k) {
     auto const indegree_k  = graph.indegree(k);

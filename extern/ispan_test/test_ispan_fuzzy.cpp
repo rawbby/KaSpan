@@ -1,6 +1,6 @@
-#include <kaspan/test/fuzzy.hpp>
 #include <ispan/scc.hpp>
 #include <kaspan/debug/sub_process.hpp>
+#include <kaspan/test/fuzzy.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/scope_guard.hpp>
 
@@ -10,14 +10,16 @@
 using namespace kaspan;
 
 auto
-main(int argc, char** argv) -> int
+main(
+  int    argc,
+  char** argv) -> int
 {
   mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();
 
   for (vertex_t n = 32; n < 64; n += 8) {
 
-    auto const s = mpi_basic::allreduce_max_time();
+    auto const s                = mpi_basic::allreduce_max_time();
     auto const [scc_id_orig, g] = fuzzy_global_scc_id_and_graph(s, n);
 
     std::vector<vertex_t> scc_id_ispan;

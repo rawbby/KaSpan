@@ -170,9 +170,7 @@ make_bits_clean(
   res.clear(round_up<64>(size64));
 
   if constexpr (KASPAN_DEBUG) {
-    bits_ops::each(res.data(), size64, [](u64 /* i */) {
-      ASSERT(false, "this code should be unreachable");
-    });
+    bits_ops::each(res.data(), size64, [](u64 /* i */) { ASSERT(false, "this code should be unreachable"); });
     for (u64 i = 0; i < size64; ++i) {
       ASSERT_EQ(res.get(i), false);
     }
@@ -194,9 +192,7 @@ make_bits_filled(
 
   if constexpr (KASPAN_DEBUG) {
     u64 c = 0;
-    bits_ops::each(res.data(), size64, [&c](u64 i) {
-      ASSERT_EQ(i, c++);
-    });
+    bits_ops::each(res.data(), size64, [&c](u64 i) { ASSERT_EQ(i, c++); });
     for (u64 i = 0; i < size64; ++i) {
       ASSERT_EQ(res.get(i), true);
     }

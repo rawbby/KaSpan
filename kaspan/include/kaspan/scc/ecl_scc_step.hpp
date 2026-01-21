@@ -82,9 +82,7 @@ ecl_scc_step(
 
     active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
     std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
-    active.for_each(local_n, [&](auto&& k) {
-      active_stack.push(k);
-    });
+    active.for_each(local_n, [&](auto&& k) { active_stack.push(k); });
 
     while (true) {
 

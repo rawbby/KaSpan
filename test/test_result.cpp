@@ -86,18 +86,14 @@ test_map_and_and_then()
 {
   // map: int -> twice
   result<int> const r1 = 3;
-  auto              r2 = r1.map([](int x) {
-    return x * 2;
-  });
+  auto              r2 = r1.map([](int x) { return x * 2; });
   ASSERT((std::is_same_v<decltype(r2)::value_type, int>));
   ASSERT(r2.has_value());
   ASSERT_EQ(r2.value(), 6);
 
   // map on failure preserves error
   result<int> const rf  = error_code::DESERIALIZE_ERROR;
-  auto              rf2 = rf.map([](int) {
-    return 1;
-  });
+  auto              rf2 = rf.map([](int) { return 1; });
   ASSERT(!rf2.has_value());
   ASSERT_EQ(rf2.error(), error_code::DESERIALIZE_ERROR);
 
@@ -113,9 +109,7 @@ test_map_and_and_then()
   ASSERT_EQ(rstr.value(), "pos");
 
   result<int> const neg     = error_code::MEMORY_MAPPING_ERROR;
-  auto              neg_res = neg.and_then([](int) -> result<std::string> {
-    return std::string("unused");
-  });
+  auto              neg_res = neg.and_then([](int) -> result<std::string> { return std::string("unused"); });
   ASSERT(!neg_res.has_value());
   ASSERT_EQ(neg_res.error(), error_code::MEMORY_MAPPING_ERROR);
 }
@@ -143,12 +137,8 @@ test_equality()
 void
 test_result_try_macro_no_var()
 {
-  auto ok_fn = []() -> result<int> {
-    return 1;
-  };
-  auto fail_fn = []() -> result<int> {
-    return error_code::IO_ERROR;
-  };
+  auto ok_fn   = []() -> result<int> { return 1; };
+  auto fail_fn = []() -> result<int> { return error_code::IO_ERROR; };
 
   auto wrapper_ok = [&]() -> error_code {
     RESULT_TRY(ok_fn());
@@ -166,12 +156,8 @@ test_result_try_macro_no_var()
 void
 test_result_try_macro_with_var()
 {
-  auto ok_fn = []() -> result<int> {
-    return 7;
-  };
-  auto fail_fn = []() -> result<int> {
-    return error_code::SERIALIZE_ERROR;
-  };
+  auto ok_fn   = []() -> result<int> { return 7; };
+  auto fail_fn = []() -> result<int> { return error_code::SERIALIZE_ERROR; };
 
   auto wrapper_ok = [&]() -> result<int> {
     RESULT_TRY(int const x, ok_fn());

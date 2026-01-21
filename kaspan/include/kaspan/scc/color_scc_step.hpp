@@ -13,8 +13,8 @@ namespace kaspan {
 template<part_view_concept Part>
 void
 color_scc_init_label(
-  Part part,
-  vertex_t*   colors)
+  Part      part,
+  vertex_t* colors)
 {
   auto const local_n = part.local_n();
   for (vertex_t k = 0; k < local_n; ++k) {
@@ -36,11 +36,11 @@ color_scc_step_multi(
   vertex_t                   local_pivot,
   auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
-  auto part = graph.part;
-  auto const  local_n      = part.local_n();
-  auto        active       = view_bits(active_storage, local_n);
-  auto        changed      = view_bits(changed_storage, local_n);
-  auto        active_stack = view_stack<vertex_t>(active_array, local_n);
+  auto       part         = graph.part;
+  auto const local_n      = part.local_n();
+  auto       active       = view_bits(active_storage, local_n);
+  auto       changed      = view_bits(changed_storage, local_n);
+  auto       active_stack = view_stack<vertex_t>(active_array, local_n);
 
   // Phase 1: Forward Color Propagation (inspired by HPCGraph scc_color)
   // This partitions the graph into components that are supersets of SCCs.
@@ -193,10 +193,10 @@ color_scc_step_multi(
   frontier_view<edge_t>      frontier,
   auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
-  auto part = graph.part;
-  auto const  local_n = part.local_n();
-  auto        active  = view_bits(active_storage, local_n);
-  auto        changed = view_bits(changed_storage, local_n);
+  auto       part    = graph.part;
+  auto const local_n = part.local_n();
+  auto       active  = view_bits(active_storage, local_n);
+  auto       changed = view_bits(changed_storage, local_n);
 
   auto const count_degree = [=, &part](vertex_t k, graph_view const g) {
     vertex_t degree = 0;
@@ -261,11 +261,11 @@ color_scc_step(
   vertex_t                   decided_count = 0,
   auto&&                     on_decision   = [](vertex_t) {}) -> vertex_t
 {
-  auto part = graph.part;
-  auto const  local_n      = part.local_n();
-  auto        active       = view_bits(active_storage, local_n);
-  auto        changed      = view_bits(changed_storage, local_n);
-  auto        active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
+  auto       part         = graph.part;
+  auto const local_n      = part.local_n();
+  auto       active       = view_bits(active_storage, local_n);
+  auto       changed      = view_bits(changed_storage, local_n);
+  auto       active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
 
   for (vertex_t k = 0; k < local_n; ++k) {
     colors[k] = part.to_global(k);
@@ -277,9 +277,7 @@ color_scc_step(
   {
     active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
     std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
-    active.for_each(local_n, [&](auto&& k) {
-      active_stack.push(k);
-    });
+    active.for_each(local_n, [&](auto&& k) { active_stack.push(k); });
 
     while (true) {
       while (!active_stack.empty()) {

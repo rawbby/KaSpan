@@ -1,6 +1,6 @@
-#include <kaspan/graph/base.hpp>
 #include <ispan/scc.hpp>
 #include <kaspan/debug/sub_process.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/util/scope_guard.hpp>
 
@@ -10,7 +10,9 @@
 using namespace kaspan;
 
 int
-main(int argc, char** argv)
+main(
+  int    argc,
+  char** argv)
 {
   mpi_sub_process(argc, argv);
 

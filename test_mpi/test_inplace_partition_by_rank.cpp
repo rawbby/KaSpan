@@ -38,9 +38,7 @@ check_case(
     send_displs[r] = send_displs[r - 1] + send_counts[r - 1];
   }
 
-  mpi_basic::inplace_partition_by_rank<item>(send_buffer, send_counts, send_displs, [](item const& x) {
-    return x.dest;
-  });
+  mpi_basic::inplace_partition_by_rank<item>(send_buffer, send_counts, send_displs, [](item const& x) { return x.dest; });
 
   auto const buffer = make_buffer<MPI_Count>(mpi_basic::world_size, mpi_basic::world_size);
   auto*      memory = buffer.data();

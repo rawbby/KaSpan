@@ -1,8 +1,8 @@
-#include <kaspan/test/fuzzy.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/graph.hpp>
 #include <kaspan/scc/tarjan.hpp>
+#include <kaspan/test/fuzzy.hpp>
 
 #include <algorithm>
 #include <cmath>

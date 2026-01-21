@@ -1,6 +1,6 @@
-#include <kaspan/graph/single_part.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/graph/single_part.hpp>
 
 #include <vector>
 
@@ -47,16 +47,12 @@ main()
     ASSERT_EQ(bgp.indegree(1), 1);
 
     std::vector<vertex_t> neighbors;
-    bgp.each_v(0, [&](vertex_t v) {
-      neighbors.push_back(v);
-    });
+    bgp.each_v(0, [&](vertex_t v) { neighbors.push_back(v); });
     ASSERT_EQ(neighbors.size(), 1);
     ASSERT_EQ(neighbors[0], 1);
 
     neighbors.clear();
-    bgp.each_bw_v(1, [&](vertex_t v) {
-      neighbors.push_back(v);
-    });
+    bgp.each_bw_v(1, [&](vertex_t v) { neighbors.push_back(v); });
     ASSERT_EQ(neighbors.size(), 1);
     ASSERT_EQ(neighbors[0], 0);
   }

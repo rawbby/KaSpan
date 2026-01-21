@@ -1,6 +1,6 @@
-#include <kaspan/graph/base.hpp>
 #include <ispan/scc.hpp>
 #include <kaspan/debug/sub_process.hpp>
+#include <kaspan/graph/base.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
@@ -14,7 +14,9 @@
 using namespace kaspan;
 
 int
-main(int argc, char** argv)
+main(
+  int    argc,
+  char** argv)
 {
   mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();

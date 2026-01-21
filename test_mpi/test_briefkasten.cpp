@@ -29,9 +29,7 @@ await_messages(
   };
 
   auto const deadline    = now_ns() + timeout_8s;
-  auto const on_progress = [=] {
-    ASSERT_LT(now_ns(), deadline);
-  };
+  auto const on_progress = [=] { ASSERT_LT(now_ns(), deadline); };
 
   do {
     on_progress();

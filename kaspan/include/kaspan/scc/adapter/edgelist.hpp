@@ -45,7 +45,7 @@ edgelist_to_graph(
 template<part_view_concept Part>
 void
 sorted_edgelist_to_graph_part(
-  Part   part,
+  Part          part,
   vertex_t      local_m,
   edge_t const* edgelist,
   index_t*      head,
@@ -69,11 +69,11 @@ sorted_edgelist_to_graph_part(
 template<part_view_concept Part>
 void
 edgelist_to_graph_part(
-  Part part,
-  vertex_t    local_m,
-  edge_t*     edgelist,
-  index_t*    head,
-  vertex_t*   csr)
+  Part      part,
+  vertex_t  local_m,
+  edge_t*   edgelist,
+  index_t*  head,
+  vertex_t* csr)
 {
   std::sort(edgelist, edgelist + local_m, edge_less);
   sorted_edgelist_to_graph_part(part, local_m, edgelist, head, csr);

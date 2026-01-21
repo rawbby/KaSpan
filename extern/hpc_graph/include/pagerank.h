@@ -50,15 +50,24 @@
 #include "dist_graph.h"
 
 int
-run_pagerank(dist_graph_t* g, mpi_data_t* comm, double*& pageranks, uint32_t num_iter);
+run_pagerank(dist_graph_t* g,
+             mpi_data_t*   comm,
+             double*&      pageranks,
+             uint32_t      num_iter);
 
 int
-pagerank_verify(dist_graph_t* g, double* pageranks);
+pagerank_verify(dist_graph_t* g,
+                double*       pageranks);
 
 int
-pagerank_output(dist_graph_t* g, double* pageranks, char* output_file);
+pagerank_output(dist_graph_t* g,
+                double*       pageranks,
+                char*         output_file);
 
 int
-pagerank_dist(dist_graph_t* g, mpi_data_t* comm, uint32_t num_iter, char* output_file);
+pagerank_dist(dist_graph_t* g,
+              mpi_data_t*   comm,
+              uint32_t      num_iter,
+              char*         output_file);
 
 #endif

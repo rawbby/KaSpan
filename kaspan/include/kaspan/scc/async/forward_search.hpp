@@ -19,10 +19,10 @@ forward_search(
   vertex_t*             active_array,
   vertex_t              root) -> vertex_t
 {
-  auto part = graph.part;
-  auto const  local_n      = part.local_n();
-  auto        fw_reached   = view_bits(fw_reached_storage, local_n);
-  auto        active_stack = view_stack<vertex_t>(active_array, local_n);
+  auto       part         = graph.part;
+  auto const local_n      = part.local_n();
+  auto       fw_reached   = view_bits(fw_reached_storage, local_n);
+  auto       active_stack = view_stack<vertex_t>(active_array, local_n);
 
   auto on_message = [&](auto env) {
     for (auto v : env.message) {

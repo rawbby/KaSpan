@@ -19,10 +19,10 @@ color_scc_step(
   u64*                       active_storage,
   vertex_t                   decided_count = 0) -> vertex_t
 {
-  auto part = graph.part;
-  auto const  local_n      = part.local_n();
-  auto        active       = view_bits(active_storage, local_n);
-  auto        active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
+  auto       part         = graph.part;
+  auto const local_n      = part.local_n();
+  auto       active       = view_bits(active_storage, local_n);
+  auto       active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
 
 #if KASPAN_DEBUG
   // Validate decided_count is consistent with scc_id
@@ -54,9 +54,7 @@ color_scc_step(
     };
 
     active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
-    active.for_each(local_n, [&](auto&& k) {
-      active_stack.push(k);
-    });
+    active.for_each(local_n, [&](auto&& k) { active_stack.push(k); });
 
     mpi_basic::barrier();
     mq.reactivate();

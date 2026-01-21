@@ -51,14 +51,21 @@
 void
 throw_err(char const* err_message);
 void
-throw_err(char const* err_message, int32_t task);
+throw_err(char const* err_message,
+          int32_t     task);
 void
-throw_err(char const* err_message, int32_t task, int32_t thread);
+throw_err(char const* err_message,
+          int32_t     task,
+          int32_t     thread);
 
 void
-quicksort_dec(uint64_t* arr1, uint64_t* arr2, int64_t left, int64_t right);
+quicksort_dec(uint64_t* arr1,
+              uint64_t* arr2,
+              int64_t   left,
+              int64_t   right);
 
 uint64_t*
-str_to_array(char* input_list_str, uint64_t* num);
+str_to_array(char*     input_list_str,
+             uint64_t* num);
 
 #endif

@@ -27,9 +27,9 @@ template<part_view_concept Part,
          class fn_t>
 auto
 allgather_sub_ids(
-  Part part,
-  vertex_t    local_sub_n,
-  fn_t&&      in_sub_graph)
+  Part     part,
+  vertex_t local_sub_n,
+  fn_t&&   in_sub_graph)
 {
   auto const local_n = part.local_n();
 
@@ -56,7 +56,7 @@ allgather_sub_ids(
 template<part_view_concept Part>
 auto
 allgather_csr_degrees(
-  Part    part,
+  Part            part,
   vertex_t        local_sub_n,
   index_t const*  head,
   vertex_t const* csr,
@@ -111,7 +111,7 @@ allgather_csr_degrees(
 template<part_view_concept Part>
 auto
 allgather_csr_with_degrees(
-  Part     part,
+  Part            part,
   vertex_t        local_sub_n,
   index_t const*  head,
   vertex_t const* csr,
@@ -119,7 +119,7 @@ allgather_csr_with_degrees(
   vertex_t const* local_ids_inverse,
   vertex_t        sub_n,
   vertex_t const* ids_inverse,
-  index_t const* sub_outdegree)
+  index_t const*  sub_outdegree)
 {
   index_t local_sub_m = 0;
   for (vertex_t i = 0; i < local_sub_n; ++i) {

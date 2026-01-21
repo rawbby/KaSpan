@@ -16,9 +16,7 @@ test_bit_ops_each()
   bits_ops::set(storage, 127);
 
   std::vector<u64> found;
-  bits_ops::each(storage, 128, [&](u64 idx) {
-    found.push_back(idx);
-  });
+  bits_ops::each(storage, 128, [&](u64 idx) { found.push_back(idx); });
 
   ASSERT_EQ(found.size(), 3);
   ASSERT_EQ(found[0], 5);
@@ -107,9 +105,7 @@ test_bits_basic(
   }
 
   auto it = 100;
-  b.for_each(200, [&](auto i) {
-    ASSERT_EQ(i, it++);
-  });
+  b.for_each(200, [&](auto i) { ASSERT_EQ(i, it++); });
 
   b.unset(4);
   b.set(5);

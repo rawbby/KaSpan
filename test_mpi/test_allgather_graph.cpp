@@ -1,4 +1,3 @@
-#include <kaspan/test/fuzzy.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/graph/balanced_slice_part.hpp>
@@ -7,6 +6,7 @@
 #include <kaspan/graph/trivial_slice_part.hpp>
 #include <kaspan/scc/allgather_graph.hpp>
 #include <kaspan/scc/partion_graph.hpp>
+#include <kaspan/test/fuzzy.hpp>
 
 using namespace kaspan;
 

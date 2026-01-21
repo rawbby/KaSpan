@@ -15,8 +15,8 @@ template<part_view_concept Part>
   requires(Part::continuous())
 auto
 partition_local_m(
-  graph_view  g,
-  Part part) -> index_t
+  graph_view g,
+  Part       part) -> index_t
 {
   return part.local_n() > 0 ? g.head[part.end()] - g.head[part.begin()] : 0;
 }
@@ -26,8 +26,8 @@ template<part_view_concept Part>
   requires(!Part::continuous())
 auto
 partition_local_m(
-  graph_view  g,
-  Part part) -> index_t
+  graph_view g,
+  Part       part) -> index_t
 {
   auto const local_n = part.local_n();
 
@@ -43,7 +43,7 @@ template<part_view_concept Part>
 auto
 partition_local_m(
   bidi_graph_view bg,
-  Part     part)
+  Part            part)
 {
   auto const local_fw_m = partition_local_m(bg.fw_view(), part);
   auto const local_bw_m = partition_local_m(bg.bw_view(), part);
@@ -65,9 +65,7 @@ partition(
   index_t pos = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
     gp.head[k] = pos;
-    g.each_v(gp.part.to_global(k), [&](auto v) {
-      gp.csr[pos++] = v;
-    });
+    g.each_v(gp.part.to_global(k), [&](auto v) { gp.csr[pos++] = v; });
   }
   if (local_n > 0) gp.head[local_n] = pos;
 
@@ -90,18 +88,14 @@ partition(
   index_t fw_offset = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
     bgp.fw.head[k] = fw_offset;
-    bg.each_v(bgp.part.to_global(k), [&](auto v) {
-      bgp.fw.csr[fw_offset++] = v;
-    });
+    bg.each_v(bgp.part.to_global(k), [&](auto v) { bgp.fw.csr[fw_offset++] = v; });
   }
   if (local_n > 0) bgp.fw.head[local_n] = fw_offset;
 
   index_t bw_offset = 0;
   for (vertex_t k = 0; k < local_n; ++k) {
     bgp.bw.head[k] = bw_offset;
-    bg.each_bw_v(bgp.part.to_global(k), [&](auto v) {
-      bgp.bw.csr[bw_offset++] = v;
-    });
+    bg.each_bw_v(bgp.part.to_global(k), [&](auto v) { bgp.bw.csr[bw_offset++] = v; });
   }
   if (local_n > 0) bgp.bw.head[local_n] = bw_offset;
 

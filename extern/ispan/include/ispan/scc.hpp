@@ -24,13 +24,13 @@
 
 inline void
 scc(
-  kaspan::vertex_t              n,
-  kaspan::index_t               m,
-  kaspan::index_t const*        fw_head,
-  kaspan::vertex_t const*       fw_csr,
-  kaspan::index_t const*        bw_head,
-  kaspan::vertex_t const*       bw_csr,
-  int                           alpha,
+  kaspan::vertex_t               n,
+  kaspan::index_t                m,
+  kaspan::index_t const*         fw_head,
+  kaspan::vertex_t const*        fw_csr,
+  kaspan::index_t const*         bw_head,
+  kaspan::vertex_t const*        bw_csr,
+  int                            alpha,
   std::vector<kaspan::vertex_t>* scc_id_out = nullptr)
 {
   KASPAN_STATISTIC_SCOPE("scc");
