@@ -29,6 +29,22 @@ struct frontier_view
   constexpr frontier_view() noexcept  = default;
   constexpr ~frontier_view() noexcept = default;
 
+  constexpr frontier_view(
+    vector<vertex_t>* send_buffer,
+    vector<vertex_t>* recv_buffer,
+    MPI_Count*        send_counts,
+    MPI_Aint*         send_displs,
+    MPI_Count*        recv_counts,
+    MPI_Aint*         recv_displs) noexcept
+    : send_buffer(send_buffer)
+    , recv_buffer(recv_buffer)
+    , send_counts(send_counts)
+    , send_displs(send_displs)
+    , recv_counts(recv_counts)
+    , recv_displs(recv_displs)
+  {
+  }
+
   constexpr frontier_view(frontier_view const&) noexcept = default;
   constexpr frontier_view(frontier_view&&) noexcept      = default;
 
@@ -215,6 +231,7 @@ struct frontier
     , recv_counts(line_alloc<MPI_Count>(mpi_basic::world_size))
     , recv_displs(line_alloc<MPI_Aint>(mpi_basic::world_size))
   {
+    std::memset(send_counts, 0x00, mpi_basic::world_size * sizeof(MPI_Count));
   }
 
   frontier(frontier const&) noexcept = delete;
