@@ -9,7 +9,7 @@
 
 namespace kaspan {
 
-template<part_concept Part>
+template<part_view_concept Part>
 void
 residual_scc(
   vertex_t const*            wcc_id,
@@ -19,7 +19,7 @@ residual_scc(
 {
   KASPAN_STATISTIC_SCOPE("residual_scc");
 
-  auto const& part    = *graph.part;
+  auto part = graph.part;
   auto const  local_n = part.local_n();
 
   std::vector<vertex_t>        queue;

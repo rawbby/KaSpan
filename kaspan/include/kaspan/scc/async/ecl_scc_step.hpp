@@ -41,7 +41,7 @@ ecl_scc_step(
   bits_accessor              bw_changed,
   vertex_t                   decided_count = 0) -> vertex_t
 {
-  auto const& part    = *graph.part;
+  auto part = graph.part;
   auto const  local_n = part.local_n();
 
   auto fw_active_stack = view_stack<vertex_t>(fw_active_array, local_n);

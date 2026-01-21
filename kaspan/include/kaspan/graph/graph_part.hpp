@@ -22,13 +22,13 @@ namespace kaspan {
  *         The neighbors of local vertex k are stored in csr[head[k]] to csr[head[k+1]-1].
  * - csr:  An array of neighbor vertex global IDs of size local_m.
  */
-template<part_concept Part>
+template<part_view_concept Part>
 struct graph_part_view
 {
-  Part const* part    = nullptr;
-  index_t     local_m = 0;
-  index_t*    head    = nullptr;
-  vertex_t*   csr     = nullptr;
+  Part      part    = nullptr;
+  index_t   local_m = 0;
+  index_t*  head    = nullptr;
+  vertex_t* csr     = nullptr;
 
   constexpr graph_part_view() noexcept  = default;
   constexpr ~graph_part_view() noexcept = default;
@@ -37,10 +37,10 @@ struct graph_part_view
   constexpr graph_part_view(graph_part_view const&) noexcept = default;
 
   constexpr graph_part_view(
-    Part const* part,
-    index_t     local_m,
-    index_t*    head,
-    vertex_t*   csr) noexcept
+    Part      part,
+    index_t   local_m,
+    index_t*  head,
+    vertex_t* csr) noexcept
     : part(part)
     , local_m(local_m)
     , head(head)
@@ -66,7 +66,7 @@ struct graph_part_view
   constexpr void each_k(
     Consumer&& consumer) const noexcept
   {
-    auto const local_n = part->local_n();
+    auto const local_n = part.local_n();
     for (vertex_t k = 0; k < local_n; ++k)
       consumer(k);
   }
@@ -80,9 +80,7 @@ struct graph_part_view
   constexpr void each_ku(
     Consumer&& consumer) const noexcept
   {
-    each_k([&](vertex_t k) {
-      consumer(k, part->to_global(k));
-    });
+    each_k([&](vertex_t k) { consumer(k, part.to_global(k)); });
   }
 
   /**
@@ -119,11 +117,7 @@ struct graph_part_view
   constexpr void each_kv(
     Consumer&& consumer) const noexcept
   {
-    each_k([&](vertex_t k) {
-      each_v(k, [&](vertex_t v) {
-        consumer(k, v);
-      });
-    });
+    each_k([&](vertex_t k) { each_v(k, [&](vertex_t v) { consumer(k, v); }); });
   }
 
   /**
@@ -136,11 +130,7 @@ struct graph_part_view
   constexpr void each_kuv(
     Consumer&& consumer) const noexcept
   {
-    each_ku([&](vertex_t k, vertex_t u) {
-      each_v(k, [&](vertex_t v) {
-        consumer(k, u, v);
-      });
-    });
+    each_ku([&](vertex_t k, vertex_t u) { each_v(k, [&](vertex_t v) { consumer(k, u, v); }); });
   }
 
   /**
@@ -151,14 +141,13 @@ struct graph_part_view
    */
   constexpr void debug_check() const noexcept
   {
-    auto const local_n = part->local_n();
+    auto const local_n = part.local_n();
     if (KASPAN_MEMCHECK && !std::is_constant_evaluated()) {
       if (local_n > 0) KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(head, (local_n + 1) * sizeof(index_t));
       if (local_m > 0) KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(csr, local_m * sizeof(vertex_t));
     }
     if (KASPAN_DEBUG) {
-      ASSERT_POINTER(part);
-      ASSERT_GE(part->n(), 0);
+      ASSERT_GE(part.n(), 0);
       ASSERT_GE(local_n, 0);
       ASSERT_GE(local_m, 0);
       ASSERT_SIZE_POINTER(local_n, head);
@@ -168,7 +157,7 @@ struct graph_part_view
 
   constexpr void debug_validate() const noexcept
   {
-    auto const local_n = part->local_n();
+    auto const local_n = part.local_n();
     if (KASPAN_MEMCHECK) {
       if (local_n > 0) KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(head, (local_n + 1) * sizeof(index_t));
       if (local_m > 0) KASPAN_MEMCHECK_CHECK_MEM_IS_DEFINED(csr, local_m * sizeof(vertex_t));
@@ -194,8 +183,8 @@ struct graph_part_view
       vertex_t prev_v = 0;
       each_kuv([&](auto k, auto u, auto v) {
         ASSERT_LT(k, local_n);
-        ASSERT_LT(u, part->n());
-        ASSERT_LT(v, part->n());
+        ASSERT_LT(u, part.n());
+        ASSERT_LT(v, part.n());
         ASSERT_LE(prev_k, k);
         if (prev_k == k) ASSERT_LE(prev_v, v);
         prev_k = k;
@@ -261,9 +250,9 @@ struct graph_part
   }
   constexpr auto operator=(graph_part const&) noexcept -> graph_part& = delete;
 
-  [[nodiscard]] constexpr auto view() const noexcept -> graph_part_view<Part>
+  [[nodiscard]] constexpr auto view() const noexcept -> graph_part_view<decltype(part.view())>
   {
-    return { &part, local_m, head, csr };
+    return { part.view(), local_m, head, csr };
   }
 
   [[nodiscard]] constexpr auto csr_range(

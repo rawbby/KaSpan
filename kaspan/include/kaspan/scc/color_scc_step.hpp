@@ -10,10 +10,10 @@
 
 namespace kaspan {
 
-template<part_concept Part>
+template<part_view_concept Part>
 void
 color_scc_init_label(
-  Part const& part,
+  Part part,
   vertex_t*   colors)
 {
   auto const local_n = part.local_n();
@@ -23,7 +23,7 @@ color_scc_init_label(
 }
 
 /// start with up to one pivot per rank
-template<part_concept Part>
+template<part_view_concept Part>
 auto
 color_scc_step_multi(
   bidi_graph_part_view<Part> graph,
@@ -36,7 +36,7 @@ color_scc_step_multi(
   vertex_t                   local_pivot,
   auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
-  auto const& part         = *graph.part;
+  auto part = graph.part;
   auto const  local_n      = part.local_n();
   auto        active       = view_bits(active_storage, local_n);
   auto        changed      = view_bits(changed_storage, local_n);
@@ -181,7 +181,7 @@ color_scc_step_multi(
   return local_decided_count;
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
 auto
 color_scc_step_multi(
   bidi_graph_part_view<Part> graph,
@@ -193,7 +193,7 @@ color_scc_step_multi(
   frontier_view<edge_t>      frontier,
   auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
-  auto const& part    = *graph.part;
+  auto part = graph.part;
   auto const  local_n = part.local_n();
   auto        active  = view_bits(active_storage, local_n);
   auto        changed = view_bits(changed_storage, local_n);
@@ -248,7 +248,7 @@ color_scc_step_multi(
   return local_decided_count + color_scc_step_multi(graph, scc_id, colors, active_array, active_storage, changed_storage, frontier, max_degree_vertex, on_decision);
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
 auto
 color_scc_step(
   bidi_graph_part_view<Part> graph,
@@ -261,7 +261,7 @@ color_scc_step(
   vertex_t                   decided_count = 0,
   auto&&                     on_decision   = [](vertex_t) {}) -> vertex_t
 {
-  auto const& part         = *graph.part;
+  auto part = graph.part;
   auto const  local_n      = part.local_n();
   auto        active       = view_bits(active_storage, local_n);
   auto        changed      = view_bits(changed_storage, local_n);

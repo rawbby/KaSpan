@@ -45,15 +45,15 @@ namespace kaspan {
  * - Local work: O(n + m) (offset fix and backward construction).
  * - Communication: O(n + m) (all-gather of head and edges).
  */
-template<part_concept Part>
+template<part_view_concept Part>
   requires(Part::ordered())
 auto
 allgather_graph(
   index_t               m,
   graph_part_view<Part> gpv) -> bidi_graph
 {
-  auto const n       = gpv.part->n();
-  auto const local_n = gpv.part->local_n();
+  auto const n       = gpv.part.n();
+  auto const local_n = gpv.part.local_n();
 
   auto bg = bidi_graph{ n, m };
 
@@ -62,13 +62,13 @@ allgather_graph(
 
   // 1) Allgather fw_head
   {
-    auto const root_part = gpv.part->world_part_of(0);
+    auto const root_part = gpv.part.world_part_of(0);
     DEBUG_ASSERT_EQ(0, root_part.begin());
     counts[0] = integral_cast<MPI_Count>(root_part.end() + 1);
     displs[0] = integral_cast<MPI_Aint>(0);
 
     for (i32 rank = 1; rank < mpi_basic::world_size; ++rank) {
-      auto const rank_part = gpv.part->world_part_of(rank);
+      auto const rank_part = gpv.part.world_part_of(rank);
       counts[rank]         = integral_cast<MPI_Count>(rank_part.end() - rank_part.begin());
       displs[rank]         = integral_cast<MPI_Aint>(rank_part.begin() + 1);
     }

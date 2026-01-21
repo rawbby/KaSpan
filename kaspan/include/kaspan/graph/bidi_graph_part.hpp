@@ -9,12 +9,12 @@ namespace kaspan {
  *
  * Reuses graph_part_view for each direction.
  */
-template<part_concept Part>
+template<part_view_concept Part>
 struct bidi_graph_part_view
 {
-  Part const* part       = nullptr; ///< The partition information
-  index_t     local_fw_m = 0;       ///< Number of local forward edges
-  index_t     local_bw_m = 0;       ///< Number of local backward edges
+  Part    part       = {}; ///< The partition information
+  index_t local_fw_m = 0;  ///< Number of local forward edges
+  index_t local_bw_m = 0;  ///< Number of local backward edges
   struct
   {
     index_t*  head = nullptr; ///< Local forward offsets
@@ -33,13 +33,13 @@ struct bidi_graph_part_view
   constexpr bidi_graph_part_view(bidi_graph_part_view const&) noexcept = default;
 
   constexpr bidi_graph_part_view(
-    Part const* part,
-    index_t     local_fw_m,
-    index_t     local_bw_m,
-    index_t*    fw_head,
-    vertex_t*   fw_csr,
-    index_t*    bw_head,
-    vertex_t*   bw_csr) noexcept
+    Part      part,
+    index_t   local_fw_m,
+    index_t   local_bw_m,
+    index_t*  fw_head,
+    vertex_t* fw_csr,
+    index_t*  bw_head,
+    vertex_t* bw_csr) noexcept
     : part(part)
     , local_fw_m(local_fw_m)
     , local_bw_m(local_bw_m)
@@ -73,7 +73,7 @@ struct bidi_graph_part_view
   /**
    * @brief Create a view with forward and backward directions swapped.
    */
-  [[nodiscard]] constexpr auto inverse_view() const noexcept -> bidi_graph_part_view<Part>
+  [[nodiscard]] constexpr auto inverse_view() const noexcept -> bidi_graph_part_view
   {
     return { part, local_bw_m, local_fw_m, bw.head, bw.csr, fw.head, fw.csr };
   }
@@ -303,15 +303,15 @@ struct bidi_graph_part
   /**
    * @brief Create a non-mutable view of the partitioned bidirectional graph.
    */
-  [[nodiscard]] constexpr auto view() const noexcept -> bidi_graph_part_view<Part>
+  [[nodiscard]] constexpr auto view() const noexcept -> bidi_graph_part_view<decltype(part.view())>
   {
-    return { &part, local_fw_m, local_bw_m, fw.head, fw.csr, bw.head, bw.csr };
+    return { part.view(), local_fw_m, local_bw_m, fw.head, fw.csr, bw.head, bw.csr };
   }
 
   /**
    * @brief Create a view of the forward partitioned graph.
    */
-  [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_part_view<Part>
+  [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_part_view<decltype(part.view())>
   {
     return view().fw_view();
   }
@@ -319,7 +319,7 @@ struct bidi_graph_part
   /**
    * @brief Create a view of the backward partitioned graph.
    */
-  [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_part_view<Part>
+  [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_part_view<decltype(part.view())>
   {
     return view().bw_view();
   }

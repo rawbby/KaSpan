@@ -23,11 +23,11 @@
 namespace kaspan {
 namespace sub_graph {
 
-template<part_concept Part,
+template<part_view_concept Part,
          class fn_t>
 auto
 allgather_sub_ids(
-  Part const& part,
+  Part part,
   vertex_t    local_sub_n,
   fn_t&&      in_sub_graph)
 {
@@ -53,10 +53,10 @@ allgather_sub_ids(
   return PACK(sub_n, super_ids, local_super_ids);
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
 auto
 allgather_csr_degrees(
-  Part const&     part,
+  Part    part,
   vertex_t        local_sub_n,
   index_t const*  head,
   vertex_t const* csr,
@@ -108,10 +108,10 @@ allgather_csr_degrees(
   return PACK(buffer, sub_m, counts, displs, local_sub_csr, local_sub_degrees);
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
 auto
 allgather_csr_with_degrees(
-  Part const&     part,
+  Part     part,
   vertex_t        local_sub_n,
   index_t const*  head,
   vertex_t const* csr,

@@ -22,7 +22,7 @@ trim_1_first(
     degree   max{};
   };
 
-  auto const& part          = *graph.part;
+  auto part = graph.part;
   auto const  local_n       = part.local_n();
   vertex_t    decided_count = 0;
 
@@ -122,7 +122,7 @@ trim_1(
   vertex_t const*            fw_degree,
   vertex_t const*            bw_degree) -> vertex_t
 {
-  auto const& part          = *graph.part;
+  auto part = graph.part;
   auto const  local_n       = part.local_n();
   vertex_t    decided_count = 0;
   for (vertex_t k = 0; k < local_n; ++k) {

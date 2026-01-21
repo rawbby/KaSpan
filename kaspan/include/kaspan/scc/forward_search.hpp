@@ -6,17 +6,16 @@
 
 namespace kaspan {
 
-template<bool         InterleavedSupport = false,
-         part_concept Part>
+template<part_view_concept Part>
 void
 forward_search(
-  graph_part_view<Part>                graph,
-  frontier_view<vertex_t, InterleavedSupport> frontier,
-  vertex_t const*                      scc_id,
-  u64*                                 fw_reached_storage,
-  vertex_t                             pivot)
+  graph_part_view<Part>   graph,
+  frontier_view<vertex_t> frontier,
+  vertex_t const*         scc_id,
+  u64*                    fw_reached_storage,
+  vertex_t                pivot)
 {
-  auto const& part       = *graph.part;
+  auto part = graph.part;
   auto const  local_n    = part.local_n();
   auto        fw_reached = view_bits(fw_reached_storage, local_n);
 

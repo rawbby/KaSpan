@@ -122,7 +122,7 @@ backward_complement_graph_part(
   g.local_bw_m = recv_count;
   g.bw.csr     = line_alloc<vertex_t>(g.local_bw_m);
 
-  edgelist_to_graph_part(g.part, recv_count, recv_buffer.data(), g.bw.head, g.bw.csr);
+  edgelist_to_graph_part(g.part.view(), recv_count, recv_buffer.data(), g.bw.head, g.bw.csr);
 }
 
 } // namespace kaspan

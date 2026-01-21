@@ -10,11 +10,11 @@
 
 using namespace kaspan;
 
-template<typename Part>
+template<part_view_concept Part>
 void
 check_p_p(
-  Part const& p,
-  Part const& p_)
+  Part p,
+  Part p_)
 {
   ASSERT_EQ(p.n(), p_.n());
   ASSERT_EQ(p.local_n(), p_.local_n());
@@ -27,21 +27,21 @@ check_p_p(
   }
 }
 
-template<typename Part>
+template<part_view_concept Part>
 void
 check_gp_gp(
   bidi_graph_part_view<Part> bgpv,
   bidi_graph_part_view<Part> bgpv_)
 {
-  check_p_p(*bgpv.part, *bgpv_.part);
-  ASSERT_EQ(bgpv.part->n(), bgpv_.part->n());
-  ASSERT_EQ(bgpv.part->local_n(), bgpv_.part->local_n());
+  check_p_p(bgpv.part, bgpv_.part);
+  ASSERT_EQ(bgpv.part.n(), bgpv_.part.n());
+  ASSERT_EQ(bgpv.part.local_n(), bgpv_.part.local_n());
   ASSERT_EQ(bgpv.local_fw_m, bgpv_.local_fw_m);
   ASSERT_EQ(bgpv.local_bw_m, bgpv_.local_bw_m);
   ASSERT(
-    std::ranges::equal(std::span{ bgpv.fw.head, integral_cast<size_t>(bgpv.part->local_n() + 1) }, std::span{ bgpv_.fw.head, integral_cast<size_t>(bgpv_.part->local_n() + 1) }));
+    std::ranges::equal(std::span{ bgpv.fw.head, integral_cast<size_t>(bgpv.part.local_n() + 1) }, std::span{ bgpv_.fw.head, integral_cast<size_t>(bgpv_.part.local_n() + 1) }));
   ASSERT(
-    std::ranges::equal(std::span{ bgpv.bw.head, integral_cast<size_t>(bgpv.part->local_n() + 1) }, std::span{ bgpv_.bw.head, integral_cast<size_t>(bgpv_.part->local_n() + 1) }));
+    std::ranges::equal(std::span{ bgpv.bw.head, integral_cast<size_t>(bgpv.part.local_n() + 1) }, std::span{ bgpv_.bw.head, integral_cast<size_t>(bgpv_.part.local_n() + 1) }));
   ASSERT(std::ranges::equal(std::span{ bgpv.fw.csr, integral_cast<size_t>(bgpv.local_fw_m) }, std::span{ bgpv_.fw.csr, integral_cast<size_t>(bgpv_.local_fw_m) }));
   ASSERT(std::ranges::equal(std::span{ bgpv.bw.csr, integral_cast<size_t>(bgpv.local_bw_m) }, std::span{ bgpv_.bw.csr, integral_cast<size_t>(bgpv_.local_bw_m) }));
 }

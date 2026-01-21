@@ -92,6 +92,12 @@ public:
     return integral_cast<i32>(rem + (i - split) / base);
   }
 
+  [[nodiscard]] constexpr auto world_part_of(
+    i32 r) const noexcept -> balanced_slice_part_view
+  {
+    return { n_, r };
+  }
+
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t
   {
     return begin_;

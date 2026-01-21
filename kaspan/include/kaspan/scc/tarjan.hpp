@@ -17,7 +17,7 @@ no_filter(
   return true;
 }
 
-template<part_concept Part,
+template<part_view_concept Part,
          typename callback_t,
          typename filter_t = decltype(no_filter)>
 void
@@ -35,7 +35,7 @@ tarjan(
     index_t  it;
   };
 
-  auto const local_n         = gp.part->local_n();
+  auto const local_n         = gp.part.local_n();
   auto const undecided_count = local_n - decided_count;
 
   vertex_t index_count = 0;
@@ -68,8 +68,8 @@ tarjan(
         auto const v = gp.csr[it];
         dfs.back().it += 1; // Update stack frame iterator
 
-        if (gp.part->has_local(v)) { // ignore non local edges
-          auto const local_v = gp.part->to_local(v);
+        if (gp.part.has_local(v)) { // ignore non local edges
+          auto const local_v = gp.part.to_local(v);
           if (!filter(local_v)) {
             continue;
           }
@@ -131,7 +131,7 @@ tarjan(
   vertex_t   decided_count = 0) noexcept
 {
   auto const part = single_part{ g.n };
-  auto const gv   = graph_part_view{ &part, g.m, g.head, g.csr };
+  auto const gv   = graph_part_view{ part.view(), g.m, g.head, g.csr };
   tarjan(gv, callback, filter, decided_count);
 }
 

@@ -85,6 +85,12 @@ public:
     return (r >= mpi_basic::world_size) ? mpi_basic::world_size - 1 : integral_cast<i32>(r);
   }
 
+  [[nodiscard]] constexpr auto world_part_of(
+    i32 r) const noexcept -> trivial_slice_part_view
+  {
+    return { n_, r };
+  }
+
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t
   {
     return begin_;

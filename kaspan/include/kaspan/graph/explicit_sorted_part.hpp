@@ -95,6 +95,12 @@ public:
     return integral_cast<i32>(r);
   }
 
+  [[nodiscard]] constexpr auto world_part_of(
+    i32 r) const noexcept -> explicit_sorted_part_view
+  {
+    return { n_, r, part_ };
+  }
+
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t
   {
     return begin_;

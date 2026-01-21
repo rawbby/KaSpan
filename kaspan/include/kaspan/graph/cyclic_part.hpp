@@ -80,6 +80,12 @@ public:
     return integral_cast<i32>(i % mpi_basic::world_size);
   }
 
+  [[nodiscard]] constexpr auto world_part_of(
+    i32 r) const noexcept -> cyclic_part_view
+  {
+    return { n_, r };
+  }
+
 private:
   vertex_t n_          = 0;
   vertex_t local_n_    = 0;

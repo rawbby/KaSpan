@@ -68,6 +68,12 @@ public:
     return 0;
   }
 
+  [[nodiscard]] constexpr auto world_part_of(
+    i32 /* r */) const noexcept -> single_part_view
+  {
+    return single_part_view{ n_ };
+  }
+
   [[nodiscard]] static constexpr auto begin() noexcept -> vertex_t
   {
     return 0;

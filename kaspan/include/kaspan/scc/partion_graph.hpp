@@ -11,23 +11,23 @@
 namespace kaspan {
 
 /// from a global_graph get the degree of a partition
-template<part_concept Part>
+template<part_view_concept Part>
   requires(Part::continuous())
 auto
 partition_local_m(
   graph_view  g,
-  Part const& part) -> index_t
+  Part part) -> index_t
 {
   return part.local_n() > 0 ? g.head[part.end()] - g.head[part.begin()] : 0;
 }
 
 /// from a global_graph get the degree of a partition
-template<part_concept Part>
+template<part_view_concept Part>
   requires(!Part::continuous())
 auto
 partition_local_m(
   graph_view  g,
-  Part const& part) -> index_t
+  Part part) -> index_t
 {
   auto const local_n = part.local_n();
 
@@ -39,18 +39,18 @@ partition_local_m(
 }
 
 /// from a global_graph get the degree of a partition
-template<part_concept Part>
+template<part_view_concept Part>
 auto
 partition_local_m(
   bidi_graph_view bg,
-  Part const&     part)
+  Part     part)
 {
   auto const local_fw_m = partition_local_m(bg.fw_view(), part);
   auto const local_bw_m = partition_local_m(bg.bw_view(), part);
   return PACK(local_fw_m, local_bw_m);
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
 auto
 partition(
   graph_view g,
@@ -75,7 +75,7 @@ partition(
   return gp;
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
 auto
 partition(
   bidi_graph_view bg,

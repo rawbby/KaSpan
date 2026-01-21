@@ -25,21 +25,21 @@ total_degree(
   return 0;
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
   requires(Part::continuous())
 index_t
 degree(
-  Part const&    part,
+  Part    part,
   index_t const* head)
 {
   return total_degree(part.local_n(), head);
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
   requires(!Part::continuous())
 index_t
 degree(
-  Part const&    part,
+  Part   part,
   index_t const* head)
 {
   index_t m = 0;

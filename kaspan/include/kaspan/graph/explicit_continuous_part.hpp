@@ -79,6 +79,12 @@ public:
     return -1;
   }
 
+  [[nodiscard]] constexpr auto world_part_of(
+    i32 r) const noexcept -> explicit_continuous_part_view
+  {
+    return { n_, r, part_ };
+  }
+
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t
   {
     return begin_;

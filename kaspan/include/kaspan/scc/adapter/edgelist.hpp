@@ -42,10 +42,10 @@ edgelist_to_graph(
   sorted_edgelist_to_graph(n, m, edgelist, head, csr);
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
 void
 sorted_edgelist_to_graph_part(
-  Part const&   part,
+  Part   part,
   vertex_t      local_m,
   edge_t const* edgelist,
   index_t*      head,
@@ -66,10 +66,10 @@ sorted_edgelist_to_graph_part(
   DEBUG_ASSERT_EQ(end, local_m);
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
 void
 edgelist_to_graph_part(
-  Part const& part,
+  Part part,
   vertex_t    local_m,
   edge_t*     edgelist,
   index_t*    head,

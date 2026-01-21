@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kaspan/graph/single_part.hpp"
+
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/concept.hpp>
@@ -14,11 +16,9 @@
 
 namespace kaspan {
 
-template<typename T, bool interleaved = false>
+template<typename T, bool normalize_vertices = false>
 struct frontier_view
 {
-  static constexpr bool is_interleaved = interleaved;
-
   vector<vertex_t>* send_buffer = nullptr;
   vector<vertex_t>* recv_buffer = nullptr;
   MPI_Count*        send_counts = nullptr;
@@ -51,6 +51,21 @@ struct frontier_view
   constexpr auto operator=(frontier_view const&) noexcept -> frontier_view& = default;
   constexpr auto operator=(frontier_view&&) noexcept -> frontier_view&      = default;
 
+  template<part_view_concept Part>
+  constexpr auto world_rank_of(
+    Part part,
+    T    value) noexcept -> i32
+  {
+    if constexpr (std::same_as<T, vertex_t>) {
+      if (normalize_vertices) return part.world_rank_of(std::abs(value));
+      return part.world_rank_of(value);
+    } else {
+      static_assert(std::same_as<T, edge_t>);
+      if (normalize_vertices) return part.world_rank_of(std::abs(value.u));
+      return part.world_rank_of(value.u);
+    }
+  }
+
   void local_push(
     T value) const
   {
@@ -77,15 +92,30 @@ struct frontier_view
     ++send_counts[rank];
   }
 
+  template<part_view_concept Part>
+  void push(
+    Part part,
+    T    value)
+  {
+    push(world_rank_of(part, value), value);
+  }
+
   void relaxed_push(
     i32 rank,
     T   value)
   {
-    if (rank == mpi_basic::world_rank) {
-      local_push(value);
-    } else {
-      push(rank, value);
-    }
+    if (rank == mpi_basic::world_rank) local_push(value);
+    else push(rank, value);
+  }
+
+  template<part_view_concept Part>
+  void relaxed_push(
+    Part part,
+    T    value)
+  {
+    auto const rank = world_rank_of(part, value);
+    if (rank == mpi_basic::world_rank) local_push(value);
+    else push(rank, value);
   }
 
   [[nodiscard]] auto size() const -> u64
@@ -150,9 +180,9 @@ struct frontier_view
     return end();
   }
 
-  template<part_concept Part>
+  template<part_view_concept Part>
   auto comm(
-    Part const& part) -> bool
+    Part part) -> bool
   {
     constexpr auto element_count = sizeof(T) / sizeof(vertex_t);
 
@@ -173,15 +203,8 @@ struct frontier_view
     auto* recv_memory = static_cast<T*>(static_cast<void*>(recv_buffer->data() + recv_offset));
     auto* send_memory = static_cast<T*>(static_cast<void*>(send_buffer->data()));
 
-    mpi_basic::inplace_partition_by_rank(send_memory, send_counts, send_displs, [&part](T value) {
-      if constexpr (std::is_same_v<T, edge_t>) {
-        return part.world_rank_of(value.u);
-      } else {
-        static_assert(std::is_same_v<T, vertex_t>);
-        if constexpr (is_interleaved) return part.world_rank_of(std::abs(value));
-        else return part.world_rank_of(value);
-      }
-    });
+    auto const value_to_rank = [&](T value) -> i32 { return world_rank_of(part, value); };
+    mpi_basic::inplace_partition_by_rank(send_memory, send_counts, send_displs, value_to_rank);
 
     mpi_basic::alltoallv(send_buffer->data(), send_counts, send_displs, recv_memory, recv_counts, recv_displs, mpi_type);
 

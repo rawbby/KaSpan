@@ -12,10 +12,10 @@
 #include <kaspan/scc/async/color_scc_step.hpp>
 #include <kaspan/scc/async/forward_search.hpp>
 #include <kaspan/scc/color_scc_step.hpp>
+#include <kaspan/scc/frontier.hpp>
 #include <kaspan/scc/pivot.hpp>
 #include <kaspan/scc/tarjan.hpp>
 #include <kaspan/scc/trim_1_exhaustive.hpp>
-#include <kaspan/scc/frontier.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 
@@ -69,14 +69,14 @@ make_briefkasten_edge()
 }
 
 template<typename indirection_scheme_t,
-         part_concept Part>
+         part_view_concept Part>
 void
 scc(
   bidi_graph_part_view<Part> graph,
   vertex_t*                  scc_id)
 {
   graph.debug_validate();
-  auto const& part = *graph.part;
+  auto part = graph.part;
   KASPAN_STATISTIC_SCOPE("scc");
 
   auto const n       = part.n();
@@ -101,9 +101,7 @@ scc(
       graph.fw_view(),
       [=](auto const* cbeg, auto const* cend) {
         auto const id = *std::min_element(cbeg, cend);
-        std::for_each(cbeg, cend, [=](auto const k) {
-          scc_id[k] = id;
-        });
+        std::for_each(cbeg, cend, [=](auto const k) { scc_id[k] = id; });
       },
       SCC_ID_UNDECIDED_FILTER(local_n, scc_id),
       local_decided);

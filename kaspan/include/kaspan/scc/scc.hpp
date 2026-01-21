@@ -18,14 +18,14 @@
 
 namespace kaspan {
 
-template<part_concept Part>
+template<part_view_concept Part>
 void
 scc(
   bidi_graph_part_view<Part> graph,
   vertex_t*                  scc_id)
 {
   graph.debug_validate();
-  auto const& part = *graph.part;
+  auto part = graph.part;
   KASPAN_STATISTIC_SCOPE("scc");
 
   auto const n       = part.n();

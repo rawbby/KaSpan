@@ -254,10 +254,10 @@ load_graph_from_manifest(
   return g;
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
 static auto
 load_graph_part_from_manifest(
-  Part const&     part,
+  Part     part,
   manifest const& manifest) -> bidi_graph_part<Part>
 {
   DEBUG_ASSERT_EQ(manifest.graph_node_count, part.n());

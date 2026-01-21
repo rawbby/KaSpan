@@ -7,7 +7,7 @@
 
 namespace kaspan::async {
 
-template<part_concept Part,
+template<part_view_concept Part,
          typename brief_queue_t>
 auto
 color_scc_step(
@@ -19,7 +19,7 @@ color_scc_step(
   u64*                       active_storage,
   vertex_t                   decided_count = 0) -> vertex_t
 {
-  auto const& part         = *graph.part;
+  auto part = graph.part;
   auto const  local_n      = part.local_n();
   auto        active       = view_bits(active_storage, local_n);
   auto        active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);

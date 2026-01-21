@@ -18,14 +18,14 @@
 
 namespace kaspan {
 
-template<part_concept Part>
+template<part_view_concept Part>
 void
 test_validate_scc_id(
   graph_part_view<Part> gpv,
   vertex_t const*       scc_id_orig,
   vertex_t const*       scc_id)
 {
-  auto const& part    = *gpv.part;
+  auto part    = gpv.part;
   auto const  local_n = part.local_n();
 
   gpv.each_k([&](auto k) {
@@ -214,11 +214,11 @@ fuzzy_global_scc_id_and_graph(
   return PACK(scc_id, bg);
 }
 
-template<part_concept Part>
+template<part_view_concept Part>
 auto
 fuzzy_local_scc_id_and_graph(
   u64         seed,
-  Part const& part,
+  Part  part,
   double      degree = -1.0)
 {
   auto const local_n = part.local_n();
