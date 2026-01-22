@@ -7,6 +7,8 @@
 #include <kaspan/scc/frontier.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
+#include <vector>
+
 namespace kaspan {
 
 template<part_view_concept Part>
@@ -16,46 +18,47 @@ backward_search(
   frontier_view<vertex_t>    frontier,
   vertex_t*                  scc_id,
   u64*                       fw_reached_storage,
+  u64*                       dense_front_storage,
   vertex_t                   pivot,
   vertex_t                   local_decided,
   auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
-  auto       part       = graph.part;
-  auto const local_n    = part.local_n();
-  auto       fw_reached = view_bits(fw_reached_storage, local_n);
-
   vertex_t decided_count = 0;
-  // vertex_t min_u         = part.n();
 
-  if (part.has_local(pivot)) {
-    frontier.local_push(pivot);
-  }
+  auto fw_reached     = view_bits(fw_reached_storage, graph.part.local_n());
+  auto dense_frontier = view_bits(dense_front_storage, graph.part.local_n());
+
+  if (graph.part.has_local(pivot)) frontier.local_push(pivot);
+
+  auto const dense_threshold = std::max<vertex_t>(1, graph.part.local_n() / 64);
 
   do {
+    while (frontier.size() >= dense_threshold) {
+      while (frontier.has_next()) {
+        dense_frontier.set(graph.part.to_local(frontier.next()));
+      }
+      dense_frontier.for_each(graph.part.local_n(), [&](auto k) {
+        if (fw_reached.get(k) && scc_id[k] == scc_id_undecided) {
+          scc_id[k] = pivot;
+          on_decision(k);
+          ++decided_count;
+          graph.each_bw_v(k, [&](auto v) { frontier.relaxed_push(graph.part, v); });
+        }
+      });
+      dense_frontier.clear(graph.part.local_n());
+    }
+
     while (frontier.has_next()) {
-      auto const u = frontier.next();
-      auto const k = part.to_local(u);
-
+      auto const k = graph.part.to_local(frontier.next());
       if (fw_reached.get(k) && scc_id[k] == scc_id_undecided) {
-
-        // (inside fw-reached and bw-reached => contributes to scc)
         scc_id[k] = pivot;
         on_decision(k);
-        // min_u = std::min(min_u, u);
         ++decided_count;
-
-        graph.each_bw_v(k, [&](auto v) { frontier.relaxed_push(part, v); });
+        graph.each_bw_v(k, [&](auto v) { frontier.relaxed_push(graph.part, v); });
       }
     }
-  } while (frontier.comm(part));
+  } while (frontier.comm(graph.part));
 
-  // normalise scc_id to minimum vertex in scc
-  // min_u = mpi_basic::allreduce_single(min_u, mpi_basic::min);
-  // for (vertex_t k = 0; k < local_n; ++k) {
-  //   if (scc_id[k] == pivot) {
-  //     scc_id[k] = min_u;
-  //   }
-  // }
   return decided_count;
 }
 

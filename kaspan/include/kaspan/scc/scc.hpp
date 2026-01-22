@@ -68,10 +68,11 @@ scc(
     // accurate degree information for a better pivot selection
     auto pivot = select_pivot_from_degree(part, scc_id, outdegree.data(), indegree.data());
 
-    auto bitvector = make_bits_clean(local_n);
+    auto fw_reached = make_bits_clean(local_n);
+    auto dense_front = make_bits_clean(local_n);
 
-    forward_search(graph, front.view<vertex_t>(), scc_id, bitvector.data(), pivot, local_decided);
-    local_decided += backward_search(graph, front.view<vertex_t>(), scc_id, bitvector.data(), pivot, local_decided, on_decision);
+    forward_search(graph, front.view<vertex_t>(), scc_id, fw_reached.data(), dense_front.data(), pivot, local_decided);
+    local_decided += backward_search(graph, front.view<vertex_t>(), scc_id, fw_reached.data(), dense_front.data(), pivot, local_decided, on_decision);
 
     auto const prev_global_decided = global_decided;
 
