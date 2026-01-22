@@ -70,8 +70,8 @@ scc(
 
     auto bitvector = make_bits_clean(local_n);
 
-    forward_search(graph.fw_view(), front.view<vertex_t>(), scc_id, bitvector.data(), pivot);
-    local_decided += backward_search(graph.bw_view(), front.view<vertex_t>(), scc_id, bitvector.data(), pivot, on_decision);
+    forward_search(graph, front.view<vertex_t>(), scc_id, bitvector.data(), pivot, local_decided);
+    local_decided += backward_search(graph, front.view<vertex_t>(), scc_id, bitvector.data(), pivot, local_decided, on_decision);
 
     auto const prev_global_decided = global_decided;
 
@@ -149,100 +149,6 @@ scc(
     KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
 
     DEBUG_ASSERT_EQ(global_decided, part.n());
-  }
-}
-
-template<part_view_concept Part>
-void
-scc_no_residual(
-  bidi_graph_part_view<Part> graph,
-  vertex_t*                  scc_id)
-{
-  KASPAN_STATISTIC_SCOPE("scc");
-
-  auto const n       = graph.part.n();
-  auto const local_n = graph.part.local_n();
-
-  auto front = frontier{ local_n };
-
-  auto       decided_stack = make_stack<vertex_t>(local_n);
-  auto const on_decision   = [&](vertex_t k) { decided_stack.push(k); };
-
-  vertex_t local_decided  = 0;
-  vertex_t global_decided = 0;
-
-  {
-    auto outdegree = make_array<vertex_t>(local_n);
-    auto indegree  = make_array<vertex_t>(local_n);
-
-    // notice: trim_1_exhaustive_first has a side effect by initializing scc_id with scc_id undecided
-    // if trim_1_exhaustive_first is removed one has to initialize scc_id with scc_id_undecided manually!
-    KASPAN_STATISTIC_PUSH("trim_1_exhaustive_first");
-    local_decided += trim_1_exhaustive_first(graph, scc_id, outdegree.data(), indegree.data(), front.view<vertex_t>());
-    global_decided += mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-    KASPAN_STATISTIC_ADD("decided_count", global_decided);
-    KASPAN_STATISTIC_POP();
-
-    // fallback to tarjan on single rank
-    if (mpi_basic::world_size <= 1) {
-      auto const on_scc = [=](auto* beg, auto* end) {
-        auto const id = *std::min_element(beg, end);
-        std::for_each(beg, end, [=](auto const k) { scc_id[k] = id; });
-      };
-      tarjan(graph.fw_view(), on_scc, SCC_ID_UNDECIDED_FILTER(local_n, scc_id), local_decided);
-      return;
-    }
-
-    if (global_decided != n) {
-      KASPAN_STATISTIC_SCOPE("forward_backward_search");
-
-      // as degree arrays are up to date we can use this more
-      // accurate degree information for a better pivot selection
-      auto pivot = select_pivot_from_degree(graph.part, scc_id, outdegree.data(), indegree.data());
-
-      auto bitvector = make_bits_clean(local_n);
-
-      forward_search(graph.fw_view(), front.view<vertex_t>(), scc_id, bitvector.data(), pivot);
-      local_decided += backward_search(graph.bw_view(), front.view<vertex_t>(), scc_id, bitvector.data(), pivot, on_decision);
-
-      auto const prev_global_decided = global_decided;
-
-      global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-      KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
-      KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
-    }
-  }
-
-  if (global_decided < n) {
-    KASPAN_STATISTIC_SCOPE("color");
-
-    auto colors       = make_array<vertex_t>(local_n);
-    auto active_array = make_array<vertex_t>(local_n - local_decided);
-    auto active       = make_bits_clean(local_n);
-    auto changed      = make_bits_clean(local_n);
-
-    vertex_t iterations = 0;
-
-    auto const prev_global_decided = global_decided;
-
-    do {
-
-      local_decided += color_scc_step(graph, scc_id, colors.data(), active_array.data(), active.data(), changed.data(), front.view<edge_t>(), local_decided);
-      global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-      ++iterations;
-
-      if (global_decided == n) break;
-
-      local_decided +=
-        color_scc_step(graph.inverse_view(), scc_id, colors.data(), active_array.data(), active.data(), changed.data(), front.view<edge_t>(), local_decided);
-      global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-      ++iterations;
-
-    } while (global_decided != n);
-
-    KASPAN_STATISTIC_ADD("iterations", iterations);
-    KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
-    KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   }
 }
 

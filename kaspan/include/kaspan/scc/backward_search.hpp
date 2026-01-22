@@ -12,19 +12,20 @@ namespace kaspan {
 template<part_view_concept Part>
 auto
 backward_search(
-  graph_part_view<Part>   graph,
-  frontier_view<vertex_t> frontier,
-  vertex_t*               scc_id,
-  u64*                    fw_reached_storage,
-  vertex_t                pivot,
-  auto&&                  on_decision = [](vertex_t) {}) -> vertex_t
+  bidi_graph_part_view<Part> graph,
+  frontier_view<vertex_t>    frontier,
+  vertex_t*                  scc_id,
+  u64*                       fw_reached_storage,
+  vertex_t                   pivot,
+  vertex_t                   local_decided,
+  auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
   auto       part       = graph.part;
   auto const local_n    = part.local_n();
   auto       fw_reached = view_bits(fw_reached_storage, local_n);
 
   vertex_t decided_count = 0;
-  vertex_t min_u         = part.n();
+  // vertex_t min_u         = part.n();
 
   if (part.has_local(pivot)) {
     frontier.local_push(pivot);
@@ -33,38 +34,28 @@ backward_search(
   do {
     while (frontier.has_next()) {
       auto const u = frontier.next();
-      DEBUG_ASSERT(part.has_local(u));
       auto const k = part.to_local(u);
 
-      if (!fw_reached.get(k) || scc_id[k] != scc_id_undecided) {
-        continue;
-      }
+      if (fw_reached.get(k) && scc_id[k] == scc_id_undecided) {
 
-      // (inside fw-reached and bw-reached => contributes to scc)
-      scc_id[k] = pivot;
-      on_decision(k);
-      min_u = std::min(min_u, u);
-      ++decided_count;
+        // (inside fw-reached and bw-reached => contributes to scc)
+        scc_id[k] = pivot;
+        on_decision(k);
+        // min_u = std::min(min_u, u);
+        ++decided_count;
 
-      // add all neighbours to frontier
-      for (vertex_t const v : graph.csr_range(k)) {
-        if (part.has_local(v)) {
-          frontier.local_push(v);
-        } else {
-          frontier.push(part.world_rank_of(v), v);
-        }
+        graph.each_bw_v(k, [&](auto v) { frontier.relaxed_push(part, v); });
       }
     }
   } while (frontier.comm(part));
 
   // normalise scc_id to minimum vertex in scc
-  min_u = mpi_basic::allreduce_single(min_u, mpi_basic::min);
-  for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] == pivot) {
-      scc_id[k] = min_u;
-    }
-  }
-
+  // min_u = mpi_basic::allreduce_single(min_u, mpi_basic::min);
+  // for (vertex_t k = 0; k < local_n; ++k) {
+  //   if (scc_id[k] == pivot) {
+  //     scc_id[k] = min_u;
+  //   }
+  // }
   return decided_count;
 }
 

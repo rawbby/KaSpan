@@ -6,6 +6,7 @@
 #include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/scc/partion_graph.hpp>
+#include <kaspan/test/normalise_scc.hpp>
 #include <kaspan/util/arithmetic.hpp>
 
 #include <algorithm>
@@ -23,10 +24,12 @@ void
 test_validate_scc_id(
   graph_part_view<Part> gpv,
   vertex_t const*       scc_id_orig,
-  vertex_t const*       scc_id)
+  vertex_t*             scc_id)
 {
   auto       part    = gpv.part;
   auto const local_n = part.local_n();
+
+  normalise_scc_id(gpv.part, scc_id);
 
   gpv.each_k([&](auto k) {
     if (scc_id_orig[k] != scc_id[k]) {

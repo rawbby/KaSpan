@@ -1,7 +1,8 @@
+#include "kaspan/test/normalise_scc.hpp"
+
 #include <ispan/scc.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/graph/base.hpp>
-#include <kaspan/graph/graph.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
@@ -33,6 +34,9 @@ main(
 
   std::vector<vertex_t> ispan_scc_id;
   scc(graph.n, graph.m, graph.fw.head, graph.fw.csr, graph.bw.head, graph.bw.csr, 12, &ispan_scc_id);
+
+  normalise_scc_id(bgp.part.view(), kaspan_scc_id.data());
+  normalise_scc_id(bgp.part.n(), ispan_scc_id.data());
 
   ASSERT_EQ(ispan_scc_id.size(), bgp.part.n());
   for (vertex_t k = 0; k < local_n; ++k) {
