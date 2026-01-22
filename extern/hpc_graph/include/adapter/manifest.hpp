@@ -72,6 +72,5 @@ load_hpc_graph_from_manifest(
     data.g.in_edges[i - bw_csr_begin] = integral_cast<u64>(bw_csr_access.get(i));
   }
 
-  data.initialize(); // count into the benchmark
   return data;
 }

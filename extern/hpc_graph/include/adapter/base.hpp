@@ -105,7 +105,7 @@ struct hpc_graph_data
   {
     if (this != &rhs) {
       this->~hpc_graph_data();
-      new (this) hpc_graph_data{std::move(rhs)};
+      new (this) hpc_graph_data{ std::move(rhs) };
     }
     return *this;
   }
@@ -115,83 +115,74 @@ struct hpc_graph_data
     if (!initialized) {
       using namespace kaspan;
 
-      g.n_ghost         = 0;
-      g.max_degree_vert = 0;
-      g.max_out_degree  = 0;
-      g.max_in_degree   = 0;
-      g.ghost_unmap     = nullptr;
-      g.ghost_tasks     = nullptr;
-
       g.m = integral_cast<u64>(mpi_basic::allreduce_single(g.m_local_out, mpi_basic::sum));
 
       g.n_total     = g.n_local;
       g.local_unmap = line_alloc<u64>(g.n_local);
-      for (uint64_t i = 0; i < g.n_local; ++i)
-        g.local_unmap[i] = g.n_offset + i;
+      for (u64 k = 0; k < g.n_local; ++k)
+        g.local_unmap[k] = g.n_offset + k; // local to global
 
-      init_map(&g.map, g.n_local * 2);
-      for (uint64_t i = 0; i < g.n_local; ++i)
-        set_value_uq(&g.map, g.local_unmap[i], i);
+      auto const m_local_total = g.m_local_out + g.m_local_in;
+      init_map(&g.map, (g.n_local + m_local_total) * 3 / 2);
+      for (u64 i = 0; i < g.n_local; ++i)
+        set_value_uq(&g.map, g.local_unmap[i], i); // global to local
+
+      // Calculate the ghost cells
+      {
+        for (u64 i = 0; i < g.m_local_out; ++i) {
+          auto const v = g.out_edges[i];
+          if (get_value(&g.map, v) == NULL_KEY) {
+            set_value_uq(&g.map, v, g.n_local + g.n_ghost);
+            ++g.n_ghost;
+          }
+        }
+        for (u64 i = 0; i < g.m_local_in; ++i) {
+          auto const v = g.in_edges[i];
+          if (get_value(&g.map, v) == NULL_KEY) {
+            set_value_uq(&g.map, v, g.n_local + g.n_ghost);
+            ++g.n_ghost;
+          }
+        }
+
+        auto const part = explicit_sorted_part{ integral_cast<vertex_t>(g.n), integral_cast<vertex_t>(g.n_offset + g.n_local) };
+
+        g.n_total     = g.n_local + g.n_ghost;
+        g.ghost_unmap = line_alloc<u64>(g.n_ghost);
+        g.ghost_tasks = line_alloc<u64>(g.n_ghost);
+        for (u64 i = 0; i < g.n_ghost; ++i) {
+          auto const global_v = g.map.unique_keys[g.n_local + i];
+          g.ghost_unmap[i]    = global_v;
+          g.ghost_tasks[i]    = integral_cast<u64>(part.world_rank_of(integral_cast<vertex_t>(global_v)));
+        }
+      }
+
+      // Convert from global vertex to local/ghost indices
+      for (u64 i = 0; i < g.m_local_out; ++i) {
+        g.out_edges[i] = get_value(&g.map, g.out_edges[i]);
+      }
+      for (u64 i = 0; i < g.m_local_in; ++i) {
+        g.in_edges[i] = get_value(&g.map, g.in_edges[i]);
+      }
 
       // Calculate max degrees
-      for (uint64_t i = 0; i < g.n_local; ++i) {
-        uint64_t const out_deg = g.out_degree_list[i + 1] - g.out_degree_list[i];
-        uint64_t const in_deg  = g.in_degree_list[i + 1] - g.in_degree_list[i];
+      g.max_degree_vert      = 0;
+      g.max_out_degree       = 0;
+      g.max_in_degree        = 0;
+      u64 max_degree_product = 0;
+      for (u64 k = 0; k < g.n_local; ++k) {
+        auto const out_deg     = g.out_degree_list[k + 1] - g.out_degree_list[k];
+        auto const in_deg      = g.in_degree_list[k + 1] - g.in_degree_list[k];
+        auto const degree_prod = out_deg * in_deg;
         if (out_deg > g.max_out_degree) g.max_out_degree = out_deg;
         if (in_deg > g.max_in_degree) g.max_in_degree = in_deg;
+        if (degree_prod > max_degree_product) {
+          max_degree_product = degree_prod;
+          g.max_degree_vert  = k;
+        }
       }
 
       init_comm_data(&comm);
       init_queue_data(&g, &q);
-
-      // init
-      {
-        for (uint64_t i = 0; i < g.m_local_out; ++i) {
-          uint64_t v   = g.out_edges[i];
-          uint64_t val = get_value(&g.map, v);
-          if (val == NULL_KEY) {
-            set_value_uq(&g.map, v, g.n_local + g.n_ghost);
-            g.n_ghost++;
-          }
-        }
-        for (uint64_t i = 0; i < g.m_local_in; ++i) {
-          uint64_t v   = g.in_edges[i];
-          uint64_t val = get_value(&g.map, v);
-          if (val == NULL_KEY) {
-            set_value_uq(&g.map, v, g.n_local + g.n_ghost);
-            g.n_ghost++;
-          }
-        }
-
-        g.n_total = g.n_local + g.n_ghost;
-
-        if (g.n_ghost > 0) {
-          g.ghost_unmap = line_alloc<u64>(g.n_ghost);
-          g.ghost_tasks = line_alloc<u64>(g.n_ghost);
-          for (uint64_t i = 0; i < g.n_ghost; ++i) {
-            uint64_t global_v = g.map.unique_keys[g.n_local + i];
-            g.ghost_unmap[i]  = global_v;
-            g.ghost_tasks[i]  = integral_cast<u64>(part.world_rank_of(integral_cast<vertex_t>(global_v))); // todo use g.map
-          }
-        }
-
-        // Calculate max degrees after conversion
-        for (uint64_t i = 0; i < g.m_local_out; ++i) {
-          g.out_edges[i] = get_value(&g.map, g.out_edges[i]);
-        }
-        for (uint64_t i = 0; i < g.m_local_in; ++i) {
-          g.in_edges[i] = get_value(&g.map, g.in_edges[i]);
-        }
-
-        g.max_out_degree = 0;
-        g.max_in_degree  = 0;
-        for (uint64_t i = 0; i < g.n_local; ++i) {
-          uint64_t const out_deg = g.out_degree_list[i + 1] - g.out_degree_list[i];
-          uint64_t const in_deg  = g.in_degree_list[i + 1] - g.in_degree_list[i];
-          if (out_deg > g.max_out_degree) g.max_out_degree = out_deg;
-          if (in_deg > g.max_in_degree) g.max_in_degree = in_deg;
-        }
-      }
 
       initialized = true;
     }

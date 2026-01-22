@@ -37,6 +37,5 @@ kagen_hpc_graph_part(
     data.g.in_edges[i] = integral_cast<u64>(g.bw.csr[i]);
   }
 
-  data.initialize(); // count into the benchmark
   return data;
 }
