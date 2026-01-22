@@ -115,7 +115,6 @@ struct hpc_graph_data
     if (!initialized) {
       using namespace kaspan;
 
-      // todo ? init these after all other graph info was written
       g.n_ghost         = 0;
       g.max_degree_vert = 0;
       g.max_out_degree  = 0;
@@ -134,58 +133,67 @@ struct hpc_graph_data
       for (uint64_t i = 0; i < g.n_local; ++i)
         set_value_uq(&g.map, g.local_unmap[i], i);
 
+      // Calculate max degrees
+      for (uint64_t i = 0; i < g.n_local; ++i) {
+        uint64_t const out_deg = g.out_degree_list[i + 1] - g.out_degree_list[i];
+        uint64_t const in_deg  = g.in_degree_list[i + 1] - g.in_degree_list[i];
+        if (out_deg > g.max_out_degree) g.max_out_degree = out_deg;
+        if (in_deg > g.max_in_degree) g.max_in_degree = in_deg;
+      }
+
       init_comm_data(&comm);
       init_queue_data(&g, &q);
+
+      // init
+      {
+        for (uint64_t i = 0; i < g.m_local_out; ++i) {
+          uint64_t v   = g.out_edges[i];
+          uint64_t val = get_value(&g.map, v);
+          if (val == NULL_KEY) {
+            set_value_uq(&g.map, v, g.n_local + g.n_ghost);
+            g.n_ghost++;
+          }
+        }
+        for (uint64_t i = 0; i < g.m_local_in; ++i) {
+          uint64_t v   = g.in_edges[i];
+          uint64_t val = get_value(&g.map, v);
+          if (val == NULL_KEY) {
+            set_value_uq(&g.map, v, g.n_local + g.n_ghost);
+            g.n_ghost++;
+          }
+        }
+
+        g.n_total = g.n_local + g.n_ghost;
+
+        if (g.n_ghost > 0) {
+          g.ghost_unmap = line_alloc<u64>(g.n_ghost);
+          g.ghost_tasks = line_alloc<u64>(g.n_ghost);
+          for (uint64_t i = 0; i < g.n_ghost; ++i) {
+            uint64_t global_v = g.map.unique_keys[g.n_local + i];
+            g.ghost_unmap[i]  = global_v;
+            g.ghost_tasks[i]  = integral_cast<u64>(part.world_rank_of(integral_cast<vertex_t>(global_v))); // todo use g.map
+          }
+        }
+
+        // Calculate max degrees after conversion
+        for (uint64_t i = 0; i < g.m_local_out; ++i) {
+          g.out_edges[i] = get_value(&g.map, g.out_edges[i]);
+        }
+        for (uint64_t i = 0; i < g.m_local_in; ++i) {
+          g.in_edges[i] = get_value(&g.map, g.in_edges[i]);
+        }
+
+        g.max_out_degree = 0;
+        g.max_in_degree  = 0;
+        for (uint64_t i = 0; i < g.n_local; ++i) {
+          uint64_t const out_deg = g.out_degree_list[i + 1] - g.out_degree_list[i];
+          uint64_t const in_deg  = g.in_degree_list[i + 1] - g.in_degree_list[i];
+          if (out_deg > g.max_out_degree) g.max_out_degree = out_deg;
+          if (in_deg > g.max_in_degree) g.max_in_degree = in_deg;
+        }
+      }
 
       initialized = true;
     }
   }
 };
-
-template<kaspan::part_concept Part>
-void
-initialize_ghost_cells(
-  hpc_graph_data& data,
-  Part const&     part,
-  uint64_t        local_fw_m,
-  uint64_t        local_bw_m)
-{
-  using namespace kaspan;
-  dist_graph_t& g = data.g;
-
-  for (uint64_t i = 0; i < local_fw_m; ++i) {
-    uint64_t v   = g.out_edges[i];
-    uint64_t val = get_value(&g.map, v);
-    if (val == NULL_KEY) {
-      set_value_uq(&g.map, v, g.n_local + g.n_ghost);
-      g.n_ghost++;
-    }
-  }
-  for (uint64_t i = 0; i < local_bw_m; ++i) {
-    uint64_t v   = g.in_edges[i];
-    uint64_t val = get_value(&g.map, v);
-    if (val == NULL_KEY) {
-      set_value_uq(&g.map, v, g.n_local + g.n_ghost);
-      g.n_ghost++;
-    }
-  }
-
-  g.n_total = g.n_local + g.n_ghost;
-
-  if (g.n_ghost > 0) {
-    g.ghost_unmap = line_alloc<u64>(g.n_ghost);
-    g.ghost_tasks = line_alloc<u64>(g.n_ghost);
-    for (uint64_t i = 0; i < g.n_ghost; ++i) {
-      uint64_t global_v = g.map.unique_keys[g.n_local + i];
-      g.ghost_unmap[i]  = global_v;
-      g.ghost_tasks[i]  = integral_cast<u64>(part.world_rank_of(integral_cast<vertex_t>(global_v)));
-    }
-  }
-
-  for (uint64_t i = 0; i < local_fw_m; ++i) {
-    g.out_edges[i] = get_value(&g.map, g.out_edges[i]);
-  }
-  for (uint64_t i = 0; i < local_bw_m; ++i) {
-    g.in_edges[i] = get_value(&g.map, g.in_edges[i]);
-  }
-}
