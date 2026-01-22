@@ -4,6 +4,8 @@ target_link_libraries(${TARGET_NAME} INTERFACE
         KaGen::KaGen
         MPI::MPI_CXX)
 
+option(KASPAN_INDEX64 "Use int64 for index type" OFF)
+option(KASPAN_VERTEX64 "Use int64 for vertex type" OFF)
 option(KASPAN_CALLGRIND "Enable Valgrind Callgrind integration" OFF)
 option(KASPAN_MEMCHECK "Enable Valgrind Memcheck integration" OFF)
 
@@ -36,6 +38,12 @@ if (KASPAN_CALLGRIND OR KASPAN_MEMCHECK)
     endif ()
 endif ()
 
+if (KASPAN_INDEX64)
+    target_compile_definitions(${TARGET_NAME} INTERFACE KASPAN_INDEX64)
+endif ()
+if (KASPAN_VERTEX64)
+    target_compile_definitions(${TARGET_NAME} INTERFACE KASPAN_VERTEX64)
+endif ()
 if (KASPAN_CALLGRIND)
     target_compile_definitions(${TARGET_NAME} INTERFACE KASPAN_CALLGRIND)
 endif ()
