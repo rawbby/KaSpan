@@ -1,24 +1,5 @@
 #pragma once
 
-#include <kaspan/memory/buffer.hpp>
-#include <kaspan/util/integral_cast.hpp>
-
-#include <comms.h>
-#include <dist_graph.h>
-#include <fast_map.h>
-
-#include <cstring>
-#include <unordered_set>
-
-// Pure data container for HPCGraph adapter
-struct hpc_graph_data
-{
-  dist_graph_t   g{};
-  mpi_data_t     comm{};
-  queue_data_t   q{};
-  kaspan::buffer storage;
-};
-
 // Convert from KaSpan GraphPart to HPCGraph dist_graph_t format
 template<kaspan::part_concept Part>
 auto
@@ -41,84 +22,12 @@ create_hpc_graph_from_graph_part(
   data.g.n           = kaspan::integral_cast<uint64_t>(n);
   data.g.m           = kaspan::integral_cast<uint64_t>(m);
   data.g.n_local     = kaspan::integral_cast<uint64_t>(local_n);
-  data.g.n_offset    = kaspan::integral_cast<uint64_t>(part.begin()); // Use begin instead of local_start()
+  data.g.n_offset    = kaspan::integral_cast<uint64_t>(part.begin());
   data.g.n_ghost     = 0;
-  data.g.n_total     = data.g.n_local; // no ghost vertices for now
+  data.g.n_total     = data.g.n_local;
   data.g.m_local_out = kaspan::integral_cast<uint64_t>(local_fw_m);
   data.g.m_local_in  = kaspan::integral_cast<uint64_t>(local_bw_m);
 
-  // Allocate and convert forward edges (out_edges)
-  auto out_degree_list_buf = kaspan::make_buffer<uint64_t>(local_n + 1);
-  auto out_edges_buf       = kaspan::make_buffer<uint64_t>(local_fw_m);
-
-  auto* out_degree_list = static_cast<uint64_t*>(out_degree_list_buf.data());
-  auto* out_edges       = static_cast<uint64_t*>(out_edges_buf.data());
-
-  // Convert forward CSR
-  for (kaspan::vertex_t i = 0; i <= local_n; ++i) {
-    out_degree_list[i] = kaspan::integral_cast<uint64_t>(fw_head[i]);
-  }
-
-  for (kaspan::index_t i = 0; i < local_fw_m; ++i) {
-    out_edges[i] = kaspan::integral_cast<uint64_t>(fw_csr[i]);
-  }
-
-  // Allocate and convert backward edges (in_edges)
-  auto in_degree_list_buf = kaspan::make_buffer<uint64_t>(local_n + 1);
-  auto in_edges_buf       = kaspan::make_buffer<uint64_t>(local_bw_m);
-
-  auto* in_degree_list = static_cast<uint64_t*>(in_degree_list_buf.data());
-  auto* in_edges       = static_cast<uint64_t*>(in_edges_buf.data());
-
-  // Convert backward CSR
-  for (kaspan::vertex_t i = 0; i <= local_n; ++i) {
-    in_degree_list[i] = kaspan::integral_cast<uint64_t>(bw_head[i]);
-  }
-
-  for (kaspan::index_t i = 0; i < local_bw_m; ++i) {
-    in_edges[i] = kaspan::integral_cast<uint64_t>(bw_csr[i]);
-  }
-
-  // Create local_unmap (maps local index to global vertex id)
-  auto  local_unmap_buf = kaspan::make_buffer<uint64_t>(local_n);
-  auto* local_unmap     = static_cast<uint64_t*>(local_unmap_buf.data());
-
-  for (kaspan::vertex_t i = 0; i < local_n; ++i) {
-    local_unmap[i] = kaspan::integral_cast<uint64_t>(part.to_global(i));
-  }
-
-  // Temporarily assign pointers
-  data.g.out_degree_list = out_degree_list;
-  data.g.out_edges       = out_edges;
-  data.g.in_degree_list  = in_degree_list;
-  data.g.in_edges        = in_edges;
-  data.g.local_unmap     = local_unmap;
-
-  // Ghost cells will be initialized separately via initialize_ghost_cells()
-  // For now, set ghost_unmap and ghost_tasks to nullptr
-  data.g.ghost_unmap = nullptr;
-  data.g.ghost_tasks = nullptr;
-
-  // Find max out and in degree for statistics
-  data.g.max_out_degree = 0;
-  data.g.max_in_degree  = 0;
-
-  for (uint64_t i = 0; i < data.g.n_local; ++i) {
-    uint64_t const out_deg = out_degree_list[i + 1] - out_degree_list[i];
-    uint64_t const in_deg  = in_degree_list[i + 1] - in_degree_list[i];
-
-    if (out_deg > data.g.max_out_degree) {
-      data.g.max_out_degree = out_deg;
-    }
-    if (in_deg > data.g.max_in_degree) {
-      data.g.max_in_degree = in_deg;
-    }
-  }
-
-  // Store buffer for ownership (just use one buffer, others will be freed at end of function)
-  // The pointers in data.g point to memory owned by the buffers that will be destroyed
-  // We need to keep ALL buffers alive, so we combine their sizes
-  // Note: Ghost arrays will be added later by initialize_ghost_cells()
   size_t total_size = (local_n + 1) * sizeof(uint64_t)   // out_degree_list
                       + local_fw_m * sizeof(uint64_t)    // out_edges
                       + (local_n + 1) * sizeof(uint64_t) // in_degree_list
@@ -130,25 +39,171 @@ create_hpc_graph_from_graph_part(
   char*  combined_data = static_cast<char*>(data.storage.data());
   size_t offset        = 0;
 
-  // Copy all data into the combined buffer and update pointers
-  std::memcpy(combined_data + offset, out_degree_list, (local_n + 1) * sizeof(uint64_t));
   data.g.out_degree_list = reinterpret_cast<uint64_t*>(combined_data + offset);
   offset += (local_n + 1) * sizeof(uint64_t);
 
-  std::memcpy(combined_data + offset, out_edges, local_fw_m * sizeof(uint64_t));
   data.g.out_edges = reinterpret_cast<uint64_t*>(combined_data + offset);
   offset += local_fw_m * sizeof(uint64_t);
 
-  std::memcpy(combined_data + offset, in_degree_list, (local_n + 1) * sizeof(uint64_t));
   data.g.in_degree_list = reinterpret_cast<uint64_t*>(combined_data + offset);
   offset += (local_n + 1) * sizeof(uint64_t);
 
-  std::memcpy(combined_data + offset, in_edges, local_bw_m * sizeof(uint64_t));
   data.g.in_edges = reinterpret_cast<uint64_t*>(combined_data + offset);
   offset += local_bw_m * sizeof(uint64_t);
 
-  std::memcpy(combined_data + offset, local_unmap, local_n * sizeof(uint64_t));
   data.g.local_unmap = reinterpret_cast<uint64_t*>(combined_data + offset);
+
+  // Convert and fill data
+  data.g.max_out_degree = 0;
+  data.g.max_in_degree  = 0;
+
+  for (kaspan::vertex_t i = 0; i <= local_n; ++i) {
+    data.g.out_degree_list[i] = kaspan::integral_cast<uint64_t>(fw_head[i]);
+  }
+  for (kaspan::index_t i = 0; i < local_fw_m; ++i) {
+    data.g.out_edges[i] = kaspan::integral_cast<uint64_t>(fw_csr[i]);
+  }
+  for (kaspan::vertex_t i = 0; i <= local_n; ++i) {
+    data.g.in_degree_list[i] = kaspan::integral_cast<uint64_t>(bw_head[i]);
+  }
+  for (kaspan::index_t i = 0; i < local_bw_m; ++i) {
+    data.g.in_edges[i] = kaspan::integral_cast<uint64_t>(bw_csr[i]);
+  }
+  for (kaspan::vertex_t i = 0; i < local_n; ++i) {
+    data.g.local_unmap[i] = kaspan::integral_cast<uint64_t>(part.to_global(i));
+
+    uint64_t const out_deg = data.g.out_degree_list[i + 1] - data.g.out_degree_list[i];
+    uint64_t const in_deg  = data.g.in_degree_list[i + 1] - data.g.in_degree_list[i];
+
+    if (out_deg > data.g.max_out_degree) data.g.max_out_degree = out_deg;
+    if (in_deg > data.g.max_in_degree) data.g.max_in_degree = in_deg;
+  }
+
+  // Initialize communication structures
+  init_comm_data(&data.comm);
+  init_queue_data(&data.g, &data.q);
+
+  return data;
+}
+
+// Load HPCGraph data directly from manifest without intermediate KaSpan graph
+template<kaspan::part_concept Part>
+auto
+load_hpc_graph_from_manifest(
+  Part const&             part,
+  kaspan::manifest const& manifest) -> hpc_graph_data
+{
+  using namespace kaspan;
+  hpc_graph_data data;
+
+  vertex_t const n       = part.n();
+  vertex_t const local_n = part.local_n();
+  index_t const  m       = integral_cast<index_t>(manifest.graph_edge_count);
+
+  auto const  head_bytes   = manifest.graph_head_bytes;
+  auto const  csr_bytes    = manifest.graph_csr_bytes;
+  auto const  load_endian  = manifest.graph_endian;
+  char const* fw_head_file = manifest.fw_head_path.c_str();
+  char const* fw_csr_file  = manifest.fw_csr_path.c_str();
+  char const* bw_head_file = manifest.bw_head_path.c_str();
+  char const* bw_csr_file  = manifest.bw_csr_path.c_str();
+
+  auto fw_head_buffer = file_buffer::create_r(fw_head_file, (n + 1) * head_bytes);
+  auto fw_csr_buffer  = file_buffer::create_r(fw_csr_file, m * csr_bytes);
+  auto bw_head_buffer = file_buffer::create_r(bw_head_file, (n + 1) * head_bytes);
+  auto bw_csr_buffer  = file_buffer::create_r(bw_csr_file, m * csr_bytes);
+
+  auto fw_head_access = view_dense_unsigned(fw_head_buffer.data(), n + 1, head_bytes, load_endian);
+  auto fw_csr_access  = view_dense_unsigned(fw_csr_buffer.data(), m, csr_bytes, load_endian);
+  auto bw_head_access = view_dense_unsigned(bw_head_buffer.data(), n + 1, head_bytes, load_endian);
+  auto bw_csr_access  = view_dense_unsigned(bw_csr_buffer.data(), m, csr_bytes, load_endian);
+
+  auto const get_local_m = [&](auto const& head) -> index_t {
+    if constexpr (Part::continuous()) {
+      if (local_n > 0) {
+        return integral_cast<index_t>(head.get(part.end()) - head.get(part.begin()));
+      }
+      return 0;
+    } else {
+      index_t sum = 0;
+      for (vertex_t k = 0; k < local_n; ++k) {
+        auto const u = part.select(k);
+        sum += integral_cast<index_t>(head.get(u + 1) - head.get(u));
+      }
+      return sum;
+    }
+  };
+
+  index_t const local_fw_m = get_local_m(fw_head_access);
+  index_t const local_bw_m = get_local_m(bw_head_access);
+
+  // Initialize dist_graph_t structure
+  data.g.n           = integral_cast<uint64_t>(n);
+  data.g.m           = integral_cast<uint64_t>(m);
+  data.g.n_local     = integral_cast<uint64_t>(local_n);
+  data.g.n_offset    = integral_cast<uint64_t>(part.begin());
+  data.g.n_ghost     = 0;
+  data.g.n_total     = data.g.n_local;
+  data.g.m_local_out = integral_cast<uint64_t>(local_fw_m);
+  data.g.m_local_in  = integral_cast<uint64_t>(local_bw_m);
+
+  size_t total_size = (local_n + 1) * sizeof(uint64_t)   // out_degree_list
+                      + local_fw_m * sizeof(uint64_t)    // out_edges
+                      + (local_n + 1) * sizeof(uint64_t) // in_degree_list
+                      + local_bw_m * sizeof(uint64_t)    // in_edges
+                      + local_n * sizeof(uint64_t);      // local_unmap
+
+  data.storage         = make_buffer<uint64_t>(total_size / sizeof(uint64_t));
+  char*  combined_data = static_cast<char*>(data.storage.data());
+  size_t offset        = 0;
+
+  data.g.out_degree_list = reinterpret_cast<uint64_t*>(combined_data + offset);
+  offset += (local_n + 1) * sizeof(uint64_t);
+  data.g.out_edges = reinterpret_cast<uint64_t*>(combined_data + offset);
+  offset += local_fw_m * sizeof(uint64_t);
+  data.g.in_degree_list = reinterpret_cast<uint64_t*>(combined_data + offset);
+  offset += (local_n + 1) * sizeof(uint64_t);
+  data.g.in_edges = reinterpret_cast<uint64_t*>(combined_data + offset);
+  offset += local_bw_m * sizeof(uint64_t);
+  data.g.local_unmap = reinterpret_cast<uint64_t*>(combined_data + offset);
+
+  // Fill data
+  uint64_t fw_pos = 0;
+  uint64_t bw_pos = 0;
+  data.g.max_out_degree = 0;
+  data.g.max_in_degree  = 0;
+
+  for (vertex_t k = 0; k < local_n; ++k) {
+    auto const global_u   = part.to_global(k);
+    data.g.local_unmap[k] = integral_cast<uint64_t>(global_u);
+
+    // Forward
+    auto const fw_begin       = fw_head_access.get(global_u);
+    auto const fw_end         = fw_head_access.get(global_u + 1);
+    data.g.out_degree_list[k] = fw_pos;
+    for (auto it = fw_begin; it != fw_end; ++it) {
+      data.g.out_edges[fw_pos++] = integral_cast<uint64_t>(fw_csr_access.get(it));
+    }
+    uint64_t const out_deg = fw_pos - data.g.out_degree_list[k];
+    if (out_deg > data.g.max_out_degree) data.g.max_out_degree = out_deg;
+
+    // Backward
+    auto const bw_begin      = bw_head_access.get(global_u);
+    auto const bw_end        = bw_head_access.get(global_u + 1);
+    data.g.in_degree_list[k] = bw_pos;
+    for (auto it = bw_begin; it != bw_end; ++it) {
+      data.g.in_edges[bw_pos++] = integral_cast<uint64_t>(bw_csr_access.get(it));
+    }
+    uint64_t const in_deg = bw_pos - data.g.in_degree_list[k];
+    if (in_deg > data.g.max_in_degree) data.g.max_in_degree = in_deg;
+  }
+  if (local_n > 0) {
+    data.g.out_degree_list[local_n] = fw_pos;
+    data.g.in_degree_list[local_n]  = bw_pos;
+  } else {
+    data.g.out_degree_list[0] = 0;
+    data.g.in_degree_list[0]  = 0;
+  }
 
   // Initialize communication structures
   init_comm_data(&data.comm);
