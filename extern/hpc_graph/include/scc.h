@@ -86,6 +86,6 @@ scc_dist(dist_graph_t* g,
          mpi_data_t*   comm,
          queue_data_t* q,
          uint64_t      root,
-         char*         output_file);
+         uint64_t*     scc_id);
 
 #endif

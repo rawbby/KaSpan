@@ -7,15 +7,16 @@
 
 namespace kaspan {
 
-inline void
+template<arithmetic_concept Vertex>
+void
 normalise_scc_id(
-  vertex_t  n,
-  vertex_t* scc_id)
+  Vertex  n,
+  Vertex* scc_id)
 {
-  auto old2new = std::unordered_map<vertex_t, vertex_t>{};
+  auto old2new = std::unordered_map<Vertex, Vertex>{};
   old2new.reserve(static_cast<size_t>(n));
 
-  for (vertex_t u = 0; u < n; ++u) {
+  for (Vertex u = 0; u < n; ++u) {
     if (!old2new.contains(scc_id[u])) {
       old2new[scc_id[u]] = u;
     }
@@ -23,19 +24,19 @@ normalise_scc_id(
   }
 }
 
-template<part_view_concept Part>
+template<part_view_concept Part, arithmetic_concept Vertex>
 void
 normalise_scc_id(
   Part      part,
-  vertex_t* scc_id)
+  Vertex* scc_id)
 {
-  auto old2new = std::unordered_map<vertex_t, vertex_t>{};
+  auto old2new = std::unordered_map<Vertex, Vertex>{};
   old2new.reserve(static_cast<size_t>(part.local_n()));
 
   auto [scc_id_full, n] = mpi_basic::allgatherv(scc_id, part.local_n());
   ASSERT_EQ(n, part.n(), "all local n should sum up to n");
 
-  for (vertex_t u = 0; u < n; ++u) {
+  for (Vertex u = 0; u < n; ++u) {
     if (!old2new.contains(scc_id_full[u])) {
       old2new[scc_id_full[u]] = u;
     }

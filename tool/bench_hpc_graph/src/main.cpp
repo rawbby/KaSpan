@@ -122,8 +122,8 @@ main(
     auto const pivot = internal::allreduce_pivot(max_degree);
     KASPAN_STATISTIC_POP();
 
-    char hpc_out_file[] = "hpc_scc_output.txt";
-    scc_dist(&hpc_data.g, &hpc_data.comm, &hpc_data.q, kaspan::integral_cast<uint64_t>(pivot), hpc_out_file);
+    auto scc_id = make_array<u64>(hpc_data.g.n_total);
+    scc_dist(&hpc_data.g, &hpc_data.comm, &hpc_data.q, kaspan::integral_cast<uint64_t>(pivot), scc_id.data());
     KASPAN_STATISTIC_POP();
 
     KASPAN_STATISTIC_ADD("memory_after_scc", get_resident_set_bytes());

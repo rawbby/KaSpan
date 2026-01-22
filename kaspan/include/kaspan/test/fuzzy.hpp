@@ -22,9 +22,9 @@ namespace kaspan {
 template<part_view_concept Part>
 void
 test_validate_scc_id(
-  graph_part_view<Part> gpv,
-  vertex_t const*       scc_id_orig,
-  vertex_t*             scc_id)
+  graph_part_view<Part>          gpv,
+  arithmetic_concept auto const* scc_id_orig,
+  arithmetic_concept auto*       scc_id)
 {
   auto       part    = gpv.part;
   auto const local_n = part.local_n();

@@ -32,7 +32,7 @@ main(
 
   std::vector<vertex_t> ispan_scc_id;
   scc(graph.n, graph.m, graph.fw.head, graph.fw.csr, graph.bw.head, graph.bw.csr, 12, &ispan_scc_id);
-  normalise_scc_id(ispan_scc_id.size(), ispan_scc_id.data());
+  normalise_scc_id(static_cast<vertex_t>(ispan_scc_id.size()), ispan_scc_id.data());
 
   tarjan(graph.fw_view(), [&](auto* beg, auto* end) {
     vertex_t min_u = graph.n;
