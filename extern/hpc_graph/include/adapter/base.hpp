@@ -114,8 +114,9 @@ struct hpc_graph_data
   {
     if (!initialized) {
       using namespace kaspan;
+      using namespace mpi_basic;
 
-      g.m = integral_cast<u64>(mpi_basic::allreduce_single(g.m_local_out, mpi_basic::sum));
+      g.m = integral_cast<u64>(allreduce_single(g.m_local_out, sum));
 
       g.n_total     = g.n_local;
       g.local_unmap = line_alloc<u64>(g.n_local);
@@ -180,6 +181,8 @@ struct hpc_graph_data
           g.max_degree_vert  = k;
         }
       }
+      if (max_degree_product != allreduce_single(max_degree_product, max)) g.max_degree_vert = 0;
+      g.max_degree_vert = allreduce_single(g.max_degree_vert, max);
 
       init_comm_data(&comm);
       init_queue_data(&g, &q);

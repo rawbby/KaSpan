@@ -101,29 +101,14 @@ main(
     KASPAN_CALLGRIND_START_INSTRUMENTATION();
     KASPAN_STATISTIC_PUSH("scc");
 
-    KASPAN_STATISTIC_PUSH("ghost_init");
+    KASPAN_STATISTIC_PUSH("init");
     // Initialize ghost cells, maps, etc as part of SCC benchmark
     // these are accelerator structurea specific to HPCGraph
     hpc_data.initialize();
     KASPAN_STATISTIC_POP();
 
-    KASPAN_STATISTIC_PUSH("pivot");
-    degree_t max_degree{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
-    // Pivot selection using HPCGraph data
-    for (uint64_t k = 0; k < hpc_data.g.n_local; ++k) {
-      auto const out_degree     = hpc_data.g.out_degree_list[k + 1] - hpc_data.g.out_degree_list[k];
-      auto const in_degree      = hpc_data.g.in_degree_list[k + 1] - hpc_data.g.in_degree_list[k];
-      auto const degree_product = out_degree * in_degree;
-      if (kaspan::integral_cast<index_t>(degree_product) > max_degree.degree_product) {
-        max_degree.degree_product = kaspan::integral_cast<index_t>(degree_product);
-        max_degree.u              = kaspan::integral_cast<vertex_t>(hpc_data.g.local_unmap[k]);
-      }
-    }
-    auto const pivot = internal::allreduce_pivot(max_degree);
-    KASPAN_STATISTIC_POP();
-
     auto scc_id = make_array<u64>(hpc_data.g.n_total);
-    scc_dist(&hpc_data.g, &hpc_data.comm, &hpc_data.q, kaspan::integral_cast<uint64_t>(pivot), scc_id.data());
+    scc_dist(&hpc_data.g, &hpc_data.comm, &hpc_data.q, hpc_data.g.max_degree_vert, scc_id.data());
     KASPAN_STATISTIC_POP();
 
     KASPAN_STATISTIC_ADD("memory_after_scc", get_resident_set_bytes());

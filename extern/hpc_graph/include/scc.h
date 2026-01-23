@@ -81,7 +81,7 @@ scc_output(dist_graph_t* g,
            uint64_t*     scc,
            char*         output_file);
 
-int
+void
 scc_dist(dist_graph_t* g,
          mpi_data_t*   comm,
          queue_data_t* q,

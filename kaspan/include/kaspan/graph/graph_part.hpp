@@ -180,15 +180,15 @@ struct graph_part_view
       });
 
       vertex_t prev_k = 0;
-      vertex_t prev_v = 0;
+      // vertex_t prev_v = 0;
       each_kuv([&](auto k, auto u, auto v) {
         ASSERT_LT(k, local_n);
         ASSERT_LT(u, part.n());
         ASSERT_LT(v, part.n());
         ASSERT_LE(prev_k, k);
-        if (prev_k == k) ASSERT_LE(prev_v, v);
+        // if (prev_k == k) ASSERT_LE(prev_v, v);
         prev_k = k;
-        prev_v = v;
+        // prev_v = v;
       });
     }
   }

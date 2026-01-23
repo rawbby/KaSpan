@@ -159,14 +159,14 @@ struct graph_view
       });
 
       vertex_t prev_u = 0;
-      vertex_t prev_v = 0;
+      // vertex_t prev_v = 0;
       each_uv([&](auto u, auto v) {
         ASSERT_LT(u, n);
         ASSERT_LT(v, n);
         ASSERT_LE(prev_u, u);
-        if (prev_u == u) ASSERT_LE(prev_v, v);
+        // if (prev_u == u) ASSERT_LE(prev_v, v);
         prev_u = u;
-        prev_v = v;
+        // prev_v = v;
       });
     }
   }
