@@ -2,6 +2,8 @@
 #include "kaspan/scc/variant/scc_hpc_trim_ex.hpp"
 #include "kaspan/scc/variant/scc_ispan_like.hpp"
 #include "kaspan/scc/variant/scc_trim_ex.hpp"
+#include "kaspan/scc/variant/scc_trim_ex_light_residual.hpp"
+#include "kaspan/scc/variant/scc_trim_ex_residual.hpp"
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
@@ -78,6 +80,20 @@ main(
         auto const local_n = part.local_n();
         auto       scc_id  = make_array<vertex_t>(local_n);
         scc_trim_ex(bgp.view(), scc_id.data());
+        test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
+      }
+
+      {
+        auto const local_n = part.local_n();
+        auto       scc_id  = make_array<vertex_t>(local_n);
+        scc_trim_ex_residual(bgp.view(), scc_id.data());
+        test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
+      }
+
+      {
+        auto const local_n = part.local_n();
+        auto       scc_id  = make_array<vertex_t>(local_n);
+        scc_trim_ex_light_residual(bgp.view(), scc_id.data());
         test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
       }
     }
