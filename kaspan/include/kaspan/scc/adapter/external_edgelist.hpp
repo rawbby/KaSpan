@@ -121,7 +121,7 @@ struct local_sort_adapter
 
   void operator()()
   {
-    std::ranges::sort(buffer, edge64_greater{});
+    std::ranges::sort(buffer, edge64_less{});
   }
 
   [[nodiscard]] auto size() const -> size_t
@@ -380,10 +380,10 @@ convert_graph(
   u64                mem_bytes,
   std::string const& graph_name = std::string{}) -> void_result
 {
-  auto const file_size = std::filesystem::file_size(input_file);
-  if (file_size < mem_bytes) {
-    return convert_graph_internal::convert_graph<convert_graph_internal::local_sort_adapter>(input_file, file_size, graph_name);
-  }
+  // auto const file_size = std::filesystem::file_size(input_file);
+  // if (file_size < mem_bytes) {
+  //   return convert_graph_internal::convert_graph<convert_graph_internal::local_sort_adapter>(input_file, file_size, graph_name);
+  // }
   return convert_graph_internal::convert_graph<convert_graph_internal::extern_sort_adapter>(input_file, mem_bytes, graph_name);
 }
 

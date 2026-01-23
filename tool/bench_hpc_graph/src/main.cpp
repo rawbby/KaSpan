@@ -21,7 +21,6 @@
 #include <omp.h>
 
 #include <cstdio>
-#include <limits>
 #include <print>
 
 using namespace kaspan;
@@ -60,10 +59,8 @@ main(
   KASPAN_DEFAULT_INIT();
   SCOPE_GUARD(KASPAN_STATISTIC_MPI_WRITE_JSON(output_file));
 
-  // Set OpenMP to single thread only
   omp_set_num_threads(threads);
 
-  // Initialize HPCGraph global variables
   MPI_Comm_rank(MPI_COMM_WORLD, &procid);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 

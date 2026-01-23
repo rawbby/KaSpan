@@ -100,6 +100,8 @@ main(
   procid = mpi_basic::world_rank;
   nprocs = mpi_basic::world_size;
 
+  omp_set_num_threads(2);
+
   auto rng  = std::mt19937{ std::random_device{}() };
   auto dist = std::uniform_int_distribution<u32>();
 
