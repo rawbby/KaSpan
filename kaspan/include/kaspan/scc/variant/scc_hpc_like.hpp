@@ -18,12 +18,15 @@ scc_hpc_like(
   bidi_graph_part_view<Part> graph,
   vertex_t*                  scc_id)
 {
+  KASPAN_STATISTIC_SCOPE("scc");
+
   KASPAN_STATISTIC_PUSH("trim_1_first");
   auto [local_decided, pivot] = trim_1_first(graph, scc_id);
   auto global_decided         = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("pivot", pivot);
   KASPAN_STATISTIC_ADD("local_decided", local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", global_decided);
   KASPAN_STATISTIC_POP();
 
   if (global_decided == graph.part.n()) return;
@@ -40,6 +43,7 @@ scc_hpc_like(
   global_decided += fwbw_global_decided;
   KASPAN_STATISTIC_ADD("local_decided", fwbw_local_decided);
   KASPAN_STATISTIC_ADD("global_decided", fwbw_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", fwbw_global_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
@@ -69,6 +73,7 @@ scc_hpc_like(
   } while (global_decided < graph.part.n());
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 }

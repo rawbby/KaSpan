@@ -20,6 +20,8 @@ scc_trim_ex_light_residual(
   bidi_graph_part_view<Part> graph,
   vertex_t*                  scc_id)
 {
+  KASPAN_STATISTIC_SCOPE("scc");
+
   auto front     = frontier{ graph.part.local_n() };
   auto outdegree = make_array<vertex_t>(graph.part.local_n());
   auto indegree  = make_array<vertex_t>(graph.part.local_n());
@@ -34,6 +36,7 @@ scc_trim_ex_light_residual(
   vertex_t global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", global_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
@@ -57,6 +60,7 @@ scc_trim_ex_light_residual(
 
     KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
     KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+    KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     KASPAN_STATISTIC_POP();
 
@@ -87,6 +91,7 @@ scc_trim_ex_light_residual(
       KASPAN_STATISTIC_ADD("iterations", iterations);
       KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
       KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+      KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
       KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
       KASPAN_STATISTIC_POP();
     }
@@ -102,6 +107,7 @@ scc_trim_ex_light_residual(
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
   KASPAN_STATISTIC_POP();
 
   if (global_decided == graph.part.n()) return;
@@ -121,6 +127,7 @@ scc_trim_ex_light_residual(
   KASPAN_STATISTIC_ADD("m", sub_g.m);
   KASPAN_STATISTIC_ADD("local_decided", graph.part.local_n() - local_decided);
   KASPAN_STATISTIC_ADD("global_decided", graph.part.n() - global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", graph.part.n() - global_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 }

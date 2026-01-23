@@ -7,6 +7,12 @@
 #include <kaspan/scc/adapter/manifest.hpp>
 #include <kaspan/scc/async/scc.hpp>
 #include <kaspan/scc/scc.hpp>
+#include <kaspan/scc/variant/scc_hpc_like.hpp>
+#include <kaspan/scc/variant/scc_hpc_trim_ex.hpp>
+#include <kaspan/scc/variant/scc_ispan_like.hpp>
+#include <kaspan/scc/variant/scc_trim_ex.hpp>
+#include <kaspan/scc/variant/scc_trim_ex_light_residual.hpp>
+#include <kaspan/scc/variant/scc_trim_ex_residual.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/mpi_basic.hpp>
@@ -28,32 +34,22 @@ usage(
   int /* argc */,
   char** argv)
 {
-  std::println("usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file <output_file> [--async [--async_indirect]] [--trim_tarjan]",
+  std::println("usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file <output_file> [--variant (async | async_indirect | "
+               "hpc_like | hpc_trim_ex | ispan_like | trim_ex | trim_ex_light_residual | trim_ex_residual)]",
                argv[0]);
 }
 
+template<part_view_concept Part>
 void
 benchmark(
-  auto const& res,
-  bool        use_async,
-  bool        use_async_indirect)
+  bidi_graph_part_view<Part> graph,
+  char const*                variant,
+  int                        argc,
+  char**                     argv)
 {
-  auto const& graph = [&]() -> auto const& {
-    if constexpr (requires { res.bgp; }) return res.bgp;
-    else return res;
-  }();
-
-  auto const m = [&]() -> index_t {
-    if constexpr (requires { res.m; }) return res.m;
-    else return graph.local_fw_m + graph.local_bw_m; // fallback for manifest_graph where m is globally known but not in bgp
-  }();
-
-  KASPAN_STATISTIC_ADD("async", use_async);
-  KASPAN_STATISTIC_ADD("async_indirect", use_async_indirect);
-
   KASPAN_STATISTIC_ADD("n", graph.part.n());
   KASPAN_STATISTIC_ADD("local_n", graph.part.local_n());
-  KASPAN_STATISTIC_ADD("m", m);
+  KASPAN_STATISTIC_ADD("m", mpi_basic::allreduce_single(graph.local_fw_m, mpi_basic::sum));
   KASPAN_STATISTIC_ADD("local_fw_m", graph.local_fw_m);
   KASPAN_STATISTIC_ADD("local_bw_m", graph.local_bw_m);
 
@@ -61,20 +57,20 @@ benchmark(
   auto const local_n = graph.part.local_n();
   auto       scc_id  = make_array<vertex_t>(local_n);
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (!use_async) {
-    KASPAN_CALLGRIND_START_INSTRUMENTATION();
-    scc(graph.view(), scc_id.data());
-    KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
-  } else if (use_async_indirect) {
-    KASPAN_CALLGRIND_START_INSTRUMENTATION();
-    async::scc<briefkasten::GridIndirectionScheme>(graph.view(), scc_id.data());
-    KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
-  } else {
-    KASPAN_CALLGRIND_START_INSTRUMENTATION();
-    async::scc<briefkasten::NoopIndirectionScheme>(graph.view(), scc_id.data());
-    KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
-  }
+  mpi_basic::barrier();
+
+  KASPAN_CALLGRIND_START_INSTRUMENTATION();
+  if      (variant == nullptr) scc(graph, scc_id.data());
+  else if (0 == std::strcmp(variant, "async")) async::scc<briefkasten::NoopIndirectionScheme>(graph, scc_id.data());
+  else if (0 == std::strcmp(variant, "async_indirect")) async::scc<briefkasten::GridIndirectionScheme>(graph, scc_id.data());
+  else if (0 == std::strcmp(variant, "hpc_like")) scc_hpc_like(graph, scc_id.data());
+  else if (0 == std::strcmp(variant, "hpc_trim_ex")) scc_hpc_trim_ex(graph, scc_id.data());
+  else if (0 == std::strcmp(variant, "ispan_like")) scc_ispan_like(graph, scc_id.data());
+  else if (0 == std::strcmp(variant, "trim_ex")) scc_trim_ex(graph, scc_id.data());
+  else if (0 == std::strcmp(variant, "trim_ex_light_residual")) scc_trim_ex_light_residual(graph, scc_id.data());
+  else if (0 == std::strcmp(variant, "trim_ex_residual")) scc_trim_ex_residual(graph, scc_id.data());
+  else usage(argc, argv);
+  KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
 
 #if KASPAN_STATISTIC
   vertex_t local_component_count = 0;
@@ -103,12 +99,7 @@ main(
   }
 
   auto const* const output_file = arg_select_str(argc, argv, "--output_file", usage);
-
-  auto const use_async          = arg_select_flag(argc, argv, "--async");
-  auto const use_async_indirect = arg_select_flag(argc, argv, "--async_indirect");
-  if (use_async_indirect && !use_async) {
-    usage(argc, argv);
-  }
+  auto const*       variant     = arg_select_optional_str(argc, argv, "--variant");
 
   KASPAN_DEFAULT_INIT();
   SCOPE_GUARD(KASPAN_STATISTIC_MPI_WRITE_JSON(output_file));
@@ -124,7 +115,7 @@ main(
     KASPAN_STATISTIC_PUSH("kagen");
     auto const kagen_graph = kagen_graph_part(kagen_option_string);
     KASPAN_STATISTIC_POP();
-    benchmark(kagen_graph, use_async, use_async_indirect);
+    benchmark(kagen_graph.view(), variant, argc, argv);
   } else {
     KASPAN_STATISTIC_PUSH("load");
     auto const manifest = manifest::load(manifest_file);
@@ -132,6 +123,6 @@ main(
     auto const part           = balanced_slice_part{ integral_cast<vertex_t>(manifest.graph_node_count) };
     auto const manifest_graph = load_graph_part_from_manifest(part, manifest);
     KASPAN_STATISTIC_POP();
-    benchmark(manifest_graph, use_async, use_async_indirect);
+    benchmark(manifest_graph.view(), variant, argc, argv);
   }
 }
