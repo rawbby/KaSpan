@@ -26,7 +26,7 @@ scc_hpc_like(
   KASPAN_STATISTIC_ADD("global_decided", global_decided);
   KASPAN_STATISTIC_POP();
 
-  if (pivot == graph.part.n()) return;
+  if (global_decided == graph.part.n()) return;
 
   auto front      = frontier{ graph.part.local_n() };
   auto bitbuffer0 = make_bits_clean(graph.part.local_n());

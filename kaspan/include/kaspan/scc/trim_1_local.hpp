@@ -53,7 +53,7 @@ trim_1_normal(
 {
   auto const has_degree = [&](graph_part_view<Part> g, auto k) {
     for (auto v : g.csr_range(k)) {
-      if (!g.part.has_local(v) || scc_id[g.part.to_local(v)] != scc_id_undecided) return true;
+      if (!g.part.has_local(v) || scc_id[g.part.to_local(v)] == scc_id_undecided) return true;
     }
     return false;
   };
@@ -61,11 +61,11 @@ trim_1_normal(
   vertex_t decided = 0;
 
   for (vertex_t k = 0; k < graph.part.local_n(); ++k) {
-    if (!has_degree(graph.fw_view(), k) || !has_degree(graph.bw_view(), k)) {
-      scc_id[k] = graph.part.to_global(k);
-      ++decided;
-    } else {
-      scc_id[k] = scc_id_undecided;
+    if (scc_id[k] == scc_id_undecided) {
+      if (!has_degree(graph.fw_view(), k) || !has_degree(graph.bw_view(), k)) {
+        scc_id[k] = graph.part.to_global(k);
+        ++decided;
+      }
     }
   }
 
