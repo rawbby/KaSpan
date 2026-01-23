@@ -64,18 +64,16 @@ scc_ispan_like(
   prev_global_decided           = global_decided;
   auto const undecided_filter   = SCC_ID_UNDECIDED_FILTER(graph.part.local_n(), scc_id);
   auto [sub_ids_inverse, sub_g] = allgather_fw_sub_graph(graph.part, graph.part.local_n() - local_decided, graph.fw.head, graph.fw.csr, undecided_filter);
-  if (sub_g.n) {
-    tarjan(sub_g.view(), [&](auto const* beg, auto const* end) {
-      auto const id = sub_ids_inverse[*std::min_element(beg, end)];
-      for (auto sub_u : std::span{ beg, end }) {
-        auto const u = sub_ids_inverse[sub_u];
-        if (graph.part.has_local(u)) {
-          scc_id[graph.part.to_local(u)] = id;
-          ++local_decided;
-        }
+  tarjan(sub_g.view(), [&](auto const* beg, auto const* end) {
+    auto const id = sub_ids_inverse[*std::min_element(beg, end)];
+    for (auto sub_u : std::span{ beg, end }) {
+      auto const u = sub_ids_inverse[sub_u];
+      if (graph.part.has_local(u)) {
+        scc_id[graph.part.to_local(u)] = id;
+        ++local_decided;
       }
-    });
-  }
+    }
+  });
   KASPAN_STATISTIC_ADD("n", sub_g.n);
   KASPAN_STATISTIC_ADD("m", sub_g.m);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);

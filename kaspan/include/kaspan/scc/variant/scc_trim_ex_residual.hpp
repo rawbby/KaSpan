@@ -12,6 +12,11 @@ scc(
   bidi_graph_part_view<Part> graph,
   vertex_t*                  scc_id)
 {
+  // todo: trim 1 exhaustice
+  // todo: calculate residual threshold
+  // todo: if (residual threshold) forward backward search + trim 1 exhaustice
+  // todo: while (residual threshold) color propagation + trim 1 exhaustice
+  // todo: residual with degree
 }
 
 } // namespace kaspan
