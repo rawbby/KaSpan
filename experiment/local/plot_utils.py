@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
-TIME_LIMIT_S = 1200  # 20 minutes
 DPI = 200
 
 MARKERS = ["o", "s", "D", "^", "v", "P", "X", "d"]
@@ -21,7 +20,7 @@ def load_all_data(cwd):
     - all_stages: set of all algorithmic step names found
     - global_all_nps: set of all process counts found
     """
-    pattern = re.compile(r"(weak|strong)_([a-zA-Z0-9]+(_[a-zA-Z0-9_]+)?)_np([0-9]+)_(.*)\.json")
+    pattern = re.compile(r"(weak|strong)_(kaspan|ispan|hpc_graph)(?:_([a-zA-Z0-9_]+))?_np([0-9]+)_(.*)\.json")
     files = [p for p in cwd.rglob("*.json") if p.is_file()]
 
     all_metrics_raw = {}
@@ -33,46 +32,33 @@ def load_all_data(cwd):
     for p in files:
         m = pattern.fullmatch(p.name)
         if not m: continue
-        scaling, app, suffix, np_val, graph = m.groups()
-        np_val = int(np_val)
 
-        # Base app for dynamic dispatch (kaspan, ispan, hpc_graph)
-        base_app = app
-        for b in ["kaspan", "ispan", "hpc_graph"]:
-            if app.startswith(b):
-                base_app = b
-                break
+        scaling, app, variant, np_val, graph = m.groups()
+        np_val = int(np_val)
+        app_variant = f"{app}_{variant}" if variant else app
 
         try:
             with p.open("r") as f:
                 j = json.load(f)
 
-                # Dynamic dispatch to app-specific extraction functions
-                dur_func = globals().get(f"get_{base_app}_duration")
-                mem_func = globals().get(f"get_{base_app}_memory")
-                prog_func = globals().get(f"get_{base_app}_progress")
+                duration = globals().get(f"get_{app}_duration")(j)
+                memory = globals().get(f"get_{app}_memory")(j, np_val)
+                progress = globals().get(f"get_{app}_progress")(j)
 
-                if not (dur_func and mem_func and prog_func):
-                    print(f"Unknown app: {app}")
-                    continue
+                entry = (duration, memory, progress)
+                all_metrics_raw.setdefault(graph, {}).setdefault(app_variant, {})[np_val] = entry
+                scaling_data[scaling].setdefault(graph, {}).setdefault(app_variant, {})[np_val] = entry
 
-                duration = dur_func(j)
-                memory = mem_func(j, np_val)
-                progress = prog_func(j)
+                apps.add(app_variant)
+                global_all_nps.add(np_val)
 
-                if duration <= TIME_LIMIT_S:
-                    entry = (duration, memory, progress)
-                    all_metrics_raw.setdefault(graph, {}).setdefault(app, {})[np_val] = entry
-                    scaling_data[scaling].setdefault(graph, {}).setdefault(app, {})[np_val] = entry
-                    apps.add(app)
-                    global_all_nps.add(np_val)
-                    for stage in progress:
-                        all_stages.add(stage["name"])
-                else:
-                    print(f"Skipping {p.name}: duration {duration:.2f}s > {TIME_LIMIT_S}s")
+                for stage in progress:
+                    all_stages.add(stage["name"])
+
         except Exception as e:
             print(f"Error loading {p.name}: {e}")
             continue
+
     return scaling_data, all_metrics_raw, apps, all_stages, global_all_nps
 
 
