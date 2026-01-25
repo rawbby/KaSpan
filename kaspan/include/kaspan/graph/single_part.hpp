@@ -158,7 +158,7 @@ public:
     return single_part_view{ n_ };
   }
 
-  [[nodiscard]] constexpr auto view() const noexcept -> single_part_view
+  [[nodiscard]] auto view() const noexcept -> single_part_view
   {
     return single_part_view{ n_ };
   }

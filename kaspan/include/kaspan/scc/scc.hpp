@@ -68,7 +68,7 @@ scc(
     // accurate degree information for a better pivot selection
     auto pivot = select_pivot_from_degree(part, scc_id, outdegree.data(), indegree.data());
 
-    auto fw_reached = make_bits_clean(local_n);
+    auto fw_reached  = make_bits_clean(local_n);
     auto dense_front = make_bits_clean(local_n);
 
     forward_search(graph, front.view<vertex_t>(), scc_id, fw_reached.data(), dense_front.data(), pivot, local_decided);

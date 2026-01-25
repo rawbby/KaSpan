@@ -1,3 +1,9 @@
+static constexpr auto
+omp_get_thread_num() noexcept -> int
+{
+  return 1;
+}
+
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
@@ -99,8 +105,6 @@ main(
   KASPAN_DEFAULT_INIT();
   procid = mpi_basic::world_rank;
   nprocs = mpi_basic::world_size;
-
-  omp_set_num_threads(2);
 
   auto rng  = std::mt19937{ std::random_device{}() };
   auto dist = std::uniform_int_distribution<u32>();

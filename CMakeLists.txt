@@ -16,6 +16,5 @@ include("${CMAKE_BINARY_DIR}/bootstrap.cmake")
 include(.cmake_utilities/modules/all.cmake)
 
 find_package(MPI REQUIRED)
-find_package(OpenMP REQUIRED)
 
 structured_directories()

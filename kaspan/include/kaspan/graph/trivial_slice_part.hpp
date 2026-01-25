@@ -9,7 +9,7 @@ class trivial_slice_part_view
 {
 public:
   constexpr trivial_slice_part_view() noexcept = default;
-  constexpr trivial_slice_part_view(
+  trivial_slice_part_view(
     vertex_t n,
     i32      r) noexcept
     : n_(n)
@@ -65,7 +65,7 @@ public:
     return true;
   }
 
-  [[nodiscard]] static constexpr auto world_size() noexcept -> i32
+  [[nodiscard]] static auto world_size() noexcept -> i32
   {
     return mpi_basic::world_size;
   }
@@ -75,7 +75,7 @@ public:
     return world_rank_;
   }
 
-  [[nodiscard]] constexpr auto world_rank_of(
+  [[nodiscard]] auto world_rank_of(
     vertex_t i) const noexcept -> i32
   {
     if (mpi_basic::world_size == 1) return 0;
@@ -85,7 +85,7 @@ public:
     return (r >= mpi_basic::world_size) ? mpi_basic::world_size - 1 : integral_cast<i32>(r);
   }
 
-  [[nodiscard]] constexpr auto world_part_of(
+  [[nodiscard]] auto world_part_of(
     i32 r) const noexcept -> trivial_slice_part_view
   {
     return { n_, r };
@@ -113,7 +113,7 @@ class trivial_slice_part
 {
 public:
   constexpr trivial_slice_part() noexcept = default;
-  explicit constexpr trivial_slice_part(
+  explicit trivial_slice_part(
     vertex_t n) noexcept
     : n_(n)
   {
@@ -167,17 +167,17 @@ public:
     return true;
   }
 
-  [[nodiscard]] static constexpr auto world_size() noexcept -> i32
+  [[nodiscard]] static auto world_size() noexcept -> i32
   {
     return mpi_basic::world_size;
   }
 
-  [[nodiscard]] static constexpr auto world_rank() noexcept -> i32
+  [[nodiscard]] static auto world_rank() noexcept -> i32
   {
     return mpi_basic::world_rank;
   }
 
-  [[nodiscard]] constexpr auto world_rank_of(
+  [[nodiscard]] auto world_rank_of(
     vertex_t i) const noexcept -> i32
   {
     if (mpi_basic::world_size == 1) return 0;
@@ -187,13 +187,13 @@ public:
     return (r >= mpi_basic::world_size) ? mpi_basic::world_size - 1 : integral_cast<i32>(r);
   }
 
-  [[nodiscard]] constexpr auto world_part_of(
+  [[nodiscard]] auto world_part_of(
     i32 r) const noexcept -> trivial_slice_part_view
   {
     return { n_, r };
   }
 
-  [[nodiscard]] constexpr auto view() const noexcept -> trivial_slice_part_view
+  [[nodiscard]] auto view() const noexcept -> trivial_slice_part_view
   {
     return { n_, mpi_basic::world_rank };
   }

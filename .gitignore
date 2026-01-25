@@ -1,12 +1,7 @@
 /.cmake_utilities/
 /.idea/
 /.venv/
-/cmake-build-*/
-
-/experiment/experiment_data/
-/experiment/experiment_data.tar.gz
-
+/build/
 /experiment/rwd/
-/experiment/real_world_graphs.tar.gz
 
 __pycache__/

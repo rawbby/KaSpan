@@ -61,7 +61,7 @@ public:
     return false;
   }
 
-  [[nodiscard]] static constexpr auto world_size() noexcept -> i32
+  [[nodiscard]] static auto world_size() noexcept -> i32
   {
     return mpi_basic::world_size;
   }
@@ -71,7 +71,7 @@ public:
     return world_rank_;
   }
 
-  [[nodiscard]] constexpr auto world_rank_of(
+  [[nodiscard]] auto world_rank_of(
     vertex_t i) const noexcept -> i32
   {
     for (i32 r = 0; r < mpi_basic::world_size; ++r)
@@ -193,17 +193,17 @@ public:
     return false;
   }
 
-  [[nodiscard]] static constexpr auto world_size() noexcept -> i32
+  [[nodiscard]] static auto world_size() noexcept -> i32
   {
     return mpi_basic::world_size;
   }
 
-  [[nodiscard]] static constexpr auto world_rank() noexcept -> i32
+  [[nodiscard]] static auto world_rank() noexcept -> i32
   {
     return mpi_basic::world_rank;
   }
 
-  [[nodiscard]] constexpr auto world_rank_of(
+  [[nodiscard]] auto world_rank_of(
     vertex_t i) const noexcept -> i32
   {
     for (i32 r = 0; r < mpi_basic::world_size; ++r)
@@ -217,7 +217,7 @@ public:
     return { n_, r, part_ };
   }
 
-  [[nodiscard]] constexpr auto view() const noexcept -> explicit_continuous_part_view
+  [[nodiscard]] auto view() const noexcept -> explicit_continuous_part_view
   {
     return { n_, mpi_basic::world_rank, part_ };
   }

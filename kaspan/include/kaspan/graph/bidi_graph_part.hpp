@@ -303,7 +303,7 @@ struct bidi_graph_part
   /**
    * @brief Create a non-mutable view of the partitioned bidirectional graph.
    */
-  [[nodiscard]] constexpr auto view() const noexcept -> bidi_graph_part_view<decltype(part.view())>
+  [[nodiscard]] auto view() const noexcept -> bidi_graph_part_view<decltype(part.view())>
   {
     return { part.view(), local_fw_m, local_bw_m, fw.head, fw.csr, bw.head, bw.csr };
   }

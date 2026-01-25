@@ -24,10 +24,11 @@ normalise_scc_id(
   }
 }
 
-template<part_view_concept Part, arithmetic_concept Vertex>
+template<part_view_concept  Part,
+         arithmetic_concept Vertex>
 void
 normalise_scc_id(
-  Part      part,
+  Part    part,
   Vertex* scc_id)
 {
   auto old2new = std::unordered_map<Vertex, Vertex>{};

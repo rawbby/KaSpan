@@ -46,7 +46,6 @@
 #ifndef _FAST_MAP_H_
 #define _FAST_MAP_H_
 
-#include <omp.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

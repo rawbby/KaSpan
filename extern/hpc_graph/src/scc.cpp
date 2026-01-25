@@ -82,10 +82,6 @@ scc_bfs_fw(
     printf("procid %d scc_bfs_fw() start\n", procid);
   }
   double elt = 0.0;
-  if (verbose) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    elt = omp_get_wtime();
-  }
 
   q->queue_size = 0;
   q->next_size  = 0;
@@ -151,14 +147,6 @@ scc_bfs_fw(
     clear_thread_queue(&tq);
   } // end parallel
 
-  if (verbose) {
-    elt = omp_get_wtime() - elt;
-    printf("Task %d scc_bfs_fw() time %9.6f (s)\n", procid, elt);
-  }
-  if (debug) {
-    printf("Task %d scc_bfs_fw() success\n", procid);
-  }
-
   return 0;
 }
 
@@ -174,10 +162,6 @@ scc_bfs_bw(
     printf("procid %d scc_bfs_bw() start\n", procid);
   }
   double elt = 0.0;
-  if (verbose) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    elt = omp_get_wtime();
-  }
 
   for (int32_t i = 0; i < nprocs; ++i)
     comm->sendcounts_temp[i] = 0;
@@ -297,14 +281,6 @@ scc_bfs_bw(
 
   MPI_Allreduce(MPI_IN_PLACE, &num_unassigned, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 
-  if (verbose) {
-    elt = omp_get_wtime() - elt;
-    printf("Task %d scc_bfs_bw() time %9.6f (s)\n", procid, elt);
-  }
-  if (debug) {
-    printf("Task %d scc_bfs_bw() success\n", procid);
-  }
-
   return num_unassigned;
 }
 
@@ -320,10 +296,6 @@ scc_color(
     printf("Task %d scc_color() start\n", procid);
   }
   double elt = 0.0;
-  if (verbose) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    elt = omp_get_wtime();
-  }
 
   q->queue_size = 0;
   q->next_size  = 0;
@@ -450,14 +422,6 @@ scc_color(
     clear_thread_comm(&tc);
   } // end parallel
 
-  if (verbose) {
-    elt = omp_get_wtime() - elt;
-    printf("Task %d, scc_color() time %9.6f (s)\n", procid, elt);
-  }
-  if (debug) {
-    printf("Task %d scc_color() success\n", procid);
-  }
-
   return 0;
 }
 
@@ -473,10 +437,6 @@ scc_find_sccs(
     printf("procid %d scc_find_sccs() start\n", procid);
   }
   double elt = 0.0;
-  if (verbose) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    elt = omp_get_wtime();
-  }
 
   q->queue_size           = 0;
   q->next_size            = 0;
@@ -601,14 +561,6 @@ scc_find_sccs(
   } // end parallel
 
   MPI_Allreduce(MPI_IN_PLACE, &num_unassigned, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
-
-  if (verbose) {
-    elt = omp_get_wtime() - elt;
-    printf("Task %d scc_find_sccs() time %9.6f (s)\n", procid, elt);
-  }
-  if (debug) {
-    printf("Task %d scc_find_sccs() success\n", procid);
-  }
 
   return num_unassigned;
 }

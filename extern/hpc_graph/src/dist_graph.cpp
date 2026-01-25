@@ -69,10 +69,6 @@ create_graph(
   }
 
   double elt = 0.0;
-  if (verbose) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    elt = omp_get_wtime();
-  }
 
   g->n           = ggi->n;
   g->n_local     = ggi->n_local;
@@ -144,14 +140,6 @@ create_graph(
   for (uint64_t i = 0; i < g->n_local; ++i)
     g->local_unmap[i] = i + g->n_offset;
 
-  if (verbose) {
-    elt = omp_get_wtime() - elt;
-    printf("Task %d create_graph() %9.6f (s)\n", procid, elt);
-  }
-
-  if (debug) {
-    printf("Task %d create_graph() success\n", procid);
-  }
   return 0;
 }
 
@@ -164,10 +152,6 @@ create_graph_serial(
     printf("Task %d create_graph_serial() success\n", procid);
   }
   double elt = 0.0;
-  if (verbose) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    elt = omp_get_wtime();
-  }
 
   g->n           = ggi->n;
   g->n_local     = ggi->n_local;
@@ -243,13 +227,6 @@ create_graph_serial(
   for (uint64_t i = 0; i < g->n_local; ++i)
     set_value_uq(&g->map, i, i);
 
-  if (verbose) {
-    elt = omp_get_wtime() - elt;
-    printf("Task %d create_graph_serial() %9.6f (s)\n", procid, elt);
-  }
-  if (debug) {
-    printf("Task %d create_graph_serial() success\n", procid);
-  }
   return 0;
 }
 
@@ -282,14 +259,7 @@ int
 relabel_edges(
   dist_graph_t* g)
 {
-  if (debug) {
-    printf("Task %d relabel_edges() start\n", procid);
-  }
   double elt = 0.0;
-  if (verbose) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    elt = omp_get_wtime();
-  }
 
   uint64_t cur_label   = g->n_local;
   uint64_t total_edges = g->m_local_in + g->m_local_out;
@@ -339,14 +309,6 @@ relabel_edges(
     g->ghost_tasks[cur_index] = g->map.unique_keys[i] / n_per_rank;
   }
 
-  if (verbose) {
-    elt = omp_get_wtime() - elt;
-    printf(" Task %d relabel_edges() %9.6f (s)\n", procid, elt);
-  }
-
-  if (debug) {
-    printf("Task %d relabel_edges() success\n", procid);
-  }
   return 0;
 }
 
@@ -355,14 +317,7 @@ relabel_edges(
   dist_graph_t* g,
   int32_t*      global_parts)
 {
-  if (debug) {
-    printf("Task %d relabel_edges() start\n", procid);
-  }
   double elt = 0.0;
-  if (verbose) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    elt = omp_get_wtime();
-  }
 
   uint64_t cur_label   = g->n_local;
   uint64_t total_edges = g->m_local_in + g->m_local_out;
@@ -412,14 +367,6 @@ relabel_edges(
     g->ghost_tasks[cur_index] = global_parts[g->map.unique_keys[i]];
   }
 
-  if (verbose) {
-    elt = omp_get_wtime() - elt;
-    printf(" Task %d relabel_edges() %9.6f (s)\n", procid, elt);
-  }
-
-  if (debug) {
-    printf("Task %d relabel_edges() success\n", procid);
-  }
   return 0;
 }
 
@@ -433,10 +380,6 @@ repart_graph(
     printf("Task %d repart_graph() start\n", procid);
   }
   double elt = 0.0;
-  if (verbose) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    elt = omp_get_wtime();
-  }
 
   int32_t* global_parts = (int32_t*)malloc(g->n * sizeof(int32_t));
   int32_t* local_parts  = (int32_t*)malloc(g->n_local * sizeof(int32_t));
@@ -470,22 +413,9 @@ repart_graph(
 
   repart_graph(g, comm, local_parts);
   relabel_edges(g, global_parts);
-  if (debug) {
-    for (uint64_t i = 0; i < g->n_local; ++i)
-      if (global_parts[g->local_unmap[i]] != procid)
-        printf("Part Error: task %d received %lu which was assigned to %d\n", procid, g->local_unmap[i], global_parts[g->local_unmap[i]]);
-  }
   free(local_parts);
   free(global_parts);
 
-  if (verbose) {
-    elt = omp_get_wtime() - elt;
-    printf("Task %d repart_graph() %9.6f (s)\n", procid, elt);
-  }
-
-  if (debug) {
-    printf("Task %d repart_graph() success\n", procid);
-  }
   return 0;
 }
 
@@ -772,14 +702,7 @@ int
 get_max_degree_vert(
   dist_graph_t* g)
 {
-  if (debug) {
-    printf("Task %d get_max_degree_vert() start\n", procid);
-  }
   double elt = 0.0;
-  if (verbose) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    elt = omp_get_wtime();
-  }
 
   uint64_t my_max_degree     = 0;
   uint64_t my_max_out_degree = 0;
@@ -813,13 +736,5 @@ get_max_degree_vert(
   g->max_out_degree  = max_out_degree;
   g->max_in_degree   = max_in_degree;
 
-  if (verbose) {
-    elt = omp_get_wtime() - elt;
-    printf("Task %d, max_degree %lu, max_vert %lu, max_in_degree %lu, max_out_degree %lu, %f (s)\n", procid, max_degree, max_vert, max_in_degree, max_out_degree, elt);
-  }
-
-  if (debug) {
-    printf("Task %d get_max_degree_vert() success\n", procid);
-  }
   return 0;
 }

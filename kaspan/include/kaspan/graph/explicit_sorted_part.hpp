@@ -3,7 +3,6 @@
 #include <kaspan/graph/base.hpp>
 #include <kaspan/memory/line.hpp>
 #include <kaspan/util/mpi_basic.hpp>
-#include <parallel/algorithm>
 
 namespace kaspan {
 
@@ -62,7 +61,7 @@ public:
     return true;
   }
 
-  [[nodiscard]] static constexpr auto world_size() noexcept -> i32
+  [[nodiscard]] static auto world_size() noexcept -> i32
   {
     return mpi_basic::world_size;
   }
@@ -72,7 +71,7 @@ public:
     return world_rank_;
   }
 
-  [[nodiscard]] constexpr auto world_rank_of(
+  [[nodiscard]] auto world_rank_of(
     vertex_t i) const noexcept -> i32
   {
     DEBUG_ASSERT_IN_RANGE(i, 0, n());
@@ -207,17 +206,17 @@ public:
     return true;
   }
 
-  [[nodiscard]] static constexpr auto world_size() noexcept -> i32
+  [[nodiscard]] static auto world_size() noexcept -> i32
   {
     return mpi_basic::world_size;
   }
 
-  [[nodiscard]] static constexpr auto world_rank() noexcept -> i32
+  [[nodiscard]] static auto world_rank() noexcept -> i32
   {
     return mpi_basic::world_rank;
   }
 
-  [[nodiscard]] constexpr auto world_rank_of(
+  [[nodiscard]] auto world_rank_of(
     vertex_t i) const noexcept -> i32
   {
     DEBUG_ASSERT_IN_RANGE(i, 0, n());
@@ -246,7 +245,7 @@ public:
     return { n_, r, part_ };
   }
 
-  [[nodiscard]] constexpr auto view() const noexcept -> explicit_sorted_part_view
+  [[nodiscard]] auto view() const noexcept -> explicit_sorted_part_view
   {
     return { n_, mpi_basic::world_rank, part_ };
   }

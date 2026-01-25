@@ -250,7 +250,7 @@ struct graph_part
   }
   constexpr auto operator=(graph_part const&) noexcept -> graph_part& = delete;
 
-  [[nodiscard]] constexpr auto view() const noexcept -> graph_part_view<decltype(part.view())>
+  [[nodiscard]] auto view() const noexcept -> graph_part_view<decltype(part.view())>
   {
     return { part.view(), local_m, head, csr };
   }

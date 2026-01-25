@@ -263,7 +263,7 @@ struct bidi_graph
   /**
    * @brief Create a non-mutable view of the bidirectional graph.
    */
-  [[nodiscard]] constexpr auto view() const noexcept -> bidi_graph_view
+  [[nodiscard]] auto view() const noexcept -> bidi_graph_view
   {
     return { n, m, fw.head, fw.csr, bw.head, bw.csr };
   }

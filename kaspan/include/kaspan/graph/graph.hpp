@@ -235,7 +235,7 @@ struct graph
   /**
    * @brief Create a non-mutable view of the graph.
    */
-  [[nodiscard]] constexpr auto view() const noexcept -> graph_view
+  [[nodiscard]] auto view() const noexcept -> graph_view
   {
     return { n, m, head, csr };
   }

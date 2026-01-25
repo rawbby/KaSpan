@@ -60,7 +60,7 @@ benchmark(
   mpi_basic::barrier();
 
   KASPAN_CALLGRIND_START_INSTRUMENTATION();
-  if      (variant == nullptr) scc(graph, scc_id.data());
+  if (variant == nullptr) scc(graph, scc_id.data());
   else if (0 == std::strcmp(variant, "async")) async::scc<briefkasten::NoopIndirectionScheme>(graph, scc_id.data());
   else if (0 == std::strcmp(variant, "async_indirect")) async::scc<briefkasten::GridIndirectionScheme>(graph, scc_id.data());
   else if (0 == std::strcmp(variant, "hpc_like")) scc_hpc_like(graph, scc_id.data());

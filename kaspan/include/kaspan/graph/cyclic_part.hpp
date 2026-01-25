@@ -9,7 +9,7 @@ class cyclic_part_view
 {
 public:
   constexpr cyclic_part_view() noexcept = default;
-  constexpr cyclic_part_view(
+  cyclic_part_view(
     vertex_t n,
     i32      r) noexcept
     : n_(n)
@@ -32,21 +32,21 @@ public:
     return local_n_;
   }
 
-  [[nodiscard]] constexpr auto to_local(
+  [[nodiscard]] auto to_local(
     vertex_t i) const noexcept -> vertex_t
   {
     if (mpi_basic::world_size == 1) return i;
     return (i - integral_cast<vertex_t>(world_rank_)) / mpi_basic::world_size;
   }
 
-  [[nodiscard]] constexpr auto to_global(
+  [[nodiscard]] auto to_global(
     vertex_t k) const noexcept -> vertex_t
   {
     if (mpi_basic::world_size == 1) return k;
     return integral_cast<vertex_t>(world_rank_) + k * mpi_basic::world_size;
   }
 
-  [[nodiscard]] constexpr auto has_local(
+  [[nodiscard]] auto has_local(
     vertex_t i) const noexcept -> bool
   {
     if (mpi_basic::world_size == 1) return true;
@@ -63,7 +63,7 @@ public:
     return false;
   }
 
-  [[nodiscard]] static constexpr auto world_size() noexcept -> i32
+  [[nodiscard]] static auto world_size() noexcept -> i32
   {
     return mpi_basic::world_size;
   }
@@ -73,14 +73,14 @@ public:
     return world_rank_;
   }
 
-  [[nodiscard]] static constexpr auto world_rank_of(
+  [[nodiscard]] static auto world_rank_of(
     vertex_t i) noexcept -> i32
   {
     if (mpi_basic::world_size == 1) return 0;
     return integral_cast<i32>(i % mpi_basic::world_size);
   }
 
-  [[nodiscard]] constexpr auto world_part_of(
+  [[nodiscard]] auto world_part_of(
     i32 r) const noexcept -> cyclic_part_view
   {
     return { n_, r };
@@ -96,7 +96,7 @@ class cyclic_part
 {
 public:
   constexpr cyclic_part() noexcept = default;
-  explicit constexpr cyclic_part(
+  explicit cyclic_part(
     vertex_t n) noexcept
     : n_(n)
   {
@@ -163,13 +163,13 @@ public:
     return i % us;
   }
 
-  [[nodiscard]] constexpr auto world_part_of(
+  [[nodiscard]] auto world_part_of(
     i32 r) const noexcept -> cyclic_part_view
   {
     return { n_, r };
   }
 
-  [[nodiscard]] constexpr auto view() const noexcept -> cyclic_part_view
+  [[nodiscard]] auto view() const noexcept -> cyclic_part_view
   {
     return { n_, mpi_basic::world_rank };
   }
