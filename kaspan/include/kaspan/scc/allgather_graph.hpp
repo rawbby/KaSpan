@@ -46,7 +46,7 @@ namespace kaspan {
  * - Communication: O(n + m) (all-gather of head and edges).
  */
 template<part_view_concept Part>
-  requires(Part::ordered())
+  requires(Part::ordered)
 auto
 allgather_graph(
   index_t               m,

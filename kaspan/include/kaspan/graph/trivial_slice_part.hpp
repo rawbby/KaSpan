@@ -55,15 +55,9 @@ public:
     return i >= begin_ && i < end_;
   }
 
-  [[nodiscard]] static constexpr auto continuous() noexcept -> bool
-  {
-    return true;
-  }
+  static constexpr auto continuous = true;
 
-  [[nodiscard]] static constexpr auto ordered() noexcept -> bool
-  {
-    return true;
-  }
+  static constexpr auto ordered = true;
 
   [[nodiscard]] static auto world_size() noexcept -> i32
   {
@@ -157,15 +151,9 @@ public:
     return i >= begin_ && i < end_;
   }
 
-  [[nodiscard]] static constexpr auto continuous() noexcept -> bool
-  {
-    return true;
-  }
+  static constexpr auto continuous = true;
 
-  [[nodiscard]] static constexpr auto ordered() noexcept -> bool
-  {
-    return true;
-  }
+  static constexpr auto ordered = true;
 
   [[nodiscard]] static auto world_size() noexcept -> i32
   {

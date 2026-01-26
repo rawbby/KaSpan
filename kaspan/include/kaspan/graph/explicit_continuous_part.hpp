@@ -51,15 +51,9 @@ public:
     return i >= begin_ && i < end_;
   }
 
-  [[nodiscard]] static constexpr auto continuous() noexcept -> bool
-  {
-    return true;
-  }
+  static constexpr auto continuous = true;
 
-  [[nodiscard]] static constexpr auto ordered() noexcept -> bool
-  {
-    return false;
-  }
+  static constexpr auto ordered = false;
 
   [[nodiscard]] static auto world_size() noexcept -> i32
   {
@@ -79,8 +73,8 @@ public:
     return -1;
   }
 
-  [[nodiscard]] constexpr auto world_part_of(
-    i32 r) const noexcept -> explicit_continuous_part_view
+  [[nodiscard]] auto world_part_of(
+    i32 r) noexcept -> explicit_continuous_part_view
   {
     return { n_, r, part_ };
   }
@@ -183,15 +177,9 @@ public:
     return i >= begin_ && i < end_;
   }
 
-  [[nodiscard]] static constexpr auto continuous() noexcept -> bool
-  {
-    return true;
-  }
+  static constexpr auto continuous = true;
 
-  [[nodiscard]] static constexpr auto ordered() noexcept -> bool
-  {
-    return false;
-  }
+  static constexpr auto ordered = false;
 
   [[nodiscard]] static auto world_size() noexcept -> i32
   {

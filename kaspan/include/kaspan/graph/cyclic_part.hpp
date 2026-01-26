@@ -53,15 +53,9 @@ public:
     return (i % mpi_basic::world_size) == integral_cast<vertex_t>(world_rank_);
   }
 
-  [[nodiscard]] static constexpr auto continuous() noexcept -> bool
-  {
-    return false;
-  }
+  static constexpr auto continuous = false;
 
-  [[nodiscard]] static constexpr auto ordered() noexcept -> bool
-  {
-    return false;
-  }
+  static constexpr auto ordered = false;
 
   [[nodiscard]] static auto world_size() noexcept -> i32
   {
@@ -135,27 +129,21 @@ public:
     return view().has_local(i);
   }
 
-  [[nodiscard]] static constexpr auto continuous() noexcept -> bool
-  {
-    return false;
-  }
+  static constexpr auto continuous = false;
 
-  [[nodiscard]] static constexpr auto ordered() noexcept -> bool
-  {
-    return false;
-  }
+  static constexpr auto ordered = false;
 
-  [[nodiscard]] static constexpr auto world_size() noexcept -> i32
+  [[nodiscard]] static auto world_size() noexcept -> i32
   {
     return mpi_basic::world_size;
   }
 
-  [[nodiscard]] static constexpr auto world_rank() noexcept -> i32
+  [[nodiscard]] static auto world_rank() noexcept -> i32
   {
     return mpi_basic::world_rank;
   }
 
-  [[nodiscard]] static constexpr auto world_rank_of(
+  [[nodiscard]] static auto world_rank_of(
     vertex_t i) noexcept -> i32
   {
     if (mpi_basic::world_size == 1) return 0;

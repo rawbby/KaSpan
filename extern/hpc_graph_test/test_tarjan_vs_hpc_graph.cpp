@@ -1,9 +1,3 @@
-static constexpr auto
-omp_get_thread_num() noexcept -> int
-{
-  return 1;
-}
-
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>

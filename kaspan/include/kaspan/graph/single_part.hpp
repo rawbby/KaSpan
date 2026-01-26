@@ -42,15 +42,9 @@ public:
     return true;
   }
 
-  [[nodiscard]] static constexpr auto continuous() noexcept -> bool
-  {
-    return true;
-  }
+  static constexpr auto continuous = true;
 
-  [[nodiscard]] static constexpr auto ordered() noexcept -> bool
-  {
-    return true;
-  }
+  static constexpr auto ordered = true;
 
   [[nodiscard]] static constexpr auto world_size() noexcept -> i32
   {
@@ -126,15 +120,9 @@ public:
     return true;
   }
 
-  [[nodiscard]] static constexpr auto continuous() noexcept -> bool
-  {
-    return true;
-  }
+  static constexpr auto continuous = true;
 
-  [[nodiscard]] static constexpr auto ordered() noexcept -> bool
-  {
-    return true;
-  }
+  static constexpr auto ordered = true;
 
   [[nodiscard]] static constexpr auto world_size() noexcept -> i32
   {

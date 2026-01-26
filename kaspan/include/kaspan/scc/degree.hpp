@@ -26,7 +26,7 @@ total_degree(
 }
 
 template<part_view_concept Part>
-  requires(Part::continuous())
+  requires(Part::continuous)
 index_t
 degree(
   Part           part,
@@ -36,7 +36,7 @@ degree(
 }
 
 template<part_view_concept Part>
-  requires(!Part::continuous())
+  requires(!Part::continuous)
 index_t
 degree(
   Part           part,

@@ -68,15 +68,9 @@ public:
     return (i / block_size_) % mpi_basic::world_size == integral_cast<vertex_t>(world_rank_);
   }
 
-  [[nodiscard]] static constexpr auto continuous() noexcept -> bool
-  {
-    return false;
-  }
+  static constexpr auto continuous = false;
 
-  [[nodiscard]] static constexpr auto ordered() noexcept -> bool
-  {
-    return false;
-  }
+  static constexpr auto ordered = false;
 
   [[nodiscard]] static auto world_size() noexcept -> i32
   {
@@ -165,15 +159,9 @@ public:
     return view().has_local(i);
   }
 
-  [[nodiscard]] static constexpr auto continuous() noexcept -> bool
-  {
-    return false;
-  }
+  static constexpr auto continuous = false;
 
-  [[nodiscard]] static constexpr auto ordered() noexcept -> bool
-  {
-    return false;
-  }
+  static constexpr auto ordered = false;
 
   [[nodiscard]] static auto world_size() noexcept -> i32
   {

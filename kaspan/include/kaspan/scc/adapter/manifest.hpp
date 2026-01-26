@@ -300,7 +300,7 @@ load_graph_part_from_manifest(
   auto bw_csr_access  = view_dense_unsigned(bw_csr_buffer.data(), m, csr_bytes, load_endian);
 
   auto const get_local_m = [=, &part](dense_unsigned_accessor<> const& head) -> index_t {
-    if constexpr (Part::continuous()) {
+    if constexpr (Part::continuous) {
       if (local_n > 0) {
 
         DEBUG_ASSERT_GE(head.get(part.begin()), 0);

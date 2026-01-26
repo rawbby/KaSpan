@@ -4,38 +4,67 @@
     {
       "name": "base",
       "hidden": true,
+      "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "/usr/bin/clang++"
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc"
       }
     },
     {
       "name": "release",
       "displayName": "Release Build",
-      "description": "Release build with maximum performance optimizations",
-      "generator": "Ninja",
+      "description": "Release build.",
       "inherits": [
         "base"
       ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -march=native -flto -ffast-math -funroll-loops -fpeel-loops -floop-interchange -fno-plt -fomit-frame-pointer -fno-stack-protector"
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -march=native -flto -funroll-loops -fpeel-loops -floop-interchange -fno-plt -fomit-frame-pointer -fno-stack-protector"
       },
-      "binaryDir": "${sourceDir}/build/release"
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "callgrind",
+      "displayName": "Callgrind Build",
+      "description": "Release build with less optimization and Valgrind callgrind integration.",
+      "inherits": [
+        "base"
+      ],
+      "cacheVariables": {
+        "KASPAN_CALLGRIND": "ON",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_CXX_FLAGS_RELEASE":
+          "-O2 -g -DNDEBUG -march=native -fprofile-arcs -fbranch-probabilities -fno-inline -flto -funroll-loops -fpeel-loops -floop-interchange -fno-plt -fomit-frame-pointer -fno-stack-protector"
+      },
+      "binaryDir": "${sourceDir}/build/${presetName}"
     },
     {
       "name": "debug",
       "displayName": "Debug Build",
-      "description": "Debug build with sanitizers enabled",
-      "generator": "Ninja",
+      "description": "Debug build.",
       "inherits": [
         "base"
       ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_FLAGS_DEBUG": "-O1 -fsanitize=memory,undefined -fno-omit-frame-pointer -g",
+        "CMAKE_CXX_FLAGS_DEBUG": "-Og -g -fstack-protector-strong",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "BUILD_TESTING": "ON"
       },
-      "binaryDir": "${sourceDir}/build/debug"
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "memcheck",
+      "displayName": "Memcheck Build",
+      "description": "Debug build with Valgrind memcheck integration.",
+      "inherits": [
+        "debug"
+      ],
+      "cacheVariables": {
+        "KASPAN_MEMCHECK": "ON"
+      },
+      "binaryDir": "${sourceDir}/build/${presetName}"
     }
   ],
   "buildPresets": [
@@ -44,8 +73,16 @@
       "configurePreset": "release"
     },
     {
+      "name": "callgrind",
+      "configurePreset": "callgrind"
+    },
+    {
       "name": "debug",
       "configurePreset": "debug"
+    },
+    {
+      "name": "memcheck",
+      "configurePreset": "memcheck"
     }
   ],
   "testPresets": [
@@ -54,8 +91,16 @@
       "configurePreset": "release"
     },
     {
+      "name": "callgrind",
+      "configurePreset": "callgrind"
+    },
+    {
       "name": "debug",
       "configurePreset": "debug"
+    },
+    {
+      "name": "memcheck",
+      "configurePreset": "memcheck"
     }
   ]
 }

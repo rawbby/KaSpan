@@ -12,7 +12,7 @@ namespace kaspan {
 
 /// from a global_graph get the degree of a partition
 template<part_view_concept Part>
-  requires(Part::continuous())
+  requires(Part::continuous)
 auto
 partition_local_m(
   graph_view g,
@@ -23,7 +23,7 @@ partition_local_m(
 
 /// from a global_graph get the degree of a partition
 template<part_view_concept Part>
-  requires(!Part::continuous())
+  requires(!Part::continuous)
 auto
 partition_local_m(
   graph_view g,

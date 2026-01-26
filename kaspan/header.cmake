@@ -2,7 +2,8 @@ target_link_libraries(${TARGET_NAME} INTERFACE
         BriefKAsten::BriefKAsten
         stxxl::stxxl
         KaGen::KaGen
-        MPI::MPI_CXX)
+        MPI::MPI_CXX
+        OpenMP::OpenMP_CXX)
 
 option(KASPAN_INDEX64 "Use int64 for index type" OFF)
 option(KASPAN_VERTEX64 "Use int64 for vertex type" OFF)

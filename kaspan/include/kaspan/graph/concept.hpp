@@ -20,15 +20,15 @@ concept part_view_concept =
        { t.to_local(i) } -> std::same_as<vertex_t>;
        { t.to_global(i) } -> std::same_as<vertex_t>;
        { t.has_local(i) } -> std::same_as<bool>;
-       { t.continuous() } -> std::same_as<bool>;
-       { t.ordered() } -> std::same_as<bool>;
+       { T::continuous } -> std::convertible_to<bool>;
+       { T::ordered } -> std::convertible_to<bool>;
        { t.world_size() } -> std::same_as<i32>;
        { t.world_rank() } -> std::same_as<i32>;
      })
 
-  && (!T::ordered() || T::continuous())
+  && (!T::ordered || T::continuous)
 
-  && (!T::continuous() || requires(T t) {
+  && (!T::continuous || requires(T t) {
        { t.begin() } -> std::same_as<vertex_t>;
        { t.end() } -> std::same_as<vertex_t>;
      });
@@ -44,15 +44,15 @@ concept part_concept =
        { t.to_local(i) } -> std::same_as<vertex_t>;
        { t.to_global(i) } -> std::same_as<vertex_t>;
        { t.has_local(i) } -> std::same_as<bool>;
-       { t.continuous() } -> std::same_as<bool>;
-       { t.ordered() } -> std::same_as<bool>;
+       { T::continuous } -> std::convertible_to<bool>;
+       { T::ordered } -> std::convertible_to<bool>;
        { t.world_size() } -> std::same_as<i32>;
        { t.world_rank() } -> std::same_as<i32>;
      })
 
-  && (!T::ordered() || T::continuous())
+  && (!T::ordered || T::continuous)
 
-  && (!T::continuous() ||
+  && (!T::continuous ||
       requires(T t) {
         { t.begin() } -> std::same_as<vertex_t>;
         { t.end() } -> std::same_as<vertex_t>;

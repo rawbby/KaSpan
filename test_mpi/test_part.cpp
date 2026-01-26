@@ -47,7 +47,7 @@ test_consistency(
   }
   ASSERT_EQ(count, local_n);
 
-  if constexpr (part.continuous()) {
+  if constexpr (Part::continuous) {
     ASSERT_EQ(part.end() - part.begin(), local_n);
     for (vertex_t k = 0; k < local_n; ++k) {
       ASSERT_EQ(part.to_global(k), part.begin() + k);

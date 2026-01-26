@@ -105,7 +105,24 @@ allgather_csr_degrees(
   mpi_basic::allgather_counts(local_sub_csr.size(), counts);
   auto const sub_m = integral_cast<index_t>(mpi_basic::displs(counts, displs));
 
-  return PACK(buffer, sub_m, counts, displs, local_sub_csr, local_sub_degrees);
+  using buffer_t            = std::remove_cvref_t<decltype(buffer)>;
+  using sub_m_t             = std::remove_cvref_t<decltype(sub_m)>;
+  using counts_t            = std::remove_cvref_t<decltype(counts)>;
+  using displs_t            = std::remove_cvref_t<decltype(displs)>;
+  using local_sub_csr_t     = std::remove_cvref_t<decltype(local_sub_csr)>;
+  using local_sub_degrees_t = std::remove_cvref_t<decltype(local_sub_degrees)>;
+
+  struct pack
+  {
+    buffer_t            buffer;
+    sub_m_t             sub_m;
+    counts_t            counts;
+    displs_t            displs;
+    local_sub_csr_t     local_sub_csr;
+    local_sub_degrees_t local_sub_degrees;
+  };
+
+  return pack{ std::move(buffer), std::move(sub_m), std::move(counts), std::move(displs), std::move(local_sub_csr), std::move(local_sub_degrees) };
 }
 
 template<part_view_concept Part>
@@ -156,16 +173,29 @@ allgather_csr_with_degrees(
   mpi_basic::allgather_counts(local_sub_csr.size(), counts);
   auto const sub_m = integral_cast<index_t>(mpi_basic::displs(counts, displs));
 
-  return PACK(buffer, sub_m, counts, displs, local_sub_csr);
+  using buffer_t        = std::remove_cvref_t<decltype(buffer)>;
+  using sub_m_t         = std::remove_cvref_t<decltype(sub_m)>;
+  using counts_t        = std::remove_cvref_t<decltype(counts)>;
+  using displs_t        = std::remove_cvref_t<decltype(displs)>;
+  using local_sub_csr_t = std::remove_cvref_t<decltype(local_sub_csr)>;
+  struct pack
+  {
+    buffer_t(buffer);
+    sub_m_t(sub_m);
+    counts_t(counts);
+    displs_t(displs);
+    local_sub_csr_t(local_sub_csr);
+  };
+  return pack{ std::move(buffer), sub_m, std::move(counts), std::move(displs), std::move(local_sub_csr) };
 }
 
 }
 
 template<class Part,
          class fn_t>
-  requires(Part::ordered() && std::convertible_to<std::invoke_result_t<fn_t,
-                                                                       vertex_t>,
-                                                  bool>)
+  requires(Part::ordered && std::convertible_to<std::invoke_result_t<fn_t,
+                                                                     vertex_t>,
+                                                bool>)
 auto
 allgather_sub_graph(
   Part const&     part,
@@ -222,9 +252,9 @@ allgather_sub_graph(
 
 template<class Part,
          class fn_t>
-  requires(Part::ordered() && std::convertible_to<std::invoke_result_t<fn_t,
-                                                                       vertex_t>,
-                                                  bool>)
+  requires(Part::ordered && std::convertible_to<std::invoke_result_t<fn_t,
+                                                                     vertex_t>,
+                                                bool>)
 auto
 allgather_fw_sub_graph(
   Part const&     part,
@@ -260,14 +290,21 @@ allgather_fw_sub_graph(
     }
   }
 
-  return PACK(super_ids, g);
+  using super_ids_t = std::remove_cvref_t<decltype(super_ids)>;
+  using g_t         = std::remove_cvref_t<decltype(g)>;
+  struct pack
+  {
+    super_ids_t(super_ids);
+    g_t(g);
+  };
+  return pack{ std::move(super_ids), std::move(g) };
 }
 
 template<class Part,
          class fn_t>
-  requires(Part::ordered() && std::convertible_to<std::invoke_result_t<fn_t,
-                                                                       vertex_t>,
-                                                  bool>)
+  requires(Part::ordered && std::convertible_to<std::invoke_result_t<fn_t,
+                                                                     vertex_t>,
+                                                bool>)
 auto
 allgather_fw_sub_graph_with_degrees(
   Part const&     part,
@@ -317,7 +354,14 @@ allgather_fw_sub_graph_with_degrees(
     mpi_basic::allgatherv<vertex_t>(local_sub_fw_csr.data(), local_sub_fw_csr.size(), g.csr, csr_counts, csr_displs);
   }
 
-  return PACK(super_ids, g);
+  using super_ids_t = std::remove_cvref_t<decltype(super_ids)>;
+  using g_t         = std::remove_cvref_t<decltype(g)>;
+  struct pack
+  {
+    super_ids_t(super_ids);
+    g_t(g);
+  };
+  return pack{ std::move(super_ids), std::move(g) };
 }
 
 } // namespace kaspan
