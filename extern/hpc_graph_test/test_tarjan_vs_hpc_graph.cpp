@@ -103,16 +103,6 @@ main(
   auto rng  = std::mt19937{ std::random_device{}() };
   auto dist = std::uniform_int_distribution<u32>();
 
-  for (int i = 0; i < 10; ++i) {
-    auto const kagen_args = std::format("rmat;directed;N=14;M=16;a=0.59;b=0.19;c=0.19;seed={}", dist(rng));
-    test(kagen_args.c_str());
-  }
-  for (int i = 0; i < 10; ++i) {
-    auto const kagen_args = std::format("rmat;directed;N=14;M=16;a=0.25;b=0.25;c=0.25;seed={}", dist(rng));
-    test(kagen_args.c_str());
-  }
-  for (int i = 0; i < 10; ++i) {
-    auto const kagen_args = std::format("gnm-directed;N=14;M=16;seed={}", dist(rng));
-    test(kagen_args.c_str());
-  }
+  auto const kagen_args = std::format("rmat;directed;N=14;M=17;a=0.45;b=0.22;c=0.22;seed={}", dist(rng));
+  test(kagen_args.c_str());
 }

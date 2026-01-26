@@ -55,46 +55,44 @@ main(
         test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
       }
 
+      // Test variants
       {
-        auto const local_n = part.local_n();
-        auto       scc_id  = make_array<vertex_t>(local_n);
-        scc_hpc_like(bgp.view(), scc_id.data());
-        test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
-      }
-
-      {
-        auto const local_n = part.local_n();
-        auto       scc_id  = make_array<vertex_t>(local_n);
-        scc_hpc_trim_ex(bgp.view(), scc_id.data());
-        test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
-      }
-
-      {
-        auto const local_n = part.local_n();
-        auto       scc_id  = make_array<vertex_t>(local_n);
-        scc_ispan_like(bgp.view(), scc_id.data());
-        test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
-      }
-
-      {
-        auto const local_n = part.local_n();
-        auto       scc_id  = make_array<vertex_t>(local_n);
-        scc_trim_ex(bgp.view(), scc_id.data());
-        test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
-      }
-
-      {
-        auto const local_n = part.local_n();
-        auto       scc_id  = make_array<vertex_t>(local_n);
-        scc_trim_ex_residual(bgp.view(), scc_id.data());
-        test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
-      }
-
-      {
-        auto const local_n = part.local_n();
-        auto       scc_id  = make_array<vertex_t>(local_n);
-        scc_trim_ex_light_residual(bgp.view(), scc_id.data());
-        test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
+        {
+          auto const local_n = part.local_n();
+          auto       scc_id  = make_array<vertex_t>(local_n);
+          scc_hpc_like(bgp.view(), scc_id.data());
+          test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
+        }
+        {
+          auto const local_n = part.local_n();
+          auto       scc_id  = make_array<vertex_t>(local_n);
+          scc_hpc_trim_ex(bgp.view(), scc_id.data());
+          test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
+        }
+        {
+          auto const local_n = part.local_n();
+          auto       scc_id  = make_array<vertex_t>(local_n);
+          scc_ispan_like(bgp.view(), scc_id.data());
+          test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
+        }
+        {
+          auto const local_n = part.local_n();
+          auto       scc_id  = make_array<vertex_t>(local_n);
+          scc_trim_ex(bgp.view(), scc_id.data());
+          test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
+        }
+        {
+          auto const local_n = part.local_n();
+          auto       scc_id  = make_array<vertex_t>(local_n);
+          scc_trim_ex_residual(bgp.view(), scc_id.data());
+          test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
+        }
+        {
+          auto const local_n = part.local_n();
+          auto       scc_id  = make_array<vertex_t>(local_n);
+          scc_trim_ex_light_residual(bgp.view(), scc_id.data());
+          test_validate_scc_id(bgp.fw_view(), scc_id_.data(), scc_id.data());
+        }
       }
     }
   }

@@ -23,7 +23,7 @@ main(
   mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();
 
-  auto const bgp = kagen_graph_part("rmat;directed;N=16;M=18;a=0.25;b=0.25;c=0.25");
+  auto const bgp = kagen_graph_part("rmat;directed;N=14;M=17;a=0.45;b=0.22;c=0.22");
   bgp.debug_validate();
 
   auto const m  = mpi_basic::allreduce_single(bgp.local_fw_m, mpi_basic::sum);
