@@ -19,6 +19,7 @@
       ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "ON",
         "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -march=native -flto -funroll-loops -fpeel-loops -floop-interchange -fno-plt -fomit-frame-pointer -fno-stack-protector"
       },
       "binaryDir": "${sourceDir}/build/${presetName}"
@@ -26,7 +27,7 @@
     {
       "name": "callgrind",
       "displayName": "Callgrind Build",
-      "description": "Release build with less optimization and Valgrind callgrind integration.",
+      "description": "RelWithDebInfo build with Valgrind callgrind integration.",
       "inherits": [
         "base"
       ],
