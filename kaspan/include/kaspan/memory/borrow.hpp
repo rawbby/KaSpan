@@ -21,8 +21,7 @@ class array : public buffer
 public:
   array() noexcept = default;
 
-  template<arithmetic_concept Count>
-  explicit array(Count count) noexcept(false)
+  explicit array(arithmetic_concept auto count) noexcept(false)
     : buffer(integral_cast<u64>(count) * sizeof(T))
   {
     DEBUG_ASSERT_GE(count, 0);
@@ -215,6 +214,25 @@ public:
   {
     return static_cast<T*>(data_);
   }
+
+  void fill(
+    std::byte               value,
+    arithmetic_concept auto size)
+  {
+    std::memset(data(), static_cast<int>(value), integral_cast<std::size_t>(size) * sizeof(T));
+  }
+
+  void fill(
+    arithmetic_concept auto size)
+  {
+    fill(static_cast<std::byte>(0xff), size);
+  }
+
+  void clear(
+    arithmetic_concept auto size)
+  {
+    fill(static_cast<std::byte>(0x00), size);
+  }
 };
 
 template<typename T = byte,
@@ -235,9 +253,8 @@ make_array_clean(
 {
   DEBUG_ASSERT_GE(count, 0);
   DEBUG_ASSERT_LE(count, std::numeric_limits<u64>::max());
-  auto const count64 = integral_cast<u64>(count);
-  auto       result  = array<T>{ count64 };
-  std::memset(result.data(), 0x00, count64 * sizeof(T));
+  auto result = array<T>{ count };
+  result.clear(count);
   return result;
 }
 
