@@ -11,7 +11,8 @@
 namespace kaspan {
 
 /// start with up to one pivot per rank
-template<part_view_concept Part>
+template<u64               CommThresholdBytes,
+         part_view_concept Part>
 auto
 color_scc_step_multi(
   bidi_graph_part_view<Part> graph,
@@ -20,7 +21,8 @@ color_scc_step_multi(
   vertex_t*                  active_array,
   u64*                       active_storage,
   u64*                       changed_storage,
-  frontier_view<edge_t>      frontier,
+  frontier_view<edge_t,
+                CommThresholdBytes> frontier,
   vertex_t                   local_pivot,
   auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
@@ -169,7 +171,8 @@ color_scc_step_multi(
   return local_decided_count;
 }
 
-template<part_view_concept Part>
+template<u64               CommThresholdBytes,
+         part_view_concept Part>
 auto
 color_scc_step_multi(
   bidi_graph_part_view<Part> graph,
@@ -178,7 +181,8 @@ color_scc_step_multi(
   vertex_t*                  active_array,
   u64*                       active_storage,
   u64*                       changed_storage,
-  frontier_view<edge_t>      frontier,
+  frontier_view<edge_t,
+                CommThresholdBytes> frontier,
   auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
   auto       part    = graph.part;
@@ -236,7 +240,8 @@ color_scc_step_multi(
   return local_decided_count + color_scc_step_multi(graph, scc_id, colors, active_array, active_storage, changed_storage, frontier, max_degree_vertex, on_decision);
 }
 
-template<part_view_concept Part>
+template<u64               CommThresholdBytes,
+         part_view_concept Part>
 auto
 color_scc_step(
   bidi_graph_part_view<Part> graph,
@@ -245,7 +250,8 @@ color_scc_step(
   vertex_t*                  active_array,
   u64*                       active_storage,
   u64*                       changed_storage,
-  frontier_view<edge_t>      frontier,
+  frontier_view<edge_t,
+                CommThresholdBytes> frontier,
   vertex_t                   decided_count = 0,
   auto&&                     on_decision   = [](vertex_t) {}) -> vertex_t
 {

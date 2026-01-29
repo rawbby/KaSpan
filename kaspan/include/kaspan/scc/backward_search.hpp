@@ -6,11 +6,13 @@
 
 namespace kaspan {
 
-template<part_view_concept Part>
+template<u64               CommThresholdBytes,
+         part_view_concept Part>
 auto
 backward_search(
   bidi_graph_part_view<Part> graph,
-  frontier_view<vertex_t>    frontier,
+  frontier_view<vertex_t,
+                CommThresholdBytes> frontier,
   vertex_t*                  scc_id,
   u64*                       fw_reached_storage,
   u64*                       dense_front_storage,

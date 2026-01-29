@@ -66,7 +66,7 @@ main(
 
   constexpr int alpha = 1;
 
-  std::vector<index_t> scc_id;
+  std::vector<vertex_t> scc_id;
   scc(g.n, g.m, g.fw.head, g.fw.csr, g.bw.head, g.bw.csr, alpha, &scc_id);
 
   if (mpi_basic::world_rank == 0) {

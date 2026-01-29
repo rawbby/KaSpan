@@ -1,6 +1,5 @@
 #pragma once
 
-#include <kaspan/graph/single_part.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/concept.hpp>
@@ -15,7 +14,7 @@
 
 namespace kaspan {
 
-template<typename T, bool normalize_vertices = false>
+template<typename T, u64 CommThresholdBytes = 0, bool normalize_vertices = false>
 struct frontier_view
 {
   vector<vertex_t>* send_buffer = nullptr;
@@ -97,6 +96,11 @@ struct frontier_view
     T    value)
   {
     push(world_rank_of(part, value), value);
+    if constexpr (CommThresholdBytes > 0) {
+      if (send_buffer->size() * sizeof(vertex_t) >= CommThresholdBytes) {
+        comm(part);
+      }
+    }
   }
 
   void relaxed_push(
@@ -114,7 +118,14 @@ struct frontier_view
   {
     auto const rank = world_rank_of(part, value);
     if (rank == mpi_basic::world_rank) local_push(value);
-    else push(rank, value);
+    else {
+      push(rank, value);
+      if constexpr (CommThresholdBytes > 0) {
+        if (send_buffer->size() * sizeof(vertex_t) >= CommThresholdBytes) {
+          comm(part);
+        }
+      }
+    }
   }
 
   [[nodiscard]] auto size() const -> u64
@@ -214,6 +225,7 @@ struct frontier_view
   }
 };
 
+template<u64 CommThresholdBytes = 0>
 struct frontier
 {
   vector<vertex_t> send_buffer{};
@@ -302,6 +314,7 @@ struct frontier
              std::same_as<T,
                           edge_t>)
   auto view() -> frontier_view<T,
+                               CommThresholdBytes,
                                interleaved>
   {
     return { &send_buffer, &recv_buffer, send_counts, send_displs, recv_counts, recv_displs };

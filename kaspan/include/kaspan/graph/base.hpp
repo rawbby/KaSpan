@@ -8,6 +8,7 @@
 
 #include <mpi.h>
 
+#include <cstring>
 #include <limits>
 
 namespace kaspan {
@@ -29,7 +30,25 @@ constexpr inline auto mpi_vertex_t = mpi_basic::type<vertex_t>;
 
 struct edge_t
 {
-  vertex_t u, v;
+  vertex_t u = 0;
+  vertex_t v = 0;
+
+  constexpr edge_t() noexcept  = default;
+  constexpr ~edge_t() noexcept = default;
+
+  constexpr edge_t(
+    vertex_t u,
+    vertex_t v) noexcept
+    : u(u)
+    , v(v)
+  {
+  }
+
+  constexpr edge_t(edge_t const&) noexcept = default;
+  constexpr edge_t(edge_t&&) noexcept      = default;
+
+  constexpr auto operator=(edge_t const&) noexcept -> edge_t& = default;
+  constexpr auto operator=(edge_t&&) noexcept -> edge_t&      = default;
 
   constexpr auto operator<(
     edge_t e) const noexcept -> bool
@@ -37,6 +56,8 @@ struct edge_t
     return u < e.u | u == e.u & v < e.v;
   }
 };
+static_assert(std::is_trivially_copyable_v<edge_t>);
+static_assert(std::is_trivially_destructible_v<edge_t>);
 
 static constexpr auto max_edge = edge_t{ std::numeric_limits<vertex_t>::max(), std::numeric_limits<vertex_t>::max() };
 
@@ -59,7 +80,7 @@ init_mpi_edge_t()
   mpi_basic::Datatype types[2] = { mpi_vertex_t, mpi_vertex_t };
 
   constexpr edge_t dummy{};
-  MPI_Aint         base = 0;
+  MPI_Aint         base;
   mpi_basic::get_address(&dummy, &base);
   mpi_basic::get_address(&dummy.u, &displs[0]);
   mpi_basic::get_address(&dummy.v, &displs[1]);
@@ -69,7 +90,7 @@ init_mpi_edge_t()
   mpi_basic::type_create_struct(2, blocklengths, displs, types, &mpi_edge_t);
   mpi_basic::type_commit(&mpi_edge_t);
 
-  IF(KASPAN_DEBUG, MPI_Aint lb = 0; MPI_Aint extent = 0; mpi_basic::type_get_extent(mpi_edge_t, &lb, &extent); ASSERT_EQ(extent, sizeof(edge_t));)
+  IF(KASPAN_DEBUG, MPI_Aint lb = 0; MPI_Aint extent = 0; mpi_basic::type_get_extent(mpi_edge_t, &lb, &extent); ASSERT_EQ(extent, (MPI_Aint)sizeof(edge_t));)
 }
 
 inline void
@@ -85,9 +106,28 @@ constexpr auto scc_id_singular  = scc_id_undecided - 1;
 
 struct degree_t
 {
-  index_t  degree_product;
-  vertex_t u;
+  index_t  degree_product = 0;
+  vertex_t u              = 0;
+
+  constexpr degree_t() noexcept  = default;
+  constexpr ~degree_t() noexcept = default;
+
+  constexpr degree_t(
+    index_t  degree_product,
+    vertex_t u) noexcept
+    : degree_product(degree_product)
+    , u(u)
+  {
+  }
+
+  constexpr degree_t(degree_t const&) noexcept = default;
+  constexpr degree_t(degree_t&&) noexcept      = default;
+
+  constexpr auto operator=(degree_t const&) noexcept -> degree_t& = default;
+  constexpr auto operator=(degree_t&&) noexcept -> degree_t&      = default;
 };
+static_assert(std::is_trivially_copyable_v<degree_t>);
+static_assert(std::is_trivially_destructible_v<degree_t>);
 
 inline mpi_basic::Datatype mpi_degree_t      = mpi_basic::datatype_null;
 inline mpi_basic::Op       mpi_degree_max_op = mpi_basic::op_null;
@@ -101,7 +141,7 @@ init_mpi_degree_t()
   mpi_basic::Datatype types[2] = { mpi_index_t, mpi_vertex_t };
 
   constexpr degree_t dummy{};
-  MPI_Aint           base = 0;
+  MPI_Aint           base;
   mpi_basic::get_address(&dummy, &base);
   mpi_basic::get_address(&dummy.degree_product, &displs[0]);
   mpi_basic::get_address(&dummy.u, &displs[1]);

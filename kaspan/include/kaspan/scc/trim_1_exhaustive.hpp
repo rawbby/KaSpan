@@ -12,7 +12,8 @@ namespace kaspan {
 /// scc_id[k] != undecided || valid(degree[k]).
 /// notice: you can pass a frontier_view with interleaved support,
 /// but its not needed nor adviced performance wise.
-template<bool              InterleavedSupport = false,
+template<u64               CommThresholdBytes,
+         bool              InterleavedSupport = false,
          part_view_concept Part>
 auto
 trim_1_exhaustive(
@@ -20,6 +21,7 @@ trim_1_exhaustive(
   vertex_t*                         scc_id,
   vertex_t*                         degree,
   frontier_view<vertex_t,
+                CommThresholdBytes,
                 InterleavedSupport> frontier) -> vertex_t
 {
   auto     part          = graph.part;
@@ -52,14 +54,16 @@ trim_1_exhaustive(
   return decided_count;
 }
 
-template<part_view_concept Part>
+template<u64               CommThresholdBytes,
+         part_view_concept Part>
 auto
 trim_1_exhaustive(
   bidi_graph_part_view<Part> graph,
   vertex_t*                  scc_id,
   vertex_t*                  outdegree,
   vertex_t*                  indegree,
-  frontier_view<vertex_t>    frontier,
+  frontier_view<vertex_t,
+                CommThresholdBytes> frontier,
   vertex_t*                  decided_beg,
   vertex_t*                  decided_end) -> vertex_t
 {
@@ -89,7 +93,8 @@ trim_1_exhaustive(
 /// will initilise these appropriately.
 /// notice: you can pass a vertex_frontier with interleaved support,
 /// but its not needed nor adviced performance wise.
-template<bool              Interleaved = false,
+template<u64               CommThresholdBytes,
+         bool              Interleaved = false,
          part_view_concept Part>
 auto
 trim_1_exhaustive_first(
@@ -98,6 +103,7 @@ trim_1_exhaustive_first(
   vertex_t*                  outdegree,
   vertex_t*                  indegree,
   frontier_view<vertex_t,
+                CommThresholdBytes,
                 Interleaved> frontier) -> vertex_t
 {
   auto       part          = graph.part;
@@ -162,7 +168,8 @@ namespace interleaved {
 /// trim_1_exhaustive iteratevely trims both directions, forward and backward, interleaved.
 /// To do that scc_id must be valid and degree must be valid if:
 /// scc_id[k] != undecided || (valid(indegree[k]) && valid(outdegree[k])).
-template<part_view_concept Part>
+template<u64               CommThresholdBytes,
+         part_view_concept Part>
 auto
 trim_1_exhaustive(
   bidi_graph_part_view<Part> graph,
@@ -170,6 +177,7 @@ trim_1_exhaustive(
   vertex_t*                  outdegree,
   vertex_t*                  indegree,
   frontier_view<vertex_t,
+                CommThresholdBytes,
                 true>        frontier) -> vertex_t
   requires(signed_concept<vertex_t>)
 {
@@ -218,7 +226,8 @@ trim_1_exhaustive(
 /// trim_1_exhaustive_first iteratively trims vertices with indegree/outdegree of zero.
 /// It assumes to run on a fresh graph with uninitialised scc_id/indegree/outdegree and
 /// will initilise these appropriately.
-template<part_view_concept Part>
+template<u64               CommThresholdBytes,
+         part_view_concept Part>
 auto
 trim_1_exhaustive_first(
   bidi_graph_part_view<Part> graph,
@@ -226,6 +235,7 @@ trim_1_exhaustive_first(
   vertex_t*                  outdegree,
   vertex_t*                  indegree,
   frontier_view<vertex_t,
+                CommThresholdBytes,
                 true>        frontier) -> vertex_t
   requires(signed_concept<vertex_t>)
 {

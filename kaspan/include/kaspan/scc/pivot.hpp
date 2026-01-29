@@ -32,13 +32,13 @@ select_pivot_from_head(
   vertex_t const*            scc_id) -> vertex_t
 {
   auto     part = graph.part;
-  degree_t local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
+  degree_t local_max(std::numeric_limits<index_t>::min(), std::numeric_limits<vertex_t>::min());
 
   for (vertex_t k = 0; k < part.local_n(); ++k) {
     if (scc_id[k] == scc_id_undecided) {
       auto const degree_product = integral_cast<index_t>(graph.outdegree(k)) * graph.indegree(k);
       if (degree_product > local_max.degree_product) [[unlikely]]
-        local_max = degree_t{ degree_product, part.to_global(k) };
+        local_max = degree_t(degree_product, part.to_global(k));
     }
   }
 
@@ -59,13 +59,13 @@ select_pivot_from_degree(
   vertex_t const* outdegree,
   vertex_t const* indegree) -> vertex_t
 {
-  degree_t local_max{ .degree_product = std::numeric_limits<index_t>::min(), .u = std::numeric_limits<vertex_t>::min() };
+  degree_t local_max{ std::numeric_limits<index_t>::min(), std::numeric_limits<vertex_t>::min() };
 
   for (vertex_t k = 0; k < part.local_n(); ++k) {
     if (scc_id[k] == scc_id_undecided) {
       auto const degree_product = integral_cast<index_t>(outdegree[k]) * indegree[k];
       if (degree_product > local_max.degree_product) [[unlikely]]
-        local_max = degree_t{ degree_product, part.to_global(k) };
+        local_max = degree_t(degree_product, part.to_global(k));
     }
   }
 

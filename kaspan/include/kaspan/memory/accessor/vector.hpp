@@ -12,7 +12,7 @@
 namespace kaspan {
 
 template<typename T>
-  requires(std::is_trivially_copyable_v<T> && std::is_trivially_constructible_v<T> && std::is_trivially_destructible_v<T>)
+  requires(std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>)
 class vector
 {
 public:
