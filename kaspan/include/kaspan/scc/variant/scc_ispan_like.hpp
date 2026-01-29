@@ -9,6 +9,7 @@
 #include <kaspan/graph/concept.hpp>
 #include <kaspan/scc/backward_search.hpp>
 #include <kaspan/scc/forward_search.hpp>
+#include <kaspan/scc/tarjan.hpp>
 #include <kaspan/scc/trim_1_local.hpp>
 
 namespace kaspan {

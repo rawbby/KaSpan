@@ -3,7 +3,7 @@
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
-#include <kaspan/memory/accessor/stack_accessor.hpp>
+#include <kaspan/memory/accessor/vector.hpp>
 
 namespace kaspan::async {
 
@@ -15,25 +15,14 @@ color_scc_step(
   brief_queue_t&             mq,
   vertex_t*                  scc_id,
   vertex_t*                  colors,
-  vertex_t*                  active_array,
-  u64*                       active_storage,
-  vertex_t                   decided_count = 0) -> vertex_t
+  vector<vertex_t>&          active,
+  u64*                       active_storage) -> vertex_t
 {
-  auto       part         = graph.part;
-  auto const local_n      = part.local_n();
-  auto       active       = view_bits(active_storage, local_n);
-  auto       active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
+  auto       part      = graph.part;
+  auto const local_n   = part.local_n();
+  auto       is_active = view_bits(active_storage, local_n);
 
-#if KASPAN_DEBUG
-  // Validate decided_count is consistent with scc_id
-  vertex_t actual_decided_count = 0;
-  for (vertex_t k = 0; k < local_n; ++k) {
-    if (scc_id[k] != scc_id_undecided) {
-      ++actual_decided_count;
-    }
-  }
-  DEBUG_ASSERT_EQ(actual_decided_count, decided_count);
-#endif
+  DEBUG_ASSERT(active.empty());
 
   // Phase 1: Forward Color Propagation
   {
@@ -45,25 +34,24 @@ color_scc_step(
         auto const k = part.to_local(u);
         if (scc_id[k] == scc_id_undecided && label < colors[k]) {
           colors[k] = label;
-          if (!active.get(k)) {
-            active.set(k);
-            active_stack.push(k);
+          if (!is_active.get(k)) {
+            is_active.set(k);
+            active.push_back(k);
           }
         }
       }
     };
 
-    active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
-    active.for_each(local_n, [&](auto&& k) { active_stack.push(k); });
+    is_active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
+    is_active.for_each(local_n, [&](auto&& k) { active.push_back(k); });
 
-    mpi_basic::barrier();
     mq.reactivate();
 
-    while (true) {
-      while (!active_stack.empty()) {
-        auto const k = active_stack.back();
-        active_stack.pop();
-        active.unset(k);
+    do {
+      while (!active.empty()) {
+        auto const k = active.back();
+        active.pop_back();
+        is_active.unset(k);
 
         auto const label = colors[k];
         for (auto v : graph.csr_range(k)) {
@@ -71,9 +59,9 @@ color_scc_step(
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided && label < colors[l]) {
               colors[l] = label;
-              if (!active.get(l)) {
-                active.set(l);
-                active_stack.push(l);
+              if (!is_active.get(l)) {
+                is_active.set(l);
+                active.push_back(l);
               }
             }
           } else {
@@ -82,13 +70,10 @@ color_scc_step(
         }
         mq.poll_throttled(on_message);
       }
-
-      mq.poll_throttled(on_message);
-      if (active_stack.empty() && mq.terminate(on_message)) {
-        break;
-      }
-    }
+    } while (!mq.terminate(on_message));
   }
+
+  DEBUG_ASSERT(active.empty());
 
   // Phase 2: Multi-pivot Backward Search
   vertex_t local_decided_count = 0;
@@ -102,34 +87,33 @@ color_scc_step(
         if (scc_id[k] == scc_id_undecided && colors[k] == pivot) {
           scc_id[k] = pivot;
           ++local_decided_count;
-          if (!active.get(k)) {
-            active.set(k);
-            active_stack.push(k);
+          if (!is_active.get(k)) {
+            is_active.set(k);
+            active.push_back(k);
           }
         }
       }
     };
 
-    DEBUG_ASSERT(active_stack.empty());
-    active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
-    active.for_each(local_n, [&](auto k) {
+    DEBUG_ASSERT(active.empty());
+    is_active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
+    is_active.for_each(local_n, [&](auto k) {
       if (colors[k] == part.to_global(k)) {
         scc_id[k] = colors[k];
         ++local_decided_count;
-        active_stack.push(k);
+        active.push_back(k);
       } else {
-        active.unset(k);
+        is_active.unset(k);
       }
     });
 
-    mpi_basic::barrier();
     mq.reactivate();
 
-    while (true) {
-      while (!active_stack.empty()) {
-        auto const k = active_stack.back();
-        active_stack.pop();
-        active.unset(k);
+    do {
+      while (!active.empty()) {
+        auto const k = active.back();
+        active.pop_back();
+        is_active.unset(k);
 
         auto const pivot = colors[k];
         for (auto v : graph.bw_csr_range(k)) {
@@ -138,9 +122,9 @@ color_scc_step(
             if (scc_id[l] == scc_id_undecided && colors[l] == pivot) {
               scc_id[l] = pivot;
               ++local_decided_count;
-              if (!active.get(l)) {
-                active.set(l);
-                active_stack.push(l);
+              if (!is_active.get(l)) {
+                is_active.set(l);
+                active.push_back(l);
               }
             }
           } else {
@@ -149,13 +133,10 @@ color_scc_step(
         }
         mq.poll_throttled(on_message);
       }
-
-      mq.poll_throttled(on_message);
-      if (active_stack.empty() && mq.terminate(on_message)) {
-        break;
-      }
-    }
+    } while (!mq.terminate(on_message));
   }
+
+  DEBUG_ASSERT(active.empty());
 
   return local_decided_count;
 }

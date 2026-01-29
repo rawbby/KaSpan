@@ -10,6 +10,7 @@
 #include <kaspan/scc/color_scc_step.hpp>
 #include <kaspan/scc/forward_search.hpp>
 #include <kaspan/scc/pivot.hpp>
+#include <kaspan/scc/tarjan.hpp>
 #include <kaspan/scc/trim_1_exhaustive.hpp>
 
 namespace kaspan {

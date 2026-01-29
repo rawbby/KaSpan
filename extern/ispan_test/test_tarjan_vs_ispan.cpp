@@ -8,6 +8,7 @@
 #include <kaspan/scc/adapter/manifest.hpp>
 #include <kaspan/scc/allgather_graph.hpp>
 #include <kaspan/scc/scc.hpp>
+#include <kaspan/scc/tarjan.hpp>
 
 #include <mpi.h>
 

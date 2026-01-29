@@ -66,6 +66,34 @@
         "KASPAN_MEMCHECK": "ON"
       },
       "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "release64",
+      "inherits": "release",
+      "cacheVariables": {
+        "KASPAN_INDEX64": "1"
+      }
+    },
+    {
+      "name": "callgrind64",
+      "inherits": "callgrind",
+      "cacheVariables": {
+        "KASPAN_INDEX64": "1"
+      }
+    },
+    {
+      "name": "debug64",
+      "inherits": "debug",
+      "cacheVariables": {
+        "KASPAN_INDEX64": "1"
+      }
+    },
+    {
+      "name": "memcheck64",
+      "inherits": "memcheck",
+      "cacheVariables": {
+        "KASPAN_INDEX64": "1"
+      }
     }
   ],
   "buildPresets": [
@@ -74,16 +102,32 @@
       "configurePreset": "release"
     },
     {
+      "name": "release64",
+      "configurePreset": "release64"
+    },
+    {
       "name": "callgrind",
       "configurePreset": "callgrind"
+    },
+    {
+      "name": "callgrind64",
+      "configurePreset": "callgrind64"
     },
     {
       "name": "debug",
       "configurePreset": "debug"
     },
     {
+      "name": "debug64",
+      "configurePreset": "debug64"
+    },
+    {
       "name": "memcheck",
       "configurePreset": "memcheck"
+    },
+    {
+      "name": "memcheck64",
+      "configurePreset": "memcheck64"
     }
   ],
   "testPresets": [
@@ -92,16 +136,32 @@
       "configurePreset": "release"
     },
     {
+      "name": "release64",
+      "configurePreset": "release64"
+    },
+    {
       "name": "callgrind",
       "configurePreset": "callgrind"
+    },
+    {
+      "name": "callgrind64",
+      "configurePreset": "callgrind64"
     },
     {
       "name": "debug",
       "configurePreset": "debug"
     },
     {
+      "name": "debug64",
+      "configurePreset": "debug64"
+    },
+    {
       "name": "memcheck",
       "configurePreset": "memcheck"
+    },
+    {
+      "name": "memcheck64",
+      "configurePreset": "memcheck64"
     }
   ]
 }

@@ -3,6 +3,7 @@
 #include <kaspan/test/fuzzy.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/scope_guard.hpp>
+#include <kaspan/scc/tarjan.hpp>
 
 #include <iomanip>
 #include <iostream>
