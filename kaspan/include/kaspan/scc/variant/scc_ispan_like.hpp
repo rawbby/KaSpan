@@ -1,7 +1,7 @@
 #pragma once
 
-#include "kaspan/debug/process.hpp"
-#include "kaspan/scc/allgather_sub_graph.hpp"
+#include <kaspan/debug/process.hpp>
+#include <kaspan/scc/allgather_sub_graph.hpp>
 
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/graph/base.hpp>

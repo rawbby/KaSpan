@@ -24,6 +24,10 @@ color_scc_step(
 
   DEBUG_ASSERT(active.empty());
 
+  for (vertex_t k = 0; k < local_n; ++k) {
+    colors[k] = part.to_global(k);
+  }
+
   // Phase 1: Forward Color Propagation
   {
     auto on_message = [&](auto env) {
@@ -64,7 +68,7 @@ color_scc_step(
                 active.push_back(l);
               }
             }
-          } else {
+          } else if (label < v) {
             mq.post_message_blocking(edge_t{ v, label }, part.world_rank_of(v), on_message);
           }
         }

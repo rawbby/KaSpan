@@ -1,13 +1,8 @@
 #pragma once
 
-#include <kaspan/debug/assert.hpp>
-#include <kaspan/graph/base.hpp>
-#include <kaspan/graph/graph_part.hpp>
-#include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/scc/frontier.hpp>
-#include <kaspan/util/mpi_basic.hpp>
-
-#include <vector>
+#include <kaspan/graph/base.hpp>
+#include <kaspan/memory/accessor/bits_accessor.hpp>
 
 namespace kaspan {
 

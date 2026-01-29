@@ -1,9 +1,8 @@
+#include <kaspan/scc/frontier.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
-#include <kaspan/graph/balanced_slice_part.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/trivial_slice_part.hpp>
-#include <kaspan/scc/frontier.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 

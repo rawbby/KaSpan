@@ -1,9 +1,9 @@
 #pragma once
 
+#include <kaspan/scc/frontier.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/concept.hpp>
-#include <kaspan/scc/frontier.hpp>
 
 namespace kaspan {
 

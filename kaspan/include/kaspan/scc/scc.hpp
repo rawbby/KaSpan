@@ -68,7 +68,6 @@ scc(
   bitbuffer0.clear(graph.part.local_n());
   bitbuffer1.clear(graph.part.local_n());
 
-  vertex_t iterations = 0;
   prev_local_decided  = local_decided;
   prev_global_decided = global_decided;
 
@@ -76,14 +75,12 @@ scc(
   do {
     local_decided += color_scc_step(graph, scc_id, colors.data(), active.data(), bitbuffer0.data(), bitbuffer1.data(), front.view<edge_t>(), local_decided, [](auto) {});
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-    ++iterations;
 
     if (global_decided >= graph.part.n()) break;
 
-    local_decided +=
-      color_scc_step(graph.inverse_view(), scc_id, colors.data(), active.data(), bitbuffer0.data(), bitbuffer1.data(), front.view<edge_t>(), local_decided, [](auto) {});
+    local_decided += color_scc_step(graph.inverse_view(), scc_id, colors.data(), active.data(), bitbuffer0.data(), bitbuffer1.data(), front.view<edge_t>(), local_decided, [](auto) {});
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-    ++iterations;
+
   } while (global_decided < graph.part.n());
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);

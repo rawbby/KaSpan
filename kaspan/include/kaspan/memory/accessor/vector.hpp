@@ -67,6 +67,14 @@ public:
     data_[size_++] = value;
   }
 
+  /// context must ensure no overflow
+  void unsafe_push_back(
+    T value)
+  {
+    DEBUG_ASSERT_LT(size_, capacity_);
+    data_[size_++] = value;
+  }
+
   void reserve(
     u64 new_capacity)
   {
@@ -180,8 +188,8 @@ private:
   void grow()
   {
     if (capacity_ == 0) [[unlikely]] {
-      // minimum capacity of 48 Kibi Bytes
-      reserve(48 * 1024);
+      // minimum capacity of 32 Kibi Bytes
+      reserve(32 * 1024);
     } else {
       // doubling strategy
       reserve(capacity_ << 1);

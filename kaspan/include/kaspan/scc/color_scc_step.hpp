@@ -1,26 +1,14 @@
 #pragma once
 
+#include <kaspan/scc/frontier.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
-#include <kaspan/scc/frontier.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 
 namespace kaspan {
-
-template<part_view_concept Part>
-void
-color_scc_init_label(
-  Part      part,
-  vertex_t* colors)
-{
-  auto const local_n = part.local_n();
-  for (vertex_t k = 0; k < local_n; ++k) {
-    colors[k] = part.to_global(k);
-  }
-}
 
 /// start with up to one pivot per rank
 template<part_view_concept Part>
@@ -261,11 +249,11 @@ color_scc_step(
   vertex_t                   decided_count = 0,
   auto&&                     on_decision   = [](vertex_t) {}) -> vertex_t
 {
-  auto       part         = graph.part;
-  auto const local_n      = part.local_n();
-  auto       active       = view_bits(active_storage, local_n);
-  auto       changed      = view_bits(changed_storage, local_n);
-  auto       active_stack = view_stack<vertex_t>(active_array, local_n - decided_count);
+  auto       part       = graph.part;
+  auto const local_n    = part.local_n();
+  auto       is_active  = view_bits(active_storage, local_n);
+  auto       is_changed = view_bits(changed_storage, local_n);
+  auto       active     = view_stack<vertex_t>(active_array, local_n - decided_count);
 
   for (vertex_t k = 0; k < local_n; ++k) {
     colors[k] = part.to_global(k);
@@ -275,14 +263,14 @@ color_scc_step(
   // This partitions the graph into components that are supersets of SCCs.
   // Each vertex v gets the minimum ID of a vertex u that can reach it (u -> v).
   {
-    active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
-    std::memcpy(changed.data(), active.data(), (local_n + 7) >> 3);
-    active.for_each(local_n, [&](auto&& k) { active_stack.push(k); });
+    is_active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
+    std::memcpy(is_changed.data(), is_active.data(), (local_n + 7) >> 3);
+    is_active.for_each(local_n, [&](auto&& k) { active.push(k); });
 
     while (true) {
-      while (!active_stack.empty()) {
-        auto const k = active_stack.back();
-        active_stack.pop();
+      while (!active.empty()) {
+        auto const k = active.back();
+        active.pop();
 
         auto const label = colors[k];
         for (auto v : graph.csr_range(k)) {
@@ -290,18 +278,18 @@ color_scc_step(
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided && label < colors[l]) {
               colors[l] = label;
-              changed.set(l);
-              if (!active.get(l)) {
-                active.set(l);
-                active_stack.push(l);
+              is_changed.set(l);
+              if (!is_active.get(l)) {
+                is_active.set(l);
+                active.push(l);
               }
             }
           }
         }
-        active.unset(k);
+        is_active.unset(k);
       }
 
-      changed.for_each(local_n, [&](auto&& k) {
+      is_changed.for_each(local_n, [&](auto&& k) {
         auto const label_k = colors[k];
         for (auto v : graph.csr_range(k)) {
           if (label_k < v && !part.has_local(v)) {
@@ -309,7 +297,7 @@ color_scc_step(
           }
         }
       });
-      changed.clear(local_n);
+      is_changed.clear(local_n);
 
       if (!frontier.comm(part)) {
         break;
@@ -320,10 +308,10 @@ color_scc_step(
         auto const k          = part.to_local(u);
         if (scc_id[k] == scc_id_undecided && label < colors[k]) {
           colors[k] = label;
-          changed.set(k);
-          if (!active.get(k)) {
-            active.set(k);
-            active_stack.push(k);
+          is_changed.set(k);
+          if (!is_active.get(k)) {
+            is_active.set(k);
+            active.push(k);
           }
         }
       }
@@ -336,26 +324,26 @@ color_scc_step(
   // Intersection of forward reaching (Phase 1) and backward reaching (Phase 2) is the SCC.
   vertex_t local_decided_count = 0;
   {
-    DEBUG_ASSERT(active_stack.empty());
-    active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
-    changed.clear(local_n);
-    active.for_each(local_n, [&](auto k) {
+    DEBUG_ASSERT(active.empty());
+    is_active.set_each(local_n, SCC_ID_UNDECIDED_FILTER(local_n, scc_id));
+    is_changed.clear(local_n);
+    is_active.for_each(local_n, [&](auto k) {
       if (colors[k] == part.to_global(k)) {
         scc_id[k] = colors[k];
         on_decision(k);
         ++local_decided_count;
-        changed.set(k);
-        active_stack.push(k);
+        is_changed.set(k);
+        active.push(k);
       } else {
-        active.unset(k);
+        is_active.unset(k);
       }
     });
 
     while (true) {
-      while (!active_stack.empty()) {
-        auto const k = active_stack.back();
-        active_stack.pop();
-        active.unset(k);
+      while (!active.empty()) {
+        auto const k = active.back();
+        active.pop();
+        is_active.unset(k);
 
         auto const pivot = colors[k];
         for (auto v : graph.bw_csr_range(k)) {
@@ -365,17 +353,17 @@ color_scc_step(
               scc_id[l] = pivot;
               on_decision(l);
               ++local_decided_count;
-              changed.set(l);
-              if (!active.get(l)) {
-                active.set(l);
-                active_stack.push(l);
+              is_changed.set(l);
+              if (!is_active.get(l)) {
+                is_active.set(l);
+                active.push(l);
               }
             }
           }
         }
       }
 
-      changed.for_each(local_n, [&](auto&& k) {
+      is_changed.for_each(local_n, [&](auto&& k) {
         auto const pivot = colors[k];
         for (auto v : graph.bw_csr_range(k)) {
           if (!part.has_local(v)) {
@@ -383,7 +371,7 @@ color_scc_step(
           }
         }
       });
-      changed.clear(local_n);
+      is_changed.clear(local_n);
 
       if (!frontier.comm(part)) {
         break;
@@ -396,10 +384,10 @@ color_scc_step(
           scc_id[k] = pivot;
           on_decision(k);
           ++local_decided_count;
-          changed.set(k);
-          if (!active.get(k)) {
-            active.set(k);
-            active_stack.push(k);
+          is_changed.set(k);
+          if (!is_active.get(k)) {
+            is_active.set(k);
+            active.push(k);
           }
         }
       }

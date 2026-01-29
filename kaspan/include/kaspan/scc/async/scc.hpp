@@ -11,7 +11,6 @@
 #include <kaspan/scc/async/backward_search.hpp>
 #include <kaspan/scc/async/color_scc_step.hpp>
 #include <kaspan/scc/async/forward_search.hpp>
-#include <kaspan/scc/color_scc_step.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 
@@ -38,32 +37,6 @@ struct mpi_type_traits<kaspan::edge_t>
 
 namespace kaspan::async {
 
-template<typename indirection_scheme_t>
-auto
-make_briefkasten_vertex()
-{
-  if constexpr (std::same_as<indirection_scheme_t, briefkasten::NoopIndirectionScheme>) {
-    return briefkasten::BufferedMessageQueueBuilder<vertex_t>().build();
-  } else {
-    return briefkasten::IndirectionAdapter{ briefkasten::BufferedMessageQueueBuilder<vertex_t>()
-                                              .with_merger(briefkasten::aggregation::EnvelopeSerializationMerger{})
-                                              .with_splitter(briefkasten::aggregation::EnvelopeSerializationSplitter<vertex_t>{})
-                                              .build(),
-                                            indirection_scheme_t{ mpi_basic::comm_world } };
-  }
-}
-
-template<typename indirection_scheme_t>
-auto
-make_briefkasten_edge()
-{
-  if constexpr (std::same_as<indirection_scheme_t, briefkasten::NoopIndirectionScheme>) {
-    return briefkasten::BufferedMessageQueueBuilder<edge_t>().build();
-  } else {
-    return briefkasten::IndirectionAdapter{ briefkasten::BufferedMessageQueueBuilder<edge_t>().build(), indirection_scheme_t{ mpi_basic::comm_world } };
-  }
-}
-
 template<typename indirection_scheme_t,
          part_view_concept Part>
 void
@@ -85,17 +58,18 @@ scc(
 
   if (global_decided == graph.part.n()) return;
 
-  auto active     = vector<vertex_t>{ graph.part.local_n() };
-  auto bitbuffer0 = make_bits_clean(graph.part.local_n());
+  auto message_buffer = vector<vertex_t>{};
+  auto active         = vector<vertex_t>{ graph.part.local_n() };
+  auto bitbuffer0     = make_bits_clean(graph.part.local_n());
 
   {
     KASPAN_STATISTIC_PUSH("forward_backward_search");
     vertex_t prev_local_decided  = local_decided;
     vertex_t prev_global_decided = global_decided;
-    auto     vertex_frontier     = make_briefkasten_vertex<indirection_scheme_t>();
+    auto     vertex_frontier     = briefkasten::BufferedMessageQueueBuilder<vertex_t>{}.build();
     auto     bitbuffer1          = make_bits_clean(graph.part.local_n());
     async::forward_search(graph, vertex_frontier, scc_id, bitbuffer0.data(), active, pivot);
-    mpi_basic::barrier();
+    // mpi_basic::barrier();
     local_decided += async::backward_search(graph, vertex_frontier, scc_id, bitbuffer0.data(), active, pivot);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
@@ -110,19 +84,17 @@ scc(
   KASPAN_STATISTIC_PUSH("color");
   vertex_t prev_local_decided  = local_decided;
   vertex_t prev_global_decided = global_decided;
-  auto     edge_frontier       = make_briefkasten_edge<indirection_scheme_t>();
+  auto     edge_frontier       = briefkasten::BufferedMessageQueueBuilder<edge_t>{}.build();
   auto     colors              = make_array<vertex_t>(graph.part.local_n());
   bitbuffer0.clear(graph.part.local_n());
   do {
 
-    color_scc_init_label(graph.part, colors.data());
     local_decided += async::color_scc_step(graph, edge_frontier, scc_id, colors.data(), active, bitbuffer0.data());
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
     if (global_decided >= graph.part.n()) break;
 
-    color_scc_init_label(graph.part, colors.data());
-    local_decided += async::color_scc_step(graph, edge_frontier, scc_id, colors.data(), active, bitbuffer0.data());
+    local_decided += async::color_scc_step(graph.inverse_view(), edge_frontier, scc_id, colors.data(), active, bitbuffer0.data());
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
   } while (global_decided < graph.part.n());

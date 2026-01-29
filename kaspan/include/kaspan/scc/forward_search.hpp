@@ -1,10 +1,10 @@
 #pragma once
 
+#include <kaspan/scc/frontier.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/graph_part.hpp>
 #include <kaspan/memory/accessor/bits.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
-#include <kaspan/scc/frontier.hpp>
 
 namespace kaspan {
 

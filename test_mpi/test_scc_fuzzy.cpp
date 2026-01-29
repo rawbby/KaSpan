@@ -1,10 +1,3 @@
-#include "kaspan/scc/variant/scc_hpc_like.hpp"
-#include "kaspan/scc/variant/scc_hpc_trim_ex.hpp"
-#include "kaspan/scc/variant/scc_ispan_like.hpp"
-#include "kaspan/scc/variant/scc_trim_ex.hpp"
-#include "kaspan/scc/variant/scc_trim_ex_light_residual.hpp"
-#include "kaspan/scc/variant/scc_trim_ex_residual.hpp"
-
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/sub_process.hpp>
 #include <kaspan/graph/balanced_slice_part.hpp>
@@ -12,6 +5,12 @@
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/scc/async/scc.hpp>
 #include <kaspan/scc/scc.hpp>
+#include <kaspan/scc/variant/scc_hpc_like.hpp>
+#include <kaspan/scc/variant/scc_hpc_trim_ex.hpp>
+#include <kaspan/scc/variant/scc_ispan_like.hpp>
+#include <kaspan/scc/variant/scc_trim_ex.hpp>
+#include <kaspan/scc/variant/scc_trim_ex_light_residual.hpp>
+#include <kaspan/scc/variant/scc_trim_ex_residual.hpp>
 #include <kaspan/test/fuzzy.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "kaspan/debug/process.hpp"
-
+#include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
