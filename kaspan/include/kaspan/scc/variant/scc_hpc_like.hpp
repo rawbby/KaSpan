@@ -31,10 +31,9 @@ scc_hpc_like(
 
   if (global_decided == graph.part.n()) return;
 
-  auto front          = frontier{ graph.part.local_n() };
-  auto message_buffer = vector<vertex_t>{};
-
   KASPAN_STATISTIC_PUSH("forward_backward_search");
+  auto     front               = frontier{ graph.part.local_n() };
+  auto     message_buffer      = vector<vertex_t>{};
   vertex_t prev_local_decided  = local_decided;
   vertex_t prev_global_decided = global_decided;
   {
@@ -51,13 +50,11 @@ scc_hpc_like(
 
   if (global_decided == graph.part.n()) return;
 
-  auto colors = make_array<vertex_t>(graph.part.local_n());
-
+  KASPAN_STATISTIC_PUSH("color");
   vertex_t iterations = 0;
   prev_local_decided  = local_decided;
   prev_global_decided = global_decided;
-
-  KASPAN_STATISTIC_PUSH("color");
+  auto colors         = make_array<vertex_t>(graph.part.local_n());
   do {
     local_decided += color_scc_step(graph, front.view<edge_t>(), message_buffer, colors.data(), scc_id);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);

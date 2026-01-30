@@ -26,11 +26,8 @@ scc_hpc_trim_ex(
   auto vertex_buffer0 = make_array<vertex_t>(graph.part.local_n());
   auto vertex_buffer1 = make_array<vertex_t>(graph.part.local_n());
 
-  auto outdegree = vertex_buffer0.data();
-  auto indegree  = vertex_buffer1.data();
-
   KASPAN_STATISTIC_PUSH("trim_ex_first");
-  auto local_decided  = trim_1_exhaustive_first(graph, scc_id, outdegree, indegree, front.view<vertex_t>());
+  auto local_decided  = trim_1_exhaustive_first(graph, scc_id, vertex_buffer0.data(), vertex_buffer1.data(), front.view<vertex_t>());
   auto global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided);
@@ -40,7 +37,7 @@ scc_hpc_trim_ex(
   if (global_decided == graph.part.n()) return;
 
   KASPAN_STATISTIC_PUSH("select_pivot");
-  auto const pivot = select_pivot_from_degree(graph.part, scc_id, outdegree, indegree);
+  auto const pivot = select_pivot_from_degree(graph.part, scc_id, vertex_buffer0.data(), vertex_buffer1.data());
   KASPAN_STATISTIC_POP();
 
   auto bitbuffer0 = make_bits_clean(graph.part.local_n());
@@ -71,8 +68,7 @@ scc_hpc_trim_ex(
 
     if (global_decided >= graph.part.n()) break;
 
-    local_decided +=
-      color_scc_step(graph.inverse_view(), front.view<edge_t>(), message_buffer, vertex_buffer1.data(), scc_id);
+    local_decided += color_scc_step(graph.inverse_view(), front.view<edge_t>(), message_buffer, vertex_buffer1.data(), scc_id);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     ++iterations;
   } while (global_decided < graph.part.n());
