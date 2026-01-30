@@ -68,8 +68,7 @@ scc(
     vertex_t prev_global_decided = global_decided;
     auto     vertex_frontier     = briefkasten::BufferedMessageQueueBuilder<vertex_t>{}.build();
     auto     bitbuffer1          = make_bits_clean(graph.part.local_n());
-    async::forward_search(graph, vertex_frontier, scc_id, bitbuffer0.data(), active, pivot);
-    // mpi_basic::barrier();
+    async::forward_search(graph, vertex_frontier, active, scc_id, bitbuffer0.data(), pivot);
     local_decided += async::backward_search(graph, vertex_frontier, scc_id, bitbuffer0.data(), active, pivot);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);

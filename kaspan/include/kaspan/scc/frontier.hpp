@@ -97,13 +97,22 @@ struct frontier_view
 
   template<part_view_concept Part>
   void push(
-    Part part,
-    T    value)
+    Part                    part,
+    arithmetic_concept auto rank,
+    T                       value,
+    auto&&                  consumer)
   {
-    push(world_rank_of(part, value), value);
+    if constexpr (std::same_as<T, vertex_t>) {
+      send_buffer->push_back(value);
+    } else {
+      static_assert(std::same_as<T, edge_t>);
+      send_buffer->push_back(value.u);
+      send_buffer->push_back(value.v);
+    }
+    ++send_counts[integral_cast<i32>(rank)];
     if constexpr (Threshold > 0) {
       if (send_buffer->size() * sizeof(vertex_t) >= Threshold) {
-        comm(part);
+        comm(part, consumer);
       }
     }
   }
@@ -121,19 +130,48 @@ struct frontier_view
 
   template<part_view_concept Part>
   void relaxed_push(
+    Part                    part,
+    arithmetic_concept auto rank,
+    T                       value,
+    auto&&                  consumer)
+  {
+    auto const r = integral_cast<i32>(rank);
+    if (r == mpi_basic::world_rank) local_push(value);
+    else push(part, r, value, consumer);
+  }
+
+  template<part_view_concept Part>
+  void push(
+    Part   part,
+    T      value,
+    auto&& consumer)
+  {
+    push(part, world_rank_of(part, value), value, consumer);
+  }
+
+  template<part_view_concept Part>
+  void push(
     Part part,
     T    value)
   {
-    auto const rank = world_rank_of(part, value);
-    if (rank == mpi_basic::world_rank) local_push(value);
-    else {
-      push(part, rank, value);
-      if constexpr (Threshold > 0) {
-        if (send_buffer->size() * sizeof(vertex_t) >= Threshold) {
-          comm(part);
-        }
-      }
-    }
+    push(part, world_rank_of(part, value), value);
+  }
+
+  template<part_view_concept Part>
+  void relaxed_push(
+    Part   part,
+    T      value,
+    auto&& consumer)
+  {
+    relaxed_push(part, world_rank_of(part, value), value, consumer);
+  }
+
+  template<part_view_concept Part>
+  void relaxed_push(
+    Part part,
+    T    value)
+  {
+    relaxed_push(part, world_rank_of(part, value), value);
   }
 
   [[nodiscard]] auto size() const -> u64
@@ -199,6 +237,19 @@ struct frontier_view
     send_buffer->clear();
     std::memset(send_counts, 0x00, mpi_basic::world_size * sizeof(MPI_Count));
 
+    return true;
+  }
+
+  template<part_view_concept Part>
+  auto comm(
+    Part   part,
+    auto&& consumer) -> bool
+  {
+    if (!comm(part)) return false;
+
+    while (has_next()) {
+      consumer(next());
+    }
     return true;
   }
 };
