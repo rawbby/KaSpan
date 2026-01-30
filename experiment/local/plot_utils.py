@@ -41,9 +41,9 @@ def load_all_data(cwd):
             with p.open("r") as f:
                 j = json.load(f)
 
-                duration = globals().get(f"get_{app}_duration")(j)
+                duration = globals().get(f"get_{app}_duration")(j, np_val)
                 memory = globals().get(f"get_{app}_memory")(j, np_val)
-                progress = globals().get(f"get_{app}_progress")(j)
+                progress = globals().get(f"get_{app}_progress")(j, np_val)
 
                 entry = (duration, memory, progress)
                 all_metrics_raw.setdefault(graph, {}).setdefault(app_variant, {})[np_val] = entry
@@ -140,31 +140,31 @@ def get_max_recursive(node, key_name):
     return max_val
 
 
-def get_kaspan_duration(data):
+def get_kaspan_duration(data, np_val):
     """Retrieves the maximum 'scc' duration across all ranks for KaSpan (in seconds)."""
-    n = len(data)
+    n = np_val
     dur = max(get_max_recursive(data[str(i)].get("benchmark", {}).get("scc", {}), "duration") for i in range(n)) * 1e-9
     assert dur > 0, f"Non-positive duration found: {dur}"
     return dur
 
 
-def get_ispan_duration(data):
+def get_ispan_duration(data, np_val):
     """Retrieves the maximum 'scc' duration across all ranks for iSpan (in seconds)."""
-    n = len(data)
+    n = np_val
     dur = max(get_max_recursive(data[str(i)].get("benchmark", {}).get("scc", {}), "duration") for i in range(n)) * 1e-9
     assert dur > 0, f"Non-positive duration found: {dur}"
     return dur
 
 
-def get_hpc_graph_duration(data):
+def get_hpc_graph_duration(data, np_val):
     """Retrieves the maximum 'scc' duration across all ranks for hpc_graph (in seconds)."""
-    n = len(data)
+    n = np_val
     dur = max(get_max_recursive(data[str(i)].get("benchmark", {}).get("scc", {}), "duration") for i in range(n)) * 1e-9
     assert dur > 0, f"Non-positive duration found: {dur}"
     return dur
 
 
-def get_all_step_data(data, app):
+def get_all_step_data(data, app, np_val):
     """
     Recursively searches for all nodes under 'benchmark/scc' that contain a 'decided_count'.
     Returns a list of dictionaries, each containing:
@@ -172,7 +172,7 @@ def get_all_step_data(data, app):
     - 'duration': The maximum duration for this node across all ranks (in seconds).
     - 'decided_count': The decided count (from rank 0, assuming it's allreduced).
     """
-    n = len(data)
+    n = np_val
     paths = []
 
     def find_paths(node, current_path):
@@ -234,19 +234,19 @@ def get_all_step_data(data, app):
     return results
 
 
-def get_kaspan_progress(data):
+def get_kaspan_progress(data, np_val):
     """Retrieves progress data for KaSpan using recursive search."""
-    return get_all_step_data(data, "kaspan")
+    return get_all_step_data(data, "kaspan", np_val)
 
 
-def get_ispan_progress(data):
+def get_ispan_progress(data, np_val):
     """Retrieves progress data for iSpan using recursive search."""
-    return get_all_step_data(data, "ispan")
+    return get_all_step_data(data, "ispan", np_val)
 
 
-def get_hpc_graph_progress(data):
+def get_hpc_graph_progress(data, np_val):
     """Retrieves progress data for hpc_graph using recursive search."""
-    return get_all_step_data(data, "hpc_graph")
+    return get_all_step_data(data, "hpc_graph", np_val)
 
 
 def get_kaspan_memory(data, np_val):
@@ -257,7 +257,7 @@ def get_kaspan_memory(data, np_val):
     Returns average memory increase per core (total increase / np_val).
     """
     mem_sum = 0
-    for i in range(len(data)):
+    for i in range(np_val):
         node = data[str(i)].get("benchmark", {})
         base = int(node.get("memory", 0))
         mem_sum += max(base, get_max_recursive(node.get("scc", {}), "memory")) - base
@@ -271,7 +271,7 @@ def get_ispan_memory(data, np_val):
     Returns average memory increase per core (total increase / np_val).
     """
     mem_sum = 0
-    for i in range(len(data)):
+    for i in range(np_val):
         node = data[str(i)].get("benchmark", {})
         base = int(node.get("memory", 0))
         mem_sum += max(base, get_max_recursive(node.get("scc", {}), "memory")) - base
@@ -285,7 +285,7 @@ def get_hpc_graph_memory(data, np_val):
     Returns average memory increase per core (total increase / np_val).
     """
     mem_sum = 0
-    for i in range(len(data)):
+    for i in range(np_val):
         node = data[str(i)].get("benchmark", {})
         base = int(node.get("memory", 0))
         mem_sum += max(base, get_max_recursive(node.get("scc", {}), "memory")) - base
