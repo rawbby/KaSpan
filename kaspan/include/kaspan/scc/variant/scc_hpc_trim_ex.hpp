@@ -69,15 +69,14 @@ scc_hpc_trim_ex(
 
   KASPAN_STATISTIC_PUSH("color");
   do {
-    local_decided +=
-      color_scc_step(graph, scc_id, vertex_buffer0.data(), vertex_buffer1.data(), bitbuffer0.data(), bitbuffer1.data(), front.view<edge_t>(), local_decided, [](auto) {});
+    local_decided += color_scc_step(graph, front.view<edge_t>(), message_buffer, bitbuffer0.data(), bitbuffer1.data(), vertex_buffer1.data(), scc_id);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     ++iterations;
 
     if (global_decided >= graph.part.n()) break;
 
-    local_decided += color_scc_step(
-      graph.inverse_view(), scc_id, vertex_buffer0.data(), vertex_buffer1.data(), bitbuffer0.data(), bitbuffer1.data(), front.view<edge_t>(), local_decided, [](auto) {});
+    local_decided +=
+      color_scc_step(graph.inverse_view(), front.view<edge_t>(), message_buffer, bitbuffer0.data(), bitbuffer1.data(), vertex_buffer1.data(), scc_id);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     ++iterations;
   } while (global_decided < graph.part.n());
