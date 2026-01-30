@@ -11,7 +11,7 @@
 namespace kaspan {
 
 /// start with up to one pivot per rank
-template<u64               CommThresholdBytes,
+template<u64               Threshold,
          part_view_concept Part>
 auto
 color_scc_step_multi(
@@ -22,7 +22,7 @@ color_scc_step_multi(
   u64*                       active_storage,
   u64*                       changed_storage,
   frontier_view<edge_t,
-                CommThresholdBytes> frontier,
+                Threshold> frontier,
   vertex_t                   local_pivot,
   auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
@@ -171,7 +171,7 @@ color_scc_step_multi(
   return local_decided_count;
 }
 
-template<u64               CommThresholdBytes,
+template<u64               Threshold,
          part_view_concept Part>
 auto
 color_scc_step_multi(
@@ -182,7 +182,7 @@ color_scc_step_multi(
   u64*                       active_storage,
   u64*                       changed_storage,
   frontier_view<edge_t,
-                CommThresholdBytes> frontier,
+                Threshold> frontier,
   auto&&                     on_decision = [](vertex_t) {}) -> vertex_t
 {
   auto       part    = graph.part;

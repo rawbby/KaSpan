@@ -14,7 +14,7 @@
 
 namespace kaspan {
 
-template<typename T, u64 Threshold = 0>
+template<typename T, u64 Threshold>
 struct frontier_view
 {
   vector<vertex_t>* send_buffer = nullptr;
@@ -76,9 +76,9 @@ struct frontier_view
 
   template<part_view_concept Part>
   void push(
-    Part part,
-    i32  rank,
-    T    value)
+    Part                    part,
+    arithmetic_concept auto rank,
+    T                       value)
   {
     if constexpr (std::same_as<T, vertex_t>) {
       send_buffer->push_back(value);
@@ -87,7 +87,7 @@ struct frontier_view
       send_buffer->push_back(value.u);
       send_buffer->push_back(value.v);
     }
-    ++send_counts[rank];
+    ++send_counts[integral_cast<i32>(rank)];
     if constexpr (Threshold > 0) {
       if (send_buffer->size() * sizeof(vertex_t) >= Threshold) {
         comm(part);
@@ -110,12 +110,13 @@ struct frontier_view
 
   template<part_view_concept Part>
   void relaxed_push(
-    Part part,
-    i32  rank,
-    T    value)
+    Part                    part,
+    arithmetic_concept auto rank,
+    T                       value)
   {
-    if (rank == mpi_basic::world_rank) local_push(value);
-    else push(part, rank, value);
+    auto const r = integral_cast<i32>(rank);
+    if (r == mpi_basic::world_rank) local_push(value);
+    else push(part, r, value);
   }
 
   template<part_view_concept Part>
@@ -167,36 +168,6 @@ struct frontier_view
     }
   }
 
-  //   auto begin() const
-  //   {
-  //     return static_cast<T const*>(static_cast<void const*>(recv_buffer->data()));
-  //   }
-  //
-  //   auto end() const
-  //   {
-  //     return static_cast<T const*>(static_cast<void const*>(recv_buffer->data() + recv_buffer->size()));
-  //   }
-  //
-  //   auto begin()
-  //   {
-  //     return static_cast<T*>(static_cast<void const*>(recv_buffer->data()));
-  //   }
-  //
-  //   auto end()
-  //   {
-  //     return static_cast<T*>(static_cast<void*>(recv_buffer->data() + recv_buffer->size()));
-  //   }
-  //
-  //   auto cbegin() const
-  //   {
-  //     return begin();
-  //   }
-  //
-  //   auto cend() const
-  //   {
-  //     return end();
-  //   }
-
   template<part_view_concept Part>
   auto comm(
     Part part) -> bool
@@ -232,7 +203,6 @@ struct frontier_view
   }
 };
 
-template<u64 ThresholdBytes = 0>
 struct frontier
 {
   vector<vertex_t> send_buffer{};
@@ -314,13 +284,14 @@ struct frontier
     return *this;
   }
 
-  template<typename T>
+  template<typename T,
+           u64 Threshold = 32 * 1024>
     requires(std::same_as<T,
                           vertex_t> ||
              std::same_as<T,
                           edge_t>)
   auto view() -> frontier_view<T,
-                               ThresholdBytes>
+                               Threshold>
   {
     return { &send_buffer, &recv_buffer, send_counts, send_displs, recv_counts, recv_displs };
   }

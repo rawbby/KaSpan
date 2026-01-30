@@ -8,13 +8,13 @@
 
 namespace kaspan {
 
-template<u64               CommThresholdBytes,
+template<u64               Threshold,
          part_view_concept Part>
 void
 forward_search(
   bidi_graph_part_view<Part> graph,
   frontier_view<vertex_t,
-                CommThresholdBytes> frontier,
+                Threshold> frontier,
   vertex_t const*            scc_id,
   u64*                       fw_reached_storage,
   u64*                       dense_front_storage,

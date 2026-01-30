@@ -37,7 +37,7 @@ ecl_scc_init_lable(
   }
 }
 
-template<world_part_concept Part>
+template<world_part_concept Part, u64 Threshold>
 auto
 ecl_scc_step(
   Part const&     part,
@@ -51,7 +51,7 @@ ecl_scc_step(
   vertex_t*       active_array,
   u64*            active_storage,
   u64*            changed_storage,
-  edge_frontier&  frontier,
+  frontier_view<edge_t, Threshold>&  frontier,
   vertex_t        decided_count = 0) -> vertex_t
 {
   // this function uses the project convention that:
