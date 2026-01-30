@@ -12,16 +12,16 @@ template<part_view_concept Part,
 auto
 color_scc_step(
   bidi_graph_part_view<Part> graph,
-  brief_queue_t&             mq,
+  brief_queue_t&             message_queue,
   vertex_t*                  scc_id,
   vertex_t*                  colors,
-  vector<vertex_t>&          active,
+  vector<vertex_t>&          message_buffer,
   auto&&                     on_decision) -> vertex_t
 {
   auto       part    = graph.part;
   auto const local_n = part.local_n();
 
-  DEBUG_ASSERT(active.empty());
+  DEBUG_ASSERT(message_buffer.empty());
 
   for (vertex_t k = 0; k < local_n; ++k) {
     colors[k] = part.to_global(k);
@@ -35,23 +35,23 @@ color_scc_step(
         auto const label = edge.v;
         if (scc_id[k] == scc_id_undecided && label < colors[k]) {
           colors[k] = label;
-          active.push_back(k);
+          message_buffer.push_back(k);
         }
       }
     };
 
     for (vertex_t k = 0; k < local_n; ++k) {
       if (scc_id[k] == scc_id_undecided) {
-        active.push_back(k);
+        message_buffer.push_back(k);
       }
     }
 
-    mq.reactivate();
+    message_queue.reactivate();
 
     do {
-      while (!active.empty()) {
-        auto const k = active.back();
-        active.pop_back();
+      while (!message_buffer.empty()) {
+        auto const k = message_buffer.back();
+        message_buffer.pop_back();
 
         auto const label = colors[k];
         for (auto v : graph.csr_range(k)) {
@@ -59,18 +59,18 @@ color_scc_step(
             auto const l = part.to_local(v);
             if (scc_id[l] == scc_id_undecided && label < colors[l]) {
               colors[l] = label;
-              active.push_back(l);
+              message_buffer.push_back(l);
             }
           } else if (label < v) {
-            mq.post_message_blocking(edge_t{ v, label }, part.world_rank_of(v), on_messages);
+            message_queue.post_message_blocking(edge_t{ v, label }, part.world_rank_of(v), on_messages);
           }
         }
-        mq.poll_throttled(on_messages);
+        message_queue.poll_throttled(on_messages);
       }
-    } while (!mq.terminate(on_messages));
+    } while (!message_queue.terminate(on_messages));
   }
 
-  DEBUG_ASSERT(active.empty());
+  DEBUG_ASSERT(message_buffer.empty());
 
   // Phase 2: Multi-pivot Backward Search
   vertex_t local_decided_count = 0;
@@ -83,7 +83,7 @@ color_scc_step(
           scc_id[k] = pivot;
           on_decision(k);
           ++local_decided_count;
-          active.push_back(k);
+          message_buffer.push_back(k);
         }
       }
     };
@@ -93,16 +93,16 @@ color_scc_step(
         scc_id[k] = colors[k];
         on_decision(k);
         ++local_decided_count;
-        active.push_back(k);
+        message_buffer.push_back(k);
       }
     }
 
-    mq.reactivate();
+    message_queue.reactivate();
 
     do {
-      while (!active.empty()) {
-        auto const k = active.back();
-        active.pop_back();
+      while (!message_buffer.empty()) {
+        auto const k = message_buffer.back();
+        message_buffer.pop_back();
 
         auto const pivot = colors[k];
         for (auto v : graph.bw_csr_range(k)) {
@@ -112,18 +112,18 @@ color_scc_step(
               scc_id[l] = pivot;
               on_decision(l);
               ++local_decided_count;
-              active.push_back(l);
+              message_buffer.push_back(l);
             }
           } else {
-            mq.post_message_blocking(edge_t{ v, pivot }, part.world_rank_of(v), on_messages);
+            message_queue.post_message_blocking(edge_t{ v, pivot }, part.world_rank_of(v), on_messages);
           }
         }
-        mq.poll_throttled(on_messages);
+        message_queue.poll_throttled(on_messages);
       }
-    } while (!mq.terminate(on_messages));
+    } while (!message_queue.terminate(on_messages));
   }
 
-  DEBUG_ASSERT(active.empty());
+  DEBUG_ASSERT(message_buffer.empty());
 
   return local_decided_count;
 }
@@ -133,13 +133,13 @@ template<part_view_concept Part,
 auto
 color_scc_step(
   bidi_graph_part_view<Part> graph,
-  brief_queue_t&             mq,
+  brief_queue_t&             message_queue,
   vertex_t*                  scc_id,
   vertex_t*                  colors,
-  vector<vertex_t>&          active) -> vertex_t
+  vector<vertex_t>&          message_buffer) -> vertex_t
 {
   auto const on_decision = [](auto /* v */) {};
-  return color_scc_step(graph, mq, scc_id, colors, active, on_decision);
+  return color_scc_step(graph, message_queue, scc_id, colors, message_buffer, on_decision);
 }
 
 } // namespace kaspan::async

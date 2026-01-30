@@ -37,8 +37,7 @@ struct mpi_type_traits<kaspan::edge_t>
 
 namespace kaspan::async {
 
-template<typename indirection_scheme_t,
-         part_view_concept Part>
+template<part_view_concept Part>
 void
 scc(
   bidi_graph_part_view<Part> graph,
@@ -95,6 +94,7 @@ scc(
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
   } while (global_decided < graph.part.n());
+
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
   KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);

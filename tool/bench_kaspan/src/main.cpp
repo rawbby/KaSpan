@@ -34,8 +34,8 @@ usage(
   int /* argc */,
   char** argv)
 {
-  std::println("usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file <output_file> [--variant (async | async_indirect | "
-               "hpc_like | hpc_trim_ex | ispan_like | trim_ex | trim_ex_light_residual | trim_ex_residual)]",
+  std::println("usage: {} (--kagen_option_string <kagen_option_string> | --manifest_file <manifest_file>) --output_file <output_file> [--variant (async | hpc_like | "
+               "hpc_trim_ex | ispan_like | trim_ex | trim_ex_light_residual | trim_ex_residual)]",
                argv[0]);
 }
 
@@ -61,8 +61,7 @@ benchmark(
 
   KASPAN_CALLGRIND_START_INSTRUMENTATION();
   if (variant == nullptr) scc(graph, scc_id.data());
-  else if (0 == std::strcmp(variant, "async")) async::scc<briefkasten::NoopIndirectionScheme>(graph, scc_id.data());
-  else if (0 == std::strcmp(variant, "async_indirect")) async::scc<briefkasten::GridIndirectionScheme>(graph, scc_id.data());
+  else if (0 == std::strcmp(variant, "async")) async::scc(graph, scc_id.data());
   else if (0 == std::strcmp(variant, "hpc_like")) scc_hpc_like(graph, scc_id.data());
   else if (0 == std::strcmp(variant, "hpc_trim_ex")) scc_hpc_trim_ex(graph, scc_id.data());
   else if (0 == std::strcmp(variant, "ispan_like")) scc_ispan_like(graph, scc_id.data());

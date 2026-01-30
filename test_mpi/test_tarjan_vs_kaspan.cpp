@@ -49,6 +49,6 @@ main(
   test_validate_scc_id(bgp.fw_view(), tarjan_scc_id.data(), kaspan_scc_id.data());
 
   // Test async version with NoopIndirectionScheme
-  async::scc<briefkasten::NoopIndirectionScheme>(bgp.view(), kaspan_scc_id.data());
+  async::scc(bgp.view(), kaspan_scc_id.data());
   test_validate_scc_id(bgp.fw_view(), tarjan_scc_id.data(), kaspan_scc_id.data());
 }

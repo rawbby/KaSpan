@@ -22,9 +22,6 @@ scc_ispan_like(
 {
   KASPAN_STATISTIC_SCOPE("scc");
 
-  auto front = frontier{ graph.part.local_n() };
-  auto message_buffer = vector<vertex_t>{};
-
   KASPAN_STATISTIC_PUSH("trim_1_first");
   auto [local_decided, pivot] = trim_1_first(graph, scc_id);
   auto global_decided         = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
@@ -36,14 +33,16 @@ scc_ispan_like(
 
   if (global_decided == graph.part.n()) return;
 
-  auto bitbuffer0 = make_bits_clean(graph.part.local_n());
-  auto bitbuffer1 = make_bits_clean(graph.part.local_n());
-
   KASPAN_STATISTIC_PUSH("forward_backward_search");
   vertex_t prev_local_decided  = local_decided;
   vertex_t prev_global_decided = global_decided;
-  forward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot);
-  local_decided += backward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot);
+  {
+    auto front          = frontier{ graph.part.local_n() };
+    auto message_buffer = vector<vertex_t>{};
+    auto reached = make_bits_clean(graph.part.local_n());
+    forward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, reached.data(), pivot);
+    local_decided += backward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, reached.data(), pivot);
+  }
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
