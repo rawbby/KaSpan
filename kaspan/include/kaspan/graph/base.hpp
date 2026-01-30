@@ -28,7 +28,6 @@ using vertex_t = i32;
 constexpr inline auto mpi_index_t  = mpi_basic::type<index_t>;
 constexpr inline auto mpi_vertex_t = mpi_basic::type<vertex_t>;
 
-#pragma pack(push, 1)
 struct edge_t
 {
   vertex_t u = 0;
@@ -40,7 +39,6 @@ struct edge_t
     return u < e.u | u == e.u & v < e.v;
   }
 };
-#pragma pack(pop)
 static_assert(std::is_trivially_copyable_v<edge_t>);
 static_assert(std::is_trivially_destructible_v<edge_t>);
 
@@ -60,23 +58,13 @@ inline void
 init_mpi_edge_t()
 {
   DEBUG_ASSERT_EQ(mpi_edge_t, mpi_basic::datatype_null);
-  int                 blocklengths[2] = { 1, 1 };
-  MPI_Aint            displs[2];
-  mpi_basic::Datatype types[2] = { mpi_vertex_t, mpi_vertex_t };
 
-  edge_t   dummy;
-  MPI_Aint base;
-  mpi_basic::get_address(&dummy, &base);
-  mpi_basic::get_address(&dummy.u, &displs[0]);
-  mpi_basic::get_address(&dummy.v, &displs[1]);
-  displs[0] -= base;
-  displs[1] -= base;
+  constexpr int      count = 2;
+  constexpr MPI_Aint displ = 0;
+  MPI_Datatype const type  = mpi_vertex_t;
 
-  mpi_basic::type_create_struct(2, blocklengths, displs, types, &mpi_edge_t);
-  MPI_Type_create_resized(mpi_edge_t, 0, sizeof(edge_t), &mpi_edge_t);
+  mpi_basic::type_create_struct(1, &count, &displ, &type, &mpi_edge_t);
   mpi_basic::type_commit(&mpi_edge_t);
-
-  IF(KASPAN_DEBUG, MPI_Aint lb = 0; MPI_Aint extent = 0; mpi_basic::type_get_extent(mpi_edge_t, &lb, &extent); ASSERT_EQ(extent, (MPI_Aint)sizeof(edge_t));)
 }
 
 inline void
@@ -90,15 +78,13 @@ free_mpi_edge_t()
 constexpr auto scc_id_undecided = std::numeric_limits<vertex_t>::max();
 constexpr auto scc_id_singular  = scc_id_undecided - 1;
 
-#pragma pack(push, 1)
 struct degree_t
 {
-  index_t  degree_product = 0;
-  vertex_t u              = 0;
+  using common_t = std::conditional_t<(sizeof(index_t) > sizeof(vertex_t)), index_t, vertex_t>;
+
+  common_t degree_product = 0;
+  common_t u              = 0;
 };
-#pragma pack(pop)
-static_assert(std::is_trivially_copyable_v<degree_t>);
-static_assert(std::is_trivially_destructible_v<degree_t>);
 
 inline mpi_basic::Datatype mpi_degree_t      = mpi_basic::datatype_null;
 inline mpi_basic::Op       mpi_degree_max_op = mpi_basic::op_null;
@@ -107,23 +93,13 @@ inline void
 init_mpi_degree_t()
 {
   DEBUG_ASSERT_EQ(mpi_degree_t, mpi_basic::datatype_null);
-  int                 blocklengths[2] = { 1, 1 };
-  MPI_Aint            displs[2];
-  mpi_basic::Datatype types[2] = { mpi_index_t, mpi_vertex_t };
 
-  degree_t dummy;
-  MPI_Aint base;
-  mpi_basic::get_address(&dummy, &base);
-  mpi_basic::get_address(&dummy.degree_product, &displs[0]);
-  mpi_basic::get_address(&dummy.u, &displs[1]);
-  displs[0] -= base;
-  displs[1] -= base;
+  constexpr int      count = 2;
+  constexpr MPI_Aint displ = 0;
+  MPI_Datatype const type  = mpi_basic::type<degree_t::common_t>;
 
-  mpi_basic::type_create_struct(2, blocklengths, displs, types, &mpi_degree_t);
-  MPI_Type_create_resized(mpi_degree_t, 0, sizeof(degree_t), &mpi_degree_t);
+  mpi_basic::type_create_struct(1, &count, &displ, &type, &mpi_degree_t);
   mpi_basic::type_commit(&mpi_degree_t);
-
-  IF(KASPAN_DEBUG, MPI_Aint lb = 0; MPI_Aint extent = 0; mpi_basic::type_get_extent(mpi_degree_t, &lb, &extent); ASSERT_EQ(extent, (MPI_Aint)sizeof(degree_t));)
 }
 
 inline void
