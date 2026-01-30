@@ -94,7 +94,6 @@ scc(
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
   } while (global_decided < graph.part.n());
-
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
   KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
