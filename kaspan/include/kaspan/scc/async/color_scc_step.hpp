@@ -61,7 +61,7 @@ color_scc_step(
               colors[l] = label;
               message_buffer.push_back(l);
             }
-          } else { // ? if (label < v)
+          } else if (label < v) {
             message_queue.post_message_blocking(edge_t{ v, label }, part.world_rank_of(v), on_messages);
           }
         }
@@ -114,7 +114,7 @@ color_scc_step(
               ++local_decided_count;
               message_buffer.push_back(l);
             }
-          } else { // ? if (label < v)
+          } else if (pivot < v) {
             message_queue.post_message_blocking(edge_t{ v, pivot }, part.world_rank_of(v), on_messages);
           }
         }
