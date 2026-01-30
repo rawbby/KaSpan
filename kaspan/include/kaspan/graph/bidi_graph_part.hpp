@@ -34,15 +34,15 @@ struct bidi_graph_part_view
 
   constexpr bidi_graph_part_view(
     Part      part,
-    index_t   local_fw_m,
-    index_t   local_bw_m,
+    arithmetic_concept auto   local_fw_m,
+    arithmetic_concept auto   local_bw_m,
     index_t*  fw_head,
     vertex_t* fw_csr,
     index_t*  bw_head,
     vertex_t* bw_csr) noexcept
     : part(part)
-    , local_fw_m(local_fw_m)
-    , local_bw_m(local_bw_m)
+    , local_fw_m(integral_cast<index_t>(local_fw_m))
+    , local_bw_m(integral_cast<index_t>(local_bw_m))
     , fw{ fw_head,
           fw_csr }
     , bw{ bw_head,
@@ -82,7 +82,7 @@ struct bidi_graph_part_view
    * @brief Get the forward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t>
+    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
   {
     return fw_view().csr_range(k);
   }
@@ -91,7 +91,7 @@ struct bidi_graph_part_view
    * @brief Get the backward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto bw_csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t>
+    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
   {
     return bw_view().csr_range(k);
   }
@@ -122,8 +122,8 @@ struct bidi_graph_part_view
    */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_v(
-    vertex_t   k,
-    Consumer&& consumer) const noexcept
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
   {
     fw_view().each_v(k, std::forward<Consumer>(consumer));
   }
@@ -133,8 +133,8 @@ struct bidi_graph_part_view
    */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_bw_v(
-    vertex_t   k,
-    Consumer&& consumer) const noexcept
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
   {
     bw_view().each_v(k, std::forward<Consumer>(consumer));
   }
@@ -143,7 +143,7 @@ struct bidi_graph_part_view
    * @brief Get the outdegree of local vertex k.
    */
   [[nodiscard]] constexpr auto outdegree(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
     return fw_view().outdegree(k);
   }
@@ -152,7 +152,7 @@ struct bidi_graph_part_view
    * @brief Get the indegree of local vertex k.
    */
   [[nodiscard]] constexpr auto indegree(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
     return bw_view().outdegree(k);
   }
@@ -246,14 +246,14 @@ struct bidi_graph_part
 
   bidi_graph_part(
     Part    part,
-    index_t local_fw_m,
-    index_t local_bw_m)
+    arithmetic_concept auto local_fw_m,
+    arithmetic_concept auto local_bw_m)
     : part(std::move(part))
-    , local_fw_m(local_fw_m)
-    , local_bw_m(local_bw_m)
-    , fw{ line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1),
+    , local_fw_m(integral_cast<index_t>(local_fw_m))
+    , local_bw_m(integral_cast<index_t>(local_bw_m))
+    , fw{ line_alloc<index_t>(part.local_n() ? part.local_n() + 1 :  0),
           line_alloc<vertex_t>(local_fw_m) }
-    , bw{ line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1),
+    , bw{ line_alloc<index_t>(part.local_n() ? part.local_n() + 1 : 0),
           line_alloc<vertex_t>(local_bw_m) }
   {
     debug_check();
@@ -328,7 +328,7 @@ struct bidi_graph_part
    * @brief Get the forward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t>
+    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
   {
     return view().csr_range(k);
   }
@@ -337,7 +337,7 @@ struct bidi_graph_part
    * @brief Get the backward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto bw_csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t>
+    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
   {
     return view().bw_csr_range(k);
   }
@@ -368,8 +368,8 @@ struct bidi_graph_part
    */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_v(
-    vertex_t   k,
-    Consumer&& consumer) const noexcept
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
   {
     view().each_v(k, std::forward<Consumer>(consumer));
   }
@@ -379,8 +379,8 @@ struct bidi_graph_part
    */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_bw_v(
-    vertex_t   k,
-    Consumer&& consumer) const noexcept
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
   {
     view().each_bw_v(k, std::forward<Consumer>(consumer));
   }
@@ -389,7 +389,7 @@ struct bidi_graph_part
    * @brief Get the outdegree of local vertex k.
    */
   [[nodiscard]] constexpr auto outdegree(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
     return view().outdegree(k);
   }
@@ -398,7 +398,7 @@ struct bidi_graph_part
    * @brief Get the indegree of local vertex k.
    */
   [[nodiscard]] constexpr auto indegree(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
     return view().indegree(k);
   }

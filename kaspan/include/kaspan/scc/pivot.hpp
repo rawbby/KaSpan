@@ -15,8 +15,6 @@ allreduce_pivot(
   degree_t local_max) -> vertex_t
 {
   auto const [p, u] = mpi_basic::allreduce_single(local_max, mpi_degree_t, mpi_degree_max_op);
-  DEBUG_ASSERT_NE(p, std::numeric_limits<vertex_t>::min());
-  DEBUG_ASSERT_NE(u, std::numeric_limits<vertex_t>::min());
   return u;
 }
 }

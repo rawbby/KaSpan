@@ -34,12 +34,12 @@ struct graph_view
   constexpr graph_view(graph_view const&) noexcept = default;
 
   constexpr graph_view(
-    vertex_t  n,
-    index_t   m,
-    index_t*  head,
-    vertex_t* csr) noexcept
-    : n(n)
-    , m(m)
+    arithmetic_concept auto n,
+    arithmetic_concept auto m,
+    index_t*                head,
+    vertex_t*               csr) noexcept
+    : n(integral_cast<vertex_t>(n))
+    , m(integral_cast<index_t>(m))
     , head(head)
     , csr(csr)
   {
@@ -55,9 +55,10 @@ struct graph_view
    * @return A span of neighbors.
    */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t>
+    arithmetic_concept auto u) const noexcept -> std::span<vertex_t>
   {
-    return { csr + head[u], csr + head[u + 1] };
+    auto const j = integral_cast<vertex_t>(u);
+    return { csr + head[j], csr + head[j + 1] };
   }
 
   /**
@@ -79,8 +80,8 @@ struct graph_view
    */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_v(
-    vertex_t   u,
-    Consumer&& consumer) const noexcept
+    arithmetic_concept auto u,
+    Consumer&&              consumer) const noexcept
   {
     for (vertex_t v : csr_range(u))
       consumer(v);
@@ -92,9 +93,10 @@ struct graph_view
    * @return The number of outgoing edges from u.
    */
   [[nodiscard]] constexpr auto outdegree(
-    vertex_t u) const noexcept -> vertex_t
+    arithmetic_concept auto u) const noexcept -> vertex_t
   {
-    return integral_cast<vertex_t>(head[u + 1] - head[u]);
+    auto const j = integral_cast<vertex_t>(u);
+    return integral_cast<vertex_t>(head[j + 1] - head[j]);
   }
 
   /**
@@ -188,11 +190,11 @@ struct graph
   constexpr graph() noexcept = default;
 
   graph(
-    vertex_t n,
-    index_t  m)
-    : n(n)
-    , m(m)
-    , head(line_alloc<index_t>(n == 0 ? 0 : n + 1))
+    arithmetic_concept auto n,
+    arithmetic_concept auto m)
+    : n(integral_cast<vertex_t>(n))
+    , m(integral_cast<index_t>(m))
+    , head(line_alloc<index_t>(n ? n + 1 : 0))
     , csr(line_alloc<vertex_t>(m))
   {
     debug_check();
@@ -244,7 +246,7 @@ struct graph
    * @brief Get the neighbors of vertex u.
    */
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t u) const noexcept -> std::span<vertex_t>
+    arithmetic_concept auto u) const noexcept -> std::span<vertex_t>
   {
     return view().csr_range(u);
   }
@@ -264,8 +266,8 @@ struct graph
    */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_v(
-    vertex_t   u,
-    Consumer&& consumer) const noexcept
+    arithmetic_concept auto u,
+    Consumer&&              consumer) const noexcept
   {
     view().each_v(u, std::forward<Consumer>(consumer));
   }
@@ -274,7 +276,7 @@ struct graph
    * @brief Get the outdegree of vertex u.
    */
   [[nodiscard]] constexpr auto outdegree(
-    vertex_t u) const noexcept -> vertex_t
+    arithmetic_concept auto u) const noexcept -> vertex_t
   {
     return view().outdegree(u);
   }

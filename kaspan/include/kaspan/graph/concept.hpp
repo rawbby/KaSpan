@@ -58,9 +58,9 @@ concept part_concept =
         { t.end() } -> std::same_as<vertex_t>;
       })
 
-  && (requires(T t, vertex_t i, i32 r) {
-       { t.world_rank_of(i) } -> std::same_as<i32>;
-       { t.world_part_of(r) } -> part_view_concept;
+  && (requires(T t) {
+       { t.world_rank_of(std::declval<vertex_t>()) } -> std::same_as<i32>;
+       { t.world_part_of(std::declval<i32>()) } -> part_view_concept;
        { t.view() } -> part_view_concept;
      });
 

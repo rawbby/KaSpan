@@ -38,11 +38,11 @@ struct graph_part_view
 
   constexpr graph_part_view(
     Part      part,
-    index_t   local_m,
+    arithmetic_concept auto   local_m,
     index_t*  head,
     vertex_t* csr) noexcept
     : part(part)
-    , local_m(local_m)
+    , local_m(integral_cast<index_t>(local_m))
     , head(head)
     , csr(csr)
   {
@@ -53,9 +53,10 @@ struct graph_part_view
   constexpr auto operator=(graph_part_view const&) noexcept -> graph_part_view& = default;
 
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t>
+    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
   {
-    return { csr + head[k], csr + head[k + 1] };
+    auto const l = integral_cast<vertex_t>(k);
+    return { csr + head[l], csr + head[l + 1] };
   }
 
   /**
@@ -90,8 +91,8 @@ struct graph_part_view
    */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_v(
-    vertex_t   k,
-    Consumer&& consumer) const noexcept
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
   {
     for (vertex_t v : csr_range(k))
       consumer(v);
@@ -103,9 +104,10 @@ struct graph_part_view
    * @return The number of outgoing edges from k.
    */
   [[nodiscard]] constexpr auto outdegree(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
-    return integral_cast<vertex_t>(head[k + 1] - head[k]);
+    auto const l = integral_cast<vertex_t>(k);
+    return integral_cast<vertex_t>(head[l + 1] - head[l]);
   }
 
   /**
@@ -206,10 +208,10 @@ struct graph_part
 
   graph_part(
     Part    part,
-    index_t local_m)
+    arithmetic_concept auto local_m)
     : part(std::move(part))
-    , local_m(local_m)
-    , head(line_alloc<index_t>(part.local_n() == 0 ? 0 : part.local_n() + 1))
+    , local_m(integral_cast<index_t>(local_m))
+    , head(line_alloc<index_t>(part.local_n() ? part.local_n() + 1 : 0))
     , csr(line_alloc<vertex_t>(local_m))
   {
     debug_check();
@@ -256,7 +258,7 @@ struct graph_part
   }
 
   [[nodiscard]] constexpr auto csr_range(
-    vertex_t k) const noexcept -> std::span<vertex_t>
+    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
   {
     return view().csr_range(k);
   }
@@ -291,10 +293,10 @@ struct graph_part
    */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_v(
-    vertex_t   k,
-    Consumer&& consumer) const noexcept
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
   {
-    view().each_v(k, std::forward<Consumer>(consumer));
+    view().each_v(k, consumer);
   }
 
   /**
@@ -303,7 +305,7 @@ struct graph_part
    * @return The number of outgoing edges from k.
    */
   [[nodiscard]] constexpr auto outdegree(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
     return view().outdegree(k);
   }

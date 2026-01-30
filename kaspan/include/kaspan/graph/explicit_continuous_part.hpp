@@ -11,15 +11,15 @@ class explicit_continuous_part_view
 public:
   constexpr explicit_continuous_part_view() noexcept = default;
   constexpr explicit_continuous_part_view(
-    vertex_t        n,
-    i32             r,
-    vertex_t const* p) noexcept
-    : n_(n)
-    , world_rank_(r)
+    arithmetic_concept auto n,
+    arithmetic_concept auto r,
+    vertex_t const*         p) noexcept
+    : n_(integral_cast<vertex_t>(n))
+    , world_rank_(integral_cast<i32>(r))
     , part_(p)
   {
-    begin_   = part_[2 * r];
-    end_     = part_[2 * r + 1];
+    begin_   = part_[2 * world_rank_];
+    end_     = part_[2 * world_rank_ + 1];
     local_n_ = end_ - begin_;
   }
 
@@ -34,21 +34,22 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    vertex_t i) const noexcept -> vertex_t
+    arithmetic_concept auto i) const noexcept -> vertex_t
   {
-    return i - begin_;
+    return integral_cast<vertex_t>(i) - begin_;
   }
 
   [[nodiscard]] constexpr auto to_global(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
-    return k + begin_;
+    return integral_cast<vertex_t>(k) + begin_;
   }
 
   [[nodiscard]] constexpr auto has_local(
-    vertex_t i) const noexcept -> bool
+    arithmetic_concept auto i) const noexcept -> bool
   {
-    return i >= begin_ && i < end_;
+    auto const j = integral_cast<vertex_t>(i);
+    return j >= begin_ && j < end_;
   }
 
   static constexpr auto continuous = true;
@@ -66,15 +67,16 @@ public:
   }
 
   [[nodiscard]] auto world_rank_of(
-    vertex_t i) const noexcept -> i32
+    arithmetic_concept auto i) const noexcept -> i32
   {
+    auto const j = integral_cast<vertex_t>(i);
     for (i32 r = 0; r < mpi_basic::world_size; ++r)
-      if (i >= part_[2 * r] && i < part_[2 * r + 1]) return r;
+      if (j >= part_[2 * r] && j < part_[2 * r + 1]) return r;
     return -1;
   }
 
   [[nodiscard]] auto world_part_of(
-    i32 r) noexcept -> explicit_continuous_part_view
+    arithmetic_concept auto r) noexcept -> explicit_continuous_part_view
   {
     return { n_, r, part_ };
   }
@@ -108,13 +110,13 @@ public:
   }
 
   explicit_continuous_part(
-    vertex_t n,
-    vertex_t b,
-    vertex_t e)
-    : n_(n)
+    arithmetic_concept auto n,
+    arithmetic_concept auto b,
+    arithmetic_concept auto e)
+    : n_(integral_cast<vertex_t>(n))
     , part_(line_alloc<vertex_t>(2 * mpi_basic::world_size))
   {
-    vertex_t const local_range[2] = { b, e };
+    vertex_t const local_range[2] = { integral_cast<vertex_t>(b), integral_cast<vertex_t>(e) };
     mpi_basic::allgather(local_range, 2, part_, 2);
     begin_   = part_[2 * mpi_basic::world_rank];
     end_     = part_[2 * mpi_basic::world_rank + 1];
@@ -160,21 +162,22 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    vertex_t i) const noexcept -> vertex_t
+    arithmetic_concept auto i) const noexcept -> vertex_t
   {
-    return i - begin_;
+    return integral_cast<vertex_t>(i) - begin_;
   }
 
   [[nodiscard]] constexpr auto to_global(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
-    return k + begin_;
+    return integral_cast<vertex_t>(k) + begin_;
   }
 
   [[nodiscard]] constexpr auto has_local(
-    vertex_t i) const noexcept -> bool
+    arithmetic_concept auto i) const noexcept -> bool
   {
-    return i >= begin_ && i < end_;
+    auto const j = integral_cast<vertex_t>(i);
+    return j >= begin_ && j < end_;
   }
 
   static constexpr auto continuous = true;
@@ -192,15 +195,16 @@ public:
   }
 
   [[nodiscard]] auto world_rank_of(
-    vertex_t i) const noexcept -> i32
+    arithmetic_concept auto i) const noexcept -> i32
   {
+    auto const j = integral_cast<vertex_t>(i);
     for (i32 r = 0; r < mpi_basic::world_size; ++r)
-      if (i >= part_[2 * r] && i < part_[2 * r + 1]) return r;
+      if (j >= part_[2 * r] && j < part_[2 * r + 1]) return r;
     return -1;
   }
 
   [[nodiscard]] constexpr auto world_part_of(
-    i32 r) const noexcept -> explicit_continuous_part_view
+    arithmetic_concept auto r) const noexcept -> explicit_continuous_part_view
   {
     return { n_, r, part_ };
   }

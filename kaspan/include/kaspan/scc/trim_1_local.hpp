@@ -72,16 +72,14 @@ trim_1_normal(
   return decided;
 }
 
-template<bool              InterleavedSupport,
-         part_view_concept Part>
+template<part_view_concept Part>
 auto
 trim_1_first(
   bidi_graph_part_view<Part>        graph,
   vertex_t*                         scc_id,
   vertex_t*                         outdegree,
   vertex_t*                         indegree,
-  frontier_view<vertex_t,
-                InterleavedSupport> frontier)
+  frontier_view<vertex_t> frontier)
 {
   struct return_t
   {

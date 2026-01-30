@@ -9,8 +9,8 @@ class single_part_view
 public:
   constexpr single_part_view() noexcept = default;
   explicit constexpr single_part_view(
-    vertex_t n) noexcept
-    : n_(n)
+    arithmetic_concept auto n) noexcept
+    : n_(integral_cast<vertex_t>(n))
   {
   }
 
@@ -25,19 +25,19 @@ public:
   }
 
   [[nodiscard]] static constexpr auto to_local(
-    vertex_t i) noexcept -> vertex_t
+    arithmetic_concept auto i) noexcept -> vertex_t
   {
-    return i;
+    return integral_cast<vertex_t>(i);
   }
 
   [[nodiscard]] static constexpr auto to_global(
-    vertex_t k) noexcept -> vertex_t
+    arithmetic_concept auto k) noexcept -> vertex_t
   {
-    return k;
+    return integral_cast<vertex_t>(k);
   }
 
   [[nodiscard]] static constexpr auto has_local(
-    vertex_t /* i */) noexcept -> bool
+    arithmetic_concept auto /* i */) noexcept -> bool
   {
     return true;
   }
@@ -57,13 +57,13 @@ public:
   }
 
   [[nodiscard]] static constexpr auto world_rank_of(
-    vertex_t /* i */) noexcept -> i32
+    arithmetic_concept auto /* i */) noexcept -> i32
   {
     return 0;
   }
 
   [[nodiscard]] constexpr auto world_part_of(
-    i32 /* r */) const noexcept -> single_part_view
+    arithmetic_concept auto /* r */) const noexcept -> single_part_view
   {
     return single_part_view{ n_ };
   }
@@ -87,8 +87,8 @@ class single_part
 public:
   constexpr single_part() noexcept = default;
   explicit constexpr single_part(
-    vertex_t n) noexcept
-    : n_(n)
+    arithmetic_concept auto n) noexcept
+    : n_(integral_cast<vertex_t>(n))
   {
   }
 
@@ -103,19 +103,19 @@ public:
   }
 
   [[nodiscard]] static constexpr auto to_local(
-    vertex_t i) noexcept -> vertex_t
+    arithmetic_concept auto i) noexcept -> vertex_t
   {
-    return i;
+    return integral_cast<vertex_t>(i);
   }
 
   [[nodiscard]] static constexpr auto to_global(
-    vertex_t k) noexcept -> vertex_t
+    arithmetic_concept auto k) noexcept -> vertex_t
   {
-    return k;
+    return integral_cast<vertex_t>(k);
   }
 
   [[nodiscard]] static constexpr auto has_local(
-    vertex_t /* i */) noexcept -> bool
+    arithmetic_concept auto /* i */) noexcept -> bool
   {
     return true;
   }
@@ -135,13 +135,13 @@ public:
   }
 
   [[nodiscard]] static constexpr auto world_rank_of(
-    vertex_t /* i */) noexcept -> i32
+    arithmetic_concept auto /* i */) noexcept -> i32
   {
     return 0;
   }
 
   [[nodiscard]] constexpr auto world_part_of(
-    i32 /* r */) const noexcept -> single_part_view
+    arithmetic_concept auto /* r */) const noexcept -> single_part_view
   {
     return single_part_view{ n_ };
   }

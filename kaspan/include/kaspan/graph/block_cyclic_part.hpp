@@ -10,12 +10,12 @@ class block_cyclic_part_view
 public:
   constexpr block_cyclic_part_view() noexcept = default;
   block_cyclic_part_view(
-    vertex_t n,
-    i32      r,
-    vertex_t b) noexcept
-    : n_(n)
-    , world_rank_(r)
-    , block_size_(b)
+    arithmetic_concept auto n,
+    arithmetic_concept auto r,
+    arithmetic_concept auto b = 512) noexcept
+    : n_(integral_cast<vertex_t>(n))
+    , world_rank_(integral_cast<i32>(r))
+    , block_size_(integral_cast<vertex_t>(b))
   {
     if (mpi_basic::world_size == 1) {
       local_n_ = n_;
@@ -27,12 +27,12 @@ public:
     }
     auto const us         = mpi_basic::world_size;
     auto const num_blocks = (n_ + block_size_ - 1) / block_size_;
-    if (num_blocks <= integral_cast<vertex_t>(r)) {
+    if (num_blocks <= integral_cast<vertex_t>(world_rank_)) {
       local_n_ = 0;
       return;
     }
-    auto const owned_blocks     = (num_blocks - integral_cast<vertex_t>(r) + us - 1) / us;
-    auto const last_owned_block = integral_cast<vertex_t>(r) + (owned_blocks - 1) * us;
+    auto const owned_blocks     = (num_blocks - integral_cast<vertex_t>(world_rank_) + us - 1) / us;
+    auto const last_owned_block = integral_cast<vertex_t>(world_rank_) + (owned_blocks - 1) * us;
     auto const last_block_size  = (last_owned_block == num_blocks - 1) ? n_ - last_owned_block * block_size_ : block_size_;
     local_n_                    = (owned_blocks - 1) * block_size_ + last_block_size;
   }
@@ -48,24 +48,27 @@ public:
   }
 
   [[nodiscard]] auto to_local(
-    vertex_t i) const noexcept -> vertex_t
+    arithmetic_concept auto i) const noexcept -> vertex_t
   {
-    if (mpi_basic::world_size == 1) return i;
-    return (i / (block_size_ * mpi_basic::world_size)) * block_size_ + (i % block_size_);
+    auto const j = integral_cast<vertex_t>(i);
+    if (mpi_basic::world_size == 1) return j;
+    return (j / (block_size_ * mpi_basic::world_size)) * block_size_ + (j % block_size_);
   }
 
   [[nodiscard]] auto to_global(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
-    if (mpi_basic::world_size == 1) return k;
-    return (k / block_size_) * (block_size_ * mpi_basic::world_size) + (integral_cast<vertex_t>(world_rank_) * block_size_) + (k % block_size_);
+    auto const l = integral_cast<vertex_t>(k);
+    if (mpi_basic::world_size == 1) return l;
+    return (l / block_size_) * (block_size_ * mpi_basic::world_size) + (integral_cast<vertex_t>(world_rank_) * block_size_) + (l % block_size_);
   }
 
   [[nodiscard]] auto has_local(
-    vertex_t i) const noexcept -> bool
+    arithmetic_concept auto i) const noexcept -> bool
   {
+    auto const j = integral_cast<vertex_t>(i);
     if (mpi_basic::world_size == 1) return true;
-    return (i / block_size_) % mpi_basic::world_size == integral_cast<vertex_t>(world_rank_);
+    return (j / block_size_) % mpi_basic::world_size == integral_cast<vertex_t>(world_rank_);
   }
 
   static constexpr auto continuous = false;
@@ -83,14 +86,14 @@ public:
   }
 
   [[nodiscard]] auto world_rank_of(
-    vertex_t i) const noexcept -> i32
+    arithmetic_concept auto i) const noexcept -> i32
   {
     if (mpi_basic::world_size == 1) return 0;
-    return integral_cast<i32>(i / block_size_ % mpi_basic::world_size);
+    return integral_cast<i32>(integral_cast<vertex_t>(i) / block_size_ % mpi_basic::world_size);
   }
 
   [[nodiscard]] auto world_part_of(
-    i32 r) const noexcept -> block_cyclic_part_view
+    arithmetic_concept auto r) const noexcept -> block_cyclic_part_view
   {
     return { n_, r, block_size_ };
   }
@@ -107,10 +110,10 @@ class block_cyclic_part
 public:
   constexpr block_cyclic_part() noexcept = default;
   explicit block_cyclic_part(
-    vertex_t n,
-    vertex_t b = 512) noexcept
-    : n_(n)
-    , block_size_(b)
+    arithmetic_concept auto n,
+    arithmetic_concept auto b) noexcept
+    : n_(integral_cast<vertex_t>(n))
+    , block_size_(integral_cast<vertex_t>(b))
   {
     if (mpi_basic::world_size == 1) {
       local_n_ = n_;
@@ -125,10 +128,16 @@ public:
       local_n_ = 0;
       return;
     }
-    auto const owned_blocks     = (num_blocks - mpi_basic::world_rank + mpi_basic::world_size - 1) / mpi_basic::world_size;
-    auto const last_owned_block = mpi_basic::world_rank + (owned_blocks - 1) * mpi_basic::world_size;
+    auto const owned_blocks     = (num_blocks - integral_cast<vertex_t>(mpi_basic::world_rank) + mpi_basic::world_size - 1) / mpi_basic::world_size;
+    auto const last_owned_block = integral_cast<vertex_t>(mpi_basic::world_rank) + (owned_blocks - 1) * mpi_basic::world_size;
     auto const last_block_size  = (last_owned_block == num_blocks - 1) ? n_ - last_owned_block * block_size_ : block_size_;
     local_n_                    = (owned_blocks - 1) * block_size_ + last_block_size;
+  }
+  explicit block_cyclic_part(
+    arithmetic_concept auto n) noexcept
+    : block_cyclic_part(n,
+                        512)
+  {
   }
 
   [[nodiscard]] constexpr auto n() const noexcept -> vertex_t
@@ -142,19 +151,19 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    vertex_t i) const noexcept -> vertex_t
+    arithmetic_concept auto i) const noexcept -> vertex_t
   {
     return view().to_local(i);
   }
 
   [[nodiscard]] constexpr auto to_global(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
     return view().to_global(k);
   }
 
   [[nodiscard]] constexpr auto has_local(
-    vertex_t i) const noexcept -> bool
+    arithmetic_concept auto i) const noexcept -> bool
   {
     return view().has_local(i);
   }
@@ -174,21 +183,21 @@ public:
   }
 
   [[nodiscard]] constexpr auto world_rank_of(
-    vertex_t i) const noexcept -> i32
+    arithmetic_concept auto i) const noexcept -> i32
   {
     return world_rank_of(i, block_size_);
   }
 
   [[nodiscard]] static auto world_rank_of(
-    vertex_t i,
-    vertex_t b) noexcept -> i32
+    arithmetic_concept auto i,
+    arithmetic_concept auto b) noexcept -> i32
   {
     if (mpi_basic::world_size == 1) return 0;
-    return i / b % mpi_basic::world_size;
+    return integral_cast<i32>(integral_cast<vertex_t>(i) / integral_cast<vertex_t>(b) % mpi_basic::world_size);
   }
 
   [[nodiscard]] auto world_part_of(
-    i32 r) const noexcept -> block_cyclic_part_view
+    arithmetic_concept auto r) const noexcept -> block_cyclic_part_view
   {
     return { n_, r, block_size_ };
   }

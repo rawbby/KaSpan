@@ -3,6 +3,7 @@
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/debug.hpp>
 #include <kaspan/util/arithmetic.hpp>
+#include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 
@@ -14,15 +15,15 @@
 namespace kaspan {
 
 #ifdef KASPAN_INDEX64
-using index_t = i64;
+using index_t = u64;
 #else
-using index_t = i32;
+using index_t = u32;
 #endif
 
 #ifdef KASPAN_VERTEX64
-using vertex_t = i64;
+using vertex_t = u64;
 #else
-using vertex_t = i32;
+using vertex_t = u32;
 #endif
 
 constexpr inline auto mpi_index_t  = mpi_basic::type<index_t>;

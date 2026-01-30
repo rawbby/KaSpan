@@ -69,7 +69,7 @@ color_scc_step_multi(
         auto const label_k = colors[k];
         for (auto v : graph.csr_range(k)) {
           // if (label_k < v && ! part.has_local(v)) {
-          frontier.push(part.world_rank_of(v), { v, label_k });
+          frontier.push(part, part.world_rank_of(v), { v, label_k });
           //}
         }
       });
@@ -141,7 +141,7 @@ color_scc_step_multi(
         auto const pivot = colors[k];
         for (auto v : graph.bw_csr_range(k)) {
           if (!part.has_local(v)) {
-            frontier.push(part.world_rank_of(v), { v, pivot });
+            frontier.push(part, part.world_rank_of(v), { v, pivot });
           }
         }
       });
@@ -299,7 +299,7 @@ color_scc_step(
         auto const label_k = colors[k];
         for (auto v : graph.csr_range(k)) {
           if (label_k < v && !part.has_local(v)) {
-            frontier.push(part.world_rank_of(v), { v, label_k });
+            frontier.push(part, part.world_rank_of(v), { v, label_k });
           }
         }
       });
@@ -373,7 +373,7 @@ color_scc_step(
         auto const pivot = colors[k];
         for (auto v : graph.bw_csr_range(k)) {
           if (!part.has_local(v)) {
-            frontier.push(part.world_rank_of(v), { v, pivot });
+            frontier.push(part, part.world_rank_of(v), { v, pivot });
           }
         }
       });

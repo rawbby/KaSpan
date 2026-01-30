@@ -28,7 +28,7 @@ test_trivial_hard_coded()
   for (vertex_t u = 0; u < part.n(); ++u) {
     auto const r = part.world_rank_of(u);
     ASSERT_EQ(r, u);
-    front.push(r, { u, 0 });
+    front.push(part, r, { u, 0 });
   }
 
   for (i32 r = 0; r < mpi_basic::world_size; ++r) {

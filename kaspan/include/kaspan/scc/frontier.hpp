@@ -14,7 +14,7 @@
 
 namespace kaspan {
 
-template<typename T, u64 CommThresholdBytes = 0, bool normalize_vertices = false>
+template<typename T, u64 Threshold = 0>
 struct frontier_view
 {
   vector<vertex_t>* send_buffer = nullptr;
@@ -55,11 +55,9 @@ struct frontier_view
     T    value) noexcept -> i32
   {
     if constexpr (std::same_as<T, vertex_t>) {
-      if (normalize_vertices) return part.world_rank_of(std::abs(value));
       return part.world_rank_of(value);
     } else {
       static_assert(std::same_as<T, edge_t>);
-      if (normalize_vertices) return part.world_rank_of(std::abs(value.u));
       return part.world_rank_of(value.u);
     }
   }
@@ -76,9 +74,11 @@ struct frontier_view
     }
   }
 
+  template<part_view_concept Part>
   void push(
-    i32 rank,
-    T   value)
+    Part part,
+    i32  rank,
+    T    value)
   {
     if constexpr (std::same_as<T, vertex_t>) {
       send_buffer->push_back(value);
@@ -88,6 +88,11 @@ struct frontier_view
       send_buffer->push_back(value.v);
     }
     ++send_counts[rank];
+    if constexpr (Threshold > 0) {
+      if (send_buffer->size() * sizeof(vertex_t) >= Threshold) {
+        comm(part);
+      }
+    }
   }
 
   template<part_view_concept Part>
@@ -96,19 +101,21 @@ struct frontier_view
     T    value)
   {
     push(world_rank_of(part, value), value);
-    if constexpr (CommThresholdBytes > 0) {
-      if (send_buffer->size() * sizeof(vertex_t) >= CommThresholdBytes) {
+    if constexpr (Threshold > 0) {
+      if (send_buffer->size() * sizeof(vertex_t) >= Threshold) {
         comm(part);
       }
     }
   }
 
+  template<part_view_concept Part>
   void relaxed_push(
-    i32 rank,
-    T   value)
+    Part part,
+    i32  rank,
+    T    value)
   {
     if (rank == mpi_basic::world_rank) local_push(value);
-    else push(rank, value);
+    else push(part, rank, value);
   }
 
   template<part_view_concept Part>
@@ -119,9 +126,9 @@ struct frontier_view
     auto const rank = world_rank_of(part, value);
     if (rank == mpi_basic::world_rank) local_push(value);
     else {
-      push(rank, value);
-      if constexpr (CommThresholdBytes > 0) {
-        if (send_buffer->size() * sizeof(vertex_t) >= CommThresholdBytes) {
+      push(part, rank, value);
+      if constexpr (Threshold > 0) {
+        if (send_buffer->size() * sizeof(vertex_t) >= Threshold) {
           comm(part);
         }
       }
@@ -160,35 +167,35 @@ struct frontier_view
     }
   }
 
-  auto begin() const
-  {
-    return static_cast<T const*>(static_cast<void const*>(recv_buffer->data()));
-  }
-
-  auto end() const
-  {
-    return static_cast<T const*>(static_cast<void const*>(recv_buffer->data() + recv_buffer->size()));
-  }
-
-  auto begin()
-  {
-    return static_cast<T*>(static_cast<void const*>(recv_buffer->data()));
-  }
-
-  auto end()
-  {
-    return static_cast<T*>(static_cast<void*>(recv_buffer->data() + recv_buffer->size()));
-  }
-
-  auto cbegin() const
-  {
-    return begin();
-  }
-
-  auto cend() const
-  {
-    return end();
-  }
+  //   auto begin() const
+  //   {
+  //     return static_cast<T const*>(static_cast<void const*>(recv_buffer->data()));
+  //   }
+  //
+  //   auto end() const
+  //   {
+  //     return static_cast<T const*>(static_cast<void const*>(recv_buffer->data() + recv_buffer->size()));
+  //   }
+  //
+  //   auto begin()
+  //   {
+  //     return static_cast<T*>(static_cast<void const*>(recv_buffer->data()));
+  //   }
+  //
+  //   auto end()
+  //   {
+  //     return static_cast<T*>(static_cast<void*>(recv_buffer->data() + recv_buffer->size()));
+  //   }
+  //
+  //   auto cbegin() const
+  //   {
+  //     return begin();
+  //   }
+  //
+  //   auto cend() const
+  //   {
+  //     return end();
+  //   }
 
   template<part_view_concept Part>
   auto comm(
@@ -225,7 +232,7 @@ struct frontier_view
   }
 };
 
-template<u64 CommThresholdBytes = 0>
+template<u64 ThresholdBytes = 0>
 struct frontier
 {
   vector<vertex_t> send_buffer{};
@@ -307,15 +314,13 @@ struct frontier
     return *this;
   }
 
-  template<typename T,
-           bool interleaved = false>
+  template<typename T>
     requires(std::same_as<T,
                           vertex_t> ||
              std::same_as<T,
                           edge_t>)
   auto view() -> frontier_view<T,
-                               CommThresholdBytes,
-                               interleaved>
+                               ThresholdBytes>
   {
     return { &send_buffer, &recv_buffer, send_counts, send_displs, recv_counts, recv_displs };
   }

@@ -10,10 +10,10 @@ class balanced_slice_part_view
 public:
   constexpr balanced_slice_part_view() noexcept = default;
   balanced_slice_part_view(
-    vertex_t n,
-    i32      r) noexcept
-    : n_(n)
-    , world_rank_(r)
+    arithmetic_concept auto n,
+    arithmetic_concept auto r) noexcept
+    : n_(integral_cast<vertex_t>(n))
+    , world_rank_(integral_cast<i32>(r))
   {
     if (mpi_basic::world_size == 1) {
       begin_   = 0;
@@ -44,21 +44,22 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    vertex_t i) const noexcept -> vertex_t
+    arithmetic_concept auto i) const noexcept -> vertex_t
   {
-    return i - begin_;
+    return integral_cast<vertex_t>(i) - begin_;
   }
 
   [[nodiscard]] constexpr auto to_global(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
-    return k + begin_;
+    return integral_cast<vertex_t>(k) + begin_;
   }
 
   [[nodiscard]] constexpr auto has_local(
-    vertex_t i) const noexcept -> bool
+    arithmetic_concept auto i) const noexcept -> bool
   {
-    return i >= begin_ && i < end_;
+    auto const j = integral_cast<vertex_t>(i);
+    return j >= begin_ && j < end_;
   }
 
   static constexpr auto continuous = true;
@@ -76,18 +77,19 @@ public:
   }
 
   [[nodiscard]] auto world_rank_of(
-    vertex_t i) const noexcept -> i32
+    arithmetic_concept auto i) const noexcept -> i32
   {
+    auto const j = integral_cast<vertex_t>(i);
     if (mpi_basic::world_size == 1) return 0;
     auto const base  = n_ / mpi_basic::world_size;
     auto const rem   = n_ % mpi_basic::world_size;
     auto const split = rem * (base + 1);
-    if (i < split) return integral_cast<i32>(i / (base + 1));
-    return integral_cast<i32>(rem + (i - split) / base);
+    if (j < split) return integral_cast<i32>(j / (base + 1));
+    return integral_cast<i32>(rem + (j - split) / base);
   }
 
   [[nodiscard]] auto world_part_of(
-    i32 r) const noexcept -> balanced_slice_part_view
+    arithmetic_concept auto r) const noexcept -> balanced_slice_part_view
   {
     return { n_, r };
   }
@@ -115,8 +117,8 @@ class balanced_slice_part
 public:
   constexpr balanced_slice_part() noexcept = default;
   explicit balanced_slice_part(
-    vertex_t n) noexcept
-    : n_(n)
+    arithmetic_concept auto n) noexcept
+    : n_(integral_cast<vertex_t>(n))
   {
     if (mpi_basic::world_size == 1) {
       begin_   = 0;
@@ -147,21 +149,21 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    vertex_t i) const noexcept -> vertex_t
+    arithmetic_concept auto i) const noexcept -> vertex_t
   {
-    return i - begin_;
+    return view().to_local(i);
   }
 
   [[nodiscard]] constexpr auto to_global(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
-    return k + begin_;
+    return view().to_global(k);
   }
 
   [[nodiscard]] constexpr auto has_local(
-    vertex_t i) const noexcept -> bool
+    arithmetic_concept auto i) const noexcept -> bool
   {
-    return i >= begin_ && i < end_;
+    return view().has_local(i);
   }
 
   static constexpr auto continuous = true;
@@ -179,18 +181,13 @@ public:
   }
 
   [[nodiscard]] auto world_rank_of(
-    vertex_t i) const noexcept -> i32
+    arithmetic_concept auto i) const noexcept -> i32
   {
-    if (mpi_basic::world_size == 1) return 0;
-    auto const base  = n_ / mpi_basic::world_size;
-    auto const rem   = n_ % mpi_basic::world_size;
-    auto const split = rem * (base + 1);
-    if (i < split) return i / (base + 1);
-    return rem + (i - split) / base;
+    return view().world_rank_of(i);
   }
 
   [[nodiscard]] auto world_part_of(
-    i32 r) const noexcept -> balanced_slice_part_view
+    arithmetic_concept auto r) const noexcept -> balanced_slice_part_view
   {
     return { n_, r };
   }

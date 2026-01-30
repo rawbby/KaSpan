@@ -11,15 +11,15 @@ class explicit_sorted_part_view
 public:
   constexpr explicit_sorted_part_view() noexcept = default;
   constexpr explicit_sorted_part_view(
-    vertex_t        n,
-    i32             r,
-    vertex_t const* p) noexcept
-    : n_(n)
-    , world_rank_(r)
+    arithmetic_concept auto n,
+    arithmetic_concept auto r,
+    vertex_t const*         p) noexcept
+    : n_(integral_cast<vertex_t>(n))
+    , world_rank_(integral_cast<i32>(r))
     , part_(p)
   {
-    begin_   = r == 0 ? 0 : part_[r - 1];
-    end_     = part_[r];
+    begin_   = world_rank_ == 0 ? 0 : part_[world_rank_ - 1];
+    end_     = part_[world_rank_];
     local_n_ = end_ - begin_;
   }
 
@@ -34,21 +34,22 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    vertex_t i) const noexcept -> vertex_t
+    arithmetic_concept auto i) const noexcept -> vertex_t
   {
-    return i - begin_;
+    return integral_cast<vertex_t>(i) - begin_;
   }
 
   [[nodiscard]] constexpr auto to_global(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
-    return k + begin_;
+    return integral_cast<vertex_t>(k) + begin_;
   }
 
   [[nodiscard]] constexpr auto has_local(
-    vertex_t i) const noexcept -> bool
+    arithmetic_concept auto i) const noexcept -> bool
   {
-    return i >= begin_ && i < end_;
+    auto const j = integral_cast<vertex_t>(i);
+    return j >= begin_ && j < end_;
   }
 
   static constexpr auto continuous = true;
@@ -66,22 +67,23 @@ public:
   }
 
   [[nodiscard]] auto world_rank_of(
-    vertex_t i) const noexcept -> i32
+    arithmetic_concept auto i) const noexcept -> i32
   {
-    DEBUG_ASSERT_IN_RANGE(i, 0, n());
+    auto const j = integral_cast<vertex_t>(i);
+    DEBUG_ASSERT_IN_RANGE(j, 0, n());
 
     // initial guess based on
     // a trivial slice partition
-    auto r = i * mpi_basic::world_size / n_;
+    auto r = j * mpi_basic::world_size / n_;
 
-    if (r > 0 && i < part_[r - 1]) {
+    if (r > 0 && j < part_[r - 1]) {
       // downwards correction
       --r;
-      while (r > 0 && i < part_[r - 1])
+      while (r > 0 && j < part_[r - 1])
         --r;
     } else {
       // upwards correction
-      while (r < mpi_basic::world_size - 1 && i >= part_[r])
+      while (r < mpi_basic::world_size - 1 && j >= part_[r])
         ++r;
     }
 
@@ -89,7 +91,7 @@ public:
   }
 
   [[nodiscard]] constexpr auto world_part_of(
-    i32 r) const noexcept -> explicit_sorted_part_view
+    arithmetic_concept auto r) const noexcept -> explicit_sorted_part_view
   {
     return { n_, r, part_ };
   }
@@ -123,12 +125,12 @@ public:
   }
 
   explicit_sorted_part(
-    vertex_t n,
-    vertex_t e)
-    : n_(n)
+    arithmetic_concept auto n,
+    arithmetic_concept auto e)
+    : n_(integral_cast<vertex_t>(n))
     , part_(line_alloc<vertex_t>(mpi_basic::world_size))
   {
-    mpi_basic::allgather(e, part_);
+    mpi_basic::allgather(integral_cast<vertex_t>(e), part_);
     begin_   = mpi_basic::world_rank == 0 ? 0 : part_[mpi_basic::world_rank - 1];
     end_     = part_[mpi_basic::world_rank];
     local_n_ = end_ - begin_;
@@ -173,21 +175,22 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    vertex_t i) const noexcept -> vertex_t
+    arithmetic_concept auto i) const noexcept -> vertex_t
   {
-    return i - begin_;
+    return integral_cast<vertex_t>(i) - begin_;
   }
 
   [[nodiscard]] constexpr auto to_global(
-    vertex_t k) const noexcept -> vertex_t
+    arithmetic_concept auto k) const noexcept -> vertex_t
   {
-    return k + begin_;
+    return integral_cast<vertex_t>(k) + begin_;
   }
 
   [[nodiscard]] constexpr auto has_local(
-    vertex_t i) const noexcept -> bool
+    arithmetic_concept auto i) const noexcept -> bool
   {
-    return i >= begin_ && i < end_;
+    auto const j = integral_cast<vertex_t>(i);
+    return j >= begin_ && j < end_;
   }
 
   static constexpr auto continuous = true;
@@ -205,30 +208,31 @@ public:
   }
 
   [[nodiscard]] auto world_rank_of(
-    vertex_t i) const noexcept -> i32
+    arithmetic_concept auto i) const noexcept -> i32
   {
-    DEBUG_ASSERT_IN_RANGE(i, 0, n());
+    auto const j = integral_cast<vertex_t>(i);
+    DEBUG_ASSERT_IN_RANGE(j, 0, n());
 
     // initial guess based on
     // a trivial slice partition
-    auto r = i * mpi_basic::world_size / n_;
+    auto r = j * mpi_basic::world_size / n_;
 
-    if (r > 0 && i < part_[r - 1]) {
+    if (r > 0 && j < part_[r - 1]) {
       // downwards correction
       --r;
-      while (r > 0 && i < part_[r - 1])
+      while (r > 0 && j < part_[r - 1])
         --r;
     } else {
       // upwards correction
-      while (r < mpi_basic::world_size - 1 && i >= part_[r])
+      while (r < mpi_basic::world_size - 1 && j >= part_[r])
         ++r;
     }
 
-    return r;
+    return integral_cast<i32>(r);
   }
 
   [[nodiscard]] constexpr auto world_part_of(
-    i32 r) const noexcept -> explicit_sorted_part_view
+    arithmetic_concept auto r) const noexcept -> explicit_sorted_part_view
   {
     return { n_, r, part_ };
   }

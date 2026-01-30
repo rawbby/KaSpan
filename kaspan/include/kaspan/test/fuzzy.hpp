@@ -41,7 +41,7 @@ test_validate_scc_id(
         return { k - 25, k + 25 };
       }();
 
-      auto const w = static_cast<vertex_t>(std::log10(std::max(2, part.to_global(end)) - 1) + 1);
+      auto const w = static_cast<vertex_t>(std::log10(std::max<vertex_t>(2, part.to_global(end)) - 1) + 1);
       auto const p = std::string{ " " } + std::string(w, ' ');
       auto const m = std::string{ " " } + std::string(w, '^');
 

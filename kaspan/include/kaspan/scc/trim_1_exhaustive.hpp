@@ -10,10 +10,7 @@ namespace kaspan {
 /// trim_1_exhaustive iteratevely trims one direction, either forward or backward, exhaustive.
 /// To do that scc_id must be valid and degree must be valid if:
 /// scc_id[k] != undecided || valid(degree[k]).
-/// notice: you can pass a frontier_view with interleaved support,
-/// but its not needed nor adviced performance wise.
-template<u64               CommThresholdBytes,
-         bool              InterleavedSupport = false,
+template<u64               ThresholdBytes,
          part_view_concept Part>
 auto
 trim_1_exhaustive(
@@ -21,8 +18,7 @@ trim_1_exhaustive(
   vertex_t*                         scc_id,
   vertex_t*                         degree,
   frontier_view<vertex_t,
-                CommThresholdBytes,
-                InterleavedSupport> frontier) -> vertex_t
+                ThresholdBytes> frontier) -> vertex_t
 {
   auto     part          = graph.part;
   vertex_t decided_count = 0;
@@ -91,10 +87,7 @@ trim_1_exhaustive(
 /// trim_1_exhaustive_first iteratively trims vertices with indegree/outdegree of zero.
 /// It assumes to run on a fresh graph with uninitialised scc_id/indegree/outdegree and
 /// will initilise these appropriately.
-/// notice: you can pass a vertex_frontier with interleaved support,
-/// but its not needed nor adviced performance wise.
 template<u64               CommThresholdBytes,
-         bool              Interleaved = false,
          part_view_concept Part>
 auto
 trim_1_exhaustive_first(
@@ -103,8 +96,7 @@ trim_1_exhaustive_first(
   vertex_t*                  outdegree,
   vertex_t*                  indegree,
   frontier_view<vertex_t,
-                CommThresholdBytes,
-                Interleaved> frontier) -> vertex_t
+                CommThresholdBytes> frontier) -> vertex_t
 {
   auto       part          = graph.part;
   auto const local_n       = part.local_n();
@@ -161,122 +153,6 @@ trim_1_exhaustive_first(
 
   // delegate the exhaustive trimming to a sub routine again.
   return decided_count + trim_1_exhaustive(graph.bw_view(), scc_id, outdegree, frontier);
-}
-
-namespace interleaved {
-
-/// trim_1_exhaustive iteratevely trims both directions, forward and backward, interleaved.
-/// To do that scc_id must be valid and degree must be valid if:
-/// scc_id[k] != undecided || (valid(indegree[k]) && valid(outdegree[k])).
-template<u64               CommThresholdBytes,
-         part_view_concept Part>
-auto
-trim_1_exhaustive(
-  bidi_graph_part_view<Part> graph,
-  vertex_t*                  scc_id,
-  vertex_t*                  outdegree,
-  vertex_t*                  indegree,
-  frontier_view<vertex_t,
-                CommThresholdBytes,
-                true>        frontier) -> vertex_t
-  requires(signed_concept<vertex_t>)
-{
-  auto     part          = graph.part;
-  vertex_t decided_count = 0;
-
-  do {
-    while (frontier.has_next()) {
-      auto const u = frontier.next();
-
-      if (u < 0) { // outdegree trim
-        auto const v = -u;
-        auto const k = part.to_local(v);
-
-        if (scc_id[k] == scc_id_undecided) {
-          if (--outdegree[k] == 0) { // decide and prepare to notify neighbours
-            scc_id[k] = v;
-            ++decided_count;
-            for (auto const w : graph.bw_csr_range(k)) {
-              frontier.relaxed_push(part.world_rank_of(w), -w);
-            }
-          }
-        }
-      }
-
-      else { // indegree trim
-        auto const v = u;
-        auto const k = part.to_local(v);
-
-        if (scc_id[k] == scc_id_undecided) {
-          if (--indegree[k] == 0) { // decide and prepare to notify neighbours
-            scc_id[k] = v;
-            ++decided_count;
-            for (auto const w : graph.csr_range(k)) {
-              frontier.relaxed_push(part, w);
-            }
-          }
-        }
-      }
-    }
-  } while (frontier.comm(part));
-
-  return decided_count;
-}
-
-/// trim_1_exhaustive_first iteratively trims vertices with indegree/outdegree of zero.
-/// It assumes to run on a fresh graph with uninitialised scc_id/indegree/outdegree and
-/// will initilise these appropriately.
-template<u64               CommThresholdBytes,
-         part_view_concept Part>
-auto
-trim_1_exhaustive_first(
-  bidi_graph_part_view<Part> graph,
-  vertex_t*                  scc_id,
-  vertex_t*                  outdegree,
-  vertex_t*                  indegree,
-  frontier_view<vertex_t,
-                CommThresholdBytes,
-                true>        frontier) -> vertex_t
-  requires(signed_concept<vertex_t>)
-{
-  auto       part          = graph.part;
-  auto const local_n       = part.local_n();
-  vertex_t   decided_count = 0;
-
-  for (vertex_t k = 0; k < local_n; ++k) {
-    auto const indegree_k  = graph.indegree(k);
-    auto const outdegree_k = graph.outdegree(k);
-
-    if (indegree_k == 0 && outdegree_k == 0) [[unlikely]] {
-      scc_id[k] = part.to_global(k);
-      ++decided_count;
-    }
-
-    else if (indegree_k == 0) {
-      scc_id[k] = part.to_global(k);
-      ++decided_count;
-      for (auto const v : graph.csr_range(k)) {
-        frontier.relaxed_push(part, v);
-      }
-    }
-
-    else if (outdegree_k == 0) {
-      scc_id[k] = part.to_global(k);
-      ++decided_count;
-      for (auto const v : graph.bw_csr_range(k)) {
-        frontier.relaxed_push(part.world_rank_of(v), -v);
-      }
-    }
-
-    else [[likely]] {
-      scc_id[k]    = scc_id_undecided;
-      indegree[k]  = indegree_k;
-      outdegree[k] = outdegree_k;
-    }
-  }
-
-  return decided_count + trim_1_exhaustive(graph, scc_id, outdegree, indegree, frontier);
-}
 }
 
 } // namespace kaspan
