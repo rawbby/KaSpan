@@ -57,7 +57,7 @@ scc_trim_ex_light_residual(
     auto bitbuffer1 = make_bits_clean(graph.part.local_n());
 
     forward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot);
-    local_decided += backward_search(graph, front.view<vertex_t>(), scc_id, bitbuffer0.data(), bitbuffer1.data(), pivot, local_decided, on_decision);
+    local_decided += backward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot, on_decision);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
     KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);

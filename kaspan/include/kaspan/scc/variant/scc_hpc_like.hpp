@@ -38,7 +38,7 @@ scc_hpc_like(
 
   KASPAN_STATISTIC_PUSH("forward_backward_search");
   forward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot);
-  auto const fwbw_local_decided  = backward_search(graph, front.view<vertex_t>(), scc_id, bitbuffer0.data(), bitbuffer1.data(), pivot, local_decided, [](auto) {});
+  auto const fwbw_local_decided  = backward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot);
   auto const fwbw_global_decided = mpi_basic::allreduce_single(fwbw_local_decided, mpi_basic::sum);
   local_decided += fwbw_local_decided;
   global_decided += fwbw_global_decided;
