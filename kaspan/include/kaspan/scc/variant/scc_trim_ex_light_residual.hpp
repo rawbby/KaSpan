@@ -54,7 +54,6 @@ scc_trim_ex_light_residual(
     auto const pivot = select_pivot_from_degree(graph.part, scc_id, outdegree.data(), indegree.data());
 
     auto bitbuffer0 = make_bits_clean(graph.part.local_n());
-    auto bitbuffer1 = make_bits_clean(graph.part.local_n());
 
     forward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot);
     local_decided += backward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot, on_decision);
@@ -77,14 +76,14 @@ scc_trim_ex_light_residual(
       prev_global_decided = global_decided;
 
       do {
-        local_decided += color_scc_step(graph, front.view<edge_t>(), message_buffer, bitbuffer0.data(), bitbuffer1.data(), colors.data(), scc_id, on_decision);
+        local_decided += color_scc_step(graph, front.view<edge_t>(), message_buffer, colors.data(), scc_id, on_decision);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
         ++iterations;
 
         if (global_decided >= decided_threshold) break;
 
         local_decided +=
-          color_scc_step(graph.inverse_view(), front.view<edge_t>(), message_buffer, bitbuffer0.data(), bitbuffer1.data(), colors.data(), scc_id, on_decision);
+          color_scc_step(graph.inverse_view(), front.view<edge_t>(), message_buffer, colors.data(), scc_id, on_decision);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
         ++iterations;
 

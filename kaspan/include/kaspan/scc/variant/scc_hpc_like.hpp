@@ -34,7 +34,6 @@ scc_hpc_like(
   auto front      = frontier{ graph.part.local_n() };
   auto message_buffer = vector<vertex_t>{};
   auto bitbuffer0 = make_bits_clean(graph.part.local_n());
-  auto bitbuffer1 = make_bits_clean(graph.part.local_n());
 
   KASPAN_STATISTIC_PUSH("forward_backward_search");
   forward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot);
@@ -51,8 +50,6 @@ scc_hpc_like(
   if (global_decided == graph.part.n()) return;
 
   auto colors = make_array<vertex_t>(graph.part.local_n());
-  bitbuffer0.clear(graph.part.local_n());
-  bitbuffer1.clear(graph.part.local_n());
 
   vertex_t iterations          = 0;
   vertex_t prev_local_decided  = local_decided;
@@ -60,14 +57,14 @@ scc_hpc_like(
 
   KASPAN_STATISTIC_PUSH("color");
   do {
-    local_decided += color_scc_step(graph, front.view<edge_t>(), message_buffer, bitbuffer0.data(), bitbuffer1.data(), colors.data(), scc_id);
+    local_decided += color_scc_step(graph, front.view<edge_t>(), message_buffer, colors.data(), scc_id);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     ++iterations;
 
     if (global_decided >= graph.part.n()) break;
 
     local_decided +=
-      color_scc_step(graph.inverse_view(), front.view<edge_t>(), message_buffer, bitbuffer0.data(), bitbuffer1.data(), colors.data(), scc_id);
+      color_scc_step(graph.inverse_view(), front.view<edge_t>(), message_buffer, colors.data(), scc_id);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     ++iterations;
   } while (global_decided < graph.part.n());

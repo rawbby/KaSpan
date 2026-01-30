@@ -52,7 +52,6 @@ scc_trim_ex_residual(
     auto const pivot = select_pivot_from_degree(graph.part, scc_id, outdegree.data(), indegree.data());
 
     auto bitbuffer0 = make_bits_clean(graph.part.local_n());
-    auto bitbuffer1 = make_bits_clean(graph.part.local_n());
 
     vertex_t prev_local_decided  = local_decided;
     vertex_t prev_global_decided = global_decided;
@@ -82,9 +81,6 @@ scc_trim_ex_residual(
     if (global_decided < decided_threshold) {
       KASPAN_STATISTIC_PUSH("color_trim_ex");
 
-      bitbuffer0.clear(graph.part.local_n());
-      bitbuffer1.clear(graph.part.local_n());
-
       auto colors       = make_array<vertex_t>(graph.part.local_n());
       auto active_array = make_array<vertex_t>(graph.part.local_n() - local_decided);
 
@@ -93,7 +89,7 @@ scc_trim_ex_residual(
       prev_global_decided = global_decided;
 
       do {
-        local_decided += color_scc_step(graph, front.view<edge_t>(), message_buffer, bitbuffer0.data(), bitbuffer1.data(), colors.data(), scc_id, on_decision);
+        local_decided += color_scc_step(graph, front.view<edge_t>(), message_buffer, colors.data(), scc_id, on_decision);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
         ++iterations;
 
@@ -105,7 +101,7 @@ scc_trim_ex_residual(
         if (global_decided >= decided_threshold) break;
 
         local_decided +=
-          color_scc_step(graph.inverse_view(), front.view<edge_t>(), message_buffer, bitbuffer0.data(), bitbuffer1.data(), colors.data(), scc_id, on_decision);
+          color_scc_step(graph.inverse_view(), front.view<edge_t>(), message_buffer, colors.data(), scc_id, on_decision);
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
         ++iterations;
 

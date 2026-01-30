@@ -83,7 +83,8 @@ backward_search(
   u64*                       fw_reached_storage,
   vertex_t                   root) -> vertex_t
 {
-  return backward_search(graph, frontier, message_buffer, scc_id, fw_reached_storage, root, [](auto /*v*/) {});
+  auto const on_message = [](auto /* v */) {};
+  return backward_search(graph, frontier, message_buffer, scc_id, fw_reached_storage, root, on_message);
 }
 
 } // namespace kaspan
