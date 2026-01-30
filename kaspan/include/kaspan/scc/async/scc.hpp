@@ -57,8 +57,7 @@ scc(
 
   if (global_decided == graph.part.n()) return;
 
-  auto message_buffer = vector<vertex_t>{};
-  auto active         = vector<vertex_t>{ graph.part.local_n() };
+  auto message_buffer = vector<vertex_t>{ graph.part.local_n() };
 
   {
     KASPAN_STATISTIC_PUSH("forward_backward_search");
@@ -66,8 +65,8 @@ scc(
     vertex_t prev_global_decided = global_decided;
     auto     vertex_frontier     = briefkasten::BufferedMessageQueueBuilder<vertex_t>{}.build();
     auto     bitbuffer0          = make_bits_clean(graph.part.local_n());
-    async::forward_search(graph, vertex_frontier, active, scc_id, bitbuffer0.data(), pivot);
-    local_decided += async::backward_search(graph, vertex_frontier, active, scc_id, bitbuffer0.data(), pivot);
+    async::forward_search(graph, vertex_frontier, message_buffer, scc_id, bitbuffer0.data(), pivot);
+    local_decided += async::backward_search(graph, vertex_frontier, message_buffer, scc_id, bitbuffer0.data(), pivot);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
     KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
@@ -81,16 +80,16 @@ scc(
   KASPAN_STATISTIC_PUSH("color");
   vertex_t prev_local_decided  = local_decided;
   vertex_t prev_global_decided = global_decided;
-  auto     edge_frontier       = briefkasten::BufferedMessageQueueBuilder<edge_t>{}.build();
+  auto     message_queue       = briefkasten::BufferedMessageQueueBuilder<edge_t>{}.build();
   auto     colors              = make_array<vertex_t>(graph.part.local_n());
   do {
 
-    local_decided += async::color_scc_step(graph, edge_frontier, scc_id, colors.data(), active);
+    local_decided += async::color_scc_step(graph, message_queue, message_buffer, colors.data(), scc_id);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
     if (global_decided >= graph.part.n()) break;
 
-    local_decided += async::color_scc_step(graph.inverse_view(), edge_frontier, scc_id, colors.data(), active);
+    local_decided += async::color_scc_step(graph.inverse_view(), message_queue, message_buffer, colors.data(), scc_id);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
   } while (global_decided < graph.part.n());

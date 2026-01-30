@@ -62,7 +62,6 @@ color_scc_step(
 
   // Phase 2: Multi-pivot Backward Search
   vertex_t local_decided_count = 0;
-  DEBUG_ASSERT(message_buffer.empty());
 
   auto bw_on_message = [&](edge_t e) {
     auto const k     = graph.part.to_local(e.u);
