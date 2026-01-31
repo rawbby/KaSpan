@@ -4,6 +4,7 @@
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/concept.hpp>
+#include <kaspan/graph/single_part.hpp>
 
 namespace kaspan {
 

@@ -5,10 +5,7 @@
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/concept.hpp>
-#include <kaspan/scc/backward_search.hpp>
-#include <kaspan/scc/forward_search.hpp>
 #include <kaspan/scc/pivot.hpp>
-#include <kaspan/scc/tarjan.hpp>
 #include <kaspan/scc/trim_1_exhaustive.hpp>
 
 namespace kaspan {
@@ -43,32 +40,40 @@ scc_hpc_trim_ex(
   auto bitbuffer0 = make_bits_clean(graph.part.local_n());
 
   KASPAN_STATISTIC_PUSH("forward_backward_search");
-  forward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot);
-  auto const fwbw_local_decided  = backward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot);
-  auto const fwbw_global_decided = mpi_basic::allreduce_single(fwbw_local_decided, mpi_basic::sum);
-  local_decided += fwbw_local_decided;
-  global_decided += fwbw_global_decided;
-  KASPAN_STATISTIC_ADD("local_decided", fwbw_local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", fwbw_global_decided);
-  KASPAN_STATISTIC_ADD("decided_count", fwbw_global_decided);
+  vertex_t prev_local_decided  = local_decided;
+  vertex_t prev_global_decided = global_decided;
+  auto active       = make_array<vertex_t>(graph.part.local_n());
+  auto is_reached   = make_bits(graph.part.local_n());
+  auto is_undecided = make_bits(graph.part.local_n());
+  {
+    is_undecided.set_each(graph.part.local_n(), [&](auto k) { return scc_id[k] == scc_id_undecided; });
+    forward_backward_search(graph, front.view<vertex_t>(), active.data(), is_reached.data(), is_undecided.data(), pivot, [&](auto k, auto id) {
+      scc_id[k] = id;
+      ++local_decided;
+    });
+  }
+  global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+  KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
+  KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
   if (global_decided == graph.part.n()) return;
 
   vertex_t iterations          = 0;
-  vertex_t prev_local_decided  = local_decided;
-  vertex_t prev_global_decided = global_decided;
+  prev_local_decided  = local_decided;
+  prev_global_decided = global_decided;
 
   KASPAN_STATISTIC_PUSH("color");
+  auto label        = make_array<vertex_t>(graph.part.local_n());
+  auto has_changed  = make_bits_clean(graph.part.local_n());
+      is_undecided.set_each(graph.part.local_n(), [&](auto k) { return scc_id[k] == scc_id_undecided; });
   do {
-    local_decided += color_scc_step(graph, front.view<edge_t>(), message_buffer, vertex_buffer1.data(), scc_id);
-    global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-    ++iterations;
-
-    if (global_decided >= graph.part.n()) break;
-
-    local_decided += color_scc_step(graph.inverse_view(), front.view<edge_t>(), message_buffer, vertex_buffer1.data(), scc_id);
+    label_search(graph, front.view<edge_t>(), label.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), [&](auto k, auto id) {
+          scc_id[k] = id;
+          ++local_decided;
+        });
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     ++iterations;
   } while (global_decided < graph.part.n());

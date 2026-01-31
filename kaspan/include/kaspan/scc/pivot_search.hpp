@@ -24,7 +24,7 @@ forward_backward_search(
   auto&&                     on_decision)
 {
   auto active       = view_stack<vertex_t>(active_storage, g.part.local_n());
-  auto is_reached   = view_bits(is_reached_storage, g.part.local_n());
+  auto is_reached   = view_bits_clean(is_reached_storage, g.part.local_n());
   auto is_undecided = view_bits(is_undecided_storage, g.part.local_n());
 
   // forward search

@@ -1,30 +1,21 @@
 #pragma once
 
-#include <kamping/mpi_datatype.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
-#include <kaspan/graph/single_part.hpp>
 #include <kaspan/memory/accessor/bits.hpp>
-#include <kaspan/memory/accessor/stack.hpp>
-#include <kaspan/memory/accessor/vector.hpp>
 #include <kaspan/memory/borrow.hpp>
+#include <kaspan/scc/async/multi_pivot_search.hpp>
+#include <kaspan/scc/async/pivot_search.hpp>
 #include <kaspan/scc/trim_1_local.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 
-#include <briefkasten/aggregators.hpp>
 #include <briefkasten/buffered_queue.hpp>
-#include <briefkasten/indirection.hpp>
-#include <briefkasten/noop_indirection.hpp>
 #include <briefkasten/queue_builder.hpp>
 
-#include <algorithm>
 #include <cstdio>
-
-#include <kaspan/scc/async/forward_backward_search.hpp>
-#include <kaspan/scc/async/label_search.hpp>
 
 namespace kaspan::async {
 
