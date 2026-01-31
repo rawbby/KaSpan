@@ -14,7 +14,7 @@
 
 namespace kaspan {
 
-template<typename T, u64 Threshold>
+template<typename T>
 struct frontier_view
 {
   vector<vertex_t>* send_buffer = nullptr;
@@ -74,6 +74,18 @@ struct frontier_view
     }
   }
 
+  void local_unsafe_push(
+    T value) const
+  {
+    if constexpr (std::same_as<T, vertex_t>) {
+      recv_buffer->unsafe_push_back(value);
+    } else {
+      static_assert(std::same_as<T, edge_t>);
+      recv_buffer->unsafe_push_back(value.u);
+      recv_buffer->unsafe_push_back(value.v);
+    }
+  }
+
   template<part_view_concept Part>
   void push(
     Part                    part,
@@ -88,11 +100,6 @@ struct frontier_view
       send_buffer->push_back(value.v);
     }
     ++send_counts[integral_cast<i32>(rank)];
-    if constexpr (Threshold > 0) {
-      if (send_buffer->size() * sizeof(vertex_t) >= Threshold) {
-        comm(part);
-      }
-    }
   }
 
   template<part_view_concept Part>
@@ -110,11 +117,6 @@ struct frontier_view
       send_buffer->push_back(value.v);
     }
     ++send_counts[integral_cast<i32>(rank)];
-    if constexpr (Threshold > 0) {
-      if (send_buffer->size() * sizeof(vertex_t) >= Threshold) {
-        comm(part, consumer);
-      }
-    }
   }
 
   template<part_view_concept Part>
@@ -335,14 +337,12 @@ struct frontier
     return *this;
   }
 
-  template<typename T,
-           u64 Threshold = 0>
+  template<typename T>
     requires(std::same_as<T,
                           vertex_t> ||
              std::same_as<T,
                           edge_t>)
-  auto view() -> frontier_view<T,
-                               Threshold>
+  auto view() -> frontier_view<T>
   {
     return { &send_buffer, &recv_buffer, send_counts, send_displs, recv_counts, recv_displs };
   }

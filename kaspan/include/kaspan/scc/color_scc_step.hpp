@@ -8,13 +8,11 @@
 
 namespace kaspan {
 
-template<u64               Threshold,
-         part_view_concept Part>
+template<part_view_concept Part>
 auto
 color_scc_step(
   bidi_graph_part_view<Part> graph,
-  frontier_view<edge_t,
-                Threshold>   message_queue,
+  frontier_view<edge_t>   message_queue,
   vector<vertex_t>&          message_buffer,
   vertex_t*                  colors,
   vertex_t*                  scc_id,
@@ -108,13 +106,11 @@ color_scc_step(
   return local_decided_count;
 }
 
-template<u64               Threshold,
-         part_view_concept Part>
+template<part_view_concept Part>
 auto
 color_scc_step(
   bidi_graph_part_view<Part> graph,
-  frontier_view<edge_t,
-                Threshold>   message_queue,
+  frontier_view<edge_t>   message_queue,
   vector<vertex_t>&          message_buffer,
   vertex_t*                  colors,
   vertex_t*                  scc_id) -> vertex_t

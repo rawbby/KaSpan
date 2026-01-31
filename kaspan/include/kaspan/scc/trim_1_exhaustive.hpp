@@ -10,15 +10,13 @@ namespace kaspan {
 /// trim_1_exhaustive iteratevely trims one direction, either forward or backward, exhaustive.
 /// To do that scc_id must be valid and degree must be valid if:
 /// scc_id[k] != undecided || valid(degree[k]).
-template<u64               Threshold,
-         part_view_concept Part>
+template<part_view_concept Part>
 auto
 trim_1_exhaustive(
   graph_part_view<Part>             graph,
   vertex_t*                         scc_id,
   vertex_t*                         degree,
-  frontier_view<vertex_t,
-                Threshold> frontier) -> vertex_t
+  frontier_view<vertex_t> frontier) -> vertex_t
 {
   auto     part          = graph.part;
   vertex_t decided_count = 0;
@@ -50,16 +48,14 @@ trim_1_exhaustive(
   return decided_count;
 }
 
-template<u64               Threshold,
-         part_view_concept Part>
+template<part_view_concept Part>
 auto
 trim_1_exhaustive(
   bidi_graph_part_view<Part> graph,
   vertex_t*                  scc_id,
   vertex_t*                  outdegree,
   vertex_t*                  indegree,
-  frontier_view<vertex_t,
-                Threshold> frontier,
+  frontier_view<vertex_t> frontier,
   vertex_t*                  decided_beg,
   vertex_t*                  decided_end) -> vertex_t
 {
@@ -87,16 +83,14 @@ trim_1_exhaustive(
 /// trim_1_exhaustive_first iteratively trims vertices with indegree/outdegree of zero.
 /// It assumes to run on a fresh graph with uninitialised scc_id/indegree/outdegree and
 /// will initilise these appropriately.
-template<u64               Threshold,
-         part_view_concept Part>
+template<part_view_concept Part>
 auto
 trim_1_exhaustive_first(
   bidi_graph_part_view<Part> graph,
   vertex_t*                  scc_id,
   vertex_t*                  outdegree,
   vertex_t*                  indegree,
-  frontier_view<vertex_t,
-                Threshold> frontier) -> vertex_t
+  frontier_view<vertex_t> frontier) -> vertex_t
 {
   auto       part          = graph.part;
   auto const local_n       = part.local_n();

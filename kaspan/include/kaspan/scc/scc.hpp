@@ -12,6 +12,9 @@
 #include <kaspan/scc/forward_search.hpp>
 #include <kaspan/scc/trim_1_local.hpp>
 
+#include <kaspan/scc/forward_backward_search.hpp>
+#include <kaspan/scc/label_search.hpp>
+
 namespace kaspan {
 
 template<part_view_concept Part = single_part_view>
@@ -40,9 +43,14 @@ scc(
   vertex_t prev_local_decided  = local_decided;
   vertex_t prev_global_decided = global_decided;
   {
-    auto bitbuffer0 = make_bits_clean(graph.part.local_n());
-    forward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot);
-    local_decided += backward_search(graph, front.view<vertex_t>(), message_buffer, scc_id, bitbuffer0.data(), pivot);
+    auto active       = make_stack<vertex_t>(graph.part.local_n());
+    auto is_reached   = make_bits_clean(graph.part.local_n());
+    auto is_undecided = make_bits(graph.part.local_n());
+    is_undecided.set_each(graph.part.local_n(), [&](auto k) { return scc_id[k] == scc_id_undecided; });
+    forward_backward_search(graph, front.view<vertex_t>(), active.data(), is_reached.data(), is_undecided.data(), pivot, [&](auto k, auto id) {
+      scc_id[k] = id;
+      ++local_decided;
+    });
   }
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
@@ -66,19 +74,24 @@ scc(
 
   if (global_decided == graph.part.n()) return;
 
-  auto colors = make_array<vertex_t>(graph.part.local_n());
+  auto label        = make_array<vertex_t>(graph.part.local_n());
+  auto active       = make_stack<vertex_t>(graph.part.local_n());
+  auto is_active    = make_bits_clean(graph.part.local_n());
+  auto has_changed  = make_bits_clean(graph.part.local_n());
+  auto is_undecided = make_bits(graph.part.local_n());
+  is_undecided.set_each(graph.part.local_n(), [&](auto k) { return scc_id[k] == scc_id_undecided; });
 
   prev_local_decided  = local_decided;
   prev_global_decided = global_decided;
 
   KASPAN_STATISTIC_PUSH("color");
   do {
-    local_decided += color_scc_step(graph, front.view<edge_t>(), message_buffer, colors.data(), scc_id);
-    global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
-    if (global_decided >= graph.part.n()) break;
+    label_search(graph, front.view<edge_t>(), label.data(), active.data(), is_active.data(), has_changed.data(), is_undecided.data(), [&](auto k, auto id) {
+      scc_id[k] = id;
+      ++local_decided;
+    });
 
-    local_decided += color_scc_step(graph.inverse_view(), front.view<edge_t>(), message_buffer, colors.data(), scc_id);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
   } while (global_decided < graph.part.n());
