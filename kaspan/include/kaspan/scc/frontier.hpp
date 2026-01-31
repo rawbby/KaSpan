@@ -336,7 +336,7 @@ struct frontier
   }
 
   template<typename T,
-           u64 Threshold = 32 * 1024>
+           u64 Threshold = 0>
     requires(std::same_as<T,
                           vertex_t> ||
              std::same_as<T,
