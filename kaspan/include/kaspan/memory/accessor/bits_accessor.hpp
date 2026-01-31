@@ -179,13 +179,22 @@ borrow_bits_filled(
   return bits_accessor{ borrow_array_filled<u64>(memory, ceildiv<64>(size64)), size64 };
 }
 
-template<arithmetic_concept Size>
 auto
 view_bits(
-  void* data,
-  Size  size) noexcept -> bits_accessor
+  void*                   data,
+  arithmetic_concept auto count) noexcept -> bits_accessor
 {
-  return bits_accessor{ data, size };
+  return bits_accessor{ data, count };
+}
+
+auto
+view_bits_clean(
+  void*                   data,
+  arithmetic_concept auto count) noexcept -> bits_accessor
+{
+  auto accessor = bits_accessor{ data, count };
+  accessor.clear(count);
+  return accessor;
 }
 
 } // namespace kaspan

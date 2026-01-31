@@ -8,6 +8,7 @@
 #include <kaspan/util/pp.hpp>
 
 #include <mpi.h>
+#include <kamping/mpi_datatype.hpp>
 
 #include <cstring>
 #include <limits>
@@ -75,6 +76,22 @@ free_mpi_edge_t()
   mpi_basic::type_free(&mpi_edge_t);
   mpi_edge_t = mpi_basic::datatype_null;
 }
+
+} // namespace kaspan
+
+namespace kamping {
+template<>
+struct mpi_type_traits<kaspan::edge_t>
+{
+  static constexpr bool has_to_be_committed = false;
+  static MPI_Datatype   data_type()
+  {
+    return kaspan::mpi_edge_t;
+  }
+};
+}
+
+namespace kaspan {
 
 constexpr auto scc_id_undecided = std::numeric_limits<vertex_t>::max();
 constexpr auto scc_id_singular  = scc_id_undecided - 1;

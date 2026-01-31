@@ -1,0 +1,96 @@
+#pragma once
+
+#include <kaspan/graph/base.hpp>
+#include <kaspan/graph/bidi_graph_part.hpp>
+#include <kaspan/memory/accessor/bits_accessor.hpp>
+#include <kaspan/memory/accessor/stack_accessor.hpp>
+
+namespace kaspan::async {
+
+template<part_view_concept Part,
+         typename brief_queue_t>
+void
+forward_backward_search(
+  bidi_graph_part_view<Part> g,
+  brief_queue_t&             message_queue,
+  vertex_t*                  active_storage,
+  u64*                       is_reached_storage,
+  u64*                       is_undecided_storage,
+  vertex_t                   root,
+  auto&&                     on_decision)
+{
+  auto active       = view_stack<vertex_t>(active_storage, g.part.local_n());
+  auto is_reached   = view_bits_clean(is_reached_storage, g.part.local_n());
+  auto is_undecided = view_bits(is_undecided_storage, g.part.local_n());
+
+  // forward search
+
+  auto const on_fw_message = [&](vertex_t v) {
+    auto const l = g.part.to_local(v);
+    if (!is_reached.get(l) && is_undecided.get(l)) {
+      is_reached.set(l);
+      active.push(l);
+    }
+  };
+  auto on_fw_messages = [&](auto env) {
+    for (auto v : env.message)
+      on_fw_message(v);
+  };
+
+  if (g.part.has_local(root)) {
+    auto const k = g.part.to_local(root);
+    is_reached.set(k);
+    active.push(k);
+  }
+
+  message_queue.reactivate();
+  do {
+    while (!active.empty()) {
+      g.each_v(active.pop_back(), [&](auto v) {
+        if (g.part.has_local(v)) on_fw_message(v);
+        else message_queue.post_message_blocking(v, g.part.world_rank_of(v), on_fw_messages);
+      });
+      message_queue.poll(on_fw_messages);
+    }
+  } while (!message_queue.terminate(on_fw_messages));
+
+  // backward search
+
+  auto const on_bw_message = [&](vertex_t v) {
+    auto const l = g.part.to_local(v);
+    if (is_reached.get(l)) {
+      is_reached.unset(l);
+      is_undecided.unset(l);
+      on_decision(l, root);
+      active.push(l);
+    }
+  };
+
+  auto on_bw_messages = [&](auto env) {
+    for (auto v : env.message)
+      on_bw_message(v);
+  };
+
+  if (g.part.has_local(root)) {
+    on_bw_message(root);
+    auto const l = g.part.to_local(root);
+    is_reached.unset(l);
+    is_undecided.unset(l);
+    on_decision(l, root);
+    active.push(l);
+  }
+
+  message_queue.reactivate();
+  do {
+    while (!active.empty()) {
+      auto const k = active.pop_back();
+      g.each_bw_v(k, [&](auto v) {
+        if (g.part.has_local(v)) on_bw_message(v);
+        else message_queue.post_message_blocking(v, g.part.world_rank_of(v), on_bw_messages);
+      });
+      message_queue.poll(on_bw_messages);
+    }
+  } while (!message_queue.terminate(on_bw_messages));
+}
+
+} // namespace kaspan::async

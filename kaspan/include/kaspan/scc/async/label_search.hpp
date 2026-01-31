@@ -2,37 +2,35 @@
 
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
-#include <kaspan/graph/single_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
-#include <kaspan/scc/frontier.hpp>
 #include <kaspan/util/math.hpp>
 
-namespace kaspan {
+#include <cstring>
 
-template<part_view_concept Part = single_part_view>
+namespace kaspan::async {
+
+template<part_view_concept Part,
+         typename brief_queue_t>
 void
 label_search(
   bidi_graph_part_view<Part> g,
-  frontier_view<edge_t>      front,
+  brief_queue_t&             front,
   vertex_t*                  label_storage,
   vertex_t*                  active_storage,
   u64*                       in_active_storage,
-  u64*                       has_changed_storage,
   u64*                       is_undecided_storage,
   auto&&                     on_decision)
 {
   auto* label        = label_storage;
   auto  active       = view_stack<vertex_t>(active_storage, g.part.local_n());
   auto  in_active    = view_bits(in_active_storage, g.part.local_n());
-  auto  has_changed  = view_bits(has_changed_storage, g.part.local_n());
   auto  is_undecided = view_bits(is_undecided_storage, g.part.local_n());
 
   auto const bit_storage_count = ceildiv<64>(g.part.local_n());
 
   // forward search
 
-  std::memcpy(has_changed_storage, is_undecided_storage, bit_storage_count * sizeof(u64));
   std::memcpy(in_active_storage, is_undecided_storage, bit_storage_count * sizeof(u64));
   in_active.for_each(g.part.local_n(), [&](auto k) {
     label[k] = g.part.to_global(k);
@@ -47,32 +45,30 @@ label_search(
       if (!in_active.get(l)) {
         in_active.set(l);
         active.push(l);
-        has_changed.set(l);
       }
     }
+  };
+  auto const on_fw_messages = [&](auto env) {
+    for (auto e : env.message)
+      on_fw_message(e);
   };
 
   do {
     while (!active.empty()) {
       auto const k       = active.pop_back();
       auto const label_k = label[k];
-
-      g.each_v(k, [&](auto v) {
-        if (g.part.has_local(v)) on_fw_message(edge_t{ v, label_k });
-      });
-
       in_active.unset(k);
-    }
 
-    has_changed.for_each(g.part.local_n(), [&](auto&& k) {
-      auto const label_k = label[k];
       g.each_v(k, [&](auto v) {
-        if (label_k < v && !g.part.has_local(v)) front.push(g.part, edge_t{ v, label_k });
+        if (label_k < v) {
+          if (g.part.has_local(v)) on_fw_message(edge_t{ v, label_k });
+          else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_fw_messages);
+        }
       });
-    });
-    memset(has_changed_storage, 0x00, bit_storage_count * sizeof(u64));
 
-  } while (front.comm(g.part, on_fw_message));
+      front.poll_throttled(on_fw_messages);
+    }
+  } while (!front.terminate(on_fw_messages));
 
   // backward search
 
@@ -86,8 +82,6 @@ label_search(
     return false;
   });
 
-  std::memcpy(has_changed_storage, in_active_storage, bit_storage_count * sizeof(u64));
-
   auto const on_bw_message = [&](edge_t e) {
     auto const [v, label_ku] = e;
     auto const l             = g.part.to_local(v);
@@ -98,9 +92,12 @@ label_search(
       if (!in_active.get(l)) {
         in_active.set(l);
         active.push(l);
-        has_changed.set(l);
       }
     }
+  };
+  auto const on_bw_messages = [&](auto env) {
+    for (auto v : env.message)
+      on_bw_message(v);
   };
 
   do {
@@ -109,21 +106,16 @@ label_search(
       auto const label_k = label[k];
 
       g.each_bw_v(k, [&](auto v) {
-        if (label_k < v && g.part.has_local(v)) on_bw_message(edge_t{ v, label_k });
+        if (label_k < v) {
+          if (g.part.has_local(v)) on_bw_message(edge_t{ v, label_k });
+          else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_bw_messages);
+        }
       });
 
       in_active.unset(k);
+      front.poll_throttled(on_bw_messages);
     }
-
-    has_changed.for_each(g.part.local_n(), [&](auto&& k) {
-      auto const label_k = label[k];
-      g.each_bw_v(k, [&](auto v) {
-        if (label_k < v && !g.part.has_local(v)) front.push(g.part, edge_t{ v, label_k });
-      });
-    });
-    memset(has_changed_storage, 0x00, bit_storage_count * sizeof(u64));
-
-  } while (front.comm(g.part, on_bw_message));
+  } while (!front.terminate(on_bw_messages));
 }
 
-}
+} // namespace kaspan::async
