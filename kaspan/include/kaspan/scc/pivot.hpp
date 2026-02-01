@@ -4,6 +4,7 @@
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/single_part.hpp>
+#include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
@@ -28,21 +29,20 @@ template<part_view_concept Part>
 auto
 select_pivot_from_head(
   bidi_graph_part_view<Part> graph,
-  vertex_t const*            scc_id) -> vertex_t
+  u64*                       is_undecided_storage) -> vertex_t
 {
-  auto     part = graph.part;
+  auto     is_undecided = view_bits(is_undecided_storage, graph.part.local_n());
   degree_t local_max(std::numeric_limits<index_t>::min(), std::numeric_limits<vertex_t>::min());
 
-  for (vertex_t k = 0; k < part.local_n(); ++k) {
-    if (scc_id[k] == scc_id_undecided) {
-      auto const degree_product = integral_cast<index_t>(graph.outdegree(k)) * graph.indegree(k);
-      if (degree_product > local_max.degree_product) [[unlikely]]
-        local_max = degree_t(degree_product, part.to_global(k));
+  is_undecided.for_each(graph.part.local_n(), [&](auto k) {
+    auto const degree_product = integral_cast<index_t>(graph.outdegree(k)) * graph.indegree(k);
+    if (degree_product > local_max.degree_product) [[unlikely]] {
+      local_max = degree_t(degree_product, graph.part.to_global(k));
     }
-  }
+  });
 
   auto const pivot = internal::allreduce_pivot(local_max);
-  DEBUG_ASSERT(!part.has_local(pivot) || scc_id[part.to_local(pivot)] == scc_id_undecided);
+  DEBUG_ASSERT(!graph.part.has_local(pivot) || is_undecided.get(graph.part.to_local(pivot)));
   return pivot;
 }
 
@@ -61,13 +61,12 @@ select_pivot_from_degree(
   auto     is_undecided = view_bits(is_undecided_storage, part.local_n());
   degree_t local_max{ std::numeric_limits<index_t>::min(), std::numeric_limits<vertex_t>::min() };
 
-  for (vertex_t k = 0; k < part.local_n(); ++k) {
-    if (is_undecided.get(k)) {
-      auto const degree_product = integral_cast<index_t>(outdegree[k]) * indegree[k];
-      if (degree_product > local_max.degree_product) [[unlikely]]
-        local_max = degree_t(degree_product, part.to_global(k));
+  is_undecided.for_each(part.local_n(), [&](auto k) {
+    auto const degree_product = integral_cast<index_t>(outdegree[k]) * indegree[k];
+    if (degree_product > local_max.degree_product) [[unlikely]] {
+      local_max = degree_t(degree_product, part.to_global(k));
     }
-  }
+  });
 
   auto const pivot = internal::allreduce_pivot(local_max);
   DEBUG_ASSERT(!part.has_local(pivot) || is_undecided.get(part.to_local(pivot)));

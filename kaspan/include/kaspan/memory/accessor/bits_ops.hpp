@@ -2,153 +2,135 @@
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/util/arithmetic.hpp>
-#include <kaspan/util/integral_cast.hpp>
-#include <kaspan/util/math.hpp>
-#include <kaspan/util/pp.hpp>
 
 #include <bit>
-#include <concepts>
 #include <cstring>
-#include <limits>
 
-namespace kaspan {
+namespace kaspan::bits_ops {
 
-struct bits_ops
+[[gnu::always_inline]] [[gnu::const]] constexpr void
+clear(
+  u64*                    data,
+  arithmetic_concept auto end) noexcept
 {
-  static void clear(
-    u64* data,
-    u64  count)
-  {
-    auto const idx = floordiv<64>(count);
-    std::memset(data, 0, idx * sizeof(u64));
-    if (auto const rem = remainder<64>(count)) {
-      auto const msk = integral_cast<u64>(1) << rem;
-      data[idx] &= ~(msk - 1);
+  DEBUG_ASSERT_GE(end, 0);
+  DEBUG_ASSERT(end == 0 || data != nullptr);
+  std::fill_n(data, end >> 6, static_cast<u64>(0));
+  if (auto const rem = end & 0b111111) {
+    data[end >> 6] &= ~((static_cast<u64>(1) << rem) - 1);
+  }
+}
+
+[[gnu::always_inline]] [[gnu::const]] constexpr void
+fill(
+  u64*                    data,
+  arithmetic_concept auto end) noexcept
+{
+  DEBUG_ASSERT_GE(end, 0);
+  DEBUG_ASSERT(end == 0 || data != nullptr);
+  std::fill_n(data, end >> 6, ~static_cast<u64>(0));
+  if (auto const rem = end & 0b111111) {
+    data[end >> 6] |= (static_cast<u64>(1) << rem) - 1;
+  }
+}
+
+[[gnu::always_inline]] [[gnu::const]] [[nodiscard]] constexpr auto
+get(
+  u64 const*              data,
+  arithmetic_concept auto index) noexcept -> bool
+{
+  DEBUG_ASSERT_GE(index, 0);
+  DEBUG_ASSERT_NE(data, nullptr);
+  return data[index >> 6] & static_cast<u64>(1) << (index & 0b111111);
+}
+
+[[gnu::always_inline]] [[gnu::const]] constexpr void
+set(
+  u64*                    data,
+  arithmetic_concept auto index,
+  bool                    f) noexcept
+{
+  DEBUG_ASSERT_GE(index, 0);
+  DEBUG_ASSERT_NE(data, nullptr);
+  auto const idx = index >> 6;
+  auto const msk = static_cast<u64>(1) << (index & 0b111111);
+  data[idx]      = data[idx] & ~msk | -static_cast<u64>(f) & msk;
+}
+
+[[gnu::always_inline]] [[gnu::const]] constexpr void
+set(
+  u64*                    data,
+  arithmetic_concept auto index) noexcept
+{
+  DEBUG_ASSERT_GE(index, 0);
+  DEBUG_ASSERT_NE(data, nullptr);
+  data[index >> 6] |= static_cast<u64>(1) << (index & 0b111111);
+}
+
+[[gnu::always_inline]] [[gnu::const]] constexpr void
+unset(
+  u64*                    data,
+  arithmetic_concept auto index) noexcept
+{
+  DEBUG_ASSERT_GE(index, 0);
+  DEBUG_ASSERT_NE(data, nullptr);
+  data[index >> 6] &= ~(static_cast<u64>(1) << (index & 0b111111));
+}
+
+[[gnu::always_inline]] inline void
+each(
+  u64 const*              data,
+  arithmetic_concept auto end,
+  auto&&                  fn)
+{
+  DEBUG_ASSERT_GE(end, 0);
+  DEBUG_ASSERT(end == 0 || data != nullptr);
+
+  auto const end_floor = ~static_cast<decltype(end)>(0b111111) & end;
+  for (decltype(end) i = 0; i < end_floor; i += 64) {
+    u64 word = data[i >> 6];
+    while (word) {
+      fn(i + std::countr_zero(word));
+      word &= word - 1;
     }
   }
 
-  static void fill(
-    u64* data,
-    u64  count)
-  {
-    auto const idx = floordiv<64>(count);
-    std::memset(data, ~0, idx * sizeof(u64));
-    if (auto const rem = remainder<64>(count)) {
-      auto const msk = integral_cast<u64>(1) << rem;
-      data[idx] |= msk - 1;
+  if (auto const rem = end & 0b111111) {
+    auto word = data[end >> 6] & (static_cast<u64>(1) << rem) - 1;
+    while (word) {
+      fn(end_floor + std::countr_zero(word));
+      word &= word - 1;
     }
   }
+}
 
-  [[nodiscard]] static auto get(
-    u64 const* data,
-    u64        bit_index) -> bool
-  {
-    DEBUG_ASSERT_NE(data, nullptr);
-    auto const idx = floordiv<64>(bit_index);
-    auto const rem = remainder<64>(bit_index);
-    auto const msk = integral_cast<u64>(1) << rem;
-    return (data[idx] & msk) != 0;
-  }
+[[gnu::always_inline]] inline void
+set_each(
+  u64*                    data,
+  arithmetic_concept auto end,
+  auto&&                  fn)
+{
+  DEBUG_ASSERT_GE(end, 0);
+  DEBUG_ASSERT(end == 0 || data != nullptr);
 
-  static void set(
-    u64* data,
-    u64  bit_index,
-    bool bit_value)
-  {
-    DEBUG_ASSERT_NE(data, nullptr);
-    auto const val_msk = -integral_cast<u64>(bit_value);
-    auto const idx     = floordiv<64>(bit_index);
-    auto const rem     = remainder<64>(bit_index);
-    auto const msk     = integral_cast<u64>(1) << rem;
-
-    auto field = data[idx];
-    field &= ~msk;
-    field |= val_msk & msk;
-    data[idx] = field;
-  }
-
-  static void set(
-    u64* data,
-    u64  bit_index)
-  {
-    DEBUG_ASSERT_NE(data, nullptr);
-    auto const idx = floordiv<64>(bit_index);
-    auto const rem = remainder<64>(bit_index);
-    auto const msk = integral_cast<u64>(1) << rem;
-    data[idx] |= msk;
-  }
-
-  static void unset(
-    u64* data,
-    u64  bit_index)
-  {
-    DEBUG_ASSERT_NE(data, nullptr);
-    auto const idx = floordiv<64>(bit_index);
-    auto const rem = remainder<64>(bit_index);
-    auto const msk = integral_cast<u64>(1) << rem;
-    data[idx] &= ~msk;
-  }
-
-  template<arithmetic_concept    Index = size_t,
-           std::invocable<Index> fn_t>
-  static void each(
-    u64 const* data,
-    Index      end,
-    fn_t&&     fn)
-  {
-    DEBUG_ASSERT(end == 0 || data != nullptr);
-    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
-
-    auto const c64 = floordiv<64>(integral_cast<u64>(end));
-    auto const rem = remainder<64>(integral_cast<u64>(end));
-
-    for (u64 i = 0; i < c64; ++i) {
-      u64 word = data[i];
-      while (word) {
-        fn(integral_cast<Index>((i << 6) + std::countr_zero(word)));
-        word &= word - 1;
-      }
+  auto const end_floor = ~static_cast<decltype(end)>(0b111111) & end;
+  for (decltype(end) i = 0; i < end_floor; i += 64) {
+    u64 word = 0;
+    for (u8 bit = 0; bit < 64; ++bit) {
+      word |= static_cast<u64>(!!fn(i + bit)) << bit;
     }
-    if (rem) {
-      auto word = data[c64] & ((integral_cast<u64>(1) << rem) - 1);
-      while (word) {
-        fn(integral_cast<Index>((c64 << 6) + std::countr_zero(word)));
-        word &= word - 1;
-      }
-    }
+    data[i >> 6] = word;
   }
 
-  template<arithmetic_concept    Index = size_t,
-           std::invocable<Index> fn_t>
-  static void set_each(
-    u64*   data,
-    Index  end,
-    fn_t&& fn)
-  {
-    DEBUG_ASSERT(end == 0 || data != nullptr);
-    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
-
-    auto const end64 = integral_cast<u64>(end);
-    auto const c64   = floordiv<64>(end64);
-    u64        b64   = 0;
-
-    for (u64 i = 0; i < c64; ++i, b64 += 64) {
-      u64 w = 0;
-      for (unsigned bit = 0; bit < 64; ++bit) {
-        w |= integral_cast<u64>(!!fn(b64 + bit)) << bit;
-      }
-      data[i] = w;
+  if (auto const rem = end & 0b111111) {
+    u64 word = 0;
+    for (u8 bit = 0; bit < rem; ++bit) {
+      word |= static_cast<u64>(!!fn(end_floor + bit)) << bit;
     }
-
-    if (auto const rem = remainder<64>(end64)) {
-      u64 w = 0;
-      for (unsigned bit = 0; bit < rem; ++bit) {
-        w |= integral_cast<u64>(!!fn(b64 + bit)) << bit;
-      }
-      auto const mask = (integral_cast<u64>(1) << rem) - 1;
-      data[c64]       = (data[c64] & ~mask) | (w & mask);
-    }
+    auto const idx = end >> 6;
+    auto const msk = (static_cast<u64>(1) << rem) - 1;
+    data[idx]      = data[idx] & ~msk | word & msk;
   }
-};
+}
 
-} // namespace kaspan
+} // namespace kaspan::bits_ops
