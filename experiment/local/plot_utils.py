@@ -120,6 +120,8 @@ def calculate_global_stats(all_metrics_raw):
                     if s["duration"] > 0:
                         if s["decided_count"] > 0:
                             all_metrics["step_throughput"].append(s["decided_count"] / s["duration"])
+                        elif s.get("local_decided", 0) > 0:
+                            all_metrics["step_throughput"].append(s["local_decided"] / s["duration"])
                         all_metrics["step_duration"].append(s["duration"])
                         sum_step_dur += s["duration"]
                 all_metrics["step_duration"].append(max(0, dur - sum_step_dur))
