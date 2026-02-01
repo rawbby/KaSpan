@@ -58,7 +58,7 @@ label_search(
       auto const label_k = label[k];
 
       g.each_v(k, [&](auto v) {
-        if (g.part.has_local(v)) on_fw_message(edge_t{ v, label_k });
+        if (label_k < v && g.part.has_local(v)) on_fw_message(edge_t{ v, label_k });
       });
 
       in_active.unset(k);

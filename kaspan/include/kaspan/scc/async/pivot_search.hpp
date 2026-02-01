@@ -12,7 +12,7 @@ template<part_view_concept Part,
 void
 forward_backward_search(
   bidi_graph_part_view<Part> g,
-  brief_queue_t&             message_queue,
+  brief_queue_t&             front,
   vertex_t*                  active_storage,
   u64*                       is_reached_storage,
   u64*                       is_undecided_storage,
@@ -43,16 +43,16 @@ forward_backward_search(
     active.push(k);
   }
 
-  message_queue.reactivate();
+  front.reactivate();
   do {
     while (!active.empty()) {
       g.each_v(active.pop_back(), [&](auto v) {
         if (g.part.has_local(v)) on_fw_message(v);
-        else message_queue.post_message_blocking(v, g.part.world_rank_of(v), on_fw_messages);
+        else front.post_message_blocking(v, g.part.world_rank_of(v), on_fw_messages);
       });
-      message_queue.poll(on_fw_messages);
+      front.poll(on_fw_messages);
     }
-  } while (!message_queue.terminate(on_fw_messages));
+  } while (!front.terminate(on_fw_messages));
 
   // backward search
 
@@ -81,18 +81,18 @@ forward_backward_search(
     active.push(k);
   }
 
-  message_queue.reactivate();
+  front.reactivate();
   do {
     while (!active.empty()) {
       auto const k = active.pop_back();
       DEBUG_ASSERT_NOT(is_undecided.get(k));
       g.each_bw_v(k, [&](auto v) {
         if (g.part.has_local(v)) on_bw_message(v);
-        else message_queue.post_message_blocking(v, g.part.world_rank_of(v), on_bw_messages);
+        else front.post_message_blocking(v, g.part.world_rank_of(v), on_bw_messages);
       });
-      message_queue.poll(on_bw_messages);
+      front.poll(on_bw_messages);
     }
-  } while (!message_queue.terminate(on_bw_messages));
+  } while (!front.terminate(on_bw_messages));
 }
 
 } // namespace kaspan::async

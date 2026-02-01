@@ -5,11 +5,6 @@
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/scc/async/scc.hpp>
 #include <kaspan/scc/scc.hpp>
-#include <kaspan/scc/variant/scc_hpc_like.hpp>
-#include <kaspan/scc/variant/scc_hpc_trim_ex.hpp>
-#include <kaspan/scc/variant/scc_ispan_like.hpp>
-#include <kaspan/scc/variant/scc_trim_ex.hpp>
-#include <kaspan/scc/variant/scc_trim_ex_light_residual.hpp>
 #include <kaspan/scc/variant/scc_trim_ex_residual.hpp>
 #include <kaspan/test/fuzzy.hpp>
 #include <kaspan/util/mpi_basic.hpp>
@@ -38,7 +33,7 @@ main(
       auto const part           = balanced_slice_part{ n };
       auto const [scc_id_, bgp] = fuzzy_local_scc_id_and_graph(seed, part);
 
-      // Test async version with NoopIndirectionScheme
+      // Test async version
       auto const local_n = part.local_n();
       auto       scc_id  = make_array<vertex_t>(local_n);
       async::scc(bgp.view(), scc_id.data());

@@ -31,14 +31,15 @@ scc(
   vertex_t prev_local_decided  = 0;
   vertex_t prev_global_decided = 0;
 
-  KASPAN_STATISTIC_PUSH("trim_1_first");
-  auto is_undecided = make_bits_filled(graph.part.local_n());
-  auto pivot        = trim_1_first(graph, is_undecided.data(), [&](auto k, auto id) {
+  auto const on_decision = [&](auto k, auto id) {
     scc_id[k] = id;
     ++local_decided;
-  });
-  global_decided    = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-  KASPAN_STATISTIC_ADD("pivot", pivot);
+  };
+
+  KASPAN_STATISTIC_PUSH("trim_1_first");
+  auto       is_undecided = make_bits_filled(graph.part.local_n());
+  auto const pivot        = trim_1_first(graph, is_undecided.data(), on_decision);
+  global_decided          = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided);
   KASPAN_STATISTIC_POP();
@@ -46,16 +47,13 @@ scc(
   if (global_decided == graph.part.n()) return;
 
   KASPAN_STATISTIC_PUSH("forward_backward_search");
-  auto vertex_storage0 = make_array<vertex_t>(graph.part.local_n());
-  auto bits_storage0   = make_bits(graph.part.local_n());
-  prev_local_decided   = local_decided;
-  prev_global_decided  = global_decided;
+  prev_local_decided  = local_decided;
+  prev_global_decided = global_decided;
+  auto active         = make_array<vertex_t>(graph.part.local_n());
+  auto in_active      = make_bits(graph.part.local_n());
   {
     auto front = briefkasten::BufferedMessageQueueBuilder<vertex_t>{}.build();
-    async::forward_backward_search(graph, front, vertex_storage0.data(), bits_storage0.data(), is_undecided.data(), pivot, [&](auto k, auto id) {
-      scc_id[k] = id;
-      ++local_decided;
-    });
+    async::forward_backward_search(graph, front, active.data(), in_active.data(), is_undecided.data(), pivot, on_decision);
   }
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
@@ -68,14 +66,8 @@ scc(
   KASPAN_STATISTIC_PUSH("trim_1_normal");
   prev_local_decided  = local_decided;
   prev_global_decided = global_decided;
-  trim_1_normal(graph, is_undecided.data(), [&](auto k, auto id) {
-    scc_id[k] = id;
-    ++local_decided;
-  });
-  trim_1_normal(graph, is_undecided.data(), [&](auto k, auto id) {
-    scc_id[k] = id;
-    ++local_decided;
-  });
+  trim_1_normal(graph, is_undecided.data(), on_decision);
+  trim_1_normal(graph, is_undecided.data(), on_decision);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
@@ -84,17 +76,16 @@ scc(
   if (global_decided == graph.part.n()) return;
 
   KASPAN_STATISTIC_PUSH("color");
-  auto vertex_storage1 = make_array<vertex_t>(graph.part.local_n());
-  prev_local_decided   = local_decided;
-  prev_global_decided  = global_decided;
-  auto front           = briefkasten::BufferedMessageQueueBuilder<edge_t>{}.build();
-  do {
-    async::label_search(graph, front, vertex_storage0.data(), vertex_storage1.data(), bits_storage0.data(), is_undecided.data(), [&](auto k, auto id) {
-      scc_id[k] = id;
-      ++local_decided;
-    });
-    global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-  } while (global_decided < graph.part.n());
+  prev_local_decided  = local_decided;
+  prev_global_decided = global_decided;
+  auto label          = make_array<vertex_t>(graph.part.local_n());
+  {
+    auto front = briefkasten::BufferedMessageQueueBuilder<edge_t>{}.build();
+    do {
+      async::label_search(graph, front, label.data(), active.data(), in_active.data(), is_undecided.data(), on_decision);
+      global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+    } while (global_decided < graph.part.n());
+  }
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());

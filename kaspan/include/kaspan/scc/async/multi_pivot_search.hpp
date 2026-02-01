@@ -53,6 +53,7 @@ label_search(
       on_fw_message(e);
   };
 
+  front.reactivate();
   do {
     while (!active.empty()) {
       auto const k       = active.pop_back();
@@ -100,6 +101,7 @@ label_search(
       on_bw_message(v);
   };
 
+  front.reactivate();
   do {
     while (!active.empty()) {
       auto const k       = active.pop_back();
@@ -112,8 +114,8 @@ label_search(
         }
       });
 
-      in_active.unset(k);
       front.poll_throttled(on_bw_messages);
+      in_active.unset(k);
     }
   } while (!front.terminate(on_bw_messages));
 }

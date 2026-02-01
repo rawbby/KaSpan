@@ -22,12 +22,14 @@ scc_hpc_like(
   vertex_t prev_local_decided  = 0;
   vertex_t prev_global_decided = 0;
 
-  KASPAN_STATISTIC_PUSH("trim_1_first");
-  auto is_undecided = make_bits_filled(graph.part.local_n());
-  auto pivot        = trim_1_first(graph, is_undecided.data(), [&](auto k, auto id) {
+  auto const on_decision = [&](auto k, auto id) {
     scc_id[k] = id;
     ++local_decided;
-  });
+  };
+
+  KASPAN_STATISTIC_PUSH("trim_1_first");
+  auto is_undecided = make_bits_filled(graph.part.local_n());
+  auto pivot        = trim_1_first(graph, is_undecided.data(), on_decision);
   global_decided    = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided);
@@ -36,18 +38,12 @@ scc_hpc_like(
   if (global_decided == graph.part.n()) return;
 
   KASPAN_STATISTIC_PUSH("forward_backward_search");
-  auto front          = frontier{ graph.part.local_n() };
-  auto message_buffer = vector<vertex_t>{};
   prev_local_decided  = local_decided;
   prev_global_decided = global_decided;
+  auto front          = frontier{ graph.part.local_n() };
   auto active         = make_array<vertex_t>(graph.part.local_n());
   auto is_reached     = make_bits(graph.part.local_n());
-  {
-    forward_backward_search(graph, front.view<vertex_t>(), active.data(), is_reached.data(), is_undecided.data(), pivot, [&](auto k, auto id) {
-      scc_id[k] = id;
-      ++local_decided;
-    });
-  }
+  forward_backward_search(graph, front.view<vertex_t>(), active.data(), is_reached.data(), is_undecided.data(), pivot, on_decision);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
@@ -62,10 +58,7 @@ scc_hpc_like(
   auto label          = make_array<vertex_t>(graph.part.local_n());
   auto has_changed    = make_bits_clean(graph.part.local_n());
   do {
-    label_search(graph, front.view<edge_t>(), label.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), [&](auto k, auto id) {
-      scc_id[k] = id;
-      ++local_decided;
-    });
+    label_search(graph, front.view<edge_t>(), label.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), on_decision);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   } while (global_decided < graph.part.n());
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
