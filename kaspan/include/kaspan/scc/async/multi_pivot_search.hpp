@@ -61,10 +61,10 @@ label_search(
       in_active.unset(k);
 
       g.each_v(k, [&](auto v) {
-        if (label_k < v) {
+        //if (label_k < v) {
           if (g.part.has_local(v)) on_fw_message(edge_t{ v, label_k });
           else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_fw_messages);
-        }
+        //}
       });
 
       front.poll_throttled(on_fw_messages);
@@ -97,25 +97,27 @@ label_search(
     }
   };
   auto const on_bw_messages = [&](auto env) {
-    for (auto v : env.message)
-      on_bw_message(v);
+    for (auto e : env.message)
+      on_bw_message(e);
   };
+
+  mpi_basic::barrier();
 
   front.reactivate();
   do {
     while (!active.empty()) {
       auto const k       = active.pop_back();
       auto const label_k = label[k];
+      in_active.unset(k);
 
       g.each_bw_v(k, [&](auto v) {
-        if (label_k < v) {
+        //if (label_k < v) {
           if (g.part.has_local(v)) on_bw_message(edge_t{ v, label_k });
           else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_bw_messages);
-        }
+        //}
       });
 
       front.poll_throttled(on_bw_messages);
-      in_active.unset(k);
     }
   } while (!front.terminate(on_bw_messages));
 }

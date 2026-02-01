@@ -45,7 +45,6 @@ scc(
   prev_local_decided  = local_decided;
   prev_global_decided = global_decided;
   auto front          = frontier{ graph.part.local_n() };
-  auto message_buffer = vector<vertex_t>{};
   auto active         = make_array<vertex_t>(graph.part.local_n());
   auto is_reached     = make_bits(graph.part.local_n());
   forward_backward_search(graph, front.view<vertex_t>(), active.data(), is_reached.data(), is_undecided.data(), pivot, on_decision);

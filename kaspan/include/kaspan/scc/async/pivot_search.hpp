@@ -66,7 +66,6 @@ forward_backward_search(
       active.push(l);
     }
   };
-
   auto on_bw_messages = [&](auto env) {
     for (auto v : env.message)
       on_bw_message(v);
@@ -80,6 +79,8 @@ forward_backward_search(
     on_decision(k, root);
     active.push(k);
   }
+
+  mpi_basic::barrier();
 
   front.reactivate();
   do {
