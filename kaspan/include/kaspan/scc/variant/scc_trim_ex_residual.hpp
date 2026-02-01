@@ -19,23 +19,27 @@ scc_trim_ex_residual(
   vertex_t*                  scc_id)
 {
   KASPAN_STATISTIC_SCOPE("scc");
-
-  auto front          = frontier{ graph.part.local_n() };
-  auto message_buffer = vector<vertex_t>{};
-  auto outdegree      = make_array<vertex_t>(graph.part.local_n());
-  auto indegree       = make_array<vertex_t>(graph.part.local_n());
-
-  auto const undecided_filter = SCC_ID_UNDECIDED_FILTER(graph.part.local_n(), scc_id);
-
-  auto       decided_stack = make_stack<vertex_t>(graph.part.local_n());
-  auto const on_decision   = [&](vertex_t k) { decided_stack.push(k); };
+  vertex_t local_decided       = 0;
+  vertex_t global_decided      = 0;
+  vertex_t prev_local_decided  = 0;
+  vertex_t prev_global_decided = 0;
 
   KASPAN_STATISTIC_PUSH("trim_ex_first");
-  vertex_t local_decided  = trim_1_exhaustive_first(graph, scc_id, outdegree.data(), indegree.data(), front.view<vertex_t>());
-  vertex_t global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
+  auto       front          = frontier{ graph.part.local_n() };
+  auto       message_buffer = vector<vertex_t>{};
+  auto       outdegree      = make_array<vertex_t>(graph.part.local_n());
+  auto       indegree       = make_array<vertex_t>(graph.part.local_n());
+  auto       decided_stack  = make_stack<vertex_t>(graph.part.local_n());
+  auto const on_decision    = [&](vertex_t k) { decided_stack.push(k); };
+  auto       is_undecided   = make_bits_filled(graph.part.local_n());
+  trim_1_exhaustive_first(graph, is_undecided.data(), outdegree.data(), indegree.data(), front.view<vertex_t>(), [&](auto k, auto id) {
+    scc_id[k] = id;
+    ++local_decided;
+  });
+  global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided);
-  KASPAN_STATISTIC_ADD("decided_count", global_decided);
+  KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
   if (global_decided == graph.part.n()) return;
@@ -45,24 +49,19 @@ scc_trim_ex_residual(
 
   if (global_decided < decided_threshold) {
     KASPAN_STATISTIC_PUSH("forward_backward_search");
-    vertex_t prev_local_decided  = local_decided;
-    vertex_t prev_global_decided = global_decided;
-    auto     active              = make_array<vertex_t>(graph.part.local_n());
-    auto     is_reached          = make_bits(graph.part.local_n());
-    auto     is_undecided        = make_bits(graph.part.local_n());
-    {
-      is_undecided.set_each(graph.part.local_n(), [&](auto k) { return scc_id[k] == scc_id_undecided; });
-      auto const pivot = select_pivot_from_degree(graph.part, scc_id, outdegree.data(), indegree.data());
-      forward_backward_search(graph, front.view<vertex_t>(), active.data(), is_reached.data(), is_undecided.data(), pivot, [&](auto k, auto id) {
-        scc_id[k] = id;
-        ++local_decided;
-        decided_stack.push(k);
-      });
-    }
+    prev_local_decided    = local_decided;
+    prev_global_decided   = global_decided;
+    auto       active     = make_array<vertex_t>(graph.part.local_n());
+    auto       is_reached = make_bits(graph.part.local_n());
+    auto const pivot      = select_pivot_from_degree(graph.part, is_undecided.data(), outdegree.data(), indegree.data());
+    forward_backward_search(graph, front.view<vertex_t>(), active.data(), is_reached.data(), is_undecided.data(), pivot, [&](auto k, auto id) {
+      scc_id[k] = id;
+      ++local_decided;
+      decided_stack.push(k);
+    });
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
     KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
-    KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
     KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
     KASPAN_STATISTIC_POP();
 
@@ -70,12 +69,14 @@ scc_trim_ex_residual(
     KASPAN_STATISTIC_PUSH("trim_ex");
     prev_local_decided  = local_decided;
     prev_global_decided = global_decided;
-    local_decided += trim_1_exhaustive(graph, scc_id, outdegree.data(), indegree.data(), front.view<vertex_t>(), decided_stack.begin(), decided_stack.end());
+    trim_1_exhaustive(graph, is_undecided.data(), outdegree.data(), indegree.data(), front.view<vertex_t>(), decided_stack.begin(), decided_stack.end(), [&](auto k, auto id) {
+      scc_id[k] = id;
+      ++local_decided;
+    });
     decided_stack.clear();
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
     KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
-    KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
     KASPAN_STATISTIC_POP();
 
     if (global_decided < decided_threshold) {
@@ -85,33 +86,30 @@ scc_trim_ex_residual(
       auto active_array = make_array<vertex_t>(graph.part.local_n());
       auto has_changed  = make_bits_clean(graph.part.local_n());
 
-      vertex_t iterations = 0;
       prev_local_decided  = local_decided;
       prev_global_decided = global_decided;
 
       do {
-        is_undecided.set_each(graph.part.local_n(), [&](auto k) { return scc_id[k] == scc_id_undecided; });
-
         label_search(graph, front.view<edge_t>(), colors.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), [&](auto k, auto id) {
           scc_id[k] = id;
           ++local_decided;
           decided_stack.push(k);
         });
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-        ++iterations;
 
         if (global_decided == graph.part.n()) return;
 
-        local_decided += trim_1_exhaustive(graph, scc_id, outdegree.data(), indegree.data(), front.view<vertex_t>(), decided_stack.begin(), decided_stack.end());
+        trim_1_exhaustive(graph, is_undecided.data(), outdegree.data(), indegree.data(), front.view<vertex_t>(), decided_stack.begin(), decided_stack.end(), [&](auto k, auto id) {
+          scc_id[k] = id;
+          ++local_decided;
+        });
         decided_stack.clear();
         global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
       } while (global_decided < decided_threshold);
 
-      KASPAN_STATISTIC_ADD("iterations", iterations);
       KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
       KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
-      KASPAN_STATISTIC_ADD("decided_count", global_decided - prev_global_decided);
       KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
       KASPAN_STATISTIC_POP();
     }
@@ -121,7 +119,8 @@ scc_trim_ex_residual(
 
   KASPAN_STATISTIC_PUSH("residual");
   DEBUG_ASSERT_LE(local_decided, graph.part.local_n());
-  auto [sub_ids_inverse, sub_g] = allgather_fw_sub_graph(graph.part, graph.part.local_n() - local_decided, graph.fw.head, graph.fw.csr, undecided_filter);
+  auto [sub_ids_inverse, sub_g] =
+    allgather_fw_sub_graph(graph.part, graph.part.local_n() - local_decided, graph.fw.head, graph.fw.csr, [&](auto k) { return is_undecided.get(k); });
   if (sub_g.n) {
     tarjan(sub_g.view(), [&](auto const* beg, auto const* end) {
       auto const id = sub_ids_inverse[*std::min_element(beg, end)];
@@ -133,11 +132,8 @@ scc_trim_ex_residual(
       }
     });
   }
-  KASPAN_STATISTIC_ADD("n", sub_g.n);
-  KASPAN_STATISTIC_ADD("m", sub_g.m);
   KASPAN_STATISTIC_ADD("local_decided", graph.part.local_n() - local_decided);
   KASPAN_STATISTIC_ADD("global_decided", graph.part.n() - global_decided);
-  KASPAN_STATISTIC_ADD("decided_count", graph.part.n() - global_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 }

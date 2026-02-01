@@ -37,10 +37,10 @@ struct graph_part_view
   constexpr graph_part_view(graph_part_view const&) noexcept = default;
 
   constexpr graph_part_view(
-    Part      part,
-    arithmetic_concept auto   local_m,
-    index_t*  head,
-    vertex_t* csr) noexcept
+    Part                    part,
+    arithmetic_concept auto local_m,
+    index_t*                head,
+    vertex_t*               csr) noexcept
     : part(part)
     , local_m(integral_cast<index_t>(local_m))
     , head(head)
@@ -207,7 +207,7 @@ struct graph_part
   constexpr graph_part() noexcept = default;
 
   graph_part(
-    Part    part,
+    Part                    part,
     arithmetic_concept auto local_m)
     : part(std::move(part))
     , local_m(integral_cast<index_t>(local_m))

@@ -57,6 +57,7 @@ forward_backward_search(
   if (g.part.has_local(root)) {
     auto const k = g.part.to_local(root);
     is_reached.unset(k);
+    DEBUG_ASSERT(is_undecided.get(k), "root must be undecided by definition");
     is_undecided.unset(k);
     on_decision(k, root);
     active.push(k);
@@ -66,6 +67,7 @@ forward_backward_search(
     auto const l = g.part.to_local(v);
     if (is_reached.get(l)) {
       is_reached.unset(l);
+      DEBUG_ASSERT(is_undecided.get(l), "l should be undecided as is_reached protects it");
       is_undecided.unset(l);
       on_decision(l, root);
       active.push(l);

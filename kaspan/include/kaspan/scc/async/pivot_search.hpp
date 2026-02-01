@@ -60,6 +60,7 @@ forward_backward_search(
     auto const l = g.part.to_local(v);
     if (is_reached.get(l)) {
       is_reached.unset(l);
+      DEBUG_ASSERT(is_undecided.get(l), "l should be undecided as is_reached protects it");
       is_undecided.unset(l);
       on_decision(l, root);
       active.push(l);
@@ -72,18 +73,19 @@ forward_backward_search(
   };
 
   if (g.part.has_local(root)) {
-    on_bw_message(root);
-    auto const l = g.part.to_local(root);
-    is_reached.unset(l);
-    is_undecided.unset(l);
-    on_decision(l, root);
-    active.push(l);
+    auto const k = g.part.to_local(root);
+    is_reached.unset(k);
+    DEBUG_ASSERT(is_undecided.get(k), "root must be undecided by definition");
+    is_undecided.unset(k);
+    on_decision(k, root);
+    active.push(k);
   }
 
   message_queue.reactivate();
   do {
     while (!active.empty()) {
       auto const k = active.pop_back();
+      DEBUG_ASSERT_NOT(is_undecided.get(k));
       g.each_bw_v(k, [&](auto v) {
         if (g.part.has_local(v)) on_bw_message(v);
         else message_queue.post_message_blocking(v, g.part.world_rank_of(v), on_bw_messages);

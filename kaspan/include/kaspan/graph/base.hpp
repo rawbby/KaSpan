@@ -7,8 +7,8 @@
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/pp.hpp>
 
-#include <mpi.h>
 #include <kamping/mpi_datatype.hpp>
+#include <mpi.h>
 
 #include <cstring>
 #include <limits>
