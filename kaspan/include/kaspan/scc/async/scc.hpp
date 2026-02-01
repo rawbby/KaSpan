@@ -78,7 +78,7 @@ scc(
   {
     auto front = briefkasten::BufferedMessageQueueBuilder<edge_t>{}.build();
     do {
-      async::label_search(graph, front, label.data(), active.data(), in_active.data(), is_undecided.data(), on_decision);
+      async::rot_label_search(graph, front, label.data(), active.data(), in_active.data(), is_undecided.data(), on_decision);
       global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     } while (global_decided < graph.part.n());
   }

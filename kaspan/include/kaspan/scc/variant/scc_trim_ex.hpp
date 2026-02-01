@@ -82,7 +82,7 @@ scc_trim_ex(
   auto label          = make_array<vertex_t>(graph.part.local_n());
   auto has_changed    = make_bits_clean(graph.part.local_n());
   do {
-    label_search(graph, front.view<edge_t>(), label.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), on_decision);
+    rot_label_search(graph, front.view<edge_t>(), label.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), on_decision);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
 
     if (global_decided >= graph.part.n()) break;

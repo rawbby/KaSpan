@@ -20,7 +20,9 @@ label_search(
   vertex_t*                  active_storage,
   u64*                       in_active_storage,
   u64*                       is_undecided_storage,
-  auto&&                     on_decision)
+  auto&&                     on_decision,
+  auto&&                     map,
+  auto&&                     unmap)
 {
   auto* label        = label_storage;
   auto  active       = view_stack<vertex_t>(active_storage, g.part.local_n());
@@ -33,7 +35,7 @@ label_search(
 
   std::memcpy(in_active_storage, is_undecided_storage, bit_storage_count * sizeof(u64));
   in_active.for_each(g.part.local_n(), [&](auto k) {
-    label[k] = g.part.to_global(k);
+    label[k] = map(g.part.to_global(k));
     active.push(k);
   });
 
@@ -61,10 +63,10 @@ label_search(
       in_active.unset(k);
 
       g.each_v(k, [&](auto v) {
-        // if (label_k < v) {
-        if (g.part.has_local(v)) on_fw_message(edge_t{ v, label_k });
-        else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_fw_messages);
-        //}
+        if (label_k < map(v)) {
+          if (g.part.has_local(v)) on_fw_message(edge_t{ v, label_k });
+          else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_fw_messages);
+        }
       });
 
       front.poll_throttled(on_fw_messages);
@@ -74,9 +76,9 @@ label_search(
   // backward search
 
   in_active.set_each(g.part.local_n(), [&](auto k) {
-    if (is_undecided.get(k) && label[k] == g.part.to_global(k)) {
+    if (is_undecided.get(k) && label[k] == map(g.part.to_global(k))) {
       is_undecided.unset(k);
-      on_decision(k, label[k]);
+      on_decision(k, unmap(label[k]));
       active.push(k);
       return true;
     }
@@ -89,7 +91,7 @@ label_search(
 
     if (is_undecided.get(l) && label[l] == label_ku) {
       is_undecided.unset(l);
-      on_decision(l, label_ku);
+      on_decision(l, unmap(label_ku));
       if (!in_active.get(l)) {
         in_active.set(l);
         active.push(l);
@@ -108,18 +110,55 @@ label_search(
     while (!active.empty()) {
       auto const k       = active.pop_back();
       auto const label_k = label[k];
-      in_active.unset(k);
 
       g.each_bw_v(k, [&](auto v) {
-        // if (label_k < v) {
-        if (g.part.has_local(v)) on_bw_message(edge_t{ v, label_k });
-        else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_bw_messages);
-        //}
+        if (label_k < map(v)) {
+          if (g.part.has_local(v)) on_bw_message(edge_t{ v, label_k });
+          else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_bw_messages);
+        }
       });
 
+      in_active.unset(k);
       front.poll_throttled(on_bw_messages);
     }
   } while (!front.terminate(on_bw_messages));
+}
+
+template<part_view_concept Part,
+         typename brief_queue_t>
+void
+rot_label_search(
+  bidi_graph_part_view<Part> g,
+  brief_queue_t&             front,
+  vertex_t*                  label_storage,
+  vertex_t*                  active_storage,
+  u64*                       in_active_storage,
+  u64*                       is_undecided_storage,
+  auto&&                     on_decision)
+{
+  static int rotation = 0;
+  ++rotation;
+
+  auto const map   = [](auto l) { return std::rotr(l, rotation); };
+  auto const unmap = [](auto l) { return std::rotl(l, rotation); };
+
+  label_search(g, front, label_storage, active_storage, in_active_storage, is_undecided_storage, on_decision, map, unmap);
+}
+
+template<part_view_concept Part,
+         typename brief_queue_t>
+void
+label_search(
+  bidi_graph_part_view<Part> g,
+  brief_queue_t&             front,
+  vertex_t*                  label_storage,
+  vertex_t*                  active_storage,
+  u64*                       in_active_storage,
+  u64*                       is_undecided_storage,
+  auto&&                     on_decision)
+{
+  auto const id = [](auto l) { return l; };
+  label_search(g, front, label_storage, active_storage, in_active_storage, is_undecided_storage, on_decision, id, id);
 }
 
 } // namespace kaspan::async

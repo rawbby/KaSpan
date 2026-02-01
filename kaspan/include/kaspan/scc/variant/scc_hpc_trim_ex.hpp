@@ -63,7 +63,7 @@ scc_hpc_trim_ex(
   prev_global_decided = global_decided;
   auto bits_buffer1   = make_bits(graph.part.local_n());
   do {
-    label_search(graph, front.view<edge_t>(), vertex_buffer1.data(), vertex_buffer0.data(), bits_buffer0.data(), bits_buffer1.data(), is_undecided.data(), on_decision);
+    rot_label_search(graph, front.view<edge_t>(), vertex_buffer1.data(), vertex_buffer0.data(), bits_buffer0.data(), bits_buffer1.data(), is_undecided.data(), on_decision);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   } while (global_decided < graph.part.n());
   KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);

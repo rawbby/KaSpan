@@ -1,5 +1,6 @@
 import json
 import re
+import traceback
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -8,6 +9,19 @@ import numpy as np
 DPI = 200
 
 MARKERS = ["o", "s", "D", "^", "v", "P", "X", "d"]
+
+
+def data(j):
+    data_bench = {k: v for k, v in j.items() if k.isdigit()}
+    data_status = {k: v for k, v in j.items() if not k.isdigit()}
+    return data_bench, data_status
+
+
+def get_path(j: dict, *path):
+    if len(path) == 0:
+        return j
+
+    return get_path(j.get(path[0], {}), *path[1:])
 
 
 def load_all_data(cwd):
@@ -39,11 +53,17 @@ def load_all_data(cwd):
 
         try:
             with p.open("r") as f:
-                j = json.load(f)
+                bench, status = data(json.load(f))
+                if len(bench) == 0:
+                    if status.get('error'):
+                        print(f"Skipping file with error {status.get('ec')}: {status.get('error').splitlines()[0]}")
+                    else:
+                        print(f"Skipping file with error {status.get('ec')}")
+                    continue
 
-                duration = globals().get(f"get_{app}_duration")(j, np_val)
-                memory = globals().get(f"get_{app}_memory")(j, np_val)
-                progress = globals().get(f"get_{app}_progress")(j, np_val)
+                duration = globals().get(f"get_{app}_duration")(bench, np_val)
+                memory = globals().get(f"get_{app}_memory")(bench, np_val)
+                progress = globals().get(f"get_{app}_progress")(bench, np_val)
 
                 entry = (duration, memory, progress)
                 all_metrics_raw.setdefault(graph, {}).setdefault(app_variant, {})[np_val] = entry
@@ -57,6 +77,7 @@ def load_all_data(cwd):
 
         except Exception as e:
             print(f"Error loading {p.name}: {e}")
+            traceback.print_exc()
             continue
 
     return scaling_data, all_metrics_raw, apps, all_stages, global_all_nps
@@ -140,31 +161,19 @@ def get_max_recursive(node, key_name):
     return max_val
 
 
-def get_kaspan_duration(data, np_val):
-    """Retrieves the maximum 'scc' duration across all ranks for KaSpan (in seconds)."""
-    n = np_val
-    dur = max(get_max_recursive(data[str(i)].get("benchmark", {}).get("scc", {}), "duration") for i in range(n)) * 1e-9
-    assert dur > 0, f"Non-positive duration found: {dur}"
-    return dur
+def get_kaspan_duration(bench, *_args):
+    return max(get_path(v, "benchmark", "scc", "duration") for v in bench.values()) * 1e-9
 
 
-def get_ispan_duration(data, np_val):
-    """Retrieves the maximum 'scc' duration across all ranks for iSpan (in seconds)."""
-    n = np_val
-    dur = max(get_max_recursive(data[str(i)].get("benchmark", {}).get("scc", {}), "duration") for i in range(n)) * 1e-9
-    assert dur > 0, f"Non-positive duration found: {dur}"
-    return dur
+def get_ispan_duration(bench, *_args):
+    return max(get_path(v, "benchmark", "scc", "duration") for v in bench.values()) * 1e-9
 
 
-def get_hpc_graph_duration(data, np_val):
-    """Retrieves the maximum 'scc' duration across all ranks for hpc_graph (in seconds)."""
-    n = np_val
-    dur = max(get_max_recursive(data[str(i)].get("benchmark", {}).get("scc", {}), "duration") for i in range(n)) * 1e-9
-    assert dur > 0, f"Non-positive duration found: {dur}"
-    return dur
+def get_hpc_graph_duration(bench, *_args):
+    return max(get_path(v, "benchmark", "scc", "duration") for v in bench.values()) * 1e-9
 
 
-def get_all_step_data(data, app, np_val):
+def get_all_step_data(bench, app, np_val):
     """
     Recursively searches for all nodes under 'benchmark/scc' that contain a 'decided_count'.
     Returns a list of dictionaries, each containing:
@@ -172,7 +181,11 @@ def get_all_step_data(data, app, np_val):
     - 'duration': The maximum duration for this node across all ranks (in seconds).
     - 'decided_count': The decided count (from rank 0, assuming it's allreduced).
     """
-    n = np_val
+    core_count = np_val
+    rank_count = len(bench)
+    thread_count = np_val / rank_count
+    assert thread_count * rank_count == core_count
+
     paths = []
 
     def find_paths(node, current_path):
@@ -184,15 +197,15 @@ def get_all_step_data(data, app, np_val):
             if isinstance(v, dict):
                 find_paths(v, current_path + [k])
 
-    scc_root_rank0 = data["0"].get("benchmark", {}).get("scc", {})
+    scc_root_rank0 = bench["0"].get("benchmark", {}).get("scc", {})
     find_paths(scc_root_rank0, [])
 
     results = []
     for path in paths:
         durs = []
         decided_val = 0
-        for i in range(n):
-            curr = data[str(i)].get("benchmark", {}).get("scc", {})
+        for i in range(rank_count):
+            curr = bench[str(i)].get("benchmark", {}).get("scc", {})
             for p in path:
                 if isinstance(curr, dict) and p in curr:
                     curr = curr[p]
@@ -218,8 +231,8 @@ def get_all_step_data(data, app, np_val):
     # Handle the special case for KaSpan's tarjan fallback if it doesn't have decided_count explicitly
     if app == "kaspan" and not any(r["name"] == "tarjan" for r in results):
         durs = []
-        for i in range(n):
-            node = data[str(i)].get("benchmark", {}).get("scc", {}).get("tarjan", {})
+        for i in range(rank_count):
+            node = bench[str(i)].get("benchmark", {}).get("scc", {}).get("tarjan", {})
             if isinstance(node, dict) and "duration" in node:
                 durs.append(int(node["duration"]))
         if durs:
@@ -228,28 +241,25 @@ def get_all_step_data(data, app, np_val):
             results.append({
                 "name": "tarjan",
                 "duration": dur,
-                "decided_count": int(data["0"].get("benchmark", {}).get("n", 0))
+                "decided_count": int(bench["0"].get("benchmark", {}).get("n", 0))
             })
 
     return results
 
 
-def get_kaspan_progress(data, np_val):
-    """Retrieves progress data for KaSpan using recursive search."""
-    return get_all_step_data(data, "kaspan", np_val)
+def get_kaspan_progress(bench, np_val):
+    return get_all_step_data(bench, "kaspan", np_val)
 
 
-def get_ispan_progress(data, np_val):
-    """Retrieves progress data for iSpan using recursive search."""
-    return get_all_step_data(data, "ispan", np_val)
+def get_ispan_progress(bench, np_val):
+    return get_all_step_data(bench, "ispan", np_val)
 
 
-def get_hpc_graph_progress(data, np_val):
-    """Retrieves progress data for hpc_graph using recursive search."""
-    return get_all_step_data(data, "hpc_graph", np_val)
+def get_hpc_graph_progress(bench, np_val):
+    return get_all_step_data(bench, "hpc_graph", np_val)
 
 
-def get_kaspan_memory(data, np_val):
+def get_kaspan_memory(bench, np_val):
     """
     Extracts peak memory usage (increase over base) for KaSpan across all ranks.
     Retrieves the maximum 'memory' (resident set size) reported in 'benchmark'
@@ -257,38 +267,35 @@ def get_kaspan_memory(data, np_val):
     Returns average memory increase per core (total increase / np_val).
     """
     mem_sum = 0
-    for i in range(np_val):
-        node = data[str(i)].get("benchmark", {})
-        base = int(node.get("memory", 0))
-        mem_sum += max(base, get_max_recursive(node.get("scc", {}), "memory")) - base
+    for v in bench.values():
+        base = int(v.get("benchmark", {}).get("memory", 0))
+        mem_sum += max(base, get_max_recursive(v.get("benchmark", {}).get("scc", {}), "memory")) - base
     return mem_sum / np_val
 
 
-def get_ispan_memory(data, np_val):
+def get_ispan_memory(bench, np_val):
     """
     Extracts peak memory usage (increase over base) for iSpan across all ranks.
     Retrieves the maximum 'memory' reported in 'benchmark' and recursively under 'scc'.
     Returns average memory increase per core (total increase / np_val).
     """
     mem_sum = 0
-    for i in range(np_val):
-        node = data[str(i)].get("benchmark", {})
-        base = int(node.get("memory", 0))
-        mem_sum += max(base, get_max_recursive(node.get("scc", {}), "memory")) - base
+    for v in bench.values():
+        base = int(v.get("benchmark", {}).get("memory", 0))
+        mem_sum += max(base, get_max_recursive(v.get("benchmark", {}).get("scc", {}), "memory")) - base
     return mem_sum / np_val
 
 
-def get_hpc_graph_memory(data, np_val):
+def get_hpc_graph_memory(bench, np_val):
     """
     Extracts peak memory usage (increase over base) for hpc_graph across all ranks.
     Retrieves 'memory' from benchmark and recursively under 'scc'.
     Returns average memory increase per core (total increase / np_val).
     """
     mem_sum = 0
-    for i in range(np_val):
-        node = data[str(i)].get("benchmark", {})
-        base = int(node.get("memory", 0))
-        mem_sum += max(base, get_max_recursive(node.get("scc", {}), "memory")) - base
+    for v in bench.values():
+        base = int(v.get("benchmark", {}).get("memory", 0))
+        mem_sum += max(base, get_max_recursive(v.get("benchmark", {}).get("scc", {}), "memory")) - base
     return mem_sum / np_val
 
 
