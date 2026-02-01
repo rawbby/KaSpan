@@ -60,7 +60,6 @@ scc(
   prev_local_decided  = local_decided;
   prev_global_decided = global_decided;
   trim_1_normal(graph, is_undecided.data(), on_decision);
-  trim_1_normal(graph, is_undecided.data(), on_decision);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
