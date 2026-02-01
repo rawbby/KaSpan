@@ -3,9 +3,9 @@
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/allgather_graph.hpp>
 #include <kaspan/scc/scc.hpp>
+#include <kaspan/scc/tarjan.hpp>
 #include <kaspan/test/fuzzy.hpp>
 #include <kaspan/test/normalise_scc.hpp>
-#include <kaspan/scc/tarjan.hpp>
 
 #include <adapter/base.hpp>
 #include <adapter/kagen.hpp>

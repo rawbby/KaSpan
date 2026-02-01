@@ -2,7 +2,7 @@
 
 #include <ispan/util.hpp>
 
-inline void
+inline size_t
 trim_1_normal(
   kaspan::vertex_t*       scc_id,
   kaspan::index_t const*  fw_head,
@@ -12,7 +12,6 @@ trim_1_normal(
   kaspan::vertex_t        vert_beg,
   kaspan::vertex_t        vert_end)
 {
-  KASPAN_STATISTIC_SCOPE("trim_1_normal");
   size_t decided_count = 0;
   for (kaspan::vertex_t vert_id = vert_beg; vert_id < vert_end; ++vert_id) {
     if (scc_id[vert_id] == kaspan::scc_id_undecided) {
@@ -47,5 +46,5 @@ trim_1_normal(
       }
     }
   }
-  KASPAN_STATISTIC_ADD("decided_count", decided_count);
+  return decided_count;
 }

@@ -237,7 +237,7 @@ fw_span(
   }
 }
 
-inline void
+inline size_t
 bw_span(
   kaspan::vertex_t*       scc_id,
   kaspan::index_t const*  fw_head,
@@ -470,5 +470,5 @@ bw_span(
     level++;
   }
 
-  KASPAN_STATISTIC_ADD("decided_count", decided_count);
+  return decided_count;
 }

@@ -34,8 +34,7 @@ scc_ispan_like(
   auto pivot        = trim_1_first(graph, is_undecided.data(), on_decision);
   global_decided    = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("pivot", pivot);
-  KASPAN_STATISTIC_ADD("local_decided", local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", local_decided);
   KASPAN_STATISTIC_POP();
 
   if (global_decided == graph.part.n()) return;
@@ -48,8 +47,7 @@ scc_ispan_like(
   auto is_reached     = make_bits(graph.part.local_n());
   forward_backward_search(graph, front.view<vertex_t>(), active.data(), is_reached.data(), is_undecided.data(), pivot, on_decision);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-  KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
@@ -61,8 +59,7 @@ scc_ispan_like(
   trim_1_normal(graph, is_undecided.data(), on_decision);
   trim_1_normal(graph, is_undecided.data(), on_decision);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-  KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);
   KASPAN_STATISTIC_POP();
 
   if (global_decided == graph.part.n()) return;
@@ -80,8 +77,7 @@ scc_ispan_like(
     }
   });
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-  KASPAN_STATISTIC_ADD("local_decided", graph.part.local_n() - prev_local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", graph.part.n() - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", graph.part.local_n() - prev_local_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 }

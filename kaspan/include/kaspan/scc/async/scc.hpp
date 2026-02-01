@@ -40,8 +40,7 @@ scc(
   auto       is_undecided = make_bits_filled(graph.part.local_n());
   auto const pivot        = trim_1_first(graph, is_undecided.data(), on_decision);
   global_decided          = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-  KASPAN_STATISTIC_ADD("local_decided", local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", local_decided);
   KASPAN_STATISTIC_POP();
 
   if (global_decided == graph.part.n()) return;
@@ -56,8 +55,7 @@ scc(
     async::forward_backward_search(graph, front, active.data(), in_active.data(), is_undecided.data(), pivot, on_decision);
   }
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-  KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
@@ -68,8 +66,7 @@ scc(
   prev_global_decided = global_decided;
   trim_1_normal(graph, is_undecided.data(), on_decision);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-  KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);
   KASPAN_STATISTIC_POP();
 
   if (global_decided == graph.part.n()) return;
@@ -85,8 +82,7 @@ scc(
       global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     } while (global_decided < graph.part.n());
   }
-  KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 }

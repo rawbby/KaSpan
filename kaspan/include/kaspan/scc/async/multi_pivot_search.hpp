@@ -61,9 +61,9 @@ label_search(
       in_active.unset(k);
 
       g.each_v(k, [&](auto v) {
-        //if (label_k < v) {
-          if (g.part.has_local(v)) on_fw_message(edge_t{ v, label_k });
-          else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_fw_messages);
+        // if (label_k < v) {
+        if (g.part.has_local(v)) on_fw_message(edge_t{ v, label_k });
+        else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_fw_messages);
         //}
       });
 
@@ -111,9 +111,9 @@ label_search(
       in_active.unset(k);
 
       g.each_bw_v(k, [&](auto v) {
-        //if (label_k < v) {
-          if (g.part.has_local(v)) on_bw_message(edge_t{ v, label_k });
-          else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_bw_messages);
+        // if (label_k < v) {
+        if (g.part.has_local(v)) on_bw_message(edge_t{ v, label_k });
+        else front.post_message_blocking(edge_t{ v, label_k }, g.part.world_rank_of(v), on_bw_messages);
         //}
       });
 

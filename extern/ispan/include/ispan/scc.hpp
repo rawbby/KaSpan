@@ -113,17 +113,25 @@ scc(
   KASPAN_STATISTIC_ADD("memory", kaspan::get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
-  trim_1_first(scc_id, fw_head, bw_head, local_beg, local_end, step);
+  KASPAN_STATISTIC_PUSH("trim_1_first");
+  size_t trim_1_decisions = trim_1_first(scc_id, fw_head, bw_head, local_beg, local_end, step);
+  KASPAN_STATISTIC_ADD("decided_count", trim_1_decisions);
+  KASPAN_STATISTIC_POP();
 
   KASPAN_STATISTIC_PUSH("forward_backward_search");
   auto const root = pivot_selection(scc_id, fw_head, bw_head, n);
   fw_span(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end, fw_sa, front_comm, root, alpha, n, m, step, fq_comm, sa_compress);
   memset(sa_compress, 0, s * sizeof(*sa_compress));
-  bw_span(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end, fw_sa, bw_sa, front_comm, work_comm, root, alpha, n, m, step, fq_comm, sa_compress);
+  size_t bw_decisions = bw_span(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end, fw_sa, bw_sa, front_comm, work_comm, root, alpha, n, m, step, fq_comm, sa_compress);
+  KASPAN_STATISTIC_ADD("decided_count", bw_decisions);
   KASPAN_STATISTIC_POP();
 
-  trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
-  trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
+  KASPAN_STATISTIC_PUSH("trim_1_normal");
+  size_t trim_1_normal_decisions = 0;
+  trim_1_normal_decisions += trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
+  trim_1_normal_decisions += trim_1_normal(scc_id, fw_head, bw_head, fw_csr, bw_csr, local_beg, local_end);
+  KASPAN_STATISTIC_ADD("decided_count", trim_1_normal_decisions);
+  KASPAN_STATISTIC_POP();
 
   KASPAN_STATISTIC_PUSH("residual");
   // clang-format off
@@ -148,30 +156,24 @@ scc(
     sub_fw_csr,
     sub_bw_head,
     sub_bw_csr);
-  KASPAN_STATISTIC_ADD("n", sub_n);
-  KASPAN_STATISTIC_ADD("m", sub_fw_head[sub_n]);
 
   if (sub_n > 0) {
     for (kaspan::index_t i = 0; i < sub_n; ++i)
       sub_wcc_id[i] = i;
 
-    KASPAN_STATISTIC_PUSH("wcc");
     wcc(sub_wcc_id, sub_fw_head, sub_fw_csr, sub_bw_head, sub_bw_csr, sub_n);
     kaspan::vertex_t sub_wcc_fq_size = 0;
     process_wcc(sub_n, sub_wcc_fq, sub_wcc_id, sub_wcc_fq_size);
-    KASPAN_STATISTIC_POP();
 
-    KASPAN_STATISTIC_PUSH("scc");
     residual_scc(sub_wcc_id, sub_scc_id, sub_fw_head, sub_bw_head, sub_fw_csr, sub_bw_csr, sub_fw_sa, sub_n, sub_wcc_fq, sub_wcc_fq_size, sub_vertices);
-    KASPAN_STATISTIC_POP();
 
-    KASPAN_STATISTIC_SCOPE("post_processing");
     MPI_Allreduce(MPI_IN_PLACE, sub_scc_id, sub_n, kaspan::mpi_vertex_t, MPI_MIN, MPI_COMM_WORLD);
     for (kaspan::index_t sub_u = 0; sub_u < sub_n; ++sub_u) {
       if (sub_scc_id[sub_u] != kaspan::scc_id_undecided) scc_id[sub_vertices[sub_u]] = sub_scc_id[sub_u];
     }
     KASPAN_STATISTIC_ADD("memory", kaspan::get_resident_set_bytes());
   }
+  KASPAN_STATISTIC_ADD("decided_count", local_end - local_beg - trim_1_decisions - bw_decisions - trim_1_normal_decisions);
   KASPAN_STATISTIC_POP();
 
   KASPAN_STATISTIC_SCOPE("post_processing");

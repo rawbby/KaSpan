@@ -36,8 +36,7 @@ scc_hpc_trim_ex(
   auto is_undecided   = make_bits_filled(graph.part.local_n());
   trim_1_exhaustive_first(graph, is_undecided.data(), vertex_buffer0.data(), vertex_buffer1.data(), front.view<vertex_t>(), on_decision);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-  KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
@@ -53,8 +52,7 @@ scc_hpc_trim_ex(
   auto bits_buffer0   = make_bits(graph.part.local_n());
   forward_backward_search(graph, front.view<vertex_t>(), vertex_buffer0.data(), bits_buffer0.data(), is_undecided.data(), pivot, on_decision);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
-  KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 
@@ -68,8 +66,7 @@ scc_hpc_trim_ex(
     label_search(graph, front.view<edge_t>(), vertex_buffer1.data(), vertex_buffer0.data(), bits_buffer0.data(), bits_buffer1.data(), is_undecided.data(), on_decision);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   } while (global_decided < graph.part.n());
-  KASPAN_STATISTIC_ADD("local_decided", local_decided - prev_local_decided);
-  KASPAN_STATISTIC_ADD("global_decided", global_decided - prev_global_decided);
+  KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
   KASPAN_STATISTIC_POP();
 }
