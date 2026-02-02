@@ -34,7 +34,7 @@ label_search(
   // forward search
 
   std::memcpy(in_active_storage, is_undecided_storage, bit_storage_count * sizeof(u64));
-  in_active.for_each(g.part.local_n(), [&](auto k) {
+  in_active.each(g.part.local_n(), [&](auto k) {
     label[k] = map(g.part.to_global(k));
     active.push(k);
   });

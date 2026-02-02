@@ -74,6 +74,31 @@ struct graph_view
   }
 
   /**
+   * @brief Iterate over each local vertex k.
+   * @param consumer A function taking a vertex_t k.
+   */
+  template<std::invocable<vertex_t> Consumer>
+  constexpr void each_k(
+    Consumer&& consumer) const noexcept
+  {
+    for (vertex_t k = 0; k < n; ++k)
+      consumer(k);
+  }
+
+  /**
+   * @brief Iterate over each local vertex k and its corresponding global vertex u.
+   * @param consumer A function taking (vertex_t k, vertex_t u).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_ku(
+    Consumer&& consumer) const noexcept
+  {
+    for (vertex_t k = 0; k < n; ++k)
+      consumer(k, k);
+  }
+
+  /**
    * @brief Iterate over each neighbor v of vertex u.
    * @param u Source vertex.
    * @param consumer A function taking a vertex_t v.
@@ -85,6 +110,46 @@ struct graph_view
   {
     for (vertex_t v : csr_range(u))
       consumer(v);
+  }
+
+  /**
+   * @brief Iterate over each edge (u, v) starting from vertex u.
+   * @param u Source vertex.
+   * @param consumer A function taking (vertex_t u, vertex_t v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_uv(
+    arithmetic_concept auto u,
+    Consumer&&              consumer) const noexcept
+  {
+    auto const i = integral_cast<vertex_t>(u);
+    each_v(i, [&](vertex_t v) { consumer(i, v); });
+  }
+
+  /**
+   * @brief Iterate over each local-global edge (k, v).
+   * @param consumer A function taking (vertex_t k, vertex_t v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_kv(
+    Consumer&& consumer) const noexcept
+  {
+    each_k([&](vertex_t k) { each_v(k, [&](vertex_t v) { consumer(k, v); }); });
+  }
+
+  /**
+   * @brief Iterate over each local-global-global edge (k, u, v).
+   * @param consumer A function taking (vertex_t k, vertex_t u, vertex_t v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_kuv(
+    Consumer&& consumer) const noexcept
+  {
+    each_ku([&](vertex_t k, vertex_t u) { each_v(k, [&](vertex_t v) { consumer(k, u, v); }); });
   }
 
   /**
@@ -262,6 +327,27 @@ struct graph
   }
 
   /**
+   * @brief Iterate over each local vertex k.
+   */
+  template<std::invocable<vertex_t> Consumer>
+  constexpr void each_k(
+    Consumer&& consumer) const noexcept
+  {
+    view().each_k(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each local vertex k and its corresponding global vertex u.
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_ku(
+    Consumer&& consumer) const noexcept
+  {
+    view().each_ku(std::forward<Consumer>(consumer));
+  }
+
+  /**
    * @brief Iterate over each neighbor v of vertex u.
    */
   template<std::invocable<vertex_t> Consumer>
@@ -270,6 +356,41 @@ struct graph
     Consumer&&              consumer) const noexcept
   {
     view().each_v(u, std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each edge (u, v) starting from vertex u.
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_uv(
+    arithmetic_concept auto u,
+    Consumer&&              consumer) const noexcept
+  {
+    view().each_uv(u, std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each local-global edge (k, v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_kv(
+    Consumer&& consumer) const noexcept
+  {
+    view().each_kv(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each local-global-global edge (k, u, v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_kuv(
+    Consumer&& consumer) const noexcept
+  {
+    view().each_kuv(std::forward<Consumer>(consumer));
   }
 
   /**

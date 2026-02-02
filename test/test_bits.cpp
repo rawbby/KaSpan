@@ -105,7 +105,7 @@ test_bits_basic(
   }
 
   auto it = 100;
-  b.for_each(200, [&](auto i) { ASSERT_EQ(i, it++); });
+  b.each(200, [&](auto i) { ASSERT_EQ(i, it++); });
 
   b.unset(4);
   b.set(5);

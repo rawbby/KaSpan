@@ -83,6 +83,39 @@ public:
     return { n_, r };
   }
 
+  /**
+   * @brief Iterate over each local index k.
+   * @param consumer A function taking an index k.
+   */
+  constexpr void each_k(
+    auto&& consumer) const noexcept
+  {
+    for (vertex_t k = 0; k < local_n_; ++k)
+      consumer(k);
+  }
+
+  /**
+   * @brief Iterate over each local index k and its corresponding global index u.
+   * @param consumer A function taking (local index k, global index u).
+   */
+  constexpr void each_ku(
+    auto&& consumer) const noexcept
+  {
+    for (vertex_t k = 0; k < local_n_; ++k)
+      consumer(k, to_global(k));
+  }
+
+  /**
+   * @brief Iterate over each global index u.
+   * @param consumer A function taking global index u.
+   */
+  constexpr void each_u(
+    auto&& consumer) const noexcept
+  {
+    for (vertex_t k = 0; k < local_n_; ++k)
+      consumer(to_global(k));
+  }
+
 private:
   vertex_t n_          = 0;
   vertex_t local_n_    = 0;
@@ -156,7 +189,37 @@ public:
   [[nodiscard]] auto world_part_of(
     arithmetic_concept auto r) const noexcept -> cyclic_part_view
   {
-    return { n_, r };
+    return view().world_part_of(r);
+  }
+
+  /**
+   * @brief Iterate over each local index k.
+   * @param consumer A function taking an index k.
+   */
+  constexpr void each_k(
+    auto&& consumer) const noexcept
+  {
+    view().each_k(std::forward<decltype(consumer)>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each local index k and its corresponding global index u.
+   * @param consumer A function taking (local index k, global index u).
+   */
+  constexpr void each_ku(
+    auto&& consumer) const noexcept
+  {
+    view().each_ku(std::forward<decltype(consumer)>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each global index u.
+   * @param consumer A function taking global index u.
+   */
+  constexpr void each_u(
+    auto&& consumer) const noexcept
+  {
+    view().each_u(std::forward<decltype(consumer)>(consumer));
   }
 
   [[nodiscard]] auto view() const noexcept -> cyclic_part_view

@@ -169,6 +169,40 @@ struct bidi_graph_part_view
   }
 
   /**
+   * @brief Iterate over each forward global vertex u and its corresponding global neighbor v.
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_uv(
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
+  {
+    fw_view().each_uv(k, std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each backward global vertex u and its corresponding global neighbor v.
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_bw_uv(
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
+  {
+    bw_view().each_uv(k, std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each global vertex u.
+   */
+  template<std::invocable<vertex_t> Consumer>
+  constexpr void each_u(
+    Consumer&& consumer) const noexcept
+  {
+    fw_view().each_u(std::forward<Consumer>(consumer));
+  }
+
+  /**
    * @brief Iterate over each backward local-global edge (k, v).
    */
   template<std::invocable<vertex_t,
@@ -412,6 +446,40 @@ struct bidi_graph_part
     Consumer&& consumer) const noexcept
   {
     view().each_kv(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each forward global vertex u and its corresponding global neighbor v.
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_uv(
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
+  {
+    view().each_uv(k, std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each backward global vertex u and its corresponding global neighbor v.
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_bw_uv(
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
+  {
+    view().each_bw_uv(k, std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each global vertex u.
+   */
+  template<std::invocable<vertex_t> Consumer>
+  constexpr void each_u(
+    Consumer&& consumer) const noexcept
+  {
+    view().each_u(std::forward<Consumer>(consumer));
   }
 
   /**

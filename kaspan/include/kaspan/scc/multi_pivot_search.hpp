@@ -36,7 +36,7 @@ label_search(
 
   std::memcpy(has_changed_storage, is_undecided_storage, bit_storage_count * sizeof(u64));
   std::memcpy(in_active_storage, is_undecided_storage, bit_storage_count * sizeof(u64));
-  in_active.for_each(g.part.local_n(), [&](auto k) {
+  in_active.each(g.part.local_n(), [&](auto k) {
     label[k] = map(g.part.to_global(k));
     active.push(k);
   });
@@ -66,7 +66,7 @@ label_search(
       in_active.unset(k);
     }
 
-    has_changed.for_each(g.part.local_n(), [&](auto&& k) {
+    has_changed.each(g.part.local_n(), [&](auto&& k) {
       auto const label_k = label[k];
       g.each_v(k, [&](auto v) {
         if (label_k < map(v) && !g.part.has_local(v)) front.push(g.part, edge_t{ v, label_k });
@@ -117,7 +117,7 @@ label_search(
       in_active.unset(k);
     }
 
-    has_changed.for_each(g.part.local_n(), [&](auto&& k) {
+    has_changed.each(g.part.local_n(), [&](auto&& k) {
       auto const label_k = label[k];
       g.each_bw_v(k, [&](auto v) {
         if (label_k < map(v) && !g.part.has_local(v)) front.push(g.part, edge_t{ v, label_k });

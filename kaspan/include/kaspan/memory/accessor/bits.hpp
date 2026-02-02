@@ -128,7 +128,7 @@ public:
   }
 
   template<arithmetic_concept Index = size_t>
-  void for_each(
+  void each(
     Index                        end,
     std::invocable<Index> auto&& fn) const
   {

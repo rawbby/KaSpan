@@ -24,6 +24,9 @@ concept part_view_concept =
        { T::ordered } -> std::convertible_to<bool>;
        { t.world_size() } -> std::same_as<i32>;
        { t.world_rank() } -> std::same_as<i32>;
+       t.each_k([](vertex_t) {});
+       t.each_ku([](vertex_t, vertex_t) {});
+       t.each_u([](vertex_t) {});
      })
 
   && (!T::ordered || T::continuous)
@@ -48,6 +51,9 @@ concept part_concept =
        { T::ordered } -> std::convertible_to<bool>;
        { t.world_size() } -> std::same_as<i32>;
        { t.world_rank() } -> std::same_as<i32>;
+       t.each_k([](vertex_t) {});
+       t.each_ku([](vertex_t, vertex_t) {});
+       t.each_u([](vertex_t) {});
      })
 
   && (!T::ordered || T::continuous)
@@ -63,5 +69,27 @@ concept part_concept =
        { t.world_part_of(std::declval<i32>()) } -> part_view_concept;
        { t.view() } -> part_view_concept;
      });
+
+template<class T>
+concept graph_part_view_concept =
+  requires(T t, vertex_t k) {
+    t.each_k([](vertex_t) {});
+    t.each_ku([](vertex_t, vertex_t) {});
+    t.each_u([](vertex_t) {});
+    t.each_v(k, [](vertex_t) {});
+    t.each_uv(k, [](vertex_t, vertex_t) {});
+    t.each_kv([](vertex_t, vertex_t) {});
+    t.each_kuv([](vertex_t, vertex_t, vertex_t) {});
+  };
+
+template<class T>
+concept graph_part_concept =
+  requires(T t) {
+    { t.view() } -> graph_part_view_concept;
+  };
+
+/**
+ * TODO: Verify that all implementations of graph and part interfaces fully support the each interface.
+ */
 
 }

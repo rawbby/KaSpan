@@ -99,6 +99,32 @@ struct graph_part_view
   }
 
   /**
+   * @brief Iterate over each global vertex u and its corresponding global neighbor v.
+   * @param k Local source vertex.
+   * @param consumer A function taking (vertex_t u, vertex_t v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_uv(
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
+  {
+    auto const u = part.to_global(k);
+    each_v(k, [&](vertex_t v) { consumer(u, v); });
+  }
+
+  /**
+   * @brief Iterate over each global vertex u.
+   * @param consumer A function taking a vertex_t u.
+   */
+  template<std::invocable<vertex_t> Consumer>
+  constexpr void each_u(
+    Consumer&& consumer) const noexcept
+  {
+    each_k([&](vertex_t k) { consumer(part.to_global(k)); });
+  }
+
+  /**
    * @brief Get the outdegree of local vertex k.
    * @param k Local source vertex.
    * @return The number of outgoing edges from k.
@@ -296,7 +322,32 @@ struct graph_part
     arithmetic_concept auto k,
     Consumer&&              consumer) const noexcept
   {
-    view().each_v(k, consumer);
+    view().each_v(k, std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each global vertex u and its corresponding global neighbor v.
+   * @param k Local source vertex.
+   * @param consumer A function taking (vertex_t u, vertex_t v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_uv(
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
+  {
+    view().each_uv(k, std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each global vertex u.
+   * @param consumer A function taking a vertex_t u.
+   */
+  template<std::invocable<vertex_t> Consumer>
+  constexpr void each_u(
+    Consumer&& consumer) const noexcept
+  {
+    view().each_u(std::forward<Consumer>(consumer));
   }
 
   /**

@@ -98,13 +98,34 @@ struct bidi_graph_view
   }
 
   /**
-   * @brief Iterate over each vertex u.
+   * @brief Iterate over each vertex u in the graph.
    */
   template<std::invocable<vertex_t> Consumer>
   constexpr void each_u(
     Consumer&& consumer) const noexcept
   {
     fw_view().each_u(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each local vertex k.
+   */
+  template<std::invocable<vertex_t> Consumer>
+  constexpr void each_k(
+    Consumer&& consumer) const noexcept
+  {
+    fw_view().each_k(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each local vertex k and its corresponding global vertex u.
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_ku(
+    Consumer&& consumer) const noexcept
+  {
+    fw_view().each_ku(std::forward<Consumer>(consumer));
   }
 
   /**
@@ -159,6 +180,18 @@ struct bidi_graph_view
   }
 
   /**
+   * @brief Iterate over each forward global vertex u and its corresponding global neighbor v.
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_uv(
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
+  {
+    fw_view().each_uv(k, std::forward<Consumer>(consumer));
+  }
+
+  /**
    * @brief Iterate over each backward edge (u, v).
    */
   template<std::invocable<vertex_t,
@@ -167,6 +200,64 @@ struct bidi_graph_view
     Consumer&& consumer) const noexcept
   {
     bw_view().each_uv(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each backward global vertex u and its corresponding global neighbor v.
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_bw_uv(
+    arithmetic_concept auto k,
+    Consumer&&              consumer) const noexcept
+  {
+    bw_view().each_uv(k, std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each forward local-global edge (k, v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_kv(
+    Consumer&& consumer) const noexcept
+  {
+    fw_view().each_kv(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each backward local-global edge (k, v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_bw_kv(
+    Consumer&& consumer) const noexcept
+  {
+    bw_view().each_kv(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each forward local-global-global edge (k, u, v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_kuv(
+    Consumer&& consumer) const noexcept
+  {
+    fw_view().each_kuv(std::forward<Consumer>(consumer));
+  }
+
+  /**
+   * @brief Iterate over each backward local-global-global edge (k, u, v).
+   */
+  template<std::invocable<vertex_t,
+                          vertex_t,
+                          vertex_t> Consumer>
+  constexpr void each_bw_kuv(
+    Consumer&& consumer) const noexcept
+  {
+    bw_view().each_kuv(std::forward<Consumer>(consumer));
   }
 
   /**

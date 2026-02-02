@@ -34,7 +34,7 @@ select_pivot_from_head(
   auto     is_undecided = view_bits(is_undecided_storage, graph.part.local_n());
   degree_t local_max(std::numeric_limits<index_t>::min(), std::numeric_limits<vertex_t>::min());
 
-  is_undecided.for_each(graph.part.local_n(), [&](auto k) {
+  is_undecided.each(graph.part.local_n(), [&](auto k) {
     auto const degree_product = integral_cast<index_t>(graph.outdegree(k)) * graph.indegree(k);
     if (degree_product > local_max.degree_product) [[unlikely]] {
       local_max = degree_t(degree_product, graph.part.to_global(k));
@@ -61,7 +61,7 @@ select_pivot_from_degree(
   auto     is_undecided = view_bits(is_undecided_storage, part.local_n());
   degree_t local_max{ std::numeric_limits<index_t>::min(), std::numeric_limits<vertex_t>::min() };
 
-  is_undecided.for_each(part.local_n(), [&](auto k) {
+  is_undecided.each(part.local_n(), [&](auto k) {
     auto const degree_product = integral_cast<index_t>(outdegree[k]) * indegree[k];
     if (degree_product > local_max.degree_product) [[unlikely]] {
       local_max = degree_t(degree_product, part.to_global(k));
