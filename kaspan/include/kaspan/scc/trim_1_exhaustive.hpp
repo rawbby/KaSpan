@@ -89,7 +89,7 @@ trim_1_exhaustive_first(
   // For every non resolved vertex we need to store the right
   // indegree and mark as undecided. (As this function is
   // expected to initialise the scc_id array)
-  for (vertex_t k = 0; k < g.part.local_n(); ++k) {
+  g.each_k([&](auto k) {
     auto const degree = g.indegree(k);
 
     if (degree > 0) { // initialise
@@ -102,7 +102,7 @@ trim_1_exhaustive_first(
       on_decision(k, g.part.to_global(k));
       g.each_v(k, [&](auto v) { frontier.relaxed_push(g.part, v); });
     }
-  }
+  });
 
   // With the initialisation done and the first collected decision we
   // can now simply delegate the exhaustive trimming to a sub routine.
@@ -112,21 +112,19 @@ trim_1_exhaustive_first(
   // We do similar to the initial indegree trim
   // but scc_id is already initialised and we might
   // already have decided vertices to skip.
-  for (vertex_t k = 0; k < g.part.local_n(); ++k) {
-    if (is_undecided.get(k)) {
-      auto const degree = g.outdegree(k);
+  is_undecided.each(g.part.local_n(), [&](auto k) {
+    auto const degree = g.outdegree(k);
 
-      if (degree > 0) { // initialise
-        outdegree[k] = degree;
-      }
-
-      else { // decide right away and prepare to notify neighbours
-        is_undecided.unset(k);
-        on_decision(k, g.part.to_global(k));
-        g.each_bw_v(k, [&](auto v) { frontier.relaxed_push(g.part, v); });
-      }
+    if (degree > 0) { // initialise
+      outdegree[k] = degree;
     }
-  }
+
+    else { // decide right away and prepare to notify neighbours
+      is_undecided.unset(k);
+      on_decision(k, g.part.to_global(k));
+      g.each_bw_v(k, [&](auto v) { frontier.relaxed_push(g.part, v); });
+    }
+  });
 
   // delegate the exhaustive trimming to a sub routine again.
   trim_1_exhaustive(g.bw_view(), is_undecided_storage, outdegree, frontier, on_decision);

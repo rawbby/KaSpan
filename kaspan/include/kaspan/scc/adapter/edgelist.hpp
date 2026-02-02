@@ -55,14 +55,14 @@ sorted_edgelist_to_graph_part(
   auto const local_n = part.local_n();
   head[0]            = 0;
   index_t end        = 0;
-  for (vertex_t k = 0; k < local_n; ++k) {
+  part.each_k([&](auto k) {
     auto const u = part.to_global(k);
     while (end < local_m && edgelist[end].u == u) {
       csr[end] = edgelist[end].v;
       ++end;
     }
     head[k + 1] = end;
-  }
+  });
   DEBUG_ASSERT_EQ(end, local_m);
 }
 

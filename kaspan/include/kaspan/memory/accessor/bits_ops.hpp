@@ -8,7 +8,7 @@
 
 namespace kaspan::bits_ops {
 
-[[gnu::always_inline]]  constexpr void
+[[gnu::always_inline]] constexpr void
 clear(
   u64*                    data,
   arithmetic_concept auto end) noexcept
@@ -21,7 +21,7 @@ clear(
   }
 }
 
-[[gnu::always_inline]]  constexpr void
+[[gnu::always_inline]] constexpr void
 fill(
   u64*                    data,
   arithmetic_concept auto end) noexcept
@@ -34,7 +34,7 @@ fill(
   }
 }
 
-[[gnu::always_inline]]  [[nodiscard]] constexpr auto
+[[gnu::always_inline]] [[nodiscard]] constexpr auto
 get(
   u64 const*              data,
   arithmetic_concept auto index) noexcept -> bool
@@ -44,7 +44,7 @@ get(
   return data[index >> 6] & static_cast<u64>(1) << (index & 0b111111);
 }
 
-[[gnu::always_inline]]  constexpr void
+[[gnu::always_inline]] constexpr void
 set(
   u64*                    data,
   arithmetic_concept auto index,
@@ -57,7 +57,7 @@ set(
   data[idx]      = data[idx] & ~msk | -static_cast<u64>(f) & msk;
 }
 
-[[gnu::always_inline]]  constexpr void
+[[gnu::always_inline]] constexpr void
 set(
   u64*                    data,
   arithmetic_concept auto index) noexcept
@@ -67,7 +67,7 @@ set(
   data[index >> 6] |= static_cast<u64>(1) << (index & 0b111111);
 }
 
-[[gnu::always_inline]]  constexpr void
+[[gnu::always_inline]] constexpr void
 unset(
   u64*                    data,
   arithmetic_concept auto index) noexcept

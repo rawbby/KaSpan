@@ -45,9 +45,7 @@ degree(
   index_t m = 0;
 
   auto const local_n = part.local_n();
-  for (vertex_t k = 0; k < local_n; ++k) {
-    m += degree(head, k);
-  }
+  part.each_k([&](auto k) { m += degree(head, k); });
   return m;
 }
 

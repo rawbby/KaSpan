@@ -21,7 +21,7 @@ trim_1_first(
 
   index_t pivot = g.part.n();
 
-  for (vertex_t k = 0; k < g.part.local_n(); ++k) {
+  g.each_k([&](auto k) {
     auto const outdegree = g.outdegree(k);
     auto const indegree  = g.indegree(k);
 
@@ -35,7 +35,7 @@ trim_1_first(
         pivot           = g.part.to_global(k);
       }
     }
-  }
+  });
 
   if (max_degree_prod != mpi_basic::allreduce_single(max_degree_prod, mpi_basic::max)) {
     // overwrite as not global max degree
@@ -64,12 +64,12 @@ trim_1_normal(
     return false;
   };
 
-  for (vertex_t k = 0; k < graph.part.local_n(); ++k) {
-    if (is_undecided.get(k) && !has_degree(graph, k)) {
+  is_undecided.each(graph.part.local_n(), [&](auto k) {
+    if (!has_degree(graph, k)) {
       is_undecided.unset(k);
       on_decision(k, graph.part.to_global(k));
     }
-  }
+  });
 }
 
 } // namespace kaspan

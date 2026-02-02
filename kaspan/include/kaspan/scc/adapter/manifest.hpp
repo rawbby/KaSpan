@@ -314,20 +314,12 @@ load_graph_part_from_manifest(
       return 0;
     } else {
       index_t sum = 0;
-      for (vertex_t k = 0; k < local_n; ++k) {
-        auto const u = part.select(k);
-
-        DEBUG_ASSERT_GE(u, 0);
-        DEBUG_ASSERT_LT(u, n);
-
-        DEBUG_ASSERT_GE(head.get(u + 1), 0);
-        DEBUG_ASSERT_LE(head.get(u + 1), m);
-
-        DEBUG_ASSERT_GE(head.get(u), 0);
-        DEBUG_ASSERT_LE(head.get(u), m);
-
+      part.each_u([&](auto u) {
+        DEBUG_ASSERT_IN_RANGE(u, 0, n);
+        DEBUG_ASSERT_IN_RANGE(head.get(u + 1), 0, m);
+        DEBUG_ASSERT_IN_RANGE(head.get(u), 0, m);
         sum += head.get(u + 1) - head.get(u);
-      }
+      });
       return sum;
     }
   };
@@ -343,27 +335,25 @@ load_graph_part_from_manifest(
   bidi_graph_part<Part> result(part, local_fw_m, local_bw_m);
 
   u64 pos = 0;
-  for (u64 k = 0; k < local_n; ++k) {
-    auto const index  = part.to_global(k);
-    auto const begin  = fw_head_access.get(index);
-    auto const end    = fw_head_access.get(index + 1);
+  part.each_ku([&](auto k, auto u) {
+    auto const begin  = fw_head_access.get(u);
+    auto const end    = fw_head_access.get(u + 1);
     result.fw.head[k] = pos;
     for (auto it = begin; it != end; ++it) {
       result.fw.csr[pos++] = fw_csr_access.get(it);
     }
-  }
+  });
   if (local_n > 0) result.fw.head[local_n] = pos;
 
   pos = 0;
-  for (u64 k = 0; k < local_n; ++k) {
-    auto const index  = part.to_global(k);
-    auto const begin  = bw_head_access.get(index);
-    auto const end    = bw_head_access.get(index + 1);
+  part.each_ku([&](auto k, auto u) {
+    auto const begin  = bw_head_access.get(u);
+    auto const end    = bw_head_access.get(u + 1);
     result.bw.head[k] = pos;
     for (auto it = begin; it != end; ++it) {
       result.bw.csr[pos++] = bw_csr_access.get(it);
     }
-  }
+  });
   if (local_n > 0) result.bw.head[local_n] = pos;
 
   return result;

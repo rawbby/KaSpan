@@ -32,9 +32,7 @@ partition_local_m(
   auto const local_n = part.local_n();
 
   index_t m = 0;
-  for (vertex_t k = 0; k < local_n; ++k) {
-    m += g.outdegree(part.to_global(k));
-  }
+  part.each_u([&](auto u) { m += g.outdegree(u); });
   return m;
 }
 
@@ -63,10 +61,10 @@ partition(
   auto       gp      = graph_part<Part>{ std::move(part), local_m };
 
   index_t pos = 0;
-  for (vertex_t k = 0; k < local_n; ++k) {
+  gp.part.each_ku([&](auto k, auto u) {
     gp.head[k] = pos;
-    g.each_v(gp.part.to_global(k), [&](auto v) { gp.csr[pos++] = v; });
-  }
+    g.each_v(u, [&](auto v) { gp.csr[pos++] = v; });
+  });
   if (local_n > 0) gp.head[local_n] = pos;
 
   gp.debug_validate();
@@ -86,17 +84,17 @@ partition(
   auto bgp = bidi_graph_part<Part>{ std::move(part), local_fw_m, local_bw_m };
 
   index_t fw_offset = 0;
-  for (vertex_t k = 0; k < local_n; ++k) {
+  bgp.part.each_ku([&](auto k, auto u) {
     bgp.fw.head[k] = fw_offset;
-    bg.each_v(bgp.part.to_global(k), [&](auto v) { bgp.fw.csr[fw_offset++] = v; });
-  }
+    bg.each_v(u, [&](auto v) { bgp.fw.csr[fw_offset++] = v; });
+  });
   if (local_n > 0) bgp.fw.head[local_n] = fw_offset;
 
   index_t bw_offset = 0;
-  for (vertex_t k = 0; k < local_n; ++k) {
+  bgp.part.each_ku([&](auto k, auto u) {
     bgp.bw.head[k] = bw_offset;
-    bg.each_bw_v(bgp.part.to_global(k), [&](auto v) { bgp.bw.csr[bw_offset++] = v; });
-  }
+    bg.each_bw_v(u, [&](auto v) { bgp.bw.csr[bw_offset++] = v; });
+  });
   if (local_n > 0) bgp.bw.head[local_n] = bw_offset;
 
   bgp.debug_validate();

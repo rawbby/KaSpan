@@ -87,16 +87,10 @@ backward_complement_graph_part(
   auto [sb, send_counts, send_displs] = mpi_basic::counts_and_displs();
   std::memset(send_counts, 0, mpi_basic::world_size * sizeof(MPI_Count));
 
-  index_t it = 0;
-  for (vertex_t k = 0; k < local_n; ++k) {
-    auto const u   = g.part.to_global(k);
-    auto const end = g.fw.head[k + 1];
-    for (; it < end; ++it) {
-      auto const v = g.fw.csr[it];
-      send_stack.push({ v, u });
-      ++send_counts[g.part.world_rank_of(v)];
-    }
-  }
+  g.each_uv([&](auto u, auto v) {
+    send_stack.push({ v, u });
+    ++send_counts[g.part.world_rank_of(v)];
+  });
 
   i8 any_edges = g.local_fw_m > 0 ? 1 : 0;
   mpi_basic::allreduce_inplace(&any_edges, 1, mpi_basic::lor);

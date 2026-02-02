@@ -34,11 +34,11 @@ allgather_sub_ids(
   auto const local_n = part.local_n();
 
   auto local_super_ids_ = make_stack<vertex_t>(local_sub_n);
-  for (vertex_t k = 0; k < local_n; ++k) {
+  part.each_k([&](auto k) {
     if (in_sub_graph(k)) {
       local_super_ids_.push(part.to_global(k));
     }
-  }
+  });
   DEBUG_ASSERT_EQ(local_super_ids_.size(), local_sub_n);
 
   auto [TMP(), counts, displs] = mpi_basic::counts_and_displs();
@@ -328,11 +328,11 @@ allgather_fw_sub_graph_with_degrees(
     auto local_sub_outdegree = make_stack<index_t>(local_sub_n);
 
     auto const local_n = part.local_n();
-    for (vertex_t k = 0; k < local_n; ++k) {
+    part.each_k([&](auto k) {
       if (in_sub_graph(k)) {
         local_sub_outdegree.push(local_outdegree[k]);
       }
-    }
+    });
 
     mpi_basic::allgather_counts(local_sub_n, counts);
     auto const recv_count = mpi_basic::displs(counts, displs);

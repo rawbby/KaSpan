@@ -102,8 +102,9 @@ public:
    * @brief Iterate over each local index k.
    * @param consumer A function taking an index k.
    */
+  template<typename Consumer>
   constexpr void each_k(
-    auto&& consumer) const noexcept
+    Consumer&& consumer) const noexcept
   {
     for (vertex_t k = 0; k < local_n_; ++k)
       consumer(k);
@@ -113,8 +114,9 @@ public:
    * @brief Iterate over each local index k and its corresponding global index u.
    * @param consumer A function taking (local index k, global index u).
    */
+  template<typename Consumer>
   constexpr void each_ku(
-    auto&& consumer) const noexcept
+    Consumer&& consumer) const noexcept
   {
     for (vertex_t k = 0; k < local_n_; ++k)
       consumer(k, to_global(k));
@@ -124,8 +126,9 @@ public:
    * @brief Iterate over each global index u.
    * @param consumer A function taking global index u.
    */
+  template<typename Consumer>
   constexpr void each_u(
-    auto&& consumer) const noexcept
+    Consumer&& consumer) const noexcept
   {
     for (vertex_t k = 0; k < local_n_; ++k)
       consumer(to_global(k));
@@ -263,30 +266,33 @@ public:
    * @brief Iterate over each local index k.
    * @param consumer A function taking an index k.
    */
+  template<typename Consumer>
   constexpr void each_k(
-    auto&& consumer) const noexcept
+    Consumer&& consumer) const noexcept
   {
-    view().each_k(std::forward<decltype(consumer)>(consumer));
+    view().each_k(std::forward<Consumer>(consumer));
   }
 
   /**
    * @brief Iterate over each local index k and its corresponding global index u.
    * @param consumer A function taking (local index k, global index u).
    */
+  template<typename Consumer>
   constexpr void each_ku(
-    auto&& consumer) const noexcept
+    Consumer&& consumer) const noexcept
   {
-    view().each_ku(std::forward<decltype(consumer)>(consumer));
+    view().each_ku(std::forward<Consumer>(consumer));
   }
 
   /**
    * @brief Iterate over each global index u.
    * @param consumer A function taking global index u.
    */
+  template<typename Consumer>
   constexpr void each_u(
-    auto&& consumer) const noexcept
+    Consumer&& consumer) const noexcept
   {
-    view().each_u(std::forward<decltype(consumer)>(consumer));
+    view().each_u(std::forward<Consumer>(consumer));
   }
 
   [[nodiscard]] auto view() const noexcept -> explicit_continuous_part_view
