@@ -9,6 +9,17 @@ class cyclic_part_view
 {
 public:
   constexpr cyclic_part_view() noexcept = default;
+
+  constexpr cyclic_part_view(
+    vertex_t n,
+    vertex_t local_n,
+    i32      world_rank) noexcept
+    : n_(n)
+    , local_n_(local_n)
+    , world_rank_(world_rank)
+  {
+  }
+
   cyclic_part_view(
     arithmetic_concept auto n,
     arithmetic_concept auto r) noexcept
@@ -224,7 +235,7 @@ public:
 
   [[nodiscard]] auto view() const noexcept -> cyclic_part_view
   {
-    return { n_, mpi_basic::world_rank };
+    return { n_, local_n_, mpi_basic::world_rank };
   }
 
 private:

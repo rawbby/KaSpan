@@ -8,9 +8,10 @@ class single_part_view
 {
 public:
   constexpr single_part_view() noexcept = default;
-  explicit constexpr single_part_view(
-    arithmetic_concept auto n) noexcept
-    : n_(integral_cast<vertex_t>(n))
+
+  constexpr single_part_view(
+    vertex_t n) noexcept
+    : n_(n)
   {
   }
 

@@ -9,6 +9,19 @@ class block_cyclic_part_view
 {
 public:
   constexpr block_cyclic_part_view() noexcept = default;
+
+  constexpr block_cyclic_part_view(
+    vertex_t n,
+    vertex_t local_n,
+    i32      world_rank,
+    vertex_t block_size) noexcept
+    : n_(n)
+    , local_n_(local_n)
+    , world_rank_(world_rank)
+    , block_size_(block_size)
+  {
+  }
+
   block_cyclic_part_view(
     arithmetic_concept auto n,
     arithmetic_concept auto r,
@@ -95,7 +108,7 @@ public:
   [[nodiscard]] auto world_part_of(
     arithmetic_concept auto r) const noexcept -> block_cyclic_part_view
   {
-    return { n_, r, block_size_ };
+    return { n_, integral_cast<i32>(r), block_size_ };
   }
 
   /**
@@ -267,7 +280,7 @@ public:
 
   [[nodiscard]] auto view() const noexcept -> block_cyclic_part_view
   {
-    return { n_, mpi_basic::world_rank, block_size_ };
+    return { n_, local_n_, mpi_basic::world_rank, block_size_ };
   }
 
 private:

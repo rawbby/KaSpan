@@ -10,6 +10,23 @@ class explicit_sorted_part_view
 {
 public:
   constexpr explicit_sorted_part_view() noexcept = default;
+
+  constexpr explicit_sorted_part_view(
+    vertex_t        n,
+    vertex_t        local_n,
+    vertex_t        begin,
+    vertex_t        end,
+    i32             world_rank,
+    vertex_t const* part) noexcept
+    : n_(n)
+    , local_n_(local_n)
+    , begin_(begin)
+    , end_(end)
+    , world_rank_(world_rank)
+    , part_(part)
+  {
+  }
+
   constexpr explicit_sorted_part_view(
     arithmetic_concept auto n,
     arithmetic_concept auto r,
@@ -302,7 +319,7 @@ public:
 
   [[nodiscard]] auto view() const noexcept -> explicit_sorted_part_view
   {
-    return { n_, mpi_basic::world_rank, part_ };
+    return { n_, local_n_, begin_, end_, mpi_basic::world_rank, part_ };
   }
 
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t

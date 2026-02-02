@@ -9,6 +9,21 @@ class balanced_slice_part_view
 {
 public:
   constexpr balanced_slice_part_view() noexcept = default;
+
+  constexpr balanced_slice_part_view(
+    vertex_t n,
+    vertex_t local_n,
+    vertex_t begin,
+    vertex_t end,
+    i32      world_rank) noexcept
+    : n_(n)
+    , local_n_(local_n)
+    , begin_(begin)
+    , end_(end)
+    , world_rank_(world_rank)
+  {
+  }
+
   balanced_slice_part_view(
     arithmetic_concept auto n,
     arithmetic_concept auto r) noexcept
@@ -257,7 +272,7 @@ public:
 
   [[nodiscard]] auto view() const noexcept -> balanced_slice_part_view
   {
-    return { n_, mpi_basic::world_rank };
+    return { n_, local_n_, begin_, end_, mpi_basic::world_rank };
   }
 
   [[nodiscard]] constexpr auto begin() const noexcept -> vertex_t
