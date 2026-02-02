@@ -109,10 +109,6 @@ public:
     return { n_, r };
   }
 
-  /**
-   * @brief Iterate over each local index k.
-   * @param consumer A function taking an index k.
-   */
   template<typename Consumer>
   constexpr void each_k(
     Consumer&& consumer) const noexcept
@@ -121,10 +117,6 @@ public:
       consumer(k);
   }
 
-  /**
-   * @brief Iterate over each local index k and its corresponding global index u.
-   * @param consumer A function taking (local index k, global index u).
-   */
   template<typename Consumer>
   constexpr void each_ku(
     Consumer&& consumer) const noexcept
@@ -133,10 +125,6 @@ public:
       consumer(k, to_global(k));
   }
 
-  /**
-   * @brief Iterate over each global index u.
-   * @param consumer A function taking global index u.
-   */
   template<typename Consumer>
   constexpr void each_u(
     Consumer&& consumer) const noexcept
@@ -243,10 +231,6 @@ public:
     return view().world_part_of(r);
   }
 
-  /**
-   * @brief Iterate over each local index k.
-   * @param consumer A function taking an index k.
-   */
   template<typename Consumer>
   constexpr void each_k(
     Consumer&& consumer) const noexcept
@@ -254,10 +238,6 @@ public:
     view().each_k(std::forward<Consumer>(consumer));
   }
 
-  /**
-   * @brief Iterate over each local index k and its corresponding global index u.
-   * @param consumer A function taking (local index k, global index u).
-   */
   template<typename Consumer>
   constexpr void each_ku(
     Consumer&& consumer) const noexcept
@@ -265,10 +245,6 @@ public:
     view().each_ku(std::forward<Consumer>(consumer));
   }
 
-  /**
-   * @brief Iterate over each global index u.
-   * @param consumer A function taking global index u.
-   */
   template<typename Consumer>
   constexpr void each_u(
     Consumer&& consumer) const noexcept

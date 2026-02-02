@@ -37,7 +37,7 @@ forward_backward_search(
 
   auto const on_fw_message = [&](auto v) {
     auto const l = g.part.to_local(v);
-    if (!is_reached.get(l) && is_undecided.get(l)) {
+    if (is_undecided.get(l) && !is_reached.get(l)) {
       is_reached.set(l);
       active.push(l);
     }

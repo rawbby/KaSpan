@@ -162,12 +162,6 @@ free_mpi_degree_max_op()
   mpi_degree_max_op = mpi_basic::op_null;
 }
 
-#define SCC_ID_UNDECIDED_FILTER(LOCAL_N, SCC_ID)                                                                                                                                   \
-  [=](auto&& k) {                                                                                                                                                                  \
-    DEBUG_ASSERT_IN_RANGE(k, 0, LOCAL_N);                                                                                                                                          \
-    return (SCC_ID)[k] == scc_id_undecided;                                                                                                                                        \
-  }
-
 #define KASPAN_DEFAULT_INIT()                                                                                                                                                      \
   MPI_INIT();                                                                                                                                                                      \
   kaspan::init_mpi_edge_t();                                                                                                                                                       \

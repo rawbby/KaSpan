@@ -55,73 +55,48 @@ struct bidi_graph_view
   constexpr auto operator=(bidi_graph_view&&) noexcept -> bidi_graph_view&      = default;
   constexpr auto operator=(bidi_graph_view const&) noexcept -> bidi_graph_view& = default;
 
-  /**
-   * @brief Create a view of the forward graph.
-   */
   [[nodiscard]] constexpr auto fw_view() const noexcept -> graph_view
   {
     return { n, m, fw.head, fw.csr };
   }
 
-  /**
-   * @brief Create a view of the backward graph.
-   */
   [[nodiscard]] constexpr auto bw_view() const noexcept -> graph_view
   {
     return { n, m, bw.head, bw.csr };
   }
 
-  /**
-   * @brief Create a view with forward and backward directions swapped.
-   */
   [[nodiscard]] constexpr auto inverse_view() const noexcept -> bidi_graph_view
   {
     return { n, m, bw.head, bw.csr, fw.head, fw.csr };
   }
 
-  /**
-   * @brief Get the forward neighbors of vertex u.
-   */
   [[nodiscard]] constexpr auto csr_range(
     arithmetic_concept auto u) const noexcept -> std::span<vertex_t>
   {
     return fw_view().csr_range(u);
   }
 
-  /**
-   * @brief Get the backward neighbors of vertex u.
-   */
   [[nodiscard]] constexpr auto bw_csr_range(
     arithmetic_concept auto u) const noexcept -> std::span<vertex_t>
   {
     return bw_view().csr_range(u);
   }
 
-  /**
-   * @brief Iterate over each vertex u in the graph.
-   */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_u(
     Consumer&& consumer) const noexcept
   {
     fw_view().each_u(std::forward<Consumer>(consumer));
   }
 
-  /**
-   * @brief Iterate over each local vertex k.
-   */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_k(
     Consumer&& consumer) const noexcept
   {
     fw_view().each_k(std::forward<Consumer>(consumer));
   }
 
-  /**
-   * @brief Iterate over each local vertex k and its corresponding global vertex u.
-   */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_ku(
     Consumer&& consumer) const noexcept
   {
@@ -131,7 +106,7 @@ struct bidi_graph_view
   /**
    * @brief Iterate over each forward neighbor v of vertex u.
    */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_v(
     arithmetic_concept auto u,
     Consumer&&              consumer) const noexcept
@@ -142,7 +117,7 @@ struct bidi_graph_view
   /**
    * @brief Iterate over each backward neighbor v of vertex u.
    */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_bw_v(
     arithmetic_concept auto u,
     Consumer&&              consumer) const noexcept
@@ -171,8 +146,7 @@ struct bidi_graph_view
   /**
    * @brief Iterate over each forward edge (u, v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_uv(
     Consumer&& consumer) const noexcept
   {
@@ -182,8 +156,7 @@ struct bidi_graph_view
   /**
    * @brief Iterate over each forward global vertex u and its corresponding global neighbor v.
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_uv(
     arithmetic_concept auto k,
     Consumer&&              consumer) const noexcept
@@ -194,8 +167,7 @@ struct bidi_graph_view
   /**
    * @brief Iterate over each backward edge (u, v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_bw_uv(
     Consumer&& consumer) const noexcept
   {
@@ -205,8 +177,7 @@ struct bidi_graph_view
   /**
    * @brief Iterate over each backward global vertex u and its corresponding global neighbor v.
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_bw_uv(
     arithmetic_concept auto k,
     Consumer&&              consumer) const noexcept
@@ -217,8 +188,7 @@ struct bidi_graph_view
   /**
    * @brief Iterate over each forward local-global edge (k, v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_kv(
     Consumer&& consumer) const noexcept
   {
@@ -228,8 +198,7 @@ struct bidi_graph_view
   /**
    * @brief Iterate over each backward local-global edge (k, v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_bw_kv(
     Consumer&& consumer) const noexcept
   {
@@ -239,9 +208,7 @@ struct bidi_graph_view
   /**
    * @brief Iterate over each forward local-global-global edge (k, u, v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_kuv(
     Consumer&& consumer) const noexcept
   {
@@ -251,9 +218,7 @@ struct bidi_graph_view
   /**
    * @brief Iterate over each backward local-global-global edge (k, u, v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_bw_kuv(
     Consumer&& consumer) const noexcept
   {
@@ -404,7 +369,7 @@ struct bidi_graph
   /**
    * @brief Iterate over each vertex u.
    */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_u(
     Consumer&& consumer) const noexcept
   {
@@ -414,7 +379,7 @@ struct bidi_graph
   /**
    * @brief Iterate over each forward neighbor v of vertex u.
    */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_v(
     arithmetic_concept auto u,
     Consumer&&              consumer) const noexcept
@@ -425,7 +390,7 @@ struct bidi_graph
   /**
    * @brief Iterate over each backward neighbor v of vertex u.
    */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_bw_v(
     arithmetic_concept auto u,
     Consumer&&              consumer) const noexcept
@@ -454,8 +419,7 @@ struct bidi_graph
   /**
    * @brief Iterate over each forward edge (u, v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_uv(
     Consumer&& consumer) const noexcept
   {
@@ -465,8 +429,7 @@ struct bidi_graph
   /**
    * @brief Iterate over each backward edge (u, v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_bw_uv(
     Consumer&& consumer) const noexcept
   {

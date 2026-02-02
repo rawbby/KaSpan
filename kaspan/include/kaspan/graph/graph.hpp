@@ -65,7 +65,7 @@ struct graph_view
    * @brief Iterate over each vertex u in the graph.
    * @param consumer A function taking a vertex_t u.
    */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_u(
     Consumer&& consumer) const noexcept
   {
@@ -77,7 +77,7 @@ struct graph_view
    * @brief Iterate over each local vertex k.
    * @param consumer A function taking a vertex_t k.
    */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_k(
     Consumer&& consumer) const noexcept
   {
@@ -89,8 +89,7 @@ struct graph_view
    * @brief Iterate over each local vertex k and its corresponding global vertex u.
    * @param consumer A function taking (vertex_t k, vertex_t u).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_ku(
     Consumer&& consumer) const noexcept
   {
@@ -103,7 +102,7 @@ struct graph_view
    * @param u Source vertex.
    * @param consumer A function taking a vertex_t v.
    */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_v(
     arithmetic_concept auto u,
     Consumer&&              consumer) const noexcept
@@ -117,8 +116,7 @@ struct graph_view
    * @param u Source vertex.
    * @param consumer A function taking (vertex_t u, vertex_t v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_uv(
     arithmetic_concept auto u,
     Consumer&&              consumer) const noexcept
@@ -131,8 +129,7 @@ struct graph_view
    * @brief Iterate over each local-global edge (k, v).
    * @param consumer A function taking (vertex_t k, vertex_t v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_kv(
     Consumer&& consumer) const noexcept
   {
@@ -143,9 +140,7 @@ struct graph_view
    * @brief Iterate over each local-global-global edge (k, u, v).
    * @param consumer A function taking (vertex_t k, vertex_t u, vertex_t v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_kuv(
     Consumer&& consumer) const noexcept
   {
@@ -168,8 +163,7 @@ struct graph_view
    * @brief Iterate over each edge (u, v) in the graph.
    * @param consumer A function taking (vertex_t u, vertex_t v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_uv(
     Consumer&& consumer) const noexcept
   {
@@ -319,7 +313,7 @@ struct graph
   /**
    * @brief Iterate over each vertex u.
    */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_u(
     Consumer&& consumer) const noexcept
   {
@@ -329,7 +323,7 @@ struct graph
   /**
    * @brief Iterate over each local vertex k.
    */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_k(
     Consumer&& consumer) const noexcept
   {
@@ -339,8 +333,7 @@ struct graph
   /**
    * @brief Iterate over each local vertex k and its corresponding global vertex u.
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_ku(
     Consumer&& consumer) const noexcept
   {
@@ -350,7 +343,7 @@ struct graph
   /**
    * @brief Iterate over each neighbor v of vertex u.
    */
-  template<std::invocable<vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_v(
     arithmetic_concept auto u,
     Consumer&&              consumer) const noexcept
@@ -361,8 +354,7 @@ struct graph
   /**
    * @brief Iterate over each edge (u, v) starting from vertex u.
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_uv(
     arithmetic_concept auto u,
     Consumer&&              consumer) const noexcept
@@ -373,8 +365,7 @@ struct graph
   /**
    * @brief Iterate over each local-global edge (k, v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_kv(
     Consumer&& consumer) const noexcept
   {
@@ -384,9 +375,7 @@ struct graph
   /**
    * @brief Iterate over each local-global-global edge (k, u, v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_kuv(
     Consumer&& consumer) const noexcept
   {
@@ -405,8 +394,7 @@ struct graph
   /**
    * @brief Iterate over each edge (u, v).
    */
-  template<std::invocable<vertex_t,
-                          vertex_t> Consumer>
+  template<typename Consumer>
   constexpr void each_uv(
     Consumer&& consumer) const noexcept
   {

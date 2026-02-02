@@ -22,8 +22,7 @@ public:
   bits() noexcept = default;
   ~bits()         = default;
 
-  template<arithmetic_concept Size>
-  explicit bits(Size size) noexcept(false)
+  explicit bits(arithmetic_concept auto size) noexcept(false)
     : buffer(ceildiv<64>(integral_cast<u64>(size)) * sizeof(u64))
   {
     DEBUG_ASSERT_GE(size, 0);
@@ -60,9 +59,8 @@ public:
     return static_cast<u64 const*>(buffer::data());
   }
 
-  template<arithmetic_concept Size>
   void clear(
-    Size end)
+    arithmetic_concept auto end)
   {
     DEBUG_ASSERT_GE(end, 0);
     DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
@@ -71,9 +69,8 @@ public:
     bits_ops::clear(data(), end64);
   }
 
-  template<arithmetic_concept Size>
   void fill(
-    Size end)
+    arithmetic_concept auto end)
   {
     DEBUG_ASSERT_GE(end, 0);
     DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
@@ -82,9 +79,8 @@ public:
     bits_ops::fill(data(), end64);
   }
 
-  template<arithmetic_concept Index>
   [[nodiscard]] auto get(
-    Index index) const -> bool
+    arithmetic_concept auto index) const -> bool
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -93,10 +89,9 @@ public:
     return bits_ops::get(data(), index64);
   }
 
-  template<arithmetic_concept Index>
   void set(
-    Index index,
-    bool  value)
+    arithmetic_concept auto index,
+    bool                    value)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -105,9 +100,8 @@ public:
     bits_ops::set(data(), index64, value);
   }
 
-  template<arithmetic_concept Index>
   void set(
-    Index index)
+    arithmetic_concept auto index)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -116,9 +110,8 @@ public:
     bits_ops::set(data(), index64);
   }
 
-  template<arithmetic_concept Index>
   void unset(
-    Index index)
+    arithmetic_concept auto index)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -127,22 +120,22 @@ public:
     bits_ops::unset(data(), index64);
   }
 
-  template<arithmetic_concept Index = size_t>
+  template<typename Consumer>
   void each(
-    Index                        end,
-    std::invocable<Index> auto&& fn) const
+    arithmetic_concept auto end,
+    Consumer&&              fn) const
   {
     DEBUG_ASSERT_LE(end, size_);
-    bits_ops::each<Index>(data(), end, std::forward<decltype(fn)>(fn));
+    bits_ops::each(data(), end, std::forward<Consumer>(fn));
   }
 
-  template<arithmetic_concept Index = size_t>
+  template<typename Consumer>
   void set_each(
-    Index                        end,
-    std::invocable<Index> auto&& fn)
+    arithmetic_concept auto end,
+    Consumer&&              fn)
   {
     DEBUG_ASSERT_LE(end, size_);
-    bits_ops::set_each<Index>(data(), end, std::forward<decltype(fn)>(fn));
+    bits_ops::set_each(data(), end, std::forward<Consumer>(fn));
   }
 
 private:
@@ -150,18 +143,16 @@ private:
      u64 size_);
 };
 
-template<arithmetic_concept Size>
 auto
 make_bits(
-  Size size) noexcept -> bits
+  arithmetic_concept auto size) noexcept -> bits
 {
   return bits{ size };
 }
 
-template<arithmetic_concept Size>
 auto
 make_bits_clean(
-  Size size) noexcept -> bits
+  arithmetic_concept auto size) noexcept -> bits
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
@@ -179,10 +170,9 @@ make_bits_clean(
   return res;
 }
 
-template<arithmetic_concept Size>
 auto
 make_bits_filled(
-  Size size) noexcept -> bits
+  arithmetic_concept auto size) noexcept -> bits
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
