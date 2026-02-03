@@ -27,8 +27,10 @@ using vertex_t = u64;
 using vertex_t = u32;
 #endif
 
-constexpr inline auto mpi_index_t  = mpi_basic::type<index_t>;
-constexpr inline auto mpi_vertex_t = mpi_basic::type<vertex_t>;
+inline auto mpi_index_t        = mpi_basic::type<index_t>;
+inline auto mpi_vertex_t       = mpi_basic::type<vertex_t>;
+inline auto mpi_edge_t         = mpi_basic::datatype_null;
+inline auto mpi_labeled_edge_t = mpi_basic::datatype_null;
 
 struct edge_t
 {
@@ -54,7 +56,14 @@ edge_less(
   return lhs.u < rhs.u || (lhs.u == rhs.u && lhs.v < rhs.v);
 }
 
-inline mpi_basic::Datatype mpi_edge_t = mpi_basic::datatype_null;
+struct labeled_edge_t
+{
+  vertex_t u = 0;
+  vertex_t v = 0;
+  vertex_t l = 0;
+};
+static_assert(std::is_trivially_copyable_v<edge_t>);
+static_assert(std::is_trivially_destructible_v<edge_t>);
 
 inline void
 init_mpi_edge_t()
@@ -70,11 +79,32 @@ init_mpi_edge_t()
 }
 
 inline void
+init_mpi_labeled_edge_t()
+{
+  DEBUG_ASSERT_EQ(mpi_labeled_edge_t, mpi_basic::datatype_null);
+
+  constexpr int      count = 3;
+  constexpr MPI_Aint displ = 0;
+  MPI_Datatype const type  = mpi_vertex_t;
+
+  mpi_basic::type_create_struct(1, &count, &displ, &type, &mpi_labeled_edge_t);
+  mpi_basic::type_commit(&mpi_labeled_edge_t);
+}
+
+inline void
 free_mpi_edge_t()
 {
   DEBUG_ASSERT_NE(mpi_edge_t, mpi_basic::datatype_null);
   mpi_basic::type_free(&mpi_edge_t);
   mpi_edge_t = mpi_basic::datatype_null;
+}
+
+inline void
+free_mpi_labeled_edge_t()
+{
+  DEBUG_ASSERT_NE(mpi_labeled_edge_t, mpi_basic::datatype_null);
+  mpi_basic::type_free(&mpi_labeled_edge_t);
+  mpi_labeled_edge_t = mpi_basic::datatype_null;
 }
 
 } // namespace kaspan
@@ -87,6 +117,15 @@ struct mpi_type_traits<kaspan::edge_t>
   static MPI_Datatype   data_type()
   {
     return kaspan::mpi_edge_t;
+  }
+};
+template<>
+struct mpi_type_traits<kaspan::labeled_edge_t>
+{
+  static constexpr bool has_to_be_committed = false;
+  static MPI_Datatype   data_type()
+  {
+    return kaspan::mpi_labeled_edge_t;
   }
 };
 }
@@ -165,6 +204,7 @@ free_mpi_degree_max_op()
 #define KASPAN_DEFAULT_INIT()                                                                                                                                                      \
   MPI_INIT();                                                                                                                                                                      \
   kaspan::init_mpi_edge_t();                                                                                                                                                       \
+  kaspan::init_mpi_labeled_edge_t();                                                                                                                                               \
   kaspan::init_mpi_degree_t();                                                                                                                                                     \
   kaspan::init_mpi_degree_max_op();
 

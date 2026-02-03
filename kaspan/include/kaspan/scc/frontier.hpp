@@ -56,8 +56,10 @@ struct frontier_view
   {
     if constexpr (std::same_as<T, vertex_t>) {
       return part.world_rank_of(value);
+    } else if constexpr (std::same_as<T, edge_t>) {
+      return part.world_rank_of(value.u);
     } else {
-      static_assert(std::same_as<T, edge_t>);
+      static_assert(std::same_as<T, labeled_edge_t>);
       return part.world_rank_of(value.u);
     }
   }
@@ -67,10 +69,14 @@ struct frontier_view
   {
     if constexpr (std::same_as<T, vertex_t>) {
       recv_buffer->push_back(value);
-    } else {
-      static_assert(std::same_as<T, edge_t>);
+    } else if constexpr (std::same_as<T, edge_t>) {
       recv_buffer->push_back(value.u);
       recv_buffer->push_back(value.v);
+    } else {
+      static_assert(std::same_as<T, labeled_edge_t>);
+      recv_buffer->push_back(value.u);
+      recv_buffer->push_back(value.v);
+      recv_buffer->push_back(value.l);
     }
   }
 
@@ -79,10 +85,14 @@ struct frontier_view
   {
     if constexpr (std::same_as<T, vertex_t>) {
       recv_buffer->unsafe_push_back(value);
-    } else {
-      static_assert(std::same_as<T, edge_t>);
+    } else if constexpr (std::same_as<T, edge_t>) {
       recv_buffer->unsafe_push_back(value.u);
       recv_buffer->unsafe_push_back(value.v);
+    } else {
+      static_assert(std::same_as<T, labeled_edge_t>);
+      recv_buffer->unsafe_push_back(value.u);
+      recv_buffer->unsafe_push_back(value.v);
+      recv_buffer->unsafe_push_back(value.l);
     }
   }
 
@@ -94,10 +104,14 @@ struct frontier_view
   {
     if constexpr (std::same_as<T, vertex_t>) {
       send_buffer->push_back(value);
-    } else {
-      static_assert(std::same_as<T, edge_t>);
+    } else if constexpr (std::same_as<T, edge_t>) {
       send_buffer->push_back(value.u);
       send_buffer->push_back(value.v);
+    } else {
+      static_assert(std::same_as<T, labeled_edge_t>);
+      send_buffer->push_back(value.u);
+      send_buffer->push_back(value.v);
+      send_buffer->push_back(value.l);
     }
     ++send_counts[integral_cast<i32>(rank)];
   }
@@ -111,10 +125,14 @@ struct frontier_view
   {
     if constexpr (std::same_as<T, vertex_t>) {
       send_buffer->push_back(value);
-    } else {
-      static_assert(std::same_as<T, edge_t>);
+    } else if constexpr (std::same_as<T, edge_t>) {
       send_buffer->push_back(value.u);
       send_buffer->push_back(value.v);
+    } else {
+      static_assert(std::same_as<T, labeled_edge_t>);
+      send_buffer->push_back(value.u);
+      send_buffer->push_back(value.v);
+      send_buffer->push_back(value.l);
     }
     ++send_counts[integral_cast<i32>(rank)];
   }
@@ -198,13 +216,21 @@ struct frontier_view
       auto const u = recv_buffer->back();
       recv_buffer->pop_back();
       return u;
-    } else {
-      static_assert(std::same_as<T, edge_t>);
+    } else if constexpr (std::same_as<T, edge_t>) {
       auto const v = recv_buffer->back();
       recv_buffer->pop_back();
       auto const u = recv_buffer->back();
       recv_buffer->pop_back();
       return edge_t{ u, v };
+    } else {
+      static_assert(std::same_as<T, labeled_edge_t>);
+      auto const l = recv_buffer->back();
+      recv_buffer->pop_back();
+      auto const v = recv_buffer->back();
+      recv_buffer->pop_back();
+      auto const u = recv_buffer->back();
+      recv_buffer->pop_back();
+      return labeled_edge_t{ u, v, l };
     }
   }
 
@@ -214,7 +240,7 @@ struct frontier_view
   {
     constexpr auto element_count = sizeof(T) / sizeof(vertex_t);
 
-    auto const mpi_type = std::is_same_v<T, vertex_t> ? mpi_vertex_t : mpi_edge_t;
+    auto const mpi_type = std::is_same_v<T, vertex_t> ? mpi_vertex_t : (std::is_same_v<T, edge_t> ? mpi_edge_t : mpi_labeled_edge_t);
 
     auto const send_count = mpi_basic::displs(send_counts, send_displs);
     DEBUG_ASSERT_EQ(send_count * element_count, send_buffer->size());
@@ -341,7 +367,9 @@ struct frontier
     requires(std::same_as<T,
                           vertex_t> ||
              std::same_as<T,
-                          edge_t>)
+                          edge_t> ||
+             std::same_as<T,
+                          labeled_edge_t>)
   auto view() -> frontier_view<T>
   {
     return { &send_buffer, &recv_buffer, send_counts, send_displs, recv_counts, recv_displs };
