@@ -21,8 +21,8 @@ class bits_accessor final
 {
 public:
   explicit bits_accessor(
-    void* data,
-    arithmetic_concept auto  size)
+    void*                   data,
+    arithmetic_concept auto size)
     : data_(size == 0 ? nullptr : data)
   {
     DEBUG_ASSERT_IN_RANGE_INCLUSIVE(size, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
@@ -83,7 +83,7 @@ public:
 
   void set(
     arithmetic_concept auto index,
-    bool  value)
+    bool                    value)
   {
     DEBUG_ASSERT_GE(index, 0);
     DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
@@ -114,8 +114,8 @@ public:
 
   template<typename Consumer>
   void each(
-    arithmetic_concept auto                        end,
-    Consumer&& fn) const
+    arithmetic_concept auto end,
+    Consumer&&              fn) const
   {
     DEBUG_ASSERT_LE(end, size_);
     bits_ops::each(data(), end, std::forward<Consumer>(fn));
@@ -124,7 +124,7 @@ public:
   template<typename Consumer>
   void set_each(
     arithmetic_concept auto end,
-    Consumer&& fn)
+    Consumer&&              fn)
   {
     DEBUG_ASSERT_LE(end, size_);
     bits_ops::set_each(data(), end, std::forward<Consumer>(fn));
@@ -138,8 +138,8 @@ private:
 
 auto
 borrow_bits(
-  void** memory,
-  arithmetic_concept auto   size) noexcept -> bits_accessor
+  void**                  memory,
+  arithmetic_concept auto size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
@@ -149,8 +149,8 @@ borrow_bits(
 
 auto
 borrow_bits_clean(
-  void** memory,
-  arithmetic_concept auto   size) noexcept -> bits_accessor
+  void**                  memory,
+  arithmetic_concept auto size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
@@ -160,8 +160,8 @@ borrow_bits_clean(
 
 auto
 borrow_bits_filled(
-  void** memory,
-  arithmetic_concept auto   size) noexcept -> bits_accessor
+  void**                  memory,
+  arithmetic_concept auto size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
   DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
