@@ -11,6 +11,7 @@
 #include <kaspan/memory/accessor/bits.hpp>
 #include <kaspan/scc/allgather_sub_graph.hpp>
 #include <kaspan/scc/cache_multi_pivot_search.hpp>
+#include <kaspan/scc/cache_pivot_search.hpp>
 #include <kaspan/scc/multi_pivot_search.hpp>
 #include <kaspan/scc/pivot_search.hpp>
 #include <kaspan/scc/trim_1_local.hpp>
@@ -59,12 +60,13 @@ scc(
   if (global_decided == graph.part.n()) return;
 
   KASPAN_STATISTIC_PUSH("forward_backward_search");
-  prev_local_decided  = local_decided;
-  prev_global_decided = global_decided;
-  auto front          = frontier{ graph.part.local_n() };
-  auto active         = make_array<vertex_t>(graph.part.local_n());
-  auto is_reached     = make_bits(graph.part.local_n());
-  forward_backward_search(graph, front.view<vertex_t>(), active.data(), is_reached.data(), is_undecided.data(), pivot, on_decision);
+  prev_local_decided    = local_decided;
+  prev_global_decided   = global_decided;
+  auto front            = frontier{ graph.part.local_n() };
+  auto active           = make_array<vertex_t>(graph.part.local_n());
+  auto is_reached       = make_bits(graph.part.local_n());
+  auto is_reached_cache = make_bits(cache_size);
+  cache_forward_backward_search(graph, front, active.data(), is_reached.data(), is_undecided.data(), pivot, on_decision, cache_index.view(), is_reached_cache.data(), cache_size);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
@@ -87,10 +89,7 @@ scc(
   prev_global_decided = global_decided;
   auto label          = make_array<vertex_t>(graph.part.local_n());
   auto label_cache    = make_array<vertex_t>(cache_size);
-  // initialize cache with worst values so first improvement is always sent
-  for (vertex_t i = 0; i < cache_size; ++i)
-    label_cache[i] = std::numeric_limits<vertex_t>::max();
-  auto has_changed = make_bits_clean(graph.part.local_n());
+  auto has_changed    = make_bits_clean(graph.part.local_n());
   do {
     cache_rot_label_search(
       graph, front, label.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), on_decision, cache_index.view(), label_cache.data());
