@@ -7,7 +7,6 @@
 #include <kaspan/test/fuzzy.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
-#include <algorithm>
 #include <chrono>
 #include <iomanip>
 #include <iostream>

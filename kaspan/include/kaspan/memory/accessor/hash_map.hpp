@@ -453,10 +453,12 @@ public:
     for (u64 cache_line = 0; cache_line < end; ++cache_line) {
       T* keys = m_data + cache_line * line_values;
 #ifdef __AVX2__
-      if (auto const avx2_mask = avx2_cmp_keys<T>(avx2_null, avx2_load_keys(keys))) c += std::popcount(static_cast<u32>(avx2_mask));
+      auto const avx2_mask = avx2_cmp_keys<T>(avx2_null, avx2_load_keys(keys));
+      ASSERT_GE(line_pairs, std::popcount(static_cast<u32>(avx2_mask)) / sizeof(T));
+      c += line_pairs - (std::popcount(static_cast<u32>(avx2_mask)) / sizeof(T));
 #else
       for (u8 i = 0; i < line_pairs; ++i) {
-        if (keys[i] == null_key) ++c;
+        if (keys[i] != null_key) ++c;
       }
 #endif
     }
