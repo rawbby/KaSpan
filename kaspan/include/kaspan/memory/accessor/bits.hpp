@@ -9,115 +9,96 @@
 #include <kaspan/util/math.hpp>
 #include <kaspan/util/pp.hpp>
 
-#include <concepts>
 #include <cstring>
-#include <limits>
 #include <utility>
 
 namespace kaspan {
 
-class bits final : public buffer
+class bits final
 {
 public:
   bits() noexcept = default;
-  ~bits()         = default;
-
   explicit bits(arithmetic_concept auto size) noexcept(false)
-    : buffer(ceildiv<64>(integral_cast<u64>(size)) * sizeof(u64))
+    : data_(line_alloc<u64>(ceildiv<64>(integral_cast<u64>(size)) * sizeof(u64)))
   {
-    DEBUG_ASSERT_GE(size, 0);
-    DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
     IF(KASPAN_DEBUG, size_ = round_up<64>(integral_cast<u64>(size)));
+  }
+
+  ~bits()
+  {
+    line_free(data_);
   }
 
   bits(bits const&) = delete;
   bits(
     bits&& rhs) noexcept
-    : buffer(std::move(rhs))
+    : data_(rhs.data_)
   {
-    IF(KASPAN_DEBUG, size_ = rhs.size_);
-    IF(KASPAN_DEBUG, rhs.size_ = 0);
+    rhs.data_ = nullptr;
+    IF(KASPAN_DEBUG, size_ = rhs.size_; rhs.size_ = 0);
   }
 
   auto operator=(bits const&) -> bits& = delete;
   auto operator=(
     bits&& rhs) noexcept -> bits&
   {
-    buffer::operator=(std::move(rhs));
-    IF(KASPAN_DEBUG, size_ = rhs.size_);
-    IF(KASPAN_DEBUG, rhs.size_ = 0);
+    data_     = rhs.data_;
+    rhs.data_ = nullptr;
+    IF(KASPAN_DEBUG, size_ = rhs.size_; rhs.size_ = 0);
     return *this;
   }
 
   [[nodiscard]] auto data() -> u64*
   {
-    return static_cast<u64*>(buffer::data());
+    return data_;
   }
 
   [[nodiscard]] auto data() const -> u64 const*
   {
-    return static_cast<u64 const*>(buffer::data());
+    return data_;
   }
 
   void clear(
     arithmetic_concept auto end)
   {
-    DEBUG_ASSERT_GE(end, 0);
-    DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
-    auto const end64 = integral_cast<u64>(end);
-    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end64, 0, size_);
-    bits_ops::clear(data(), end64);
+    DEBUG_ASSERT_LE(end, size_);
+    bits_ops::clear(data(), end);
   }
 
   void fill(
     arithmetic_concept auto end)
   {
-    DEBUG_ASSERT_GE(end, 0);
-    DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
-    auto const end64 = integral_cast<u64>(end);
-    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end64, 0, size_);
-    bits_ops::fill(data(), end64);
+    DEBUG_ASSERT_LE(end, size_);
+    bits_ops::fill(data(), end);
   }
 
   [[nodiscard]] auto get(
     arithmetic_concept auto index) const -> bool
   {
-    DEBUG_ASSERT_GE(index, 0);
-    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = integral_cast<u64>(index);
-    DEBUG_ASSERT_IN_RANGE(index64, 0, size_);
-    return bits_ops::get(data(), index64);
+    DEBUG_ASSERT_LT(index, size_);
+    return bits_ops::get(data(), index);
   }
 
   void set(
     arithmetic_concept auto index,
     bool                    value)
   {
-    DEBUG_ASSERT_GE(index, 0);
-    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = integral_cast<u64>(index);
-    DEBUG_ASSERT_IN_RANGE(index64, 0, size_);
-    bits_ops::set(data(), index64, value);
+    DEBUG_ASSERT_LT(index, size_);
+    bits_ops::set(data(), index, value);
   }
 
   void set(
     arithmetic_concept auto index)
   {
-    DEBUG_ASSERT_GE(index, 0);
-    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = integral_cast<u64>(index);
-    DEBUG_ASSERT_IN_RANGE(index64, 0, size_);
-    bits_ops::set(data(), index64);
+    DEBUG_ASSERT_LT(index, size_);
+    bits_ops::set(data(), index);
   }
 
   void unset(
     arithmetic_concept auto index)
   {
-    DEBUG_ASSERT_GE(index, 0);
-    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = integral_cast<u64>(index);
-    DEBUG_ASSERT_IN_RANGE(index64, 0, size_);
-    bits_ops::unset(data(), index64);
+    DEBUG_ASSERT_LT(index, size_);
+    bits_ops::unset(data(), index);
   }
 
   template<typename Consumer>
@@ -139,8 +120,9 @@ public:
   }
 
 private:
+  u64* data_ = nullptr;
   IF(KASPAN_DEBUG,
-     u64 size_);
+     u64 size_ = 0);
 };
 
 auto
@@ -154,19 +136,8 @@ auto
 make_bits_clean(
   arithmetic_concept auto size) noexcept -> bits
 {
-  DEBUG_ASSERT_GE(size, 0);
-  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = integral_cast<u64>(size);
-  bits       res{ size64 };
-  res.clear(round_up<64>(size64));
-
-  if constexpr (KASPAN_DEBUG) {
-    bits_ops::each(res.data(), size64, [](u64 /* i */) { ASSERT(false, "this code should be unreachable"); });
-    for (u64 i = 0; i < size64; ++i) {
-      ASSERT_EQ(res.get(i), false);
-    }
-  }
-
+  bits res{ size };
+  res.clear(size);
   return res;
 }
 
@@ -174,20 +145,8 @@ auto
 make_bits_filled(
   arithmetic_concept auto size) noexcept -> bits
 {
-  DEBUG_ASSERT_GE(size, 0);
-  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = integral_cast<u64>(size);
-  bits       res{ size64 };
-  res.fill(round_up<64>(size64));
-
-  if constexpr (KASPAN_DEBUG) {
-    u64 c = 0;
-    bits_ops::each(res.data(), size64, [&c](u64 i) { ASSERT_EQ(i, c++); });
-    for (u64 i = 0; i < size64; ++i) {
-      ASSERT_EQ(res.get(i), true);
-    }
-  }
-
+  bits res{ size };
+  res.fill(size);
   return res;
 }
 

@@ -4,6 +4,7 @@
 #include <kaspan/util/arithmetic.hpp>
 
 #include <bit>
+#include <bitset>
 #include <cstring>
 
 namespace kaspan::bits_ops {
@@ -52,9 +53,9 @@ set(
 {
   DEBUG_ASSERT_GE(index, 0);
   DEBUG_ASSERT_NE(data, nullptr);
-  auto const idx = index >> 6;
-  auto const msk = static_cast<u64>(1) << (index & 0b111111);
-  data[idx]      = data[idx] & ~msk | -static_cast<u64>(f) & msk;
+  auto const mask  = static_cast<u64>(1) << (index & 0b111111);
+  auto&      value = data[index >> 6];
+  value            = value & ~mask | -static_cast<u64>(f) & mask;
 }
 
 [[gnu::always_inline]] constexpr void
@@ -75,6 +76,49 @@ unset(
   DEBUG_ASSERT_GE(index, 0);
   DEBUG_ASSERT_NE(data, nullptr);
   data[index >> 6] &= ~(static_cast<u64>(1) << (index & 0b111111));
+}
+
+[[gnu::always_inline]] constexpr auto
+getset(
+  u64*                    data,
+  arithmetic_concept auto index,
+  bool                    f) noexcept -> bool
+{
+  DEBUG_ASSERT_GE(index, 0);
+  DEBUG_ASSERT_NE(data, nullptr);
+  auto const mask   = static_cast<u64>(1) << (index & 0b111111);
+  auto&      value  = data[index >> 6];
+  auto const result = value & mask;
+  value             = value & ~mask | -static_cast<u64>(f) & mask;
+  return result;
+}
+
+[[gnu::always_inline]] constexpr auto
+getset(
+  u64*                    data,
+  arithmetic_concept auto index) noexcept -> bool
+{
+  DEBUG_ASSERT_GE(index, 0);
+  DEBUG_ASSERT_NE(data, nullptr);
+  auto const mask   = static_cast<u64>(1) << (index & 0b111111);
+  auto&      value  = data[index >> 6];
+  auto const result = value & mask;
+  value |= mask;
+  return result;
+}
+
+[[gnu::always_inline]] constexpr auto
+getunset(
+  u64*                    data,
+  arithmetic_concept auto index) noexcept -> bool
+{
+  DEBUG_ASSERT_GE(index, 0);
+  DEBUG_ASSERT_NE(data, nullptr);
+  auto const mask   = static_cast<u64>(1) << (index & 0b111111);
+  auto&      value  = data[index >> 6];
+  auto const result = value & mask;
+  value &= ~mask;
+  return result;
 }
 
 [[gnu::always_inline]] inline void

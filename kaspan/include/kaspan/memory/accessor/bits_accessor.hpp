@@ -21,15 +21,11 @@ class bits_accessor final
 {
 public:
   explicit bits_accessor(
-    void*                   data,
-    arithmetic_concept auto size)
-    : data_(size == 0 ? nullptr : data)
+    void*                                    data,
+    [[maybe_unused]] arithmetic_concept auto size)
+    : data_(data)
   {
-    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(size, std::numeric_limits<u64>::min(), std::numeric_limits<u64>::max());
-    IF(OR(KASPAN_DEBUG, KASPAN_MEMCHECK), auto const size64 = integral_cast<u64>(size));
-    DEBUG_ASSERT((size == 0 && data_ == nullptr) || (size > 0 && data_ != nullptr));
-    IF(KASPAN_DEBUG, size_ = size64);
-    KASPAN_MEMCHECK_CHECK_MEM_IS_ADDRESSABLE(data, round_up<64>(size64) / 8);
+    IF(KASPAN_DEBUG, size_ = integral_cast<u64>(size));
   }
 
   bits_accessor()  = default;
@@ -54,62 +50,66 @@ public:
   void clear(
     arithmetic_concept auto end)
   {
-    DEBUG_ASSERT_GE(end, 0);
-    DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
-    auto const end64 = integral_cast<u64>(end);
-    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end64, 0, size_);
-    bits_ops::clear(data(), end64);
+    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, 0, size_);
+    bits_ops::clear(data(), end);
   }
 
   void fill(
     arithmetic_concept auto end)
   {
-    DEBUG_ASSERT_GE(end, 0);
-    DEBUG_ASSERT_LE(end, std::numeric_limits<u64>::max());
-    auto const end64 = integral_cast<u64>(end);
-    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end64, 0, size_);
-    bits_ops::fill(data(), end64);
+    DEBUG_ASSERT_IN_RANGE_INCLUSIVE(end, 0, size_);
+    bits_ops::fill(data(), end);
   }
 
   [[nodiscard]] auto get(
     arithmetic_concept auto index) const -> bool
   {
-    DEBUG_ASSERT_GE(index, 0);
-    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = integral_cast<u64>(index);
-    DEBUG_ASSERT_LT(index64, size_);
-    return bits_ops::get(data(), index64);
+    DEBUG_ASSERT_LT(index, size_);
+    return bits_ops::get(data(), index);
   }
 
   void set(
     arithmetic_concept auto index,
     bool                    value)
   {
-    DEBUG_ASSERT_GE(index, 0);
-    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = integral_cast<u64>(index);
-    DEBUG_ASSERT_LT(index64, size_);
-    bits_ops::set(data(), index64, value);
+    DEBUG_ASSERT_LT(index, size_);
+    bits_ops::set(data(), index, value);
   }
 
   void set(
     arithmetic_concept auto index)
   {
-    DEBUG_ASSERT_GE(index, 0);
-    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = integral_cast<u64>(index);
-    DEBUG_ASSERT_LT(index64, size_);
-    bits_ops::set(data(), index64);
+    DEBUG_ASSERT_LT(index, size_);
+    bits_ops::set(data(), index);
   }
 
   void unset(
     arithmetic_concept auto index)
   {
-    DEBUG_ASSERT_GE(index, 0);
-    DEBUG_ASSERT_LE(index, std::numeric_limits<u64>::max());
-    auto const index64 = integral_cast<u64>(index);
-    DEBUG_ASSERT_LT(index64, size_);
-    bits_ops::unset(data(), index64);
+    DEBUG_ASSERT_LT(index, size_);
+    bits_ops::unset(data(), index);
+  }
+
+  auto getset(
+    arithmetic_concept auto index,
+    bool                    value) -> bool
+  {
+    DEBUG_ASSERT_LT(index, size_);
+    return bits_ops::getset(data(), index, value);
+  }
+
+  auto getset(
+    arithmetic_concept auto index) -> bool
+  {
+    DEBUG_ASSERT_LT(index, size_);
+    return bits_ops::getset(data(), index);
+  }
+
+  auto getunset(
+    arithmetic_concept auto index) -> bool
+  {
+    DEBUG_ASSERT_LT(index, size_);
+    return bits_ops::getunset(data(), index);
   }
 
   template<typename Consumer>
@@ -142,9 +142,7 @@ borrow_bits(
   arithmetic_concept auto size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
-  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = integral_cast<u64>(size);
-  return bits_accessor{ borrow_array<u64>(memory, ceildiv<64>(size64)), size64 };
+  return bits_accessor{ borrow_array<u64>(memory, ceildiv<64>(size)), size };
 }
 
 auto
@@ -153,9 +151,7 @@ borrow_bits_clean(
   arithmetic_concept auto size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
-  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = integral_cast<u64>(size);
-  return bits_accessor{ borrow_array_clean<u64>(memory, ceildiv<64>(size64)), size64 };
+  return bits_accessor{ borrow_array_clean<u64>(memory, ceildiv<64>(size)), size };
 }
 
 auto
@@ -164,9 +160,7 @@ borrow_bits_filled(
   arithmetic_concept auto size) noexcept -> bits_accessor
 {
   DEBUG_ASSERT_GE(size, 0);
-  DEBUG_ASSERT_LE(size, std::numeric_limits<u64>::max());
-  auto const size64 = integral_cast<u64>(size);
-  return bits_accessor{ borrow_array_filled<u64>(memory, ceildiv<64>(size64)), size64 };
+  return bits_accessor{ borrow_array_filled<u64>(memory, ceildiv<64>(size)), size };
 }
 
 auto

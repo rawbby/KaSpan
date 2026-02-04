@@ -92,16 +92,8 @@ scc(
     label_cache[i] = std::numeric_limits<vertex_t>::max();
   auto has_changed = make_bits_clean(graph.part.local_n());
   do {
-    cache_rot_label_search(graph,
-                           front.view<labeled_edge_t>(),
-                           label.data(),
-                           active.data(),
-                           is_reached.data(),
-                           has_changed.data(),
-                           is_undecided.data(),
-                           on_decision,
-                           cache_index.view(),
-                           label_cache.data());
+    cache_rot_label_search(
+      graph, front, label.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), on_decision, cache_index.view(), label_cache.data());
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   } while (global_decided < graph.part.n());
   KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);

@@ -15,7 +15,7 @@ template<part_view_concept Part = single_part_view>
 void
 cache_label_search(
   bidi_graph_part_view<Part>    g,
-  frontier_view<labeled_edge_t> front,
+  frontier&                     front,
   vertex_t*                     label_storage,
   vertex_t*                     active_storage,
   u64*                          in_active_storage,
@@ -32,6 +32,8 @@ cache_label_search(
   auto  in_active    = view_bits(in_active_storage, g.part.local_n());
   auto  has_changed  = view_bits(has_changed_storage, g.part.local_n());
   auto  is_undecided = view_bits(is_undecided_storage, g.part.local_n());
+  auto  fw_front     = front.view<labeled_edge_t>();
+  auto  bw_front     = front.view<edge_t>();
 
   auto const bit_storage_count = ceildiv<64>(g.part.local_n());
 
@@ -52,48 +54,48 @@ cache_label_search(
 
   auto const on_fw_message = [&](labeled_edge_t e) {
     auto const l = g.part.to_local(e.u);
-    if (is_undecided.get(l) && e.l < label[l]) {
-      label[l] = e.l;
-      if (!in_active.get(l)) {
-        in_active.set(l);
-        active.push(l);
-        has_changed.set(l);
+    if (is_undecided.get(l)) {
+      if (e.v < label[l]) {
+        label[l] = e.v;
+        if (!in_active.get(l)) {
+          in_active.set(l);
+          active.push(l);
+          has_changed.set(l);
+        }
       }
     }
   };
   auto const on_extern_fw_message = [&](labeled_edge_t e) {
-    on_fw_message(e);
     DEBUG_ASSERT(!g.part.has_local(e.l));
-    auto const i = cache_index.get(e.l);
-    if (e.v < label_cache[i]) label_cache[i] = e.v;
+    on_fw_message(e);
+    auto& cache_label = label_cache[cache_index.get(e.l)];
+    if (e.v < cache_label) {
+      cache_label = e.v;
+    }
   };
 
   do {
     while (!active.empty()) {
       auto const k       = active.pop_back();
       auto const label_k = label[k];
-
       g.each_v(k, [&](auto v) {
         if (label_k < map(v) && g.part.has_local(v)) on_fw_message(labeled_edge_t{ v, label_k, g.part.to_global(k) });
       });
-
       in_active.unset(k);
     }
 
     has_changed.each(g.part.local_n(), [&](auto&& k) {
       auto const label_k = label[k];
       g.each_v(k, [&](auto v) {
-        if (label_k <= map(v) && !g.part.has_local(v)) {    // we need to add eq so the cache is ensured at the target
-          if (label_k <= label_cache[cache_index.get(v)]) { // we need to add eq so the cache is ensured at the target
-            label_cache[cache_index.get(v)] = label_k;
-            front.push(g.part, labeled_edge_t{ v, label_k, g.part.to_global(k) });
-          }
+        if (label_k <= map(v) && !g.part.has_local(v) && label_k <= label_cache[cache_index.get(v)]) {
+          label_cache[cache_index.get(v)] = label_k;
+          fw_front.push(g.part, labeled_edge_t{ v, label_k, g.part.to_global(k) });
         }
       });
     });
     memset(has_changed_storage, 0x00, bit_storage_count * sizeof(u64));
 
-  } while (front.comm(g.part, on_extern_fw_message));
+  } while (fw_front.comm(g.part, on_extern_fw_message));
 
   // backward search
 
@@ -109,38 +111,16 @@ cache_label_search(
 
   std::memcpy(has_changed_storage, in_active_storage, bit_storage_count * sizeof(u64));
 
-  auto const on_bw_message = [&](labeled_edge_t e) {
-    auto const [v, label_ku, _] = e;
-    auto const l                = g.part.to_local(v);
-
-    if (is_undecided.get(l)) {
-      if (label[l] == label_ku) {
-        is_undecided.unset(l);
-        on_decision(l, unmap(label_ku));
-        if (!in_active.get(l)) {
-          in_active.set(l);
-          active.push(l);
-          has_changed.set(l);
-        }
+  auto const on_bw_message = [&](edge_t e) {
+    auto const l = g.part.to_local(e.u);
+    if (is_undecided.get(l) && label[l] == e.v) {
+      is_undecided.unset(l);
+      on_decision(l, unmap(e.v));
+      if (!in_active.get(l)) {
+        in_active.set(l);
+        active.push(l);
+        has_changed.set(l);
       }
-    }
-  };
-  auto const on_extern_bw_message = [&](labeled_edge_t e) {
-    auto const [v, label_ku, _] = e;
-    auto const l                = g.part.to_local(v);
-
-    if (is_undecided.get(l)) {
-      if (label[l] == label_ku) {
-        is_undecided.unset(l);
-        on_decision(l, unmap(label_ku));
-        if (!in_active.get(l)) {
-          in_active.set(l);
-          active.push(l);
-          has_changed.set(l);
-        }
-      }
-      // DEBUG_ASSERT(!g.part.has_local(e.l));
-      // label_cache[cache_index.get(e.l)] = std::min(label_cache[cache_index.get(e.l)], label_ku);
     }
   };
 
@@ -148,34 +128,30 @@ cache_label_search(
     while (!active.empty()) {
       auto const k       = active.pop_back();
       auto const label_k = label[k];
-
       g.each_bw_v(k, [&](auto v) {
-        if (label_k < map(v) && g.part.has_local(v)) on_bw_message(labeled_edge_t{ v, label_k, g.part.to_global(k) });
+        if (label_k < map(v) && g.part.has_local(v)) on_bw_message(edge_t{ v, label_k });
       });
-
       in_active.unset(k);
     }
 
     has_changed.each(g.part.local_n(), [&](auto k) {
       auto const label_k = label[k];
       g.each_bw_v(k, [&](auto v) {
-        if (label_k < map(v) && !g.part.has_local(v)) {
-          if (label_k == label_cache[cache_index.get(v)]) { // if cache is globally right this could be ==
-            front.push(g.part, labeled_edge_t{ v, label_k, g.part.to_global(k) });
-          }
+        if (label_k < map(v) && !g.part.has_local(v) && label_k == label_cache[cache_index.get(v)]) {
+          bw_front.push(g.part, edge_t{ v, label_k });
         }
       });
     });
     memset(has_changed_storage, 0x00, bit_storage_count * sizeof(u64));
 
-  } while (front.comm(g.part, on_extern_bw_message));
+  } while (bw_front.comm(g.part, on_bw_message));
 }
 
 template<part_view_concept Part = single_part_view>
 void
 cache_rot_label_search(
   bidi_graph_part_view<Part>    g,
-  frontier_view<labeled_edge_t> front,
+  frontier& front,
   vertex_t*                     label_storage,
   vertex_t*                     active_storage,
   u64*                          in_active_storage,
@@ -198,7 +174,7 @@ template<part_view_concept Part = single_part_view>
 void
 cache_label_search(
   bidi_graph_part_view<Part>    g,
-  frontier_view<labeled_edge_t> front,
+  frontier& front,
   vertex_t*                     label_storage,
   vertex_t*                     active_storage,
   u64*                          in_active_storage,
