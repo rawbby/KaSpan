@@ -108,8 +108,6 @@ main(
     scc_dist(&hpc_data.g, &hpc_data.comm, &hpc_data.q, hpc_data.g.max_degree_vert, scc_id.data());
     KASPAN_STATISTIC_POP();
 
-    KASPAN_STATISTIC_ADD("memory_after_scc", get_resident_set_bytes());
-
     KASPAN_CALLGRIND_STOP_INSTRUMENTATION();
   }
 }

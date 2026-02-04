@@ -14,7 +14,7 @@
 #endif
 
 namespace kaspan {
-namespace index_map_avx2 {
+namespace hash_map_avx2 {
 #ifdef __AVX2__
 
 /// loads a key into an avx2 register as [key, key, key, ...]
@@ -110,7 +110,7 @@ public:
       T* vals = keys + line_pairs;
 
 #ifdef __AVX2__
-      using namespace index_map_avx2;
+      using namespace hash_map_avx2;
       auto const avx2_key  = avx2_load_key(key);
       auto const avx2_keys = avx2_load_keys(keys);
       if (auto const avx2_mask = avx2_cmp_keys<T>(avx2_key, avx2_keys)) {
@@ -203,7 +203,7 @@ public:
       T* vals = keys + line_pairs;
 
 #ifdef __AVX2__
-      using namespace index_map_avx2;
+      using namespace hash_map_avx2;
       auto const avx2_key  = avx2_load_key(key);
       auto const avx2_keys = avx2_load_keys(keys);
       if (auto const avx2_mask = avx2_cmp_keys<T>(avx2_key, avx2_keys)) {

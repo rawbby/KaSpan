@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (NOT EXISTS "${CMAKE_BINARY_DIR}/bootstrap.cmake")
     file(DOWNLOAD
-            "https://raw.githubusercontent.com/rawbby/cmake_utilities/refs/tags/v2.4.1/bootstrap.cmake"
+            "https://raw.githubusercontent.com/rawbby/cmake_utilities/refs/tags/v2.4.2/bootstrap.cmake"
             "${CMAKE_BINARY_DIR}/bootstrap.cmake")
 endif ()
 
