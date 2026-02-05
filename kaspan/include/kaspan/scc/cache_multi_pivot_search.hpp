@@ -23,7 +23,7 @@ update_min_cache(
     val_slot = val;
     on_update();
   };
-  auto const on_key = [&](auto /* key_ */, auto& val_slot) {
+  auto const on_key = [&](auto& val_slot) {
     if (val <= val_slot) {
       val_slot = val;
       on_update();

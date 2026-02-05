@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kaspan/debug/assert.hpp>
+#include <kaspan/memory/accessor/hash_util.hpp>
 #include <kaspan/memory/line.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/hash.hpp>
@@ -10,80 +11,7 @@
 #include <cstring>
 #include <optional>
 
-#ifdef __AVX2__
-#include <immintrin.h>
-#endif
-
 namespace kaspan {
-
-#ifdef __AVX2__
-namespace hash_map_avx2 {
-
-template<integral_c T>
-[[nodiscard]] auto
-avx2_set1_key(
-  T key) noexcept -> __m256i
-{
-  if constexpr (sizeof(T) == 8) return _mm256_set1_epi64(std::bit_cast<i64>(key));
-  else if constexpr (sizeof(T) == 4) return _mm256_set1_epi32(std::bit_cast<i32>(key));
-  else if constexpr (sizeof(T) == 2) return _mm256_set1_epi16(std::bit_cast<i16>(key));
-  else return _mm256_set1_epi8(std::bit_cast<i8>(key));
-}
-
-template<integral_c T>
-[[nodiscard]] auto
-avx2_load_keys(
-  T const* keys) noexcept -> __m256i
-{
-  auto const raw_keys = static_cast<void const*>(keys);
-  return _mm256_load_si256(static_cast<__m256i const*>(raw_keys));
-}
-
-template<integral_c T>
-[[nodiscard]] auto
-avx2_cmpeq_keys(
-  __m256i key,
-  __m256i keys) noexcept
-{
-#if defined(__AVX512F__)
-  if constexpr (sizeof(T) == 8) return _mm256_cmpeq_epi64_mask(keys, key);
-  else if constexpr (sizeof(T) == 4) return _mm256_cmpeq_epi32_mask(keys, key);
-  else if constexpr (sizeof(T) == 2) return _mm256_cmpeq_epi16_mask(keys, key);
-  else return _mm256_cmpeq_epi8_mask(keys, key);
-#else
-  if constexpr (sizeof(T) == 8) return _mm256_movemask_epi8(_mm256_cmpeq_epi64(keys, key));
-  else if constexpr (sizeof(T) == 4) return _mm256_movemask_epi8(_mm256_cmpeq_epi32(keys, key));
-  else if constexpr (sizeof(T) == 2) return _mm256_movemask_epi8(_mm256_cmpeq_epi16(keys, key));
-  else return _mm256_movemask_epi8(_mm256_cmpeq_epi8(keys, key));
-#endif
-}
-
-template<integral_c T>
-[[nodiscard]] auto
-avx2_mask_first(
-  auto mask) noexcept -> u32
-{
-#if defined(__AVX512F__)
-  return std::countr_zero(static_cast<u32>(mask));
-#else
-  return std::countr_zero(static_cast<u32>(mask)) / sizeof(T);
-#endif
-}
-
-template<integral_c T>
-[[nodiscard]] auto
-avx2_mask_count(
-  auto mask) noexcept -> u32
-{
-#if defined(__AVX512F__)
-  return std::popcount(static_cast<u32>(mask));
-#else
-  return std::popcount(static_cast<u32>(mask)) / sizeof(T);
-#endif
-}
-
-}
-#endif
 
 template<integral_c T>
 class hash_map
@@ -138,147 +66,15 @@ public:
     return *this;
   }
 
-  auto find_null(
-    T      key,
-    auto&& on_null)
-  {
-#ifdef __AVX2__
-    using namespace hash_map_avx2;
-    auto const avx_null = avx2_set1_key(static_cast<T>(-1));
-#endif
-
-    auto cache_line = hash(key) & m_mask;
-    IF(KASPAN_DEBUG, auto const first_cache_line = cache_line);
-    for (;;) {
-      T* keys = m_data + cache_line * 64 / sizeof(T);
-      T* vals = keys + 32 / sizeof(T);
-#ifdef __AVX2__
-      auto const avx2_keys = avx2_load_keys(keys);
-      if (auto const avx2_mask = avx2_cmpeq_keys<T>(avx_null, avx2_keys)) {
-        auto const i = avx2_mask_first<T>(avx2_mask);
-        return on_null(keys[i], vals[i]);
-      }
-#else
-      for (u8 i = 0; i < 32 / sizeof(T); ++i) {
-        if (keys[i] == static_cast<T>(-1)) return on_null(keys[i], vals[i]);
-      }
-#endif
-      cache_line = cache_line + 1 & m_mask;
-      DEBUG_ASSERT_NE(cache_line, first_cache_line);
-    }
-  }
-
-  auto find_key(
-    T      key,
-    auto&& on_key)
-  {
-#ifdef __AVX2__
-    using namespace hash_map_avx2;
-    auto const avx2_key = avx2_set1_key(key);
-#endif
-
-    auto cache_line = hash(key) & m_mask;
-    IF(KASPAN_DEBUG, auto const first_cache_line = cache_line);
-    for (;;) {
-      T* keys = m_data + cache_line * 64 / sizeof(T);
-      T* vals = keys + 32 / sizeof(T);
-#ifdef __AVX2__
-      auto const avx2_keys = avx2_load_keys(keys);
-      if (auto const avx2_mask = avx2_cmpeq_keys<T>(avx2_key, avx2_keys)) {
-        auto const i = avx2_mask_first<T>(avx2_mask);
-        return on_key(keys[i], vals[i]);
-      }
-#else
-      for (u32 i = 0; i < 32 / sizeof(T); ++i) {
-        if (keys[i] == key) {
-          return on_key(keys[i], vals[i]);
-        }
-      }
-#endif
-      cache_line = cache_line + 1 & m_mask;
-      DEBUG_ASSERT_NE(cache_line, first_cache_line);
-    }
-  }
-
-  auto find_key_or_null(
-    T      key,
-    auto&& on_key,
-    auto&& on_null)
-  {
-#ifdef __AVX2__
-    using namespace hash_map_avx2;
-    auto const avx2_key  = avx2_set1_key(key);
-    auto const avx2_null = avx2_set1_key(static_cast<T>(-1));
-#endif
-
-    auto cache_line = hash(key) & m_mask;
-    IF(KASPAN_DEBUG, auto const first_cache_line = cache_line);
-    for (;;) {
-      T* keys = m_data + cache_line * 64 / sizeof(T);
-      T* vals = keys + 32 / sizeof(T);
-#ifdef __AVX2__
-      auto const avx2_keys = avx2_load_keys(keys);
-      if (auto const avx2_mask = avx2_cmpeq_keys<T>(avx2_key, avx2_keys)) {
-        auto const i = avx2_mask_first<T>(avx2_mask);
-        return on_key(keys[i], vals[i]);
-      }
-      if (auto const avx2_mask = avx2_cmpeq_keys<T>(avx2_null, avx2_keys)) {
-        auto const i = avx2_mask_first<T>(avx2_mask);
-        return on_null(keys[i], vals[i]);
-      }
-#else
-      for (u32 i = 0; i < 32 / sizeof(T); ++i) {
-        if (keys[i] == key) return on_key(keys[i], vals[i]);
-        if (keys[i] == static_cast<T>(-1)) return on_null(keys[i], vals[i]);
-      }
-#endif
-      cache_line = cache_line + 1 & m_mask;
-      DEBUG_ASSERT_NE(cache_line, first_cache_line);
-    }
-  }
-
-  auto find_slot(
-    T      key,
-    auto&& on_slot)
-  {
-#ifdef __AVX2__
-    using namespace hash_map_avx2;
-    auto const avx2_key  = avx2_set1_key(key);
-    auto const avx2_null = avx2_set1_key(static_cast<T>(-1));
-#endif
-
-    auto cache_line = hash(key) & m_mask;
-    IF(KASPAN_DEBUG, auto const first_cache_line = cache_line);
-    for (;;) {
-      T* keys = m_data + cache_line * 64 / sizeof(T);
-      T* vals = keys + 32 / sizeof(T);
-#ifdef __AVX2__
-      auto const avx2_keys = avx2_load_keys(keys);
-      auto       avx2_mask = avx2_cmpeq_keys<T>(avx2_key, avx2_keys);
-      avx2_mask |= avx2_cmpeq_keys<T>(avx2_null, avx2_keys);
-      if (avx2_mask) {
-        auto const i = avx2_mask_first<T>(avx2_mask);
-        return on_slot(keys[i], vals[i]);
-      }
-#else
-      for (u32 i = 0; i < 32 / sizeof(T); ++i) {
-        if (keys[i] == key) return on_slot(keys[i], vals[i]);
-        if (keys[i] == static_cast<T>(-1)) return on_slot(keys[i], vals[i]);
-      }
-#endif
-      cache_line = cache_line + 1 & m_mask;
-      DEBUG_ASSERT_NE(cache_line, first_cache_line);
-    }
-  }
 
   /// inserts a key value pair or assigns to an existing key
   void insert_or_assign(
     T key,
     T val) noexcept
   {
-    find_slot(key, [&](auto& key_slot, auto& val_slot) {
-      key_slot = key;
-      val_slot = val;
+    find_slot(key, [&](auto& key_, auto& val_) {
+      key_ = key;
+      val_ = val;
     });
   }
 
@@ -287,9 +83,9 @@ public:
     T key,
     T val) noexcept
   {
-    find_null(key, [&](auto& key_slot, auto& val_slot) {
-      key_slot = key;
-      val_slot = val;
+    find_null(key, [&](auto& key_, auto& val_) {
+      key_ = key;
+      val_ = val;
     });
   }
 
@@ -298,10 +94,10 @@ public:
     T key,
     T val) noexcept
   {
-    auto const on_key  = [](auto /* key_ */, auto /* val_ */) {};
-    auto const on_null = [=](auto& key_slot, auto& val_slot) {
-      key_slot = key;
-      val_slot = val;
+    auto const on_key  = [](auto /* val_ */) {};
+    auto const on_null = [=](auto& key_, auto& val_) {
+      key_ = key;
+      val_ = val;
     };
     find_key_or_null(key, on_key, on_null);
   }
@@ -311,10 +107,10 @@ public:
     T      key,
     auto&& val_producer) noexcept
   {
-    auto const on_key  = [](auto /* key_ */, auto /* val_ */) {};
-    auto const on_null = [&](auto& key_slot, auto& val_slot) {
-      key_slot = key;
-      val_slot = val_producer();
+    auto const on_key  = [](auto /* val_ */) {};
+    auto const on_null = [&](auto& key_, auto& val_) {
+      key_ = key;
+      val_ = val_producer();
     };
     find_key_or_null(key, on_key, on_null);
   }
@@ -324,10 +120,7 @@ public:
     T key,
     T val) noexcept
   {
-    find_key(key, [=](auto& key_slot, auto& val_slot) {
-      key_slot = key;
-      val_slot = val;
-    });
+    find_key(key, [=](auto& val_) { val_ = val; });
   }
 
   /// finds the key and swaps the value
@@ -335,10 +128,9 @@ public:
     T key,
     T val) noexcept -> T
   {
-    return find_key(key, [=](auto& key_slot, auto& val_slot) {
-      auto const val_ = val_slot;
-      key_slot        = key;
-      val_slot        = val;
+    return find_key(key, [=](auto& val_) {
+      auto const val_ = val_;
+      val_            = val;
       return val_;
     });
   }
@@ -348,15 +140,14 @@ public:
     T key,
     T val) noexcept -> std::optional<T>
   {
-    auto const on_key = [=](auto& key_slot, auto& val_slot) -> std::optional<T> {
-      auto const val_ = val_slot;
-      key_slot        = key;
-      val_slot        = val;
+    auto const on_key = [=](auto& val_) -> std::optional<T> {
+      auto const val_ = val_;
+      val_            = val;
       return val_;
     };
-    auto const on_null = [=](auto& key_slot, auto& val_slot) -> std::optional<T> {
-      key_slot = key;
-      val_slot = val;
+    auto const on_null = [=](auto& key_, auto& val_) -> std::optional<T> {
+      key_ = key;
+      val_ = val;
       return std::nullopt;
     };
     return find_key_or_null(key, on_key, on_null);
@@ -365,14 +156,14 @@ public:
   [[nodiscard]] auto get(
     T key) noexcept -> T
   {
-    return find_key(key, [](auto /* key_ */, auto val_) { return val_; });
+    return find_key(key, [](auto val_) { return val_; });
   }
 
   [[nodiscard]] auto get_default(
     T key,
     T val) noexcept -> T
   {
-    auto const on_key  = [](auto /* key_ */, auto val_) -> T { return val_; };
+    auto const on_key  = [](auto val_) -> T { return val_; };
     auto const on_null = [=](auto /* key_ */, auto /* val_ */) -> T { return val; };
     return find_key_or_null(key, on_key, on_null);
   }
@@ -380,7 +171,7 @@ public:
   [[nodiscard]] auto get_optional(
     T key) noexcept -> std::optional<T>
   {
-    auto const on_key  = [](auto /* key_ */, auto val_) -> std::optional<T> { return val_; };
+    auto const on_key  = [](auto val_) -> std::optional<T> { return val_; };
     auto const on_null = [](auto /* key_ */, auto /* val_ */) -> std::optional<T> { return std::nullopt; };
     return find_key_or_null(key, on_key, on_null);
   }
@@ -389,12 +180,10 @@ public:
     T      key,
     auto&& val_producer) noexcept -> T
   {
-    auto const on_key  = [](auto /* key_ */, auto val_) -> T { return val_; };
-    auto const on_null = [=](auto& key_slot, auto& val_slot) -> T {
-      auto const val = val_producer();
-      key_slot       = key;
-      val_slot       = val;
-      return val;
+    auto const on_key  = [](auto val_) -> T { return val_; };
+    auto const on_null = [=](auto& key_, auto& val_) -> T {
+      key_        = key;
+      return val_ = val_producer();
     };
     return find_key_or_null(key, on_key, on_null);
   }
@@ -403,11 +192,10 @@ public:
     T key,
     T val) noexcept -> T
   {
-    auto const on_key  = [](auto /* key_ */, auto val_) -> T { return val_; };
-    auto const on_null = [=](auto& key_slot, auto& val_slot) -> T {
-      key_slot = key;
-      val_slot = val;
-      return val;
+    auto const on_key  = [](auto val_) -> T { return val_; };
+    auto const on_null = [=](auto& key_, auto& val_) -> T {
+      key_        = key;
+      return val_ = val;
     };
     return find_key_or_null(key, on_key, on_null);
   }
@@ -415,8 +203,8 @@ public:
   auto contains(
     T key) noexcept -> bool
   {
-    auto const on_key  = [](auto /* key_ */, auto /* val_ */) -> bool { return true; };
-    auto const on_null = [](auto /* key_ */, auto /* val_ */) -> bool { return false; };
+    auto const on_key  = [](auto...) -> bool { return true; };
+    auto const on_null = [](auto...) -> bool { return false; };
     return find_key_or_null(key, on_key, on_null);
   }
 
