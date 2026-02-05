@@ -128,10 +128,10 @@ public:
     T key,
     T val) noexcept -> T
   {
-    return find_key(key, [=](auto& val_) {
-      auto const val_ = val_;
-      val_            = val;
-      return val_;
+    return find_key(key, [=](auto& val_slot) {
+      auto const old_val = val_slot;
+      val_slot           = val;
+      return old_val;
     });
   }
 
@@ -140,10 +140,10 @@ public:
     T key,
     T val) noexcept -> std::optional<T>
   {
-    auto const on_key = [=](auto& val_) -> std::optional<T> {
-      auto const val_ = val_;
-      val_            = val;
-      return val_;
+    auto const on_key = [=](auto& val_slot) -> std::optional<T> {
+      auto const old_val = val_slot;
+      val_slot           = val;
+      return old_val;
     };
     auto const on_null = [=](auto& key_, auto& val_) -> std::optional<T> {
       key_ = key;
@@ -215,28 +215,27 @@ public:
 
   [[nodiscard]] auto count() noexcept -> T
   {
-#ifdef __AVX2__
-    using namespace hash_map_avx2;
-    auto const avx2_null = avx2_set1_key<T>(static_cast<T>(-1));
-#endif
+    return static_cast<u64>(m_mask) - hash_map_util::count256_null(m_data, m_mask) + 1;
+  }
 
-    T c = 0;
+  auto find_null(T key, auto&& on_null) noexcept
+  {
+    return hash_map_util::find256_null(m_data, m_mask, key, std::forward<decltype(on_null)>(on_null));
+  }
 
-    auto const end = static_cast<u64>(m_mask) + 1;
-    for (u64 cache_line = 0; cache_line < end; ++cache_line) {
-      T* keys = m_data + cache_line * 64 / sizeof(T);
-#ifdef __AVX2__
-      auto const avx2_keys = avx2_load_keys(keys);
-      auto const avx2_mask = avx2_cmpeq_keys<T>(avx2_null, avx2_keys);
-      c += 32 / sizeof(T) - avx2_mask_count<T>(avx2_mask);
-#else
-      for (u8 i = 0; i < 32 / sizeof(T); ++i) {
-        if (keys[i] != static_cast<T>(-1)) ++c;
-      }
-#endif
-    }
+  auto find_key(T key, auto&& on_key) noexcept
+  {
+    return hash_map_util::find256_key(m_data, m_mask, key, std::forward<decltype(on_key)>(on_key));
+  }
 
-    return c;
+  auto find_key_or_null(T key, auto&& on_key, auto&& on_null) noexcept
+  {
+    return hash_map_util::find256_key_or_null(m_data, m_mask, key, std::forward<decltype(on_key)>(on_key), std::forward<decltype(on_null)>(on_null));
+  }
+
+  auto find_slot(T key, auto&& on_slot) noexcept
+  {
+    return hash_map_util::find256_slot(m_data, m_mask, key, std::forward<decltype(on_slot)>(on_slot));
   }
 };
 
