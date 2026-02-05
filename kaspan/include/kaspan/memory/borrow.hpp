@@ -21,7 +21,7 @@ class array : public buffer
 public:
   array() noexcept = default;
 
-  explicit array(arithmetic_concept auto count) noexcept(false)
+  explicit array(integral_c auto count) noexcept(false)
     : buffer(integral_cast<u64>(count) * sizeof(T))
   {
     DEBUG_ASSERT_GE(count, 0);
@@ -55,7 +55,7 @@ public:
     return data();
   }
 
-  template<arithmetic_concept Index>
+  template<integral_c Index>
   [[nodiscard]] auto operator[](
     Index idx) const noexcept -> T&
   {
@@ -217,19 +217,19 @@ public:
 
   void fill(
     std::byte               value,
-    arithmetic_concept auto size)
+    integral_c auto size)
   {
     std::memset(data(), static_cast<int>(value), integral_cast<std::size_t>(size) * sizeof(T));
   }
 
   void fill(
-    arithmetic_concept auto size)
+    integral_c auto size)
   {
     fill(static_cast<std::byte>(0xff), size);
   }
 
   void clear(
-    arithmetic_concept auto size)
+    integral_c auto size)
   {
     fill(static_cast<std::byte>(0x00), size);
   }
@@ -238,14 +238,14 @@ public:
 template<typename T = byte>
 static auto
 make_array(
-  arithmetic_concept auto count) noexcept -> array<T>
+  integral_c auto count) noexcept -> array<T>
 {
   auto result = array<T>{ count };
   return result;
 }
 
 template<typename T = byte,
-         arithmetic_concept Count>
+         integral_c Count>
 static auto
 make_array_clean(
   Count count) noexcept -> array<T>
@@ -258,7 +258,7 @@ make_array_clean(
 }
 
 template<typename T = byte,
-         arithmetic_concept Count>
+         integral_c Count>
 static auto
 make_array_filled(
   Count count) noexcept -> array<T>
@@ -272,7 +272,7 @@ make_array_filled(
 }
 
 template<typename T = byte,
-         arithmetic_concept Count>
+         integral_c Count>
 static auto
 make_array_filled(
   T const& value,
@@ -289,7 +289,7 @@ make_array_filled(
 }
 
 template<typename T = byte,
-         arithmetic_concept Count>
+         integral_c Count>
   requires(std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>)
 static auto
 borrow_array(
@@ -315,7 +315,7 @@ borrow_array(
 }
 
 template<typename T = byte,
-         arithmetic_concept Count>
+         integral_c Count>
 static auto
 borrow_array_clean(
   void** memory,
@@ -330,7 +330,7 @@ borrow_array_clean(
 }
 
 template<typename T = byte,
-         arithmetic_concept Count>
+         integral_c Count>
 static auto
 borrow_array_filled(
   void** memory,
@@ -345,7 +345,7 @@ borrow_array_filled(
 }
 
 template<typename T = byte,
-         arithmetic_concept Count>
+         integral_c Count>
 static auto
 borrow_array_filled(
   void**   memory,

@@ -26,19 +26,19 @@ public:
   }
 
   [[nodiscard]] static constexpr auto to_local(
-    arithmetic_concept auto i) noexcept -> vertex_t
+    integral_c auto i) noexcept -> vertex_t
   {
     return integral_cast<vertex_t>(i);
   }
 
   [[nodiscard]] static constexpr auto to_global(
-    arithmetic_concept auto k) noexcept -> vertex_t
+    integral_c auto k) noexcept -> vertex_t
   {
     return integral_cast<vertex_t>(k);
   }
 
   [[nodiscard]] static constexpr auto has_local(
-    arithmetic_concept auto /* i */) noexcept -> bool
+    integral_c auto /* i */) noexcept -> bool
   {
     return true;
   }
@@ -58,13 +58,13 @@ public:
   }
 
   [[nodiscard]] static constexpr auto world_rank_of(
-    arithmetic_concept auto /* i */) noexcept -> i32
+    integral_c auto /* i */) noexcept -> i32
   {
     return 0;
   }
 
   [[nodiscard]] constexpr auto world_part_of(
-    arithmetic_concept auto /* r */) const noexcept -> single_part_view
+    integral_c auto /* r */) const noexcept -> single_part_view
   {
     return single_part_view{ n_ };
   }
@@ -124,7 +124,7 @@ class single_part
 public:
   constexpr single_part() noexcept = default;
   explicit constexpr single_part(
-    arithmetic_concept auto n) noexcept
+    integral_c auto n) noexcept
     : n_(integral_cast<vertex_t>(n))
   {
   }
@@ -140,19 +140,19 @@ public:
   }
 
   [[nodiscard]] static constexpr auto to_local(
-    arithmetic_concept auto i) noexcept -> vertex_t
+    integral_c auto i) noexcept -> vertex_t
   {
     return integral_cast<vertex_t>(i);
   }
 
   [[nodiscard]] static constexpr auto to_global(
-    arithmetic_concept auto k) noexcept -> vertex_t
+    integral_c auto k) noexcept -> vertex_t
   {
     return integral_cast<vertex_t>(k);
   }
 
   [[nodiscard]] static constexpr auto has_local(
-    arithmetic_concept auto /* i */) noexcept -> bool
+    integral_c auto /* i */) noexcept -> bool
   {
     return true;
   }
@@ -172,13 +172,13 @@ public:
   }
 
   [[nodiscard]] static constexpr auto world_rank_of(
-    arithmetic_concept auto /* i */) noexcept -> i32
+    integral_c auto /* i */) noexcept -> i32
   {
     return 0;
   }
 
   [[nodiscard]] constexpr auto world_part_of(
-    arithmetic_concept auto /* r */) const noexcept -> single_part_view
+    integral_c auto /* r */) const noexcept -> single_part_view
   {
     return view().world_part_of(0);
   }

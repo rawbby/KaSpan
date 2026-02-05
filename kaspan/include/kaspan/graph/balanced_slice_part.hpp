@@ -25,8 +25,8 @@ public:
   }
 
   balanced_slice_part_view(
-    arithmetic_concept auto n,
-    arithmetic_concept auto r) noexcept
+    integral_c auto n,
+    integral_c auto r) noexcept
     : n_(integral_cast<vertex_t>(n))
     , world_rank_(integral_cast<i32>(r))
   {
@@ -59,19 +59,19 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    arithmetic_concept auto i) const noexcept -> vertex_t
+    integral_c auto i) const noexcept -> vertex_t
   {
     return integral_cast<vertex_t>(i) - begin_;
   }
 
   [[nodiscard]] constexpr auto to_global(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     return integral_cast<vertex_t>(k) + begin_;
   }
 
   [[nodiscard]] constexpr auto has_local(
-    arithmetic_concept auto i) const noexcept -> bool
+    integral_c auto i) const noexcept -> bool
   {
     auto const j = integral_cast<vertex_t>(i);
     return j >= begin_ && j < end_;
@@ -92,7 +92,7 @@ public:
   }
 
   [[nodiscard]] auto world_rank_of(
-    arithmetic_concept auto i) const noexcept -> i32
+    integral_c auto i) const noexcept -> i32
   {
     auto const j = integral_cast<vertex_t>(i);
     if (mpi_basic::world_size == 1) return 0;
@@ -104,7 +104,7 @@ public:
   }
 
   [[nodiscard]] auto world_part_of(
-    arithmetic_concept auto r) const noexcept -> balanced_slice_part_view
+    integral_c auto r) const noexcept -> balanced_slice_part_view
   {
     return { n_, r };
   }
@@ -156,7 +156,7 @@ class balanced_slice_part
 public:
   constexpr balanced_slice_part() noexcept = default;
   explicit balanced_slice_part(
-    arithmetic_concept auto n) noexcept
+    integral_c auto n) noexcept
     : n_(integral_cast<vertex_t>(n))
   {
     if (mpi_basic::world_size == 1) {
@@ -188,19 +188,19 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    arithmetic_concept auto i) const noexcept -> vertex_t
+    integral_c auto i) const noexcept -> vertex_t
   {
     return view().to_local(i);
   }
 
   [[nodiscard]] constexpr auto to_global(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     return view().to_global(k);
   }
 
   [[nodiscard]] constexpr auto has_local(
-    arithmetic_concept auto i) const noexcept -> bool
+    integral_c auto i) const noexcept -> bool
   {
     return view().has_local(i);
   }
@@ -220,13 +220,13 @@ public:
   }
 
   [[nodiscard]] auto world_rank_of(
-    arithmetic_concept auto i) const noexcept -> i32
+    integral_c auto i) const noexcept -> i32
   {
     return view().world_rank_of(i);
   }
 
   [[nodiscard]] auto world_part_of(
-    arithmetic_concept auto r) const noexcept -> balanced_slice_part_view
+    integral_c auto r) const noexcept -> balanced_slice_part_view
   {
     return view().world_part_of(r);
   }

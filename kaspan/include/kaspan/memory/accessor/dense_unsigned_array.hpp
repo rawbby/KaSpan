@@ -11,14 +11,14 @@
 
 namespace kaspan {
 
-template<unsigned_concept T = u64>
+template<unsigned_c T = u64>
 class dense_unsigned_array final : public buffer
 {
 public:
   dense_unsigned_array() noexcept = default;
   ~dense_unsigned_array()         = default;
 
-  template<arithmetic_concept Size>
+  template<integral_c Size>
   explicit dense_unsigned_array(Size size, u8 element_byte_size, std::endian endian = std::endian::native) noexcept(false)
     : buffer(integral_cast<u64>(size) * element_byte_size)
     , element_byte_size_(element_byte_size)
@@ -74,7 +74,7 @@ public:
     return endian_;
   }
 
-  template<arithmetic_concept Count>
+  template<integral_c Count>
   void fill(
     T     value,
     Count n)
@@ -86,7 +86,7 @@ public:
     dense_unsigned_ops::fill<T>(data(), n64, element_bytes(), endian(), value);
   }
 
-  template<arithmetic_concept Index>
+  template<integral_c Index>
   [[nodiscard]] auto get(
     Index index) const -> T
   {
@@ -97,7 +97,7 @@ public:
     return dense_unsigned_ops::get<T>(data(), index64, element_bytes(), endian());
   }
 
-  template<arithmetic_concept Index>
+  template<integral_c Index>
   void set(
     Index index,
     T     val)
@@ -116,8 +116,8 @@ private:
      u64 size_ = 0);
 };
 
-template<unsigned_concept   T = u64,
-         arithmetic_concept Count>
+template<unsigned_c   T = u64,
+         integral_c Count>
 auto
 make_dense_unsigned_array(
   Count       count,

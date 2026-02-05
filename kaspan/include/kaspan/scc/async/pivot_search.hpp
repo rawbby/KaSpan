@@ -7,7 +7,7 @@
 
 namespace kaspan::async {
 
-template<part_view_concept Part,
+template<part_view_c Part,
          typename brief_queue_t>
 void
 forward_backward_search(

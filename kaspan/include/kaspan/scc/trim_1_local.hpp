@@ -9,7 +9,7 @@
 
 namespace kaspan {
 
-template<part_view_concept Part>
+template<part_view_c Part>
 auto
 trim_1_first(
   bidi_graph_part_view<Part> g,
@@ -45,7 +45,7 @@ trim_1_first(
   return mpi_basic::allreduce_single(pivot, mpi_basic::min);
 }
 
-template<part_view_concept Part = single_part_view>
+template<part_view_c Part = single_part_view>
 void
 trim_1_normal(
   bidi_graph_part_view<Part> graph,

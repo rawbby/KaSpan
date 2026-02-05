@@ -30,7 +30,7 @@ namespace kaspan {
  * - result.m = m (global number of edges).
  * - CSR layout: fw_head[u]..fw_head[u+1]-1 indexes neighbors in fw_csr (analogous for bw_*).
  *
- * @tparam Part Graph partition type satisfying world_part_concept and Part::ordered.
+ * @tparam Part Graph partition type satisfying world_part_c and Part::ordered.
  * @param graph_part Distributed graph partition (disjoint global ownership).
  * @return local_graph containing replicated forward and backward CSR on every rank.
  *
@@ -45,7 +45,7 @@ namespace kaspan {
  * - Local work: O(n + m) (offset fix and backward construction).
  * - Communication: O(n + m) (all-gather of head and edges).
  */
-template<part_view_concept Part>
+template<part_view_c Part>
   requires(Part::ordered)
 auto
 allgather_graph(

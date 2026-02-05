@@ -20,60 +20,31 @@ using i8   = std::int8_t;
 using f32 = float;
 using f64 = double;
 
-// 1) Preferred: standard facility
-#if defined(__cpp_lib_int128)
-using u128                          = std::uint128_t;
-using i128                          = std::int128_t;
-inline constexpr bool has_uint128_t = true;
-inline constexpr bool has_int128_t  = true;
-
-// 2) Fallback: compiler extension (GCC/Clang)
-#elif defined(__SIZEOF_INT128__) && !defined(_MSC_VER)
-using u128                          = unsigned __int128;
-using i128                          = __int128;
-inline constexpr bool has_uint128_t = true;
-inline constexpr bool has_int128_t  = true;
-
-// 3) No 128-bit support
-#else
-using u128                          = std::monostate;
-using i128                          = std::monostate;
-inline constexpr bool has_uint128_t = false;
-inline constexpr bool has_int128_t  = false;
-
-#endif
-
 // clang-format off
-template<typename T> concept byte_concept = std::same_as<std::remove_cvref_t<T>, byte>;
+template<typename T> concept byte_c = std::same_as<std::remove_cvref_t<T>, byte>;
 
-template<typename T> concept unsigned_concept = ! std::is_enum_v<T> && (
-  (std::unsigned_integral<std::remove_cvref_t<T>>) ||
-  (has_uint128_t && std::same_as<std::remove_cvref_t<T>, u128>));
-template<typename T> concept signed_concept = ! std::is_enum_v<T> && (
-  (std::signed_integral<std::remove_cvref_t<T>>) ||
-  (has_int128_t && std::same_as<std::remove_cvref_t<T>, i128>));
+template<typename T> concept unsigned_c = !std::is_enum_v<T> && std::unsigned_integral<std::remove_cvref_t<T>>;
+template<typename T> concept signed_c   = !std::is_enum_v<T> && std::signed_integral<std::remove_cvref_t<T>>;
 
-template<typename T> concept integral_concept  = unsigned_concept<T> || signed_concept<T>;
-template<typename T> concept u128_concept = unsigned_concept<T> && (sizeof(T) == 16);
-template<typename T> concept u64_concept  = unsigned_concept<T> && (sizeof(T) ==  8);
-template<typename T> concept u32_concept  = unsigned_concept<T> && (sizeof(T) ==  4);
-template<typename T> concept u16_concept  = unsigned_concept<T> && (sizeof(T) ==  2);
-template<typename T> concept u8_concept   = unsigned_concept<T> && (sizeof(T) ==  1);
-template<typename T> concept i128_concept = signed_concept<T>   && (sizeof(T) == 16);
-template<typename T> concept i64_concept  = signed_concept<T>   && (sizeof(T) ==  8);
-template<typename T> concept i32_concept  = signed_concept<T>   && (sizeof(T) ==  4);
-template<typename T> concept i16_concept  = signed_concept<T>   && (sizeof(T) ==  2);
-template<typename T> concept i8_concept   = signed_concept<T>   && (sizeof(T) ==  1);
+template<typename T> concept integral_c  = unsigned_c<T> || signed_c<T>;
+template<typename T> concept u64_c       = unsigned_c<T> && sizeof(T) == 8;
+template<typename T> concept u32_c       = unsigned_c<T> && sizeof(T) == 4;
+template<typename T> concept u16_c       = unsigned_c<T> && sizeof(T) == 2;
+template<typename T> concept u8_c        = unsigned_c<T> && sizeof(T) == 1;
+template<typename T> concept i64_c       = signed_c<T>   && sizeof(T) == 8;
+template<typename T> concept i32_c       = signed_c<T>   && sizeof(T) == 4;
+template<typename T> concept i16_c       = signed_c<T>   && sizeof(T) == 2;
+template<typename T> concept i8_c        = signed_c<T>   && sizeof(T) == 1;
 
-template<typename T> concept float_concept = ! std::is_enum_v<T> && (
+template<typename T> concept float_c = ! std::is_enum_v<T> && (
   std::same_as<std::remove_cvref_t<T>, float>  ||
   std::same_as<std::remove_cvref_t<T>, double> ||
   std::same_as<std::remove_cvref_t<T>, long double>);
 
-template<typename T> concept f32_concept = float_concept<T> && (sizeof(T) == 4);
-template<typename T> concept f64_concept = float_concept<T> && (sizeof(T) == 8);
+template<typename T> concept f32_c = float_c<T> && sizeof(T) == 4;
+template<typename T> concept f64_c = float_c<T> && sizeof(T) == 8;
 
-template<typename T> concept arithmetic_concept  = integral_concept<T> || float_concept<T>;
+template<typename T> concept arithmetic_c  = integral_c<T> || float_c<T>;
 
 // clang-format on
 

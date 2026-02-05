@@ -18,7 +18,7 @@ public:
   once_queue_accessor()  = default;
   ~once_queue_accessor() = default;
 
-  template<arithmetic_concept Size>
+  template<integral_c Size>
   explicit once_queue_accessor(
     void* data,
     Size  size)
@@ -108,7 +108,7 @@ private:
 };
 
 template<typename T,
-         arithmetic_concept Size>
+         integral_c Size>
 auto
 borrow_once_queue(
   void** memory,
@@ -121,7 +121,7 @@ borrow_once_queue(
 }
 
 template<typename T,
-         arithmetic_concept Size>
+         integral_c Size>
 auto
 view_once_queue(
   void* data,

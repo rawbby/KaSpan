@@ -9,10 +9,12 @@
 #include <kaspan/graph/concept.hpp>
 #include <kaspan/scc/tarjan.hpp>
 #include <kaspan/scc/trim_1_local.hpp>
+#include <kaspan/scc/multi_pivot_search.hpp>
+#include <kaspan/scc/pivot_search.hpp>
 
 namespace kaspan {
 
-template<part_view_concept Part>
+template<part_view_c Part>
 void
 scc_ispan_like(
   bidi_graph_part_view<Part> graph,

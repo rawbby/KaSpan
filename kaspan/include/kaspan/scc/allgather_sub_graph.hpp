@@ -23,7 +23,7 @@
 namespace kaspan {
 namespace sub_graph {
 
-template<part_view_concept Part,
+template<part_view_c Part,
          class fn_t>
 auto
 allgather_sub_ids(
@@ -53,7 +53,7 @@ allgather_sub_ids(
   return PACK(sub_n, super_ids, local_super_ids);
 }
 
-template<part_view_concept Part>
+template<part_view_c Part>
 auto
 allgather_csr_degrees(
   Part            part,
@@ -125,7 +125,7 @@ allgather_csr_degrees(
   return pack{ std::move(buffer), std::move(sub_m), std::move(counts), std::move(displs), std::move(local_sub_csr), std::move(local_sub_degrees) };
 }
 
-template<part_view_concept Part>
+template<part_view_c Part>
 auto
 allgather_csr_with_degrees(
   Part            part,

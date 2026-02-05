@@ -19,7 +19,7 @@ public:
   constexpr vector() noexcept = default;
 
   explicit vector(
-    arithmetic_concept auto initial_capacity)
+    integral_c auto initial_capacity)
     : capacity_(integral_cast<u64>(initial_capacity))
     , data_(line_alloc<T>(capacity_))
   {

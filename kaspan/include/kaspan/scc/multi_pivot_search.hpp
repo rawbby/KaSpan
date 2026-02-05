@@ -10,7 +10,7 @@
 
 namespace kaspan {
 
-template<part_view_concept Part = single_part_view>
+template<part_view_c Part = single_part_view>
 void
 label_search(
   bidi_graph_part_view<Part> g,
@@ -128,7 +128,7 @@ label_search(
   } while (front.comm(g.part, on_bw_message));
 }
 
-template<part_view_concept Part = single_part_view>
+template<part_view_c Part = single_part_view>
 void
 rot_label_search(
   bidi_graph_part_view<Part> g,
@@ -149,7 +149,7 @@ rot_label_search(
   label_search(g, front, label_storage, active_storage, in_active_storage, has_changed_storage, is_undecided_storage, on_decision, map, unmap);
 }
 
-template<part_view_concept Part = single_part_view>
+template<part_view_c Part = single_part_view>
 void
 label_search(
   bidi_graph_part_view<Part> g,

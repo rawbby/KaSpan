@@ -10,7 +10,7 @@
 
 using namespace kaspan;
 
-template<part_view_concept Part>
+template<part_view_c Part>
 void
 check_p_p(
   Part p,
@@ -27,7 +27,7 @@ check_p_p(
   }
 }
 
-template<part_view_concept Part>
+template<part_view_c Part>
 void
 check_gp_gp(
   bidi_graph_part_view<Part> bgpv,

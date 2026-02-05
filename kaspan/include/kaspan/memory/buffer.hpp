@@ -37,7 +37,7 @@ public:
     }
   }
 
-  template<arithmetic_concept Size>
+  template<integral_c Size>
   explicit buffer(Size size) noexcept(false)
   {
     DEBUG_ASSERT_GE(size, 0);

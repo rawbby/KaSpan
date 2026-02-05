@@ -7,7 +7,7 @@
 
 namespace kaspan {
 
-template<arithmetic_concept Vertex>
+template<integral_c Vertex>
 void
 normalise_scc_id(
   Vertex  n,
@@ -24,8 +24,8 @@ normalise_scc_id(
   }
 }
 
-template<part_view_concept  Part,
-         arithmetic_concept Vertex>
+template<part_view_c  Part,
+         integral_c Vertex>
 void
 normalise_scc_id(
   Part    part,

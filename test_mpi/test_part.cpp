@@ -153,21 +153,21 @@ main(
   mpi_sub_process(argc, argv);
   KASPAN_DEFAULT_INIT();
 
-  static_assert(part_view_concept<single_part_view>);
-  static_assert(part_view_concept<cyclic_part_view>);
-  static_assert(part_view_concept<block_cyclic_part_view>);
-  static_assert(part_view_concept<trivial_slice_part_view>);
-  static_assert(part_view_concept<balanced_slice_part_view>);
-  static_assert(part_view_concept<explicit_continuous_part_view>);
-  static_assert(part_view_concept<explicit_sorted_part_view>);
+  static_assert(part_view_c<single_part_view>);
+  static_assert(part_view_c<cyclic_part_view>);
+  static_assert(part_view_c<block_cyclic_part_view>);
+  static_assert(part_view_c<trivial_slice_part_view>);
+  static_assert(part_view_c<balanced_slice_part_view>);
+  static_assert(part_view_c<explicit_continuous_part_view>);
+  static_assert(part_view_c<explicit_sorted_part_view>);
 
-  static_assert(part_concept<single_part>);
-  static_assert(part_concept<cyclic_part>);
-  static_assert(part_concept<block_cyclic_part>);
-  static_assert(part_concept<trivial_slice_part>);
-  static_assert(part_concept<balanced_slice_part>);
-  static_assert(part_concept<explicit_continuous_part>);
-  static_assert(part_concept<explicit_sorted_part>);
+  static_assert(part_c<single_part>);
+  static_assert(part_c<cyclic_part>);
+  static_assert(part_c<block_cyclic_part>);
+  static_assert(part_c<trivial_slice_part>);
+  static_assert(part_c<balanced_slice_part>);
+  static_assert(part_c<explicit_continuous_part>);
+  static_assert(part_c<explicit_sorted_part>);
 
   if (mpi_basic::world_size == 3) {
     test_explicit_continuous_part<false>();

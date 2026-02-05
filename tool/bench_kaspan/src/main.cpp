@@ -39,7 +39,7 @@ usage(
                argv[0]);
 }
 
-template<part_view_concept Part>
+template<part_view_c Part>
 void
 benchmark(
   bidi_graph_part_view<Part> graph,

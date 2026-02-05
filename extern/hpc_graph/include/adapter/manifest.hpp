@@ -7,7 +7,7 @@
 
 #include <adapter/base.hpp>
 
-template<kaspan::part_view_concept Part>
+template<kaspan::part_view_c Part>
 auto
 load_hpc_graph_from_manifest(
   Part                    part,

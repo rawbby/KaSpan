@@ -12,7 +12,7 @@
 
 namespace kaspan {
 
-template<part_view_concept Part = single_part_view>
+template<part_view_c Part = single_part_view>
 void
 forward_backward_search(
   bidi_graph_part_view<Part> g,

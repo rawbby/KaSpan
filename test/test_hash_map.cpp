@@ -1,5 +1,5 @@
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/memory/accessor/hash_index_map.hpp>
+#include <kaspan/memory/accessor/hash_map.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -19,14 +19,15 @@ test()
   auto non_local_lo = std::uniform_int_distribution{ 0u, beg };
   auto non_local_hi = std::uniform_int_distribution{ end, n };
 
-  hash_index_map<u32>          map{ 5000 };
+  hash_map<u32>                map{ 5000 };
   std::unordered_map<u32, u32> inserted{};
 
   auto last_map_count = map.count();
 
+  u32 count = 0;
   for (int i = 0; i < 2500; ++i) {
     auto const key = non_local_lo(rng);
-    auto const val = map.insert(key);
+    auto const val = map.get_or_insert(key, [&]{ return count++; });
     ASSERT_EQ(val, map.get(key));
 
     if (last_map_count == map.count()) {
@@ -41,7 +42,7 @@ test()
 
   for (int i = 0; i < 2500; ++i) {
     auto const key = non_local_hi(rng);
-    auto const val = map.insert(key);
+    auto const val = map.get_or_insert(key, [&]{ return count++; });
     ASSERT_EQ(val, map.get(key));
 
     if (last_map_count == map.count()) {

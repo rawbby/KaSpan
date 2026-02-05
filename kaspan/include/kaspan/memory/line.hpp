@@ -19,7 +19,7 @@ inline bool    linesize_initialized = false;
 inline auto    linesize_value       = linesize_default;
 }
 
-template<unsigned_concept Size = u32>
+template<unsigned_c Size = u32>
 auto
 linesize() -> Size
 {
@@ -36,7 +36,7 @@ linesize() -> Size
   return integral_cast<Size>(detail::linesize_value);
 }
 
-template<unsigned_concept Size>
+template<unsigned_c Size>
 auto
 line_align_down(
   Size size) -> Size
@@ -45,7 +45,7 @@ line_align_down(
   return size & ~mask;
 }
 
-template<unsigned_concept Size>
+template<unsigned_c Size>
 auto
 line_align_up(
   Size size) -> Size
@@ -54,7 +54,7 @@ line_align_up(
   return (size + mask) & ~mask;
 }
 
-template<unsigned_concept Size>
+template<unsigned_c Size>
 auto
 is_line_aligned(
   Size size) -> bool
@@ -74,7 +74,7 @@ inline auto line_align_up(void* data){return std::bit_cast<void*>(line_align_up(
 
 template<typename T = void>
 [[nodiscard]] auto
-line_alloc(arithmetic_concept auto size) noexcept(false) -> T*
+line_alloc(integral_c auto size) noexcept(false) -> T*
 {
   using alloc_t = std::conditional_t<std::is_same_v<T, void>, byte, T>;
 

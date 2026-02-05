@@ -34,8 +34,8 @@ struct graph_view
   constexpr graph_view(graph_view const&) noexcept = default;
 
   constexpr graph_view(
-    arithmetic_concept auto n,
-    arithmetic_concept auto m,
+    integral_c auto n,
+    integral_c auto m,
     index_t*                head,
     vertex_t*               csr) noexcept
     : n(integral_cast<vertex_t>(n))
@@ -55,7 +55,7 @@ struct graph_view
    * @return A span of neighbors.
    */
   [[nodiscard]] constexpr auto csr_range(
-    arithmetic_concept auto u) const noexcept -> std::span<vertex_t>
+    integral_c auto u) const noexcept -> std::span<vertex_t>
   {
     auto const j = integral_cast<vertex_t>(u);
     return { csr + head[j], csr + head[j + 1] };
@@ -104,7 +104,7 @@ struct graph_view
    */
   template<typename Consumer>
   constexpr void each_v(
-    arithmetic_concept auto u,
+    integral_c auto u,
     Consumer&&              consumer) const noexcept
   {
     for (vertex_t v : csr_range(u))
@@ -118,7 +118,7 @@ struct graph_view
    */
   template<typename Consumer>
   constexpr void each_uv(
-    arithmetic_concept auto u,
+    integral_c auto u,
     Consumer&&              consumer) const noexcept
   {
     auto const i = integral_cast<vertex_t>(u);
@@ -153,7 +153,7 @@ struct graph_view
    * @return The number of outgoing edges from u.
    */
   [[nodiscard]] constexpr auto outdegree(
-    arithmetic_concept auto u) const noexcept -> vertex_t
+    integral_c auto u) const noexcept -> vertex_t
   {
     auto const j = integral_cast<vertex_t>(u);
     return integral_cast<vertex_t>(head[j + 1] - head[j]);
@@ -249,8 +249,8 @@ struct graph
   constexpr graph() noexcept = default;
 
   graph(
-    arithmetic_concept auto n,
-    arithmetic_concept auto m)
+    integral_c auto n,
+    integral_c auto m)
     : n(integral_cast<vertex_t>(n))
     , m(integral_cast<index_t>(m))
     , head(line_alloc<index_t>(n ? n + 1 : 0))
@@ -305,7 +305,7 @@ struct graph
    * @brief Get the neighbors of vertex u.
    */
   [[nodiscard]] constexpr auto csr_range(
-    arithmetic_concept auto u) const noexcept -> std::span<vertex_t>
+    integral_c auto u) const noexcept -> std::span<vertex_t>
   {
     return view().csr_range(u);
   }
@@ -345,7 +345,7 @@ struct graph
    */
   template<typename Consumer>
   constexpr void each_v(
-    arithmetic_concept auto u,
+    integral_c auto u,
     Consumer&&              consumer) const noexcept
   {
     view().each_v(u, std::forward<Consumer>(consumer));
@@ -356,7 +356,7 @@ struct graph
    */
   template<typename Consumer>
   constexpr void each_uv(
-    arithmetic_concept auto u,
+    integral_c auto u,
     Consumer&&              consumer) const noexcept
   {
     view().each_uv(u, std::forward<Consumer>(consumer));
@@ -386,7 +386,7 @@ struct graph
    * @brief Get the outdegree of vertex u.
    */
   [[nodiscard]] constexpr auto outdegree(
-    arithmetic_concept auto u) const noexcept -> vertex_t
+    integral_c auto u) const noexcept -> vertex_t
   {
     return view().outdegree(u);
   }

@@ -9,7 +9,7 @@ namespace kaspan {
  *
  * Reuses graph_part_view for each direction.
  */
-template<part_view_concept Part>
+template<part_view_c Part>
 struct bidi_graph_part_view
 {
   Part    part       = {}; ///< The partition information
@@ -34,8 +34,8 @@ struct bidi_graph_part_view
 
   constexpr bidi_graph_part_view(
     Part                    part,
-    arithmetic_concept auto local_fw_m,
-    arithmetic_concept auto local_bw_m,
+    integral_c auto local_fw_m,
+    integral_c auto local_bw_m,
     index_t*                fw_head,
     vertex_t*               fw_csr,
     index_t*                bw_head,
@@ -82,7 +82,7 @@ struct bidi_graph_part_view
    * @brief Get the forward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto csr_range(
-    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
+    integral_c auto k) const noexcept -> std::span<vertex_t>
   {
     return fw_view().csr_range(k);
   }
@@ -91,7 +91,7 @@ struct bidi_graph_part_view
    * @brief Get the backward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto bw_csr_range(
-    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
+    integral_c auto k) const noexcept -> std::span<vertex_t>
   {
     return bw_view().csr_range(k);
   }
@@ -121,7 +121,7 @@ struct bidi_graph_part_view
    */
   template<typename Consumer>
   constexpr void each_v(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     fw_view().each_v(k, std::forward<Consumer>(consumer));
@@ -142,7 +142,7 @@ struct bidi_graph_part_view
    */
   template<typename Consumer>
   constexpr void each_bw_v(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     bw_view().each_v(k, std::forward<Consumer>(consumer));
@@ -162,7 +162,7 @@ struct bidi_graph_part_view
    * @brief Get the outdegree of local vertex k.
    */
   [[nodiscard]] constexpr auto outdegree(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     return fw_view().outdegree(k);
   }
@@ -171,7 +171,7 @@ struct bidi_graph_part_view
    * @brief Get the indegree of local vertex k.
    */
   [[nodiscard]] constexpr auto indegree(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     return bw_view().outdegree(k);
   }
@@ -201,7 +201,7 @@ struct bidi_graph_part_view
    */
   template<typename Consumer>
   constexpr void each_uv(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     fw_view().each_uv(k, std::forward<Consumer>(consumer));
@@ -222,7 +222,7 @@ struct bidi_graph_part_view
    */
   template<typename Consumer>
   constexpr void each_bw_uv(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     bw_view().each_uv(k, std::forward<Consumer>(consumer));
@@ -290,7 +290,7 @@ struct bidi_graph_part_view
 /**
  * @brief An owning partitioned bidirectional graph structure.
  */
-template<part_concept Part>
+template<part_c Part>
 struct bidi_graph_part
 {
   Part    part{};         ///< The partition info
@@ -311,8 +311,8 @@ struct bidi_graph_part
 
   bidi_graph_part(
     Part                    part,
-    arithmetic_concept auto local_fw_m,
-    arithmetic_concept auto local_bw_m)
+    integral_c auto local_fw_m,
+    integral_c auto local_bw_m)
     : part(std::move(part))
     , local_fw_m(integral_cast<index_t>(local_fw_m))
     , local_bw_m(integral_cast<index_t>(local_bw_m))
@@ -393,7 +393,7 @@ struct bidi_graph_part
    * @brief Get the forward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto csr_range(
-    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
+    integral_c auto k) const noexcept -> std::span<vertex_t>
   {
     return view().csr_range(k);
   }
@@ -402,7 +402,7 @@ struct bidi_graph_part
    * @brief Get the backward neighbors of local vertex k.
    */
   [[nodiscard]] constexpr auto bw_csr_range(
-    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
+    integral_c auto k) const noexcept -> std::span<vertex_t>
   {
     return view().bw_csr_range(k);
   }
@@ -432,7 +432,7 @@ struct bidi_graph_part
    */
   template<typename Consumer>
   constexpr void each_v(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     view().each_v(k, std::forward<Consumer>(consumer));
@@ -453,7 +453,7 @@ struct bidi_graph_part
    */
   template<typename Consumer>
   constexpr void each_bw_v(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     view().each_bw_v(k, std::forward<Consumer>(consumer));
@@ -473,7 +473,7 @@ struct bidi_graph_part
    * @brief Get the outdegree of local vertex k.
    */
   [[nodiscard]] constexpr auto outdegree(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     return view().outdegree(k);
   }
@@ -482,7 +482,7 @@ struct bidi_graph_part
    * @brief Get the indegree of local vertex k.
    */
   [[nodiscard]] constexpr auto indegree(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     return view().indegree(k);
   }
@@ -502,7 +502,7 @@ struct bidi_graph_part
    */
   template<typename Consumer>
   constexpr void each_uv(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     view().each_uv(k, std::forward<Consumer>(consumer));
@@ -523,7 +523,7 @@ struct bidi_graph_part
    */
   template<typename Consumer>
   constexpr void each_bw_uv(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     view().each_bw_uv(k, std::forward<Consumer>(consumer));

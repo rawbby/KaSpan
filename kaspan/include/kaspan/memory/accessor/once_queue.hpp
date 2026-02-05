@@ -20,7 +20,7 @@ public:
   once_queue() noexcept = default;
   ~once_queue()         = default;
 
-  template<arithmetic_concept Size>
+  template<integral_c Size>
   explicit once_queue(Size size) noexcept(false)
     : buffer(integral_cast<u64>(size) * sizeof(T))
   {
@@ -125,7 +125,7 @@ private:
 };
 
 template<typename T,
-         arithmetic_concept Size>
+         integral_c Size>
 auto
 make_once_queue(
   Size size) -> once_queue<T>

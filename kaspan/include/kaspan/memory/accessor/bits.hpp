@@ -18,7 +18,7 @@ class bits final
 {
 public:
   bits() noexcept = default;
-  explicit bits(arithmetic_concept auto size) noexcept(false)
+  explicit bits(integral_c auto size) noexcept(false)
     : data_(line_alloc<u64>(ceildiv<64>(integral_cast<u64>(size)) * sizeof(u64)))
   {
     IF(KASPAN_DEBUG, size_ = round_up<64>(integral_cast<u64>(size)));
@@ -59,28 +59,28 @@ public:
   }
 
   void clear(
-    arithmetic_concept auto end)
+    integral_c auto end)
   {
     DEBUG_ASSERT_LE(end, size_);
     bits_ops::clear(data(), end);
   }
 
   void fill(
-    arithmetic_concept auto end)
+    integral_c auto end)
   {
     DEBUG_ASSERT_LE(end, size_);
     bits_ops::fill(data(), end);
   }
 
   [[nodiscard]] auto get(
-    arithmetic_concept auto index) const -> bool
+    integral_c auto index) const -> bool
   {
     DEBUG_ASSERT_LT(index, size_);
     return bits_ops::get(data(), index);
   }
 
   void set(
-    arithmetic_concept auto index,
+    integral_c auto index,
     bool                    value)
   {
     DEBUG_ASSERT_LT(index, size_);
@@ -88,14 +88,14 @@ public:
   }
 
   void set(
-    arithmetic_concept auto index)
+    integral_c auto index)
   {
     DEBUG_ASSERT_LT(index, size_);
     bits_ops::set(data(), index);
   }
 
   void unset(
-    arithmetic_concept auto index)
+    integral_c auto index)
   {
     DEBUG_ASSERT_LT(index, size_);
     bits_ops::unset(data(), index);
@@ -103,7 +103,7 @@ public:
 
   template<typename Consumer>
   void each(
-    arithmetic_concept auto end,
+    integral_c auto end,
     Consumer&&              fn) const
   {
     DEBUG_ASSERT_LE(end, size_);
@@ -112,7 +112,7 @@ public:
 
   template<typename Consumer>
   void set_each(
-    arithmetic_concept auto end,
+    integral_c auto end,
     Consumer&&              fn)
   {
     DEBUG_ASSERT_LE(end, size_);
@@ -127,14 +127,14 @@ private:
 
 auto
 make_bits(
-  arithmetic_concept auto size) noexcept -> bits
+  integral_c auto size) noexcept -> bits
 {
   return bits{ size };
 }
 
 auto
 make_bits_clean(
-  arithmetic_concept auto size) noexcept -> bits
+  integral_c auto size) noexcept -> bits
 {
   bits res{ size };
   res.clear(size);
@@ -143,7 +143,7 @@ make_bits_clean(
 
 auto
 make_bits_filled(
-  arithmetic_concept auto size) noexcept -> bits
+  integral_c auto size) noexcept -> bits
 {
   bits res{ size };
   res.fill(size);

@@ -42,25 +42,25 @@ inline i32 world_size = 1;
  */
 template<typename T>
 constexpr inline auto type =
-  byte_concept<T> ? MPI_BYTE     :
-  i8_concept<T>   ? MPI_INT8_T   :
-  i16_concept<T>  ? MPI_INT16_T  :
-  i32_concept<T>  ? MPI_INT32_T  :
-  i64_concept<T>  ? MPI_INT64_T  :
-  u8_concept<T>   ? MPI_UINT8_T  :
-  u16_concept<T>  ? MPI_UINT16_T :
-  u32_concept<T>  ? MPI_UINT32_T :
-  u64_concept<T>  ? MPI_UINT64_T :
-  f32_concept<T>  ? MPI_FLOAT    :
-  f64_concept<T>  ? MPI_DOUBLE   :
+  byte_c<T> ? MPI_BYTE     :
+  i8_c<T>   ? MPI_INT8_T   :
+  i16_c<T>  ? MPI_INT16_T  :
+  i32_c<T>  ? MPI_INT32_T  :
+  i64_c<T>  ? MPI_INT64_T  :
+  u8_c<T>   ? MPI_UINT8_T  :
+  u16_c<T>  ? MPI_UINT16_T :
+  u32_c<T>  ? MPI_UINT32_T :
+  u64_c<T>  ? MPI_UINT64_T :
+  f32_c<T>  ? MPI_FLOAT    :
+  f64_c<T>  ? MPI_DOUBLE   :
   MPI_DATATYPE_NULL;
 // clang-format on
 
 /**
- * @brief mpi_type_concept for types that have a corresponding MPI datatype.
+ * @brief mpi_type_c for types that have a corresponding MPI datatype.
  */
 template<typename T>
-concept mpi_type_concept = type<T> != MPI_DATATYPE_NULL;
+concept mpi_type_c = type<T> != MPI_DATATYPE_NULL;
 
 constexpr inline auto byte_t = MPI_BYTE;
 constexpr inline auto i8_t   = MPI_INT8_T;
@@ -197,7 +197,7 @@ extent_of(
   return extent;
 }
 
-template<mpi_type_concept T>
+template<mpi_type_c T>
 auto
 extent_of() -> MPI_Aint
 {
@@ -389,7 +389,7 @@ allreduce_single(
 /**
  * @brief All-reduce for a single typed value.
  */
-template<mpi_type_concept T>
+template<mpi_type_c T>
 auto
 allreduce_single(
   T const& send_value,
@@ -462,7 +462,7 @@ allgather(
  * @param recv_buffer The buffer to receive the data.
  * @param recv_count The number of elements to receive from each process.
  */
-template<mpi_type_concept T>
+template<mpi_type_c T>
 void
 allgather(
   T const*  send_buffer,
@@ -480,7 +480,7 @@ allgather(
  * @param send_value The value to send.
  * @param recv_buffer The buffer to receive the data.
  */
-template<mpi_type_concept T>
+template<mpi_type_c T>
 void
 allgather(
   T const& send_value,
@@ -552,7 +552,7 @@ allgatherv(
  * @param recv_counts Per-rank element counts (MPI_Count[world_size]).
  * @param recv_displs Per-rank displacements (MPI_Aint[world_size]).
  */
-template<mpi_type_concept T>
+template<mpi_type_c T>
 void
 allgatherv(
   T const*         send_buffer,
@@ -574,7 +574,7 @@ allgatherv(
  *         - recv points into buffer,
  *         - count is the total number of received elements.
  */
-template<mpi_type_concept T>
+template<mpi_type_c T>
 auto
 allgatherv(
   T const*  send_buffer,
@@ -622,7 +622,7 @@ allreduce_inplace(
 /**
  * @brief In-place all-reduce for a buffer of typed elements.
  */
-template<mpi_type_concept T>
+template<mpi_type_c T>
 void
 allreduce_inplace(
   T*        send_buffer,
@@ -635,7 +635,7 @@ allreduce_inplace(
 /**
  * @brief In-place all-reduce for a single typed value.
  */
-template<mpi_type_concept T>
+template<mpi_type_c T>
 void
 allreduce_inplace(
   T&     send_value,
@@ -694,7 +694,7 @@ alltoallv(
 /**
  * @brief Typed wrapper for MPI_Alltoallv_c.
  */
-template<mpi_type_concept T>
+template<mpi_type_c T>
 void
 alltoallv(
   T const*         send_buffer,
@@ -785,7 +785,7 @@ gather(
  * @param recv_count The number of elements to receive from each process (significant only at root).
  * @param root The rank of the root process.
  */
-template<mpi_type_concept T>
+template<mpi_type_c T>
 void
 gather(
   T const*  send_buffer,
@@ -805,7 +805,7 @@ gather(
  * @param recv_buffer The buffer to receive the data (significant only at root).
  * @param root The rank of the root process.
  */
-template<mpi_type_concept T>
+template<mpi_type_c T>
 void
 gather(
   T const& send_value,
@@ -878,7 +878,7 @@ gatherv(
  * @param displs The displacements in the receive buffer (significant only at root).
  * @param root The rank of the root process.
  */
-template<mpi_type_concept T>
+template<mpi_type_c T>
 void
 gatherv(
   T const*         send_buffer,

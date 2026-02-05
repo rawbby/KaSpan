@@ -8,7 +8,7 @@
 namespace kaspan {
 
 template<class T>
-concept part_view_concept =
+concept part_view_c =
 
   std::is_move_constructible_v<T> && std::is_move_assignable_v<T>
 
@@ -37,7 +37,7 @@ concept part_view_concept =
      });
 
 template<class T>
-concept part_concept =
+concept part_c =
 
   std::is_move_constructible_v<T> && std::is_move_assignable_v<T>
 
@@ -66,12 +66,12 @@ concept part_concept =
 
   && (requires(T t) {
        { t.world_rank_of(std::declval<vertex_t>()) } -> std::same_as<i32>;
-       { t.world_part_of(std::declval<i32>()) } -> part_view_concept;
-       { t.view() } -> part_view_concept;
+       { t.world_part_of(std::declval<i32>()) } -> part_view_c;
+       { t.view() } -> part_view_c;
      });
 
 template<class T>
-concept graph_part_view_concept = requires(T t, vertex_t k) {
+concept graph_part_view_c = requires(T t, vertex_t k) {
   t.each_k([](vertex_t) {});
   t.each_ku([](vertex_t, vertex_t) {});
   t.each_u([](vertex_t) {});
@@ -82,8 +82,8 @@ concept graph_part_view_concept = requires(T t, vertex_t k) {
 };
 
 template<class T>
-concept graph_part_concept = requires(T t) {
-  { t.view() } -> graph_part_view_concept;
+concept graph_part_c = requires(T t) {
+  { t.view() } -> graph_part_view_c;
 };
 
 }

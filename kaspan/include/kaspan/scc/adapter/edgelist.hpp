@@ -42,7 +42,7 @@ edgelist_to_graph(
   sorted_edgelist_to_graph(n, m, edgelist, head, csr);
 }
 
-template<part_view_concept Part>
+template<part_view_c Part>
 void
 sorted_edgelist_to_graph_part(
   Part          part,
@@ -66,7 +66,7 @@ sorted_edgelist_to_graph_part(
   DEBUG_ASSERT_EQ(end, local_m);
 }
 
-template<part_view_concept Part>
+template<part_view_c Part>
 void
 edgelist_to_graph_part(
   Part      part,

@@ -49,7 +49,7 @@ struct frontier_view
   constexpr auto operator=(frontier_view const&) noexcept -> frontier_view& = default;
   constexpr auto operator=(frontier_view&&) noexcept -> frontier_view&      = default;
 
-  template<part_view_concept Part>
+  template<part_view_c Part>
   constexpr auto world_rank_of(
     Part part,
     T    value) noexcept -> i32
@@ -96,10 +96,10 @@ struct frontier_view
     }
   }
 
-  template<part_view_concept Part>
+  template<part_view_c Part>
   void push(
     Part                    part,
-    arithmetic_concept auto rank,
+    integral_c auto rank,
     T                       value)
   {
     if constexpr (std::same_as<T, vertex_t>) {
@@ -116,10 +116,10 @@ struct frontier_view
     ++send_counts[integral_cast<i32>(rank)];
   }
 
-  template<part_view_concept Part>
+  template<part_view_c Part>
   void push(
     Part                    part,
-    arithmetic_concept auto rank,
+    integral_c auto rank,
     T                       value,
     auto&&                  consumer)
   {
@@ -137,10 +137,10 @@ struct frontier_view
     ++send_counts[integral_cast<i32>(rank)];
   }
 
-  template<part_view_concept Part>
+  template<part_view_c Part>
   void relaxed_push(
     Part                    part,
-    arithmetic_concept auto rank,
+    integral_c auto rank,
     T                       value)
   {
     auto const r = integral_cast<i32>(rank);
@@ -148,10 +148,10 @@ struct frontier_view
     else push(part, r, value);
   }
 
-  template<part_view_concept Part>
+  template<part_view_c Part>
   void relaxed_push(
     Part                    part,
-    arithmetic_concept auto rank,
+    integral_c auto rank,
     T                       value,
     auto&&                  consumer)
   {
@@ -160,7 +160,7 @@ struct frontier_view
     else push(part, r, value, consumer);
   }
 
-  template<part_view_concept Part>
+  template<part_view_c Part>
   void push(
     Part   part,
     T      value,
@@ -169,7 +169,7 @@ struct frontier_view
     push(part, world_rank_of(part, value), value, consumer);
   }
 
-  template<part_view_concept Part>
+  template<part_view_c Part>
   void push(
     Part part,
     T    value)
@@ -177,7 +177,7 @@ struct frontier_view
     push(part, world_rank_of(part, value), value);
   }
 
-  template<part_view_concept Part>
+  template<part_view_c Part>
   void relaxed_push(
     Part   part,
     T      value,
@@ -186,7 +186,7 @@ struct frontier_view
     relaxed_push(part, world_rank_of(part, value), value, consumer);
   }
 
-  template<part_view_concept Part>
+  template<part_view_c Part>
   void relaxed_push(
     Part part,
     T    value)
@@ -234,7 +234,7 @@ struct frontier_view
     }
   }
 
-  template<part_view_concept Part>
+  template<part_view_c Part>
   auto comm(
     Part part) -> bool
   {
@@ -268,7 +268,7 @@ struct frontier_view
     return true;
   }
 
-  template<part_view_concept Part>
+  template<part_view_c Part>
   auto comm(
     Part   part,
     auto&& consumer) -> bool
@@ -313,7 +313,7 @@ struct frontier
   }
 
   explicit frontier(
-    arithmetic_concept auto initial_capacity) noexcept
+    integral_c auto initial_capacity) noexcept
     : send_buffer(initial_capacity)
     , recv_buffer(initial_capacity)
     , send_counts(line_alloc<MPI_Count>(mpi_basic::world_size))

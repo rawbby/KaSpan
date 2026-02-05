@@ -116,7 +116,7 @@ namespace kaspan {
 namespace internal {
 
 template<typename T>
-concept formattable_concept = requires { std::formatter<std::remove_cvref_t<T>>{}; };
+concept formattable_c = requires { std::formatter<std::remove_cvref_t<T>>{}; };
 
 [[noreturn]] constexpr void
 fail(
@@ -129,7 +129,7 @@ fail(
   std::abort();
 }
 
-template<formattable_concept... Args>
+template<formattable_c... Args>
 [[noreturn]] constexpr void
 fail_fmt(
   std::string_view            head,
@@ -148,9 +148,9 @@ fail_fmt(
   std::abort();
 }
 
-template<formattable_concept Arg0,
-         formattable_concept Arg1,
-         formattable_concept... Args>
+template<formattable_c Arg0,
+         formattable_c Arg1,
+         formattable_c... Args>
 [[noreturn]] constexpr void
 fail_fmt2_fmt(
   std::string_view            head,
@@ -174,10 +174,10 @@ fail_fmt2_fmt(
   std::abort();
 }
 
-template<formattable_concept Arg0,
-         formattable_concept Arg1,
-         formattable_concept Arg2,
-         formattable_concept... Args>
+template<formattable_c Arg0,
+         formattable_c Arg1,
+         formattable_c Arg2,
+         formattable_c... Args>
 [[noreturn]] constexpr void
 fail_fmt3_fmt(
   std::string_view            head,
@@ -205,7 +205,7 @@ fail_fmt3_fmt(
 
 template<typename Lhs,
          typename Rhs>
-  requires(!arithmetic_concept<Lhs> || !arithmetic_concept<Rhs>)
+  requires(!integral_c<Lhs> || !integral_c<Rhs>)
 constexpr bool
 eq(
   Lhs const& lhs,
@@ -216,7 +216,7 @@ eq(
 
 template<typename Lhs,
          typename Rhs>
-  requires(!arithmetic_concept<Lhs> || !arithmetic_concept<Rhs>)
+  requires(!integral_c<Lhs> || !integral_c<Rhs>)
 constexpr bool
 lt(
   Lhs const& lhs,
@@ -225,27 +225,27 @@ lt(
   return lhs < rhs;
 }
 
-template<arithmetic_concept Lhs,
-         arithmetic_concept Rhs>
+template<integral_c Lhs,
+         integral_c Rhs>
 constexpr bool
 eq(
   Lhs lhs,
   Rhs rhs) noexcept
 {
-  if constexpr (signed_concept<Lhs> == signed_concept<Rhs>) return lhs == rhs;
-  else if constexpr (signed_concept<Lhs>) return lhs >= 0 && std::make_unsigned_t<Lhs>(lhs) == rhs;
+  if constexpr (signed_c<Lhs> == signed_c<Rhs>) return lhs == rhs;
+  else if constexpr (signed_c<Lhs>) return lhs >= 0 && std::make_unsigned_t<Lhs>(lhs) == rhs;
   else return rhs >= 0 && std::make_unsigned_t<Rhs>(rhs) == lhs;
 }
 
-template<arithmetic_concept Lhs,
-         arithmetic_concept Rhs>
+template<integral_c Lhs,
+         integral_c Rhs>
 constexpr bool
 lt(
   Lhs lhs,
   Rhs rhs) noexcept
 {
-  if constexpr (signed_concept<Lhs> == signed_concept<Rhs>) return lhs < rhs;
-  else if constexpr (signed_concept<Lhs>) return lhs < 0 || std::make_unsigned_t<Lhs>(lhs) < rhs;
+  if constexpr (signed_c<Lhs> == signed_c<Rhs>) return lhs < rhs;
+  else if constexpr (signed_c<Lhs>) return lhs < 0 || std::make_unsigned_t<Lhs>(lhs) < rhs;
   else return rhs >= 0 && lhs < std::make_unsigned_t<Rhs>(rhs);
 }
 
@@ -310,7 +310,7 @@ assert_true(
     internal::fail(head);
 }
 
-template<internal::formattable_concept... Args>
+template<internal::formattable_c... Args>
 constexpr void
 assert_true(
   auto const&                 cond,
@@ -331,7 +331,7 @@ assert_false(
     internal::fail(head);
 }
 
-template<internal::formattable_concept... Args>
+template<internal::formattable_c... Args>
 constexpr void
 assert_false(
   auto const&                 cond,
@@ -345,7 +345,7 @@ assert_false(
 
 template<typename Lhs,
          typename Rhs>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_eq(
   Lhs const&       lhs,
@@ -358,8 +358,8 @@ assert_eq(
 
 template<typename Lhs,
          typename Rhs,
-         internal::formattable_concept... Args>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+         internal::formattable_c... Args>
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_eq(
   Lhs const&                  lhs,
@@ -372,8 +372,8 @@ assert_eq(
     internal::fail_fmt(head, fmt, std::forward<Args>(args)...);
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs>
 constexpr void
 assert_eq(
   Lhs const&       lhs,
@@ -386,9 +386,9 @@ assert_eq(
   }
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs,
-         internal::formattable_concept... Args>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs,
+         internal::formattable_c... Args>
 constexpr void
 assert_eq(
   Lhs const&                  lhs,
@@ -405,8 +405,8 @@ assert_eq(
 
 template<typename Lhs,
          typename Rhs,
-         internal::formattable_concept... Args>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+         internal::formattable_c... Args>
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_ne(
   Lhs const&                  lhs,
@@ -421,7 +421,7 @@ assert_ne(
 
 template<typename Lhs,
          typename Rhs>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_ne(
   Lhs const&       lhs,
@@ -432,9 +432,9 @@ assert_ne(
     internal::fail(head);
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs,
-         internal::formattable_concept... Args>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs,
+         internal::formattable_c... Args>
 constexpr void
 assert_ne(
   Lhs const&                  lhs,
@@ -449,8 +449,8 @@ assert_ne(
   }
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs>
 constexpr void
 assert_ne(
   Lhs const&       lhs,
@@ -465,8 +465,8 @@ assert_ne(
 
 template<typename Lhs,
          typename Rhs,
-         internal::formattable_concept... Args>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+         internal::formattable_c... Args>
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_lt(
   Lhs const&                  lhs,
@@ -481,7 +481,7 @@ assert_lt(
 
 template<typename Lhs,
          typename Rhs>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_lt(
   Lhs const&       lhs,
@@ -492,9 +492,9 @@ assert_lt(
     internal::fail(head);
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs,
-         internal::formattable_concept... Args>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs,
+         internal::formattable_c... Args>
 constexpr void
 assert_lt(
   Lhs const&                  lhs,
@@ -509,8 +509,8 @@ assert_lt(
   }
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs>
 constexpr void
 assert_lt(
   Lhs const&       lhs,
@@ -525,8 +525,8 @@ assert_lt(
 
 template<typename Lhs,
          typename Rhs,
-         internal::formattable_concept... Args>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+         internal::formattable_c... Args>
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_gt(
   Lhs const&                  lhs,
@@ -541,7 +541,7 @@ assert_gt(
 
 template<typename Lhs,
          typename Rhs>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_gt(
   Lhs const&       lhs,
@@ -552,9 +552,9 @@ assert_gt(
     internal::fail(head);
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs,
-         internal::formattable_concept... Args>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs,
+         internal::formattable_c... Args>
 constexpr void
 assert_gt(
   Lhs const&                  lhs,
@@ -569,8 +569,8 @@ assert_gt(
   }
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs>
 constexpr void
 assert_gt(
   Lhs const&       lhs,
@@ -585,8 +585,8 @@ assert_gt(
 
 template<typename Lhs,
          typename Rhs,
-         internal::formattable_concept... Args>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+         internal::formattable_c... Args>
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_le(
   Lhs const&                  lhs,
@@ -601,7 +601,7 @@ assert_le(
 
 template<typename Lhs,
          typename Rhs>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_le(
   Lhs const&       lhs,
@@ -612,9 +612,9 @@ assert_le(
     internal::fail(head);
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs,
-         internal::formattable_concept... Args>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs,
+         internal::formattable_c... Args>
 constexpr void
 assert_le(
   Lhs const&                  lhs,
@@ -629,8 +629,8 @@ assert_le(
   }
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs>
 constexpr void
 assert_le(
   Lhs const&       lhs,
@@ -645,8 +645,8 @@ assert_le(
 
 template<typename Lhs,
          typename Rhs,
-         internal::formattable_concept... Args>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+         internal::formattable_c... Args>
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_ge(
   Lhs const&                  lhs,
@@ -661,7 +661,7 @@ assert_ge(
 
 template<typename Lhs,
          typename Rhs>
-  requires(!internal::formattable_concept<Lhs> || !internal::formattable_concept<Rhs>)
+  requires(!internal::formattable_c<Lhs> || !internal::formattable_c<Rhs>)
 constexpr void
 assert_ge(
   Lhs const&       lhs,
@@ -672,9 +672,9 @@ assert_ge(
     internal::fail(head);
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs,
-         internal::formattable_concept... Args>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs,
+         internal::formattable_c... Args>
 constexpr void
 assert_ge(
   Lhs const&                  lhs,
@@ -689,8 +689,8 @@ assert_ge(
   }
 }
 
-template<internal::formattable_concept Lhs,
-         internal::formattable_concept Rhs>
+template<internal::formattable_c Lhs,
+         internal::formattable_c Rhs>
 constexpr void
 assert_ge(
   Lhs const&       lhs,
@@ -706,8 +706,8 @@ assert_ge(
 template<typename Val,
          typename Beg,
          typename End,
-         internal::formattable_concept... Args>
-  requires(!internal::formattable_concept<Val> || !internal::formattable_concept<Beg> || !internal::formattable_concept<End>)
+         internal::formattable_c... Args>
+  requires(!internal::formattable_c<Val> || !internal::formattable_c<Beg> || !internal::formattable_c<End>)
 constexpr void
 assert_in_range(
   Val const&                  val,
@@ -724,7 +724,7 @@ assert_in_range(
 template<typename Val,
          typename Beg,
          typename End>
-  requires(!internal::formattable_concept<Val> || !internal::formattable_concept<Beg> || !internal::formattable_concept<End>)
+  requires(!internal::formattable_c<Val> || !internal::formattable_c<Beg> || !internal::formattable_c<End>)
 constexpr void
 assert_in_range(
   Val const&       val,
@@ -736,10 +736,10 @@ assert_in_range(
     internal::fail(head);
 }
 
-template<internal::formattable_concept Val,
-         internal::formattable_concept Beg,
-         internal::formattable_concept End,
-         internal::formattable_concept... Args>
+template<internal::formattable_c Val,
+         internal::formattable_c Beg,
+         internal::formattable_c End,
+         internal::formattable_c... Args>
 constexpr void
 assert_in_range(
   Val const&                  val,
@@ -755,9 +755,9 @@ assert_in_range(
   }
 }
 
-template<internal::formattable_concept Val,
-         internal::formattable_concept Beg,
-         internal::formattable_concept End>
+template<internal::formattable_c Val,
+         internal::formattable_c Beg,
+         internal::formattable_c End>
 constexpr void
 assert_in_range(
   Val const&       val,

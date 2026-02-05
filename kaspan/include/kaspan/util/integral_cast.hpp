@@ -9,8 +9,8 @@
 
 namespace kaspan {
 
-template<integral_concept T,
-         integral_concept F>
+template<integral_c T,
+         integral_c F>
 [[nodiscard]] constexpr auto
 integral_cast(
   F&& value) noexcept -> T

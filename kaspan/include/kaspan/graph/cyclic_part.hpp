@@ -21,8 +21,8 @@ public:
   }
 
   cyclic_part_view(
-    arithmetic_concept auto n,
-    arithmetic_concept auto r) noexcept
+    integral_c auto n,
+    integral_c auto r) noexcept
     : n_(integral_cast<vertex_t>(n))
     , world_rank_(integral_cast<i32>(r))
   {
@@ -44,7 +44,7 @@ public:
   }
 
   [[nodiscard]] auto to_local(
-    arithmetic_concept auto i) const noexcept -> vertex_t
+    integral_c auto i) const noexcept -> vertex_t
   {
     auto const j = integral_cast<vertex_t>(i);
     if (mpi_basic::world_size == 1) return j;
@@ -52,7 +52,7 @@ public:
   }
 
   [[nodiscard]] auto to_global(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     auto const l = integral_cast<vertex_t>(k);
     if (mpi_basic::world_size == 1) return l;
@@ -60,7 +60,7 @@ public:
   }
 
   [[nodiscard]] auto has_local(
-    arithmetic_concept auto i) const noexcept -> bool
+    integral_c auto i) const noexcept -> bool
   {
     auto const j = integral_cast<vertex_t>(i);
     if (mpi_basic::world_size == 1) return true;
@@ -82,14 +82,14 @@ public:
   }
 
   [[nodiscard]] static auto world_rank_of(
-    arithmetic_concept auto i) noexcept -> i32
+    integral_c auto i) noexcept -> i32
   {
     if (mpi_basic::world_size == 1) return 0;
     return integral_cast<i32>(integral_cast<vertex_t>(i) % mpi_basic::world_size);
   }
 
   [[nodiscard]] auto world_part_of(
-    arithmetic_concept auto r) const noexcept -> cyclic_part_view
+    integral_c auto r) const noexcept -> cyclic_part_view
   {
     return { n_, r };
   }
@@ -141,7 +141,7 @@ class cyclic_part
 public:
   constexpr cyclic_part() noexcept = default;
   explicit cyclic_part(
-    arithmetic_concept auto n) noexcept
+    integral_c auto n) noexcept
     : n_(integral_cast<vertex_t>(n))
   {
     if (mpi_basic::world_size == 1) {
@@ -162,19 +162,19 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    arithmetic_concept auto i) const noexcept -> vertex_t
+    integral_c auto i) const noexcept -> vertex_t
   {
     return view().to_local(i);
   }
 
   [[nodiscard]] constexpr auto to_global(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     return view().to_global(k);
   }
 
   [[nodiscard]] constexpr auto has_local(
-    arithmetic_concept auto i) const noexcept -> bool
+    integral_c auto i) const noexcept -> bool
   {
     return view().has_local(i);
   }
@@ -194,14 +194,14 @@ public:
   }
 
   [[nodiscard]] static auto world_rank_of(
-    arithmetic_concept auto i) noexcept -> i32
+    integral_c auto i) noexcept -> i32
   {
     if (mpi_basic::world_size == 1) return 0;
     return integral_cast<i32>(integral_cast<vertex_t>(i) % mpi_basic::world_size);
   }
 
   [[nodiscard]] auto world_part_of(
-    arithmetic_concept auto r) const noexcept -> cyclic_part_view
+    integral_c auto r) const noexcept -> cyclic_part_view
   {
     return view().world_part_of(r);
   }

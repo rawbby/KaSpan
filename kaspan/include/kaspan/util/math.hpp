@@ -10,7 +10,7 @@
 
 namespace kaspan {
 
-template<unsigned_concept T>
+template<unsigned_c T>
 constexpr auto
 floordiv(
   T x,
@@ -22,7 +22,7 @@ floordiv(
   return x / base;
 }
 
-template<unsigned_concept T>
+template<unsigned_c T>
 constexpr auto
 ceildiv(
   T x,
@@ -35,7 +35,7 @@ ceildiv(
   return (base - 1 + x) / base;
 }
 
-template<unsigned_concept T>
+template<unsigned_c T>
 constexpr auto
 remainder(
   T x,
@@ -47,7 +47,7 @@ remainder(
   return x % base;
 }
 
-template<unsigned_concept T>
+template<unsigned_c T>
 constexpr auto
 round_down(
   T x,
@@ -59,7 +59,7 @@ round_down(
   return x - (x % base);
 }
 
-template<unsigned_concept T>
+template<unsigned_c T>
 constexpr auto
 round_up(
   T x,
@@ -73,7 +73,7 @@ round_up(
   return r ? x + (base - r) : x;
 }
 
-template<unsigned_concept T>
+template<unsigned_c T>
 constexpr T
 clip(
   T x,
@@ -87,7 +87,7 @@ clip(
 }
 
 template<u64              base,
-         unsigned_concept T>
+         unsigned_c T>
 constexpr auto
 floordiv(
   T x) noexcept -> T
@@ -104,7 +104,7 @@ floordiv(
 }
 
 template<u64              base,
-         unsigned_concept T>
+         unsigned_c T>
 constexpr auto
 ceildiv(
   T x) noexcept -> T
@@ -121,7 +121,7 @@ ceildiv(
 }
 
 template<u64              base,
-         unsigned_concept T>
+         unsigned_c T>
 constexpr auto
 remainder(
   T x) noexcept -> T
@@ -138,7 +138,7 @@ remainder(
 }
 
 template<u64              base,
-         unsigned_concept T>
+         unsigned_c T>
 constexpr auto
 round_down(
   T x) noexcept -> T
@@ -156,7 +156,7 @@ round_down(
 }
 
 template<u64              base,
-         unsigned_concept T>
+         unsigned_c T>
 constexpr auto
 round_up(
   T x) noexcept -> T
@@ -179,7 +179,7 @@ round_up(
 
 template<u64              lo,
          u64              hi,
-         unsigned_concept T>
+         unsigned_c T>
 constexpr T
 clip(
   T x) noexcept

@@ -11,7 +11,7 @@
 namespace kaspan {
 
 /// from a global_graph get the degree of a partition
-template<part_view_concept Part>
+template<part_view_c Part>
   requires(Part::continuous)
 auto
 partition_local_m(
@@ -22,7 +22,7 @@ partition_local_m(
 }
 
 /// from a global_graph get the degree of a partition
-template<part_view_concept Part>
+template<part_view_c Part>
   requires(!Part::continuous)
 auto
 partition_local_m(
@@ -37,7 +37,7 @@ partition_local_m(
 }
 
 /// from a global_graph get the degree of a partition
-template<part_view_concept Part>
+template<part_view_c Part>
 auto
 partition_local_m(
   bidi_graph_view bg,
@@ -48,7 +48,7 @@ partition_local_m(
   return PACK(local_fw_m, local_bw_m);
 }
 
-template<part_view_concept Part>
+template<part_view_c Part>
 auto
 partition(
   graph_view g,
@@ -71,7 +71,7 @@ partition(
   return gp;
 }
 
-template<part_view_concept Part>
+template<part_view_c Part>
 auto
 partition(
   bidi_graph_view bg,

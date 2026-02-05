@@ -67,7 +67,7 @@ backward_complement_graph(
   g.bw_view().debug_validate();
 }
 
-template<part_concept Part>
+template<part_c Part>
 void
 backward_complement_graph_part(
   bidi_graph_part<Part>& g)

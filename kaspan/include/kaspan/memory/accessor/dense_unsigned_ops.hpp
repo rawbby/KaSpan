@@ -11,7 +11,7 @@ namespace kaspan {
 
 struct dense_unsigned_ops
 {
-  template<unsigned_concept T>
+  template<unsigned_c T>
   static auto get(
     std::byte const* data,
     u64              index,
@@ -41,7 +41,7 @@ struct dense_unsigned_ops
     return result;
   }
 
-  template<unsigned_concept T>
+  template<unsigned_c T>
   static void set(
     std::byte*  data,
     u64         index,
@@ -70,7 +70,7 @@ struct dense_unsigned_ops
     }
   }
 
-  template<unsigned_concept T>
+  template<unsigned_c T>
   static void fill(
     std::byte*  data,
     u64         n,

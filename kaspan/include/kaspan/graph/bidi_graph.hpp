@@ -36,8 +36,8 @@ struct bidi_graph_view
   constexpr bidi_graph_view(bidi_graph_view const&) noexcept = default;
 
   constexpr bidi_graph_view(
-    arithmetic_concept auto n,
-    arithmetic_concept auto m,
+    integral_c auto n,
+    integral_c auto m,
     index_t*                fw_head,
     vertex_t*               fw_csr,
     index_t*                bw_head,
@@ -71,13 +71,13 @@ struct bidi_graph_view
   }
 
   [[nodiscard]] constexpr auto csr_range(
-    arithmetic_concept auto u) const noexcept -> std::span<vertex_t>
+    integral_c auto u) const noexcept -> std::span<vertex_t>
   {
     return fw_view().csr_range(u);
   }
 
   [[nodiscard]] constexpr auto bw_csr_range(
-    arithmetic_concept auto u) const noexcept -> std::span<vertex_t>
+    integral_c auto u) const noexcept -> std::span<vertex_t>
   {
     return bw_view().csr_range(u);
   }
@@ -108,7 +108,7 @@ struct bidi_graph_view
    */
   template<typename Consumer>
   constexpr void each_v(
-    arithmetic_concept auto u,
+    integral_c auto u,
     Consumer&&              consumer) const noexcept
   {
     fw_view().each_v(u, std::forward<Consumer>(consumer));
@@ -119,7 +119,7 @@ struct bidi_graph_view
    */
   template<typename Consumer>
   constexpr void each_bw_v(
-    arithmetic_concept auto u,
+    integral_c auto u,
     Consumer&&              consumer) const noexcept
   {
     bw_view().each_v(u, std::forward<Consumer>(consumer));
@@ -129,7 +129,7 @@ struct bidi_graph_view
    * @brief Get the outdegree of vertex u.
    */
   [[nodiscard]] constexpr auto outdegree(
-    arithmetic_concept auto u) const noexcept -> vertex_t
+    integral_c auto u) const noexcept -> vertex_t
   {
     return fw_view().outdegree(u);
   }
@@ -138,7 +138,7 @@ struct bidi_graph_view
    * @brief Get the indegree of vertex u.
    */
   [[nodiscard]] constexpr auto indegree(
-    arithmetic_concept auto u) const noexcept -> vertex_t
+    integral_c auto u) const noexcept -> vertex_t
   {
     return bw_view().outdegree(u);
   }
@@ -158,7 +158,7 @@ struct bidi_graph_view
    */
   template<typename Consumer>
   constexpr void each_uv(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     fw_view().each_uv(k, std::forward<Consumer>(consumer));
@@ -179,7 +179,7 @@ struct bidi_graph_view
    */
   template<typename Consumer>
   constexpr void each_bw_uv(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     bw_view().each_uv(k, std::forward<Consumer>(consumer));
@@ -265,8 +265,8 @@ struct bidi_graph
   constexpr bidi_graph() noexcept = default;
 
   bidi_graph(
-    arithmetic_concept auto n,
-    arithmetic_concept auto m)
+    integral_c auto n,
+    integral_c auto m)
     : n(integral_cast<vertex_t>(n))
     , m(integral_cast<index_t>(m))
     , fw{ line_alloc<index_t>(n ? n + 1 : 0),
@@ -352,7 +352,7 @@ struct bidi_graph
    * @brief Get the forward neighbors of vertex u.
    */
   [[nodiscard]] constexpr auto csr_range(
-    arithmetic_concept auto u) const noexcept -> std::span<vertex_t>
+    integral_c auto u) const noexcept -> std::span<vertex_t>
   {
     return view().csr_range(u);
   }
@@ -361,7 +361,7 @@ struct bidi_graph
    * @brief Get the backward neighbors of vertex u.
    */
   [[nodiscard]] constexpr auto bw_csr_range(
-    arithmetic_concept auto u) const noexcept -> std::span<vertex_t>
+    integral_c auto u) const noexcept -> std::span<vertex_t>
   {
     return view().bw_csr_range(u);
   }
@@ -381,7 +381,7 @@ struct bidi_graph
    */
   template<typename Consumer>
   constexpr void each_v(
-    arithmetic_concept auto u,
+    integral_c auto u,
     Consumer&&              consumer) const noexcept
   {
     view().each_v(u, std::forward<Consumer>(consumer));
@@ -392,7 +392,7 @@ struct bidi_graph
    */
   template<typename Consumer>
   constexpr void each_bw_v(
-    arithmetic_concept auto u,
+    integral_c auto u,
     Consumer&&              consumer) const noexcept
   {
     view().each_bw_v(u, std::forward<Consumer>(consumer));
@@ -402,7 +402,7 @@ struct bidi_graph
    * @brief Get the outdegree of vertex u.
    */
   [[nodiscard]] constexpr auto outdegree(
-    arithmetic_concept auto u) const noexcept -> vertex_t
+    integral_c auto u) const noexcept -> vertex_t
   {
     return view().outdegree(u);
   }
@@ -411,7 +411,7 @@ struct bidi_graph
    * @brief Get the indegree of vertex u.
    */
   [[nodiscard]] constexpr auto indegree(
-    arithmetic_concept auto u) const noexcept -> vertex_t
+    integral_c auto u) const noexcept -> vertex_t
   {
     return view().indegree(u);
   }

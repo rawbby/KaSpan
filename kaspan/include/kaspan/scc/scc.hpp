@@ -15,7 +15,7 @@
 
 namespace kaspan {
 
-template<part_view_concept Part = single_part_view>
+template<part_view_c Part = single_part_view>
 void
 scc(
   bidi_graph_part_view<Part> graph,
@@ -32,8 +32,6 @@ scc(
     ++local_decided;
   };
 
-  auto cache_index = hash_map<vertex_t>{ graph.local_fw_m + graph.local_bw_m };
-
   KASPAN_STATISTIC_PUSH("trim_1_first");
   auto       is_undecided = make_bits_filled(graph.part.local_n());
   auto const pivot        = trim_1_first(graph, is_undecided.data(), on_decision);
@@ -44,12 +42,13 @@ scc(
   if (global_decided == graph.part.n()) return;
 
   KASPAN_STATISTIC_PUSH("forward_backward_search");
-  prev_local_decided    = local_decided;
-  prev_global_decided   = global_decided;
-  auto front            = frontier{ graph.part.local_n() };
-  auto active           = make_array<vertex_t>(graph.part.local_n());
-  auto is_reached       = make_bits(graph.part.local_n());
-  cache_forward_backward_search(graph, front, active.data(), is_reached.data(), is_undecided.data(), pivot, on_decision, cache_index.view(), is_reached_cache.data(), cache_size);
+  prev_local_decided  = local_decided;
+  prev_global_decided = global_decided;
+  auto front          = frontier{ graph.part.local_n() };
+  auto active         = make_array<vertex_t>(graph.part.local_n());
+  auto is_reached     = make_bits(graph.part.local_n());
+  auto cache          = hash_map<vertex_t>{ graph.local_fw_m + graph.local_bw_m };
+  cache_forward_backward_search(graph, front, active.data(), is_reached.data(), is_undecided.data(), pivot, on_decision, cache);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);
   KASPAN_STATISTIC_ADD("memory", get_resident_set_bytes());
@@ -71,11 +70,10 @@ scc(
   prev_local_decided  = local_decided;
   prev_global_decided = global_decided;
   auto label          = make_array<vertex_t>(graph.part.local_n());
-  auto label_cache    = make_array<vertex_t>(cache_size);
   auto has_changed    = make_bits_clean(graph.part.local_n());
   do {
-    cache_rot_label_search(
-      graph, front, label.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), on_decision, cache_index.view(), label_cache.data());
+    cache.clear();
+    cache_rot_label_search(graph, front, label.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), on_decision, cache);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   } while (global_decided < graph.part.n());
   KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);

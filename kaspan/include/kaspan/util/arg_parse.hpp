@@ -68,7 +68,7 @@ arg_select_default_str(
   return default_value;
 }
 
-template<integral_concept Int>
+template<integral_c Int>
 auto
 arg_select_int(
   int         argc,
@@ -89,7 +89,7 @@ arg_select_int(
   std::exit(1);
 }
 
-template<integral_concept Int>
+template<integral_c Int>
 auto
 arg_select_optional_int(
   int         argc,
@@ -107,7 +107,7 @@ arg_select_optional_int(
   return std::nullopt;
 }
 
-template<integral_concept Int>
+template<integral_c Int>
 auto
 arg_select_default_int(
   int         argc,

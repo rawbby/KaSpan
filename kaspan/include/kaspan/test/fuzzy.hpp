@@ -19,12 +19,12 @@
 
 namespace kaspan {
 
-template<part_view_concept Part>
+template<part_view_c Part>
 void
 test_validate_scc_id(
   graph_part_view<Part>          gpv,
-  arithmetic_concept auto const* scc_id_orig,
-  arithmetic_concept auto*       scc_id)
+  integral_c auto const* scc_id_orig,
+  integral_c auto*       scc_id)
 {
   auto       part    = gpv.part;
   auto const local_n = part.local_n();
@@ -217,7 +217,7 @@ fuzzy_global_scc_id_and_graph(
   return PACK(scc_id, bg);
 }
 
-template<part_view_concept Part>
+template<part_view_c Part>
 auto
 fuzzy_local_scc_id_and_graph(
   u64    seed,

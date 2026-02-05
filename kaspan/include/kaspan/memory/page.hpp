@@ -19,7 +19,7 @@ inline bool    pagesize_initialized = false;
 inline auto    pagesize_value       = pagesize_default;
 }
 
-template<unsigned_concept Size = u32>
+template<unsigned_c Size = u32>
 auto
 pagesize() -> Size
 {
@@ -36,7 +36,7 @@ pagesize() -> Size
   return integral_cast<Size>(detail::pagesize_value);
 }
 
-template<unsigned_concept Size>
+template<unsigned_c Size>
 auto
 page_align_down(
   Size size) -> Size
@@ -45,7 +45,7 @@ page_align_down(
   return size & ~mask;
 }
 
-template<unsigned_concept Size>
+template<unsigned_c Size>
 auto
 page_align_up(
   Size size) -> Size
@@ -54,7 +54,7 @@ page_align_up(
   return (size + mask) & ~mask;
 }
 
-template<unsigned_concept Size>
+template<unsigned_c Size>
 auto
 is_page_aligned(
   Size size) -> bool
@@ -74,7 +74,7 @@ inline auto page_align_up(void* data){return std::bit_cast<void*>(page_align_up(
 
 template<typename T = byte>
 [[nodiscard]] auto
-page_alloc(arithmetic_concept auto size) noexcept(false) -> T*
+page_alloc(integral_c auto size) noexcept(false) -> T*
 {
   using alloc_t = std::conditional_t<std::is_same_v<T, void>, byte, T>;
 

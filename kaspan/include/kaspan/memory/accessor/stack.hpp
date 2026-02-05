@@ -20,7 +20,7 @@ public:
   stack() noexcept = default;
   ~stack()         = default;
 
-  template<arithmetic_concept Size>
+  template<integral_c Size>
   explicit stack(Size size) noexcept(false)
     : buffer(integral_cast<u64>(size) * sizeof(T))
   {
@@ -133,7 +133,7 @@ private:
 };
 
 template<typename T,
-         arithmetic_concept Size>
+         integral_c Size>
 auto
 make_stack(
   Size size) -> stack<T>

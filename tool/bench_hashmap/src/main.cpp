@@ -2,7 +2,7 @@
 
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/explicit_sorted_part.hpp>
-#include <kaspan/memory/accessor/hash_index_map.hpp>
+#include <kaspan/memory/accessor/hash_map.hpp>
 #include <kaspan/scc/partion_graph.hpp>
 #include <kaspan/test/fuzzy.hpp>
 #include <kaspan/util/mpi_basic.hpp>

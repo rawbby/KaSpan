@@ -12,11 +12,11 @@
 
 namespace kaspan {
 
-template<unsigned_concept T = u64>
+template<unsigned_c T = u64>
 class dense_unsigned_accessor final
 {
 public:
-  template<arithmetic_concept Size>
+  template<integral_c Size>
   explicit dense_unsigned_accessor(
     void*       data,
     Size        size,
@@ -64,7 +64,7 @@ public:
     return endian_;
   }
 
-  template<arithmetic_concept Count>
+  template<integral_c Count>
   void fill(
     T     value,
     Count n)
@@ -76,7 +76,7 @@ public:
     dense_unsigned_ops::fill<T>(data(), n64, element_bytes(), endian(), value);
   }
 
-  template<arithmetic_concept Index>
+  template<integral_c Index>
   [[nodiscard]] auto get(
     Index index) const -> T
   {
@@ -87,7 +87,7 @@ public:
     return dense_unsigned_ops::get<T>(data(), index64, element_bytes(), endian());
   }
 
-  template<arithmetic_concept Index>
+  template<integral_c Index>
   void set(
     Index index,
     T     val)
@@ -108,8 +108,8 @@ private:
     u64 size_ = 0;)
 };
 
-template<unsigned_concept   T = u64,
-         arithmetic_concept Count>
+template<unsigned_c   T = u64,
+         integral_c Count>
 auto
 borrow_dense_unsigned(
   void**      memory,
@@ -124,8 +124,8 @@ borrow_dense_unsigned(
   return dense_unsigned_accessor<T>{ data, count64, element_byte_size, endian };
 }
 
-template<unsigned_concept   T = u64,
-         arithmetic_concept Count>
+template<unsigned_c   T = u64,
+         integral_c Count>
 auto
 view_dense_unsigned(
   void*       data,

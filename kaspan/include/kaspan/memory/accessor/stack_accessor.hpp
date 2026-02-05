@@ -19,7 +19,7 @@ public:
   stack_accessor()  = default;
   ~stack_accessor() = default;
 
-  template<arithmetic_concept Size>
+  template<integral_c Size>
   explicit stack_accessor(
     void* data,
     Size  size)
@@ -31,8 +31,8 @@ public:
     IF(KASPAN_DEBUG, size_ = integral_cast<u64>(size));
   }
 
-  template<arithmetic_concept End,
-           arithmetic_concept Size>
+  template<integral_c End,
+           integral_c Size>
   stack_accessor(
     void* data,
     End   end,
@@ -133,7 +133,7 @@ private:
 };
 
 template<typename T,
-         arithmetic_concept Size>
+         integral_c Size>
 auto
 borrow_stack(
   void** memory,
@@ -146,7 +146,7 @@ borrow_stack(
 }
 
 template<typename T,
-         arithmetic_concept Size>
+         integral_c Size>
 auto
 view_stack(
   void* data,

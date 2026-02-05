@@ -17,7 +17,7 @@ no_filter(
   return true;
 }
 
-template<part_view_concept Part,
+template<part_view_c Part,
          typename callback_t,
          typename filter_t = decltype(no_filter)>
 void

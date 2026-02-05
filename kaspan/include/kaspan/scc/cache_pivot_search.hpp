@@ -1,7 +1,6 @@
 #pragma once
 
-#include "kaspan/memory/accessor/hash_index_map.hpp"
-
+#include <kaspan/memory/accessor/hash_map.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/single_part.hpp>
@@ -14,26 +13,23 @@
 
 namespace kaspan {
 
-template<part_view_concept Part = single_part_view>
+template<part_view_c Part = single_part_view>
 void
 cache_forward_backward_search(
-  bidi_graph_part_view<Part>    g,
-  frontier&                     front,
-  vertex_t*                     active_storage,
-  u64*                          is_reached_storage,
-  u64*                          is_undecided_storage,
-  vertex_t                      root,
-  auto&&                        on_decision,
-  hash_index_map_view<vertex_t> cache_index,
-  u64*                          is_reached_cache_storage,
-  arithmetic_concept auto       cache_size)
+  bidi_graph_part_view<Part> g,
+  frontier&                  front,
+  vertex_t*                  active_storage,
+  u64*                       is_reached_storage,
+  u64*                       is_undecided_storage,
+  vertex_t                   root,
+  auto&&                     on_decision,
+  hash_map<vertex_t>&        cache)
 {
-  auto active           = view_stack<vertex_t>(active_storage, g.part.local_n());
-  auto is_reached       = view_bits_clean(is_reached_storage, g.part.local_n());
-  auto is_undecided     = view_bits(is_undecided_storage, g.part.local_n());
-  auto is_reached_cache = view_bits_clean(is_reached_cache_storage, cache_size);
-  auto fw_front         = front.view<edge_t>();
-  auto bw_front         = front.view<edge_t>();
+  auto active       = view_stack<vertex_t>(active_storage, g.part.local_n());
+  auto is_reached   = view_bits_clean(is_reached_storage, g.part.local_n());
+  auto is_undecided = view_bits(is_undecided_storage, g.part.local_n());
+  auto fw_front     = front.view<edge_t>();
+  auto bw_front     = front.view<edge_t>();
 
   // forward search
 
@@ -52,7 +48,7 @@ cache_forward_backward_search(
   };
   auto const on_extern_fw_message = [&](edge_t e) {
     on_fw_message(e.u);
-    is_reached_cache.set(cache_index.get(e.v));
+    cache.insert_or_assign(e.v, 1);
   };
 
   do {
@@ -60,10 +56,7 @@ cache_forward_backward_search(
       g.each_uv(active.pop_back(), [&](auto u, auto v) {
         if (g.part.has_local(v)) on_fw_message(v);
         else {
-          auto const ci = cache_index.get(v);
-          if (!is_reached_cache.get(ci)) {
-            is_reached_cache.set(ci);
-          }
+          cache.insert_or_assign(v, 1);
           fw_front.push(g.part, edge_t{ v, u });
         }
       });
@@ -93,7 +86,7 @@ cache_forward_backward_search(
   };
   auto const on_extern_bw_message = [&](edge_t e) {
     on_bw_message(e.u);
-    is_reached_cache.unset(cache_index.get(e.v));
+    cache.insert_or_assign(e.v, 0);
   };
 
   do {
@@ -101,9 +94,8 @@ cache_forward_backward_search(
       g.each_bw_uv(active.pop_back(), [&](auto u, auto v) {
         if (g.part.has_local(v)) on_bw_message(v);
         else {
-          auto const ci = cache_index.get(v);
-          if (is_reached_cache.get(ci)) {
-            is_reached_cache.unset(ci);
+          if (cache.get_default(v, 0)) {
+            cache.assign(v, 0);
             bw_front.push(g.part, edge_t{ v, u });
           }
         }

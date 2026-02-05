@@ -22,7 +22,7 @@ namespace kaspan {
  *         The neighbors of local vertex k are stored in csr[head[k]] to csr[head[k+1]-1].
  * - csr:  An array of neighbor vertex global IDs of size local_m.
  */
-template<part_view_concept Part>
+template<part_view_c Part>
 struct graph_part_view
 {
   Part      part    = nullptr;
@@ -38,7 +38,7 @@ struct graph_part_view
 
   constexpr graph_part_view(
     Part                    part,
-    arithmetic_concept auto local_m,
+    integral_c auto local_m,
     index_t*                head,
     vertex_t*               csr) noexcept
     : part(part)
@@ -53,7 +53,7 @@ struct graph_part_view
   constexpr auto operator=(graph_part_view const&) noexcept -> graph_part_view& = default;
 
   [[nodiscard]] constexpr auto csr_range(
-    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
+    integral_c auto k) const noexcept -> std::span<vertex_t>
   {
     auto const l = integral_cast<vertex_t>(k);
     return { csr + head[l], csr + head[l + 1] };
@@ -90,7 +90,7 @@ struct graph_part_view
    */
   template<typename Consumer>
   constexpr void each_v(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     for (vertex_t v : csr_range(k))
@@ -115,7 +115,7 @@ struct graph_part_view
    */
   template<typename Consumer>
   constexpr void each_uv(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     auto const u = part.to_global(k);
@@ -150,7 +150,7 @@ struct graph_part_view
    * @return The number of outgoing edges from k.
    */
   [[nodiscard]] constexpr auto outdegree(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     auto const l = integral_cast<vertex_t>(k);
     return integral_cast<vertex_t>(head[l + 1] - head[l]);
@@ -239,7 +239,7 @@ struct graph_part_view
   }
 };
 
-template<part_concept Part>
+template<part_c Part>
 struct graph_part
 {
   Part      part{};
@@ -251,7 +251,7 @@ struct graph_part
 
   graph_part(
     Part                    part,
-    arithmetic_concept auto local_m)
+    integral_c auto local_m)
     : part(std::move(part))
     , local_m(integral_cast<index_t>(local_m))
     , head(line_alloc<index_t>(part.local_n() ? part.local_n() + 1 : 0))
@@ -301,7 +301,7 @@ struct graph_part
   }
 
   [[nodiscard]] constexpr auto csr_range(
-    arithmetic_concept auto k) const noexcept -> std::span<vertex_t>
+    integral_c auto k) const noexcept -> std::span<vertex_t>
   {
     return view().csr_range(k);
   }
@@ -335,7 +335,7 @@ struct graph_part
    */
   template<typename Consumer>
   constexpr void each_v(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     view().each_v(k, std::forward<Consumer>(consumer));
@@ -359,7 +359,7 @@ struct graph_part
    */
   template<typename Consumer>
   constexpr void each_uv(
-    arithmetic_concept auto k,
+    integral_c auto k,
     Consumer&&              consumer) const noexcept
   {
     view().each_uv(k, std::forward<Consumer>(consumer));
@@ -393,7 +393,7 @@ struct graph_part
    * @return The number of outgoing edges from k.
    */
   [[nodiscard]] constexpr auto outdegree(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     return view().outdegree(k);
   }

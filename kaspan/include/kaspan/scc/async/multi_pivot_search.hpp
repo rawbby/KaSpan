@@ -10,7 +10,7 @@
 
 namespace kaspan::async {
 
-template<part_view_concept Part,
+template<part_view_c Part,
          typename brief_queue_t>
 void
 label_search(
@@ -124,7 +124,7 @@ label_search(
   } while (!front.terminate(on_bw_messages));
 }
 
-template<part_view_concept Part,
+template<part_view_c Part,
          typename brief_queue_t>
 void
 rot_label_search(
@@ -145,7 +145,7 @@ rot_label_search(
   label_search(g, front, label_storage, active_storage, in_active_storage, is_undecided_storage, on_decision, map, unmap);
 }
 
-template<part_view_concept Part,
+template<part_view_c Part,
          typename brief_queue_t>
 void
 label_search(

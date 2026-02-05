@@ -12,7 +12,7 @@ namespace kaspan::bits_ops {
 [[gnu::always_inline]] constexpr void
 clear(
   u64*                    data,
-  arithmetic_concept auto end) noexcept
+  integral_c auto end) noexcept
 {
   DEBUG_ASSERT_GE(end, 0);
   DEBUG_ASSERT(end == 0 || data != nullptr);
@@ -25,7 +25,7 @@ clear(
 [[gnu::always_inline]] constexpr void
 fill(
   u64*                    data,
-  arithmetic_concept auto end) noexcept
+  integral_c auto end) noexcept
 {
   DEBUG_ASSERT_GE(end, 0);
   DEBUG_ASSERT(end == 0 || data != nullptr);
@@ -38,7 +38,7 @@ fill(
 [[gnu::always_inline]] [[nodiscard]] constexpr auto
 get(
   u64 const*              data,
-  arithmetic_concept auto index) noexcept -> bool
+  integral_c auto index) noexcept -> bool
 {
   DEBUG_ASSERT_GE(index, 0);
   DEBUG_ASSERT_NE(data, nullptr);
@@ -48,7 +48,7 @@ get(
 [[gnu::always_inline]] constexpr void
 set(
   u64*                    data,
-  arithmetic_concept auto index,
+  integral_c auto index,
   bool                    f) noexcept
 {
   DEBUG_ASSERT_GE(index, 0);
@@ -61,7 +61,7 @@ set(
 [[gnu::always_inline]] constexpr void
 set(
   u64*                    data,
-  arithmetic_concept auto index) noexcept
+  integral_c auto index) noexcept
 {
   DEBUG_ASSERT_GE(index, 0);
   DEBUG_ASSERT_NE(data, nullptr);
@@ -71,7 +71,7 @@ set(
 [[gnu::always_inline]] constexpr void
 unset(
   u64*                    data,
-  arithmetic_concept auto index) noexcept
+  integral_c auto index) noexcept
 {
   DEBUG_ASSERT_GE(index, 0);
   DEBUG_ASSERT_NE(data, nullptr);
@@ -81,7 +81,7 @@ unset(
 [[gnu::always_inline]] constexpr auto
 getset(
   u64*                    data,
-  arithmetic_concept auto index,
+  integral_c auto index,
   bool                    f) noexcept -> bool
 {
   DEBUG_ASSERT_GE(index, 0);
@@ -96,7 +96,7 @@ getset(
 [[gnu::always_inline]] constexpr auto
 getset(
   u64*                    data,
-  arithmetic_concept auto index) noexcept -> bool
+  integral_c auto index) noexcept -> bool
 {
   DEBUG_ASSERT_GE(index, 0);
   DEBUG_ASSERT_NE(data, nullptr);
@@ -110,7 +110,7 @@ getset(
 [[gnu::always_inline]] constexpr auto
 getunset(
   u64*                    data,
-  arithmetic_concept auto index) noexcept -> bool
+  integral_c auto index) noexcept -> bool
 {
   DEBUG_ASSERT_GE(index, 0);
   DEBUG_ASSERT_NE(data, nullptr);
@@ -124,7 +124,7 @@ getunset(
 [[gnu::always_inline]] inline void
 each(
   u64 const*              data,
-  arithmetic_concept auto end,
+  integral_c auto end,
   auto&&                  fn)
 {
   DEBUG_ASSERT_GE(end, 0);
@@ -151,7 +151,7 @@ each(
 [[gnu::always_inline]] inline void
 set_each(
   u64*                    data,
-  arithmetic_concept auto end,
+  integral_c auto end,
   auto&&                  fn)
 {
   DEBUG_ASSERT_GE(end, 0);

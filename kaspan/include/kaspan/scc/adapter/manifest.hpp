@@ -254,7 +254,7 @@ load_graph_from_manifest(
   return g;
 }
 
-template<part_view_concept Part>
+template<part_view_c Part>
 static auto
 load_graph_part_from_manifest(
   Part            part,

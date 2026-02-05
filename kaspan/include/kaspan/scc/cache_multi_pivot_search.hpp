@@ -4,28 +4,49 @@
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/single_part.hpp>
 #include <kaspan/memory/accessor/bits_accessor.hpp>
-#include <kaspan/memory/accessor/hash_index_map.hpp>
+#include <kaspan/memory/accessor/hash_map.hpp>
 #include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/scc/frontier.hpp>
 #include <kaspan/util/math.hpp>
 
 namespace kaspan {
+namespace internal {
+void
+update_min_cache(
+  hash_map<vertex_t>& cache,
+  vertex_t            key,
+  vertex_t            val,
+  auto&&              on_update)
+{
+  auto const on_null = [&](auto& key_slot, auto& val_slot) {
+    key_slot = key;
+    val_slot = val;
+    on_update();
+  };
+  auto const on_key = [&](auto /* key_ */, auto& val_slot) {
+    if (val <= val_slot) {
+      val_slot = val;
+      on_update();
+    }
+  };
+  cache.find_key_or_null(key, on_key, on_null);
+}
+}
 
-template<part_view_concept Part = single_part_view>
+template<part_view_c Part = single_part_view>
 void
 cache_label_search(
-  bidi_graph_part_view<Part>    g,
-  frontier&                     front,
-  vertex_t*                     label_storage,
-  vertex_t*                     active_storage,
-  u64*                          in_active_storage,
-  u64*                          has_changed_storage,
-  u64*                          is_undecided_storage,
-  auto&&                        on_decision,
-  auto&&                        map,
-  auto&&                        unmap,
-  hash_index_map_view<vertex_t> cache_index,
-  vertex_t*                     label_cache)
+  bidi_graph_part_view<Part> g,
+  frontier&                  front,
+  vertex_t*                  label_storage,
+  vertex_t*                  active_storage,
+  u64*                       in_active_storage,
+  u64*                       has_changed_storage,
+  u64*                       is_undecided_storage,
+  auto&&                     on_decision,
+  auto&&                     map,
+  auto&&                     unmap,
+  hash_map<vertex_t>&        cache)
 {
   auto* label        = label_storage;
   auto  active       = view_stack<vertex_t>(active_storage, g.part.local_n());
@@ -36,12 +57,6 @@ cache_label_search(
   auto  bw_front     = front.view<edge_t>();
 
   auto const bit_storage_count = ceildiv<64>(g.part.local_n());
-
-  auto const init_cache = [&](auto v) {
-    if (!g.part.has_local(v)) label_cache[cache_index.get(v)] = map(v);
-  };
-  is_undecided.each(g.part.local_n(), [&](auto k) { g.each_v(k, init_cache); });
-  is_undecided.each(g.part.local_n(), [&](auto k) { g.each_bw_v(k, init_cache); });
 
   // forward search
 
@@ -68,10 +83,7 @@ cache_label_search(
   auto const on_extern_fw_message = [&](labeled_edge_t e) {
     DEBUG_ASSERT(!g.part.has_local(e.l));
     on_fw_message(e);
-    auto& cache_label = label_cache[cache_index.get(e.l)];
-    if (e.v < cache_label) {
-      cache_label = e.v;
-    }
+    internal::update_min_cache(cache, e.l, e.v, [] {});
   };
 
   do {
@@ -87,9 +99,8 @@ cache_label_search(
     has_changed.each(g.part.local_n(), [&](auto&& k) {
       auto const label_k = label[k];
       g.each_v(k, [&](auto v) {
-        if (label_k <= map(v) && !g.part.has_local(v) && label_k <= label_cache[cache_index.get(v)]) {
-          label_cache[cache_index.get(v)] = label_k;
-          fw_front.push(g.part, labeled_edge_t{ v, label_k, g.part.to_global(k) });
+        if (label_k <= map(v) && !g.part.has_local(v)) {
+          internal::update_min_cache(cache, v, label_k, [&] { fw_front.push(g.part, labeled_edge_t{ v, label_k, g.part.to_global(k) }); });
         }
       });
     });
@@ -137,8 +148,10 @@ cache_label_search(
     has_changed.each(g.part.local_n(), [&](auto k) {
       auto const label_k = label[k];
       g.each_bw_v(k, [&](auto v) {
-        if (label_k < map(v) && !g.part.has_local(v) && label_k == label_cache[cache_index.get(v)]) {
-          bw_front.push(g.part, edge_t{ v, label_k });
+        if (label_k < map(v) && !g.part.has_local(v)) {
+          if (label_k == cache.get_default(v, map(v))) {
+            bw_front.push(g.part, edge_t{ v, label_k });
+          }
         }
       });
     });
@@ -147,19 +160,18 @@ cache_label_search(
   } while (bw_front.comm(g.part, on_bw_message));
 }
 
-template<part_view_concept Part = single_part_view>
+template<part_view_c Part = single_part_view>
 void
 cache_rot_label_search(
-  bidi_graph_part_view<Part>    g,
-  frontier& front,
-  vertex_t*                     label_storage,
-  vertex_t*                     active_storage,
-  u64*                          in_active_storage,
-  u64*                          has_changed_storage,
-  u64*                          is_undecided_storage,
-  auto&&                        on_decision,
-  hash_index_map_view<vertex_t> cache_index,
-  vertex_t*                     label_cache)
+  bidi_graph_part_view<Part> g,
+  frontier&                  front,
+  vertex_t*                  label_storage,
+  vertex_t*                  active_storage,
+  u64*                       in_active_storage,
+  u64*                       has_changed_storage,
+  u64*                       is_undecided_storage,
+  auto&&                     on_decision,
+  hash_map<vertex_t>&        cache)
 {
   static int rotation = 0;
   ++rotation;
@@ -167,25 +179,24 @@ cache_rot_label_search(
   auto const map   = [](auto l) { return std::rotr(l, rotation); };
   auto const unmap = [](auto l) { return std::rotl(l, rotation); };
 
-  cache_label_search(g, front, label_storage, active_storage, in_active_storage, has_changed_storage, is_undecided_storage, on_decision, map, unmap, cache_index, label_cache);
+  cache_label_search(g, front, label_storage, active_storage, in_active_storage, has_changed_storage, is_undecided_storage, on_decision, map, unmap, cache);
 }
 
-template<part_view_concept Part = single_part_view>
+template<part_view_c Part = single_part_view>
 void
 cache_label_search(
-  bidi_graph_part_view<Part>    g,
-  frontier& front,
-  vertex_t*                     label_storage,
-  vertex_t*                     active_storage,
-  u64*                          in_active_storage,
-  u64*                          has_changed_storage,
-  u64*                          is_undecided_storage,
-  auto&&                        on_decision,
-  hash_index_map_view<vertex_t> cache_index,
-  vertex_t*                     label_cache)
+  bidi_graph_part_view<Part> g,
+  frontier&                  front,
+  vertex_t*                  label_storage,
+  vertex_t*                  active_storage,
+  u64*                       in_active_storage,
+  u64*                       has_changed_storage,
+  u64*                       is_undecided_storage,
+  auto&&                     on_decision,
+  hash_map<vertex_t>&        cache)
 {
   auto const id = [](auto l) { return l; };
-  cache_label_search(g, front, label_storage, active_storage, in_active_storage, has_changed_storage, is_undecided_storage, on_decision, id, id, cache_index, label_cache);
+  cache_label_search(g, front, label_storage, active_storage, in_active_storage, has_changed_storage, is_undecided_storage, on_decision, id, id, cache);
 }
 
 }

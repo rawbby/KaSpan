@@ -28,8 +28,8 @@ public:
   }
 
   constexpr explicit_sorted_part_view(
-    arithmetic_concept auto n,
-    arithmetic_concept auto r,
+    integral_c auto n,
+    integral_c auto r,
     vertex_t const*         p) noexcept
     : n_(integral_cast<vertex_t>(n))
     , world_rank_(integral_cast<i32>(r))
@@ -51,19 +51,19 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    arithmetic_concept auto i) const noexcept -> vertex_t
+    integral_c auto i) const noexcept -> vertex_t
   {
     return integral_cast<vertex_t>(i) - begin_;
   }
 
   [[nodiscard]] constexpr auto to_global(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     return integral_cast<vertex_t>(k) + begin_;
   }
 
   [[nodiscard]] constexpr auto has_local(
-    arithmetic_concept auto i) const noexcept -> bool
+    integral_c auto i) const noexcept -> bool
   {
     auto const j = integral_cast<vertex_t>(i);
     return j >= begin_ && j < end_;
@@ -84,7 +84,7 @@ public:
   }
 
   [[nodiscard]] auto world_rank_of(
-    arithmetic_concept auto i) const noexcept -> i32
+    integral_c auto i) const noexcept -> i32
   {
     auto const j = integral_cast<vertex_t>(i);
     DEBUG_ASSERT_IN_RANGE(j, 0, n());
@@ -108,7 +108,7 @@ public:
   }
 
   [[nodiscard]] constexpr auto world_part_of(
-    arithmetic_concept auto r) const noexcept -> explicit_sorted_part_view
+    integral_c auto r) const noexcept -> explicit_sorted_part_view
   {
     return { n_, r, part_ };
   }
@@ -178,8 +178,8 @@ public:
   }
 
   explicit_sorted_part(
-    arithmetic_concept auto n,
-    arithmetic_concept auto e)
+    integral_c auto n,
+    integral_c auto e)
     : n_(integral_cast<vertex_t>(n))
     , part_(line_alloc<vertex_t>(mpi_basic::world_size))
   {
@@ -228,19 +228,19 @@ public:
   }
 
   [[nodiscard]] constexpr auto to_local(
-    arithmetic_concept auto i) const noexcept -> vertex_t
+    integral_c auto i) const noexcept -> vertex_t
   {
     return integral_cast<vertex_t>(i) - begin_;
   }
 
   [[nodiscard]] constexpr auto to_global(
-    arithmetic_concept auto k) const noexcept -> vertex_t
+    integral_c auto k) const noexcept -> vertex_t
   {
     return integral_cast<vertex_t>(k) + begin_;
   }
 
   [[nodiscard]] constexpr auto has_local(
-    arithmetic_concept auto i) const noexcept -> bool
+    integral_c auto i) const noexcept -> bool
   {
     auto const j = integral_cast<vertex_t>(i);
     return j >= begin_ && j < end_;
@@ -261,7 +261,7 @@ public:
   }
 
   [[nodiscard]] auto world_rank_of(
-    arithmetic_concept auto i) const noexcept -> i32
+    integral_c auto i) const noexcept -> i32
   {
     auto const j = integral_cast<vertex_t>(i);
     DEBUG_ASSERT_IN_RANGE(j, 0, n());
@@ -285,7 +285,7 @@ public:
   }
 
   [[nodiscard]] constexpr auto world_part_of(
-    arithmetic_concept auto r) const noexcept -> explicit_sorted_part_view
+    integral_c auto r) const noexcept -> explicit_sorted_part_view
   {
     return view().world_part_of(r);
   }
