@@ -7,6 +7,8 @@
 #include <kaspan/test/fuzzy.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
+#include <absl/container/flat_hash_map.h>
+
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -98,10 +100,10 @@ main()
     auto const dur_insert = std::chrono::duration_cast<std::chrono::microseconds>(end_insert - start_insert).count();
     auto const dur_query  = std::chrono::duration_cast<std::chrono::microseconds>(end_query - start_query).count();
 
-    std::cout << " Name: " << std::left << std::setw(15) << name;
-    std::cout << " | Insert: " << std::right << std::setw(5) << dur_insert << " us (" << insert_count << ")";
-    std::cout << " | Query: " << std::right << std::setw(4) << dur_query << " us (" << query_count << ")";
-    std::cout << " | Items: " << std::right << std::setw(4) << count() << std::endl;
+    std::cout << " Name: " << std::left << std::setw(25) << name;
+    std::cout << " | Insert: " << std::right << std::setw(8) << dur_insert << " us (" << insert_count << ")";
+    std::cout << " | Query: " << std::right << std::setw(6) << dur_query << " us (" << query_count << ")";
+    std::cout << " | Items: " << std::right << std::setw(6) << count() << std::endl;
 
     clear();
   };
@@ -110,9 +112,12 @@ main()
   auto hmap = hash_map<vertex_t>(graph_part.local_fw_m + graph_part.local_bw_m);
   auto umap = std::unordered_map<vertex_t, vertex_t>();
   umap.reserve(graph_part.local_fw_m + graph_part.local_bw_m);
+  auto amap = absl::flat_hash_map<vertex_t, vertex_t>{};
+  amap.reserve(graph_part.local_fw_m + graph_part.local_bw_m);
 
   for (int i = 0; i < 10; ++i) {
-    run_bench("hash_index_map", [&](auto v) { hmap.try_insert(v, v); }, [&](auto v) { return hmap.get(v); }, [&] { hmap.clear(); }, [&] { return hmap.count(); });
-    run_bench("unordered_map", [&](auto v) { umap[v] = v; }, [&](auto v) { return umap[v]; }, [&] { umap.clear(); }, [&] { return umap.size(); });
+    run_bench("kaspan::hash_index_map", [&](auto v) { hmap.try_insert(v, v); }, [&](auto v) { return hmap.get(v); }, [&] { hmap.clear(); }, [&] { return hmap.count(); });
+    run_bench("std::unordered_map", [&](auto v) { umap[v] = v; }, [&](auto v) { return umap[v]; }, [&] { umap.clear(); }, [&] { return umap.size(); });
+    run_bench("absl::flat_hash_map", [&](auto v) { amap[v] = v; }, [&](auto v) { return amap[v]; }, [&] { amap.clear(); }, [&] { return amap.size(); });
   }
 }

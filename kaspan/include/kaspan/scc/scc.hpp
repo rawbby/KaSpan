@@ -1,7 +1,5 @@
 #pragma once
 
-#include "kaspan/memory/accessor/hash_index_map.hpp"
-
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/graph/base.hpp>
@@ -9,11 +7,10 @@
 #include <kaspan/graph/concept.hpp>
 #include <kaspan/graph/single_part.hpp>
 #include <kaspan/memory/accessor/bits.hpp>
+#include <kaspan/memory/accessor/hash_map.hpp>
 #include <kaspan/scc/allgather_sub_graph.hpp>
 #include <kaspan/scc/cache_multi_pivot_search.hpp>
 #include <kaspan/scc/cache_pivot_search.hpp>
-#include <kaspan/scc/multi_pivot_search.hpp>
-#include <kaspan/scc/pivot_search.hpp>
 #include <kaspan/scc/trim_1_local.hpp>
 
 namespace kaspan {
@@ -35,20 +32,7 @@ scc(
     ++local_decided;
   };
 
-  KASPAN_STATISTIC_PUSH("cache_initialization");
-  // init cache index with worst case size
-  hash_index_map<vertex_t> cache_index{ graph.local_fw_m + graph.local_bw_m };
-  for (vertex_t it = 0; it < graph.local_fw_m; ++it) {
-    auto const v = graph.fw.csr[it];
-    if (!graph.part.has_local(v)) cache_index.insert(v);
-  }
-  for (vertex_t it = 0; it < graph.local_bw_m; ++it) {
-    auto const v = graph.bw.csr[it];
-    if (!graph.part.has_local(v)) cache_index.insert(v);
-  }
-  // number of actually inserted elements
-  auto const cache_size = cache_index.count();
-  KASPAN_STATISTIC_POP();
+  auto cache_index = hash_map<vertex_t>{ graph.local_fw_m + graph.local_bw_m };
 
   KASPAN_STATISTIC_PUSH("trim_1_first");
   auto       is_undecided = make_bits_filled(graph.part.local_n());
@@ -65,7 +49,6 @@ scc(
   auto front            = frontier{ graph.part.local_n() };
   auto active           = make_array<vertex_t>(graph.part.local_n());
   auto is_reached       = make_bits(graph.part.local_n());
-  auto is_reached_cache = make_bits(cache_size);
   cache_forward_backward_search(graph, front, active.data(), is_reached.data(), is_undecided.data(), pivot, on_decision, cache_index.view(), is_reached_cache.data(), cache_size);
   global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
   KASPAN_STATISTIC_ADD("decided_count", local_decided - prev_local_decided);
