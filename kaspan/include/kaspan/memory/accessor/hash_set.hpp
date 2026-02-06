@@ -16,7 +16,6 @@ template<typename T>
   requires(u32_c<T> || u64_c<T>)
 class hash_set
 {
-  static constexpr u8 line_bytes = 64;
 
   T* m_data = nullptr;
   T  m_mask = 0;
@@ -27,8 +26,8 @@ public:
     integral_c auto size)
   {
     if (size) {
-      auto const cache_lines = std::bit_ceil(ceildiv<line_bytes>(integral_cast<u64>(size) * 2 * sizeof(T)));
-      auto const alloc_bytes = cache_lines * line_bytes;
+      auto const cache_lines = std::bit_ceil(ceildiv<64>(integral_cast<u64>(size) * 2 * sizeof(T)));
+      auto const alloc_bytes = cache_lines * 64;
 
       m_data = static_cast<T*>(line_alloc(alloc_bytes));
       m_mask = integral_cast<T>(cache_lines - 1);
@@ -94,12 +93,13 @@ public:
 
   void clear() noexcept
   {
-    if (m_data) std::memset(m_data, 0xff, (integral_cast<u64>(m_mask) + 1) * line_bytes);
+    if (m_data) std::memset(m_data, 0xff, (integral_cast<u64>(m_mask) + 1) * 64);
   }
 
   [[nodiscard]] auto count() const noexcept -> T
   {
-    return static_cast<u64>(m_mask) - hash_map_util::count512_null(m_data, m_mask) + 1;
+    auto const slot_sount = (static_cast<u64>(m_mask) + 1) * (64 / sizeof(T));
+    return slot_sount - hash_map_util::count512_null(m_data, m_mask);
   }
 
   auto find_null(

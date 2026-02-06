@@ -66,7 +66,6 @@ public:
     return *this;
   }
 
-
   /// inserts a key value pair or assigns to an existing key
   void insert_or_assign(
     T key,
@@ -215,25 +214,35 @@ public:
 
   [[nodiscard]] auto count() noexcept -> T
   {
-    return static_cast<u64>(m_mask) - hash_map_util::count256_null(m_data, m_mask) + 1;
+    auto const slot_sount = (static_cast<u64>(m_mask) + 1) * (32 / sizeof(T));
+    return slot_sount - hash_map_util::count256_null(m_data, m_mask);
   }
 
-  auto find_null(T key, auto&& on_null) noexcept
+  auto find_null(
+    T      key,
+    auto&& on_null) noexcept
   {
     return hash_map_util::find256_null(m_data, m_mask, key, std::forward<decltype(on_null)>(on_null));
   }
 
-  auto find_key(T key, auto&& on_key) noexcept
+  auto find_key(
+    T      key,
+    auto&& on_key) noexcept
   {
     return hash_map_util::find256_key(m_data, m_mask, key, std::forward<decltype(on_key)>(on_key));
   }
 
-  auto find_key_or_null(T key, auto&& on_key, auto&& on_null) noexcept
+  auto find_key_or_null(
+    T      key,
+    auto&& on_key,
+    auto&& on_null) noexcept
   {
     return hash_map_util::find256_key_or_null(m_data, m_mask, key, std::forward<decltype(on_key)>(on_key), std::forward<decltype(on_null)>(on_null));
   }
 
-  auto find_slot(T key, auto&& on_slot) noexcept
+  auto find_slot(
+    T      key,
+    auto&& on_slot) noexcept
   {
     return hash_map_util::find256_slot(m_data, m_mask, key, std::forward<decltype(on_slot)>(on_slot));
   }

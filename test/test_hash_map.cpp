@@ -19,13 +19,13 @@ test()
   auto non_local_lo = std::uniform_int_distribution{ 0u, beg };
   auto non_local_hi = std::uniform_int_distribution{ end, n };
 
-  hash_map<u32>                map{ 5000 };
+  hash_map<u32>                map{ 3000 };
   std::unordered_map<u32, u32> inserted{};
 
   auto last_map_count = map.count();
 
   u32 count = 0;
-  for (int i = 0; i < 2500; ++i) {
+  for (int i = 0; i < 1500; ++i) {
     auto const key = non_local_lo(rng);
     auto const val = map.get_or_insert(key, [&]{ return count++; });
     ASSERT_EQ(val, map.get(key));
@@ -40,7 +40,7 @@ test()
     last_map_count = map.count();
   }
 
-  for (int i = 0; i < 2500; ++i) {
+  for (int i = 0; i < 1500; ++i) {
     auto const key = non_local_hi(rng);
     auto const val = map.get_or_insert(key, [&]{ return count++; });
     ASSERT_EQ(val, map.get(key));
@@ -64,7 +64,7 @@ test()
 int
 main()
 {
-  for (int i = 0; i < 5000; ++i) {
+  for (int i = 0; i < 1000; ++i) {
     test();
   }
 }

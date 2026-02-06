@@ -244,7 +244,7 @@ find256_key_or_null(
     auto const avx_keys = avx2_load_keys(keys);
     if (auto const mask_key = avx2_cmpeq_keys<T>(avx_key, avx_keys)) {
       auto const i = avx2_mask_first<T>(mask_key);
-      return on_null(keys[i], vals[i]);
+      return on_key(vals[i]);
     }
     if (auto const mask_null = avx2_cmpeq_keys<T>(avx_null, avx_keys)) {
       auto const i = avx2_mask_first<T>(mask_null);
