@@ -3,7 +3,7 @@
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
-#include <kaspan/memory/accessor/vector.hpp>
+#include <kaspan/memory/vector.hpp>
 #include <kaspan/util/scope_guard.hpp>
 
 #include <unordered_set>

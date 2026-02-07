@@ -1,10 +1,10 @@
 #pragma once
 
+#include <kaspan/memory/bits.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
-#include <kaspan/memory/accessor/bits.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/scc/async/multi_pivot_search.hpp>
 #include <kaspan/scc/async/pivot_search.hpp>

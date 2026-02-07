@@ -5,7 +5,6 @@
 #include <kaspan/graph/base.hpp>
 #include <kaspan/scc/adapter/kagen.hpp>
 #include <kaspan/scc/adapter/manifest.hpp>
-#include <kaspan/scc/pivot.hpp>
 #include <kaspan/util/arg_parse.hpp>
 #include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/mpi_basic.hpp>

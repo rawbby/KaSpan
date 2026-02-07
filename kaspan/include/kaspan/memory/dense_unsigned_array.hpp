@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kaspan/memory/accessor/dense_unsigned_ops.hpp>
+#include <kaspan/memory/dense_unsigned_ops.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>

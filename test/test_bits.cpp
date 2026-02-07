@@ -1,6 +1,6 @@
+#include <kaspan/memory/bits.hpp>
+#include <kaspan/memory/bits_accessor.hpp>
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/memory/accessor/bits.hpp>
-#include <kaspan/memory/accessor/bits_accessor.hpp>
 #include <kaspan/util/arithmetic.hpp>
 
 #include <random>

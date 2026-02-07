@@ -1,10 +1,9 @@
+#include <kaspan/memory/hash_set.hpp>
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/memory/accessor/hash_set.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <random>
-#include <unordered_map>
 #include <unordered_set>
 
 void

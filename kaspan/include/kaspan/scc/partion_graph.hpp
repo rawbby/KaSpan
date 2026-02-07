@@ -4,7 +4,6 @@
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/concept.hpp>
-#include <kaspan/graph/explicit_sorted_part.hpp>
 #include <kaspan/graph/graph.hpp>
 #include <kaspan/graph/graph_part.hpp>
 

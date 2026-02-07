@@ -1,9 +1,9 @@
 #pragma once
 
+#include <kaspan/memory/vector.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/concept.hpp>
-#include <kaspan/memory/accessor/vector.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 
 #include <mpi.h>

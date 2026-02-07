@@ -2,17 +2,12 @@
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/debug.hpp>
-#include <kaspan/debug/valgrind.hpp>
-#include <kaspan/memory/accessor/bits_ops.hpp>
+#include <kaspan/memory/bits_ops.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/util/arithmetic.hpp>
-#include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/math.hpp>
 #include <kaspan/util/pp.hpp>
 
-#include <concepts>
-#include <limits>
-#include <stddef.h>
 #include <utility>
 
 namespace kaspan {

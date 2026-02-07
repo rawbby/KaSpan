@@ -1,9 +1,5 @@
 #pragma once
 
-#include <ispan/util.hpp>
-
-#include <set>
-
 inline void
 process_wcc(
   kaspan::vertex_t        n,

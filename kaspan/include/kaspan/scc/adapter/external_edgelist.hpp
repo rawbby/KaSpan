@@ -1,8 +1,8 @@
 #pragma once
 
+#include <kaspan/memory/dense_unsigned_accessor.hpp>
+#include <kaspan/memory/vector.hpp>
 #include <kaspan/graph/base.hpp>
-#include <kaspan/memory/accessor/dense_unsigned_accessor.hpp>
-#include <kaspan/memory/accessor/vector.hpp>
 #include <kaspan/memory/buffer.hpp>
 #include <kaspan/memory/file_buffer.hpp>
 #include <kaspan/scc/adapter/stxxl_wrapper.hpp>

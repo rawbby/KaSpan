@@ -1,6 +1,6 @@
+#include <kaspan/memory/once_queue.hpp>
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/memory/accessor/once_queue.hpp>
-#include <kaspan/memory/accessor/once_queue_accessor.hpp>
+#include <kaspan/memory/once_queue_accessor.hpp>
 
 using namespace kaspan;
 

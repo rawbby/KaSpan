@@ -1,5 +1,5 @@
+#include <kaspan/memory/dense_unsigned_ops.hpp>
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/memory/accessor/dense_unsigned_ops.hpp>
 #include <kaspan/util/arithmetic.hpp>
 
 #include <bit>

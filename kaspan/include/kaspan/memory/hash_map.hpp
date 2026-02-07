@@ -1,7 +1,6 @@
 #pragma once
 
-#include <kaspan/debug/assert.hpp>
-#include <kaspan/memory/accessor/hash_util.hpp>
+#include <kaspan/memory/hash_container_avx.hpp>
 #include <kaspan/memory/line.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/hash.hpp>
@@ -12,6 +11,185 @@
 #include <optional>
 
 namespace kaspan {
+
+template<integral_c T>
+auto
+hash_map_find_null(
+  T*     data,
+  T      mask,
+  T      key,
+  auto&& on_null)
+{
+#if defined(__AVX2__)
+  auto const avx_null = avx2_set1_key(static_cast<T>(-1));
+#endif
+
+  auto cache_line = hash(key) & mask;
+  IF(KASPAN_DEBUG, auto const first_cache_line = cache_line);
+
+  for (;;) {
+    T* keys = data + cache_line * 64 / sizeof(T);
+    T* vals = keys + 32 / sizeof(T);
+
+#if defined(__AVX2__)
+    if (auto const avx_mask = avx2_cmpeq_keys<T>(avx_null, avx2_load_keys(keys))) {
+      auto const i = avx2_mask_first<T>(avx_mask);
+      return on_null(keys[i], vals[i]);
+    }
+#else
+    for (u8 i = 0; i < 32 / sizeof(T); ++i) {
+      if (keys[i] == static_cast<T>(-1)) return on_null(keys[i], vals[i]);
+    }
+#endif
+
+    cache_line = cache_line + 1 & mask;
+    DEBUG_ASSERT_NE(cache_line, first_cache_line);
+  }
+}
+
+template<integral_c T>
+auto
+hash_map_find_key(
+  T*     data,
+  T      mask,
+  T      key,
+  auto&& on_key)
+{
+#if defined(__AVX2__)
+  auto const avx_key = avx2_set1_key(key);
+#endif
+
+  auto cache_line = hash(key) & mask;
+  IF(KASPAN_DEBUG, auto const first_cache_line = cache_line);
+
+  for (;;) {
+    T* keys = data + cache_line * 64 / sizeof(T);
+    T* vals = keys + 32 / sizeof(T);
+
+#if defined(__AVX2__)
+    if (auto const avx_mask = avx2_cmpeq_keys<T>(avx_key, avx2_load_keys(keys))) {
+      return on_key(vals[avx2_mask_first<T>(avx_mask)]);
+    }
+#else
+    for (u32 i = 0; i < 32 / sizeof(T); ++i) {
+      if (keys[i] == key) return on_key(vals[i]);
+    }
+#endif
+
+    cache_line = cache_line + 1 & mask;
+    DEBUG_ASSERT_NE(cache_line, first_cache_line);
+  }
+}
+
+template<integral_c T>
+auto
+hash_map_find_key_or_null(
+  T*     data,
+  T      mask,
+  T      key,
+  auto&& on_key,
+  auto&& on_null)
+{
+#if defined(__AVX2__)
+  auto const avx_key  = avx2_set1_key(key);
+  auto const avx_null = avx2_set1_key(static_cast<T>(-1));
+#endif
+
+  auto cache_line = hash(key) & mask;
+  IF(KASPAN_DEBUG, auto const first_cache_line = cache_line);
+
+  for (;;) {
+    T* keys = data + cache_line * 64 / sizeof(T);
+    T* vals = keys + 32 / sizeof(T);
+
+#if defined(__AVX2__)
+    auto const avx_keys = avx2_load_keys(keys);
+    if (auto const mask_key = avx2_cmpeq_keys<T>(avx_key, avx_keys)) {
+      auto const i = avx2_mask_first<T>(mask_key);
+      return on_key(vals[i]);
+    }
+    if (auto const mask_null = avx2_cmpeq_keys<T>(avx_null, avx_keys)) {
+      auto const i = avx2_mask_first<T>(mask_null);
+      return on_null(keys[i], vals[i]);
+    }
+#else
+    for (u32 i = 0; i < 32 / sizeof(T); ++i) {
+      if (keys[i] == key) return on_key(vals[i]);
+      if (keys[i] == static_cast<T>(-1)) return on_null(keys[i], vals[i]);
+    }
+#endif
+
+    cache_line = cache_line + 1 & mask;
+    DEBUG_ASSERT_NE(cache_line, first_cache_line);
+  }
+}
+
+template<integral_c T>
+auto
+hash_map_find_slot(
+  T*     data,
+  T      mask,
+  T      key,
+  auto&& on_slot)
+{
+#if defined(__AVX2__)
+  auto const avx_key  = avx2_set1_key(key);
+  auto const avx_null = avx2_set1_key(static_cast<T>(-1));
+#endif
+
+  auto cache_line = hash(key) & mask;
+  IF(KASPAN_DEBUG, auto const first_cache_line = cache_line);
+
+  for (;;) {
+    T* keys = data + cache_line * 64 / sizeof(T);
+    T* vals = keys + 32 / sizeof(T);
+
+#if defined(__AVX2__)
+    auto const avx_keys = avx2_load_keys(keys);
+    auto const avx_mask = avx_mask_lor(avx2_cmpeq_keys<T>(avx_key, avx_keys), avx2_cmpeq_keys<T>(avx_null, avx_keys));
+    if (avx_mask) {
+      auto const i = avx2_mask_first<T>(avx_mask);
+      return on_slot(keys[i], vals[i]);
+    }
+#else
+    for (u32 i = 0; i < 32 / sizeof(T); ++i) {
+      if (keys[i] == key || keys[i] == static_cast<T>(-1)) return on_slot(keys[i], vals[i]);
+    }
+#endif
+
+    cache_line = cache_line + 1 & mask;
+    DEBUG_ASSERT_NE(cache_line, first_cache_line);
+  }
+}
+
+template<integral_c T>
+[[nodiscard]] auto
+hash_map_count_null(
+  T* data,
+  T  mask) noexcept -> T
+{
+#if defined(__AVX2__)
+  auto const avx_null = avx2_set1_key<T>(static_cast<T>(-1));
+#endif
+
+  T count = 0;
+
+  auto const end = static_cast<u64>(mask) + 1;
+  for (u64 it = 0; it < end; ++it) {
+    T* keys = data + it * 64 / sizeof(T);
+
+#if defined(__AVX2__)
+    auto const avx_keys = avx2_load_keys<T>(keys);
+    count += avx2_mask_count<T>(avx2_cmpeq_keys<T>(avx_null, avx_keys));
+#else
+    for (u32 i = 0; i < 32 / sizeof(T); ++i) {
+      count += keys[i] == static_cast<T>(-1);
+    }
+#endif
+  }
+
+  return count;
+}
 
 template<integral_c T>
 class hash_map
@@ -28,7 +206,7 @@ public:
     integral_c auto size)
   {
     if (size) {
-      auto const cache_lines = std::bit_ceil(ceildiv<line_bytes>(integral_cast<u64>(size) * 2 * pair_bytes));
+      auto const cache_lines = std::bit_ceil(ceildiv<line_bytes>(integral_cast<u64>(size) * (3 * pair_bytes / 2)));
       auto const alloc_bytes = cache_lines * line_bytes;
 
       m_data = static_cast<T*>(line_alloc(alloc_bytes));
@@ -215,21 +393,21 @@ public:
   [[nodiscard]] auto count() noexcept -> T
   {
     auto const slot_sount = (static_cast<u64>(m_mask) + 1) * (32 / sizeof(T));
-    return slot_sount - hash_map_util::count256_null(m_data, m_mask);
+    return slot_sount - hash_map_count_null(m_data, m_mask);
   }
 
   auto find_null(
     T      key,
     auto&& on_null) noexcept
   {
-    return hash_map_util::find256_null(m_data, m_mask, key, std::forward<decltype(on_null)>(on_null));
+    return hash_map_find_null(m_data, m_mask, key, std::forward<decltype(on_null)>(on_null));
   }
 
   auto find_key(
     T      key,
     auto&& on_key) noexcept
   {
-    return hash_map_util::find256_key(m_data, m_mask, key, std::forward<decltype(on_key)>(on_key));
+    return hash_map_find_key(m_data, m_mask, key, std::forward<decltype(on_key)>(on_key));
   }
 
   auto find_key_or_null(
@@ -237,14 +415,14 @@ public:
     auto&& on_key,
     auto&& on_null) noexcept
   {
-    return hash_map_util::find256_key_or_null(m_data, m_mask, key, std::forward<decltype(on_key)>(on_key), std::forward<decltype(on_null)>(on_null));
+    return hash_map_find_key_or_null(m_data, m_mask, key, std::forward<decltype(on_key)>(on_key), std::forward<decltype(on_null)>(on_null));
   }
 
   auto find_slot(
     T      key,
     auto&& on_slot) noexcept
   {
-    return hash_map_util::find256_slot(m_data, m_mask, key, std::forward<decltype(on_slot)>(on_slot));
+    return hash_map_find_slot(m_data, m_mask, key, std::forward<decltype(on_slot)>(on_slot));
   }
 };
 

@@ -1,5 +1,5 @@
+#include <kaspan/memory/hash_map.hpp>
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/memory/accessor/hash_map.hpp>
 
 #include <algorithm>
 #include <cmath>

@@ -1,10 +1,10 @@
 #pragma once
 
+#include <kaspan/memory/bits_accessor.hpp>
+#include <kaspan/memory/stack_accessor.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/single_part.hpp>
-#include <kaspan/memory/accessor/bits_accessor.hpp>
-#include <kaspan/memory/accessor/stack_accessor.hpp>
 #include <kaspan/scc/frontier.hpp>
 #include <kaspan/util/math.hpp>
 

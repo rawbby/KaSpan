@@ -1,6 +1,6 @@
+#include <kaspan/memory/stack.hpp>
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/memory/accessor/stack.hpp>
-#include <kaspan/memory/accessor/stack_accessor.hpp>
+#include <kaspan/memory/stack_accessor.hpp>
 
 using namespace kaspan;
 

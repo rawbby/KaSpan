@@ -1,7 +1,6 @@
 #pragma once
 
 #include <kaspan/debug/assert.hpp>
-#include <kaspan/debug/statistic.hpp>
 #include <kaspan/util/integral_cast.hpp>
 #include <kaspan/util/mpi_basic.hpp>
 #include <kaspan/util/scope_guard.hpp>

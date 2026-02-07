@@ -2,7 +2,7 @@
 
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/debug/valgrind.hpp>
-#include <kaspan/memory/accessor/dense_unsigned_ops.hpp>
+#include <kaspan/memory/dense_unsigned_ops.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>

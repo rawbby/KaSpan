@@ -1,7 +1,7 @@
 #pragma once
 
+#include <kaspan/memory/dense_unsigned_accessor.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
-#include <kaspan/memory/accessor/dense_unsigned_accessor.hpp>
 #include <kaspan/memory/file_buffer.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/integral_cast.hpp>

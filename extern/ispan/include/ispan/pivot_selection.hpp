@@ -1,6 +1,5 @@
 #pragma once
 
-#include <ispan/util.hpp>
 #include <kaspan/util/integral_cast.hpp>
 
 inline kaspan::vertex_t

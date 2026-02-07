@@ -1,15 +1,15 @@
 #pragma once
 
+#include <kaspan/memory/stack.hpp>
 #include <kaspan/debug/process.hpp>
 #include <kaspan/debug/statistic.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/concept.hpp>
-#include <kaspan/memory/accessor/stack.hpp>
-#include <kaspan/scc/pivot.hpp>
-#include <kaspan/scc/trim_1_exhaustive.hpp>
 #include <kaspan/scc/multi_pivot_search.hpp>
+#include <kaspan/scc/pivot.hpp>
 #include <kaspan/scc/pivot_search.hpp>
+#include <kaspan/scc/trim_1_exhaustive.hpp>
 
 namespace kaspan {
 

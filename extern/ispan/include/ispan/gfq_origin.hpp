@@ -1,7 +1,5 @@
 #pragma once
 
-#include <ispan/util.hpp>
-
 static void
 gfq_origin(
   kaspan::vertex_t const  n,

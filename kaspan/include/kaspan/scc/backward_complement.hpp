@@ -1,12 +1,12 @@
 #pragma once
 
+#include <kaspan/memory/stack.hpp>
 #include <kaspan/debug/assert.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/concept.hpp>
 #include <kaspan/graph/graph.hpp>
-#include <kaspan/memory/accessor/stack.hpp>
 #include <kaspan/memory/borrow.hpp>
 #include <kaspan/scc/adapter/edgelist.hpp>
 #include <kaspan/util/arithmetic.hpp>

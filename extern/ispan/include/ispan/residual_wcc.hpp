@@ -1,7 +1,5 @@
 #pragma once
 
-#include <ispan/util.hpp>
-
 static void
 wcc(
   kaspan::vertex_t*       wcc_id,

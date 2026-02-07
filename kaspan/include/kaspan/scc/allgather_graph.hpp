@@ -3,7 +3,6 @@
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph.hpp>
 #include <kaspan/graph/concept.hpp>
-#include <kaspan/graph/explicit_sorted_part.hpp>
 #include <kaspan/graph/graph_part.hpp>
 #include <kaspan/scc/backward_complement.hpp>
 #include <kaspan/util/arithmetic.hpp>
