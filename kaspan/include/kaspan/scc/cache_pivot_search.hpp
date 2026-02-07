@@ -1,11 +1,11 @@
 #pragma once
 
-#include <kaspan/memory/bits_accessor.hpp>
-#include <kaspan/memory/hash_map.hpp>
-#include <kaspan/memory/stack_accessor.hpp>
 #include <kaspan/graph/base.hpp>
 #include <kaspan/graph/bidi_graph_part.hpp>
 #include <kaspan/graph/single_part.hpp>
+#include <kaspan/memory/bits_accessor.hpp>
+#include <kaspan/memory/hash_map.hpp>
+#include <kaspan/memory/stack_accessor.hpp>
 #include <kaspan/scc/frontier.hpp>
 #include <kaspan/util/math.hpp>
 
@@ -23,7 +23,7 @@ cache_forward_backward_search(
   u64*                       is_undecided_storage,
   vertex_t                   root,
   auto&&                     on_decision,
-  hash_map<vertex_t>&        cache)
+  hash_set<vertex_t>&        cache)
 {
   auto active       = view_stack<vertex_t>(active_storage, g.part.local_n());
   auto is_reached   = view_bits_clean(is_reached_storage, g.part.local_n());
@@ -48,7 +48,7 @@ cache_forward_backward_search(
   };
   auto const on_extern_fw_message = [&](edge_t e) {
     on_fw_message(e.u);
-    cache.insert_or_assign(e.v, 1);
+    cache.try_insert(e.v);
   };
 
   do {
@@ -56,7 +56,7 @@ cache_forward_backward_search(
       g.each_uv(active.pop_back(), [&](auto u, auto v) {
         if (g.part.has_local(v)) on_fw_message(v);
         else {
-          cache.insert_or_assign(v, 1);
+          cache.try_insert(v);
           fw_front.push(g.part, edge_t{ v, u });
         }
       });
@@ -86,7 +86,7 @@ cache_forward_backward_search(
   };
   auto const on_extern_bw_message = [&](edge_t e) {
     on_bw_message(e.u);
-    cache.insert_or_assign(e.v, 0);
+    cache.try_invalidate(e.v, static_cast<vertex_t>(-2));
   };
 
   do {
@@ -94,8 +94,7 @@ cache_forward_backward_search(
       g.each_bw_uv(active.pop_back(), [&](auto u, auto v) {
         if (g.part.has_local(v)) on_bw_message(v);
         else {
-          if (cache.get_default(v, 0)) {
-            cache.assign(v, 0);
+          if (cache.try_invalidate(v, static_cast<vertex_t>(-2))) {
             bw_front.push(g.part, edge_t{ v, u });
           }
         }

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <kaspan/memory/hash_container_avx.hpp>
 #include <kaspan/debug/assert.hpp>
+#include <kaspan/memory/hash_container_avx.hpp>
 #include <kaspan/memory/line.hpp>
 #include <kaspan/util/arithmetic.hpp>
 #include <kaspan/util/hash.hpp>
@@ -313,6 +313,26 @@ public:
     T key) const noexcept -> bool
   {
     auto const on_key  = [](auto /* key_slot */) -> bool { return true; };
+    auto const on_null = [](auto /* key_slot */) -> bool { return false; };
+    return find_key_or_null(key, on_key, on_null);
+  }
+
+  auto invalidate(
+    T key,
+    T invalid) const noexcept -> bool
+  {
+    auto const on_key = [=](auto& key_slot) { key_slot = invalid; };
+    return find_key(key, on_key);
+  }
+
+  auto try_invalidate(
+    T key,
+    T invalid) const noexcept -> bool
+  {
+    auto const on_key = [=](auto& key_slot) {
+      key_slot = invalid;
+      return true;
+    };
     auto const on_null = [](auto /* key_slot */) -> bool { return false; };
     return find_key_or_null(key, on_key, on_null);
   }
