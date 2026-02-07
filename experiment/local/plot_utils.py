@@ -193,7 +193,7 @@ def get_all_step_data(bench, app, np_val):
     def find_paths(node, current_path):
         if not isinstance(node, dict):
             return
-        if "decided_count" in node:
+        if "decided_count" in node or "global_decided" in node:
             paths.append(current_path)
         for k, v in node.items():
             if isinstance(v, dict):
@@ -205,7 +205,6 @@ def get_all_step_data(bench, app, np_val):
     results = []
     for path in paths:
         durs = []
-        decided_val = 0
         for i in range(rank_count):
             curr = bench[str(i)].get("benchmark", {}).get("scc", {})
             for p in path:
@@ -217,13 +216,49 @@ def get_all_step_data(bench, app, np_val):
             if isinstance(curr, dict):
                 if "duration" in curr:
                     durs.append(int(curr["duration"]))
-                if i == 0 and "decided_count" in curr:
-                    decided_val = int(curr["decided_count"])
 
         if durs:
             dur = max(durs) * 1e-9
             assert dur > 0, f"Non-positive duration found for step {path}: {dur}"
             name = "_".join(path) if path else "scc"
+
+            # Determine if decided_count is global or local based on the app
+            decided_counts = []
+            has_decided_count = False
+            for i in range(rank_count):
+                curr = bench[str(i)].get("benchmark", {}).get("scc", {})
+                for p in path:
+                    if isinstance(curr, dict) and p in curr:
+                        curr = curr[p]
+                    else:
+                        curr = None
+                        break
+                if isinstance(curr, dict) and "decided_count" in curr:
+                    decided_counts.append(int(curr["decided_count"]))
+                    has_decided_count = True
+                else:
+                    decided_counts.append(0)
+
+            if app == "hpc_graph":
+                # hpc_graph performs global reduction before logging
+                decided_val = decided_counts[0]
+            elif app == "kaspan" and not has_decided_count:
+                # Fallback for kaspan versions with global_decided / local_decided
+                rank0_node = bench["0"].get("benchmark", {}).get("scc", {})
+                for p in path:
+                    if isinstance(rank0_node, dict) and p in rank0_node:
+                        rank0_node = rank0_node[p]
+                    else:
+                        rank0_node = None
+                        break
+                if isinstance(rank0_node, dict) and "global_decided" in rank0_node:
+                    decided_val = int(rank0_node["global_decided"])
+                else:
+                    decided_val = 0
+            else:
+                # kaspan and ispan log local counts by default
+                decided_val = sum(decided_counts)
+
             results.append({
                 "name": name,
                 "duration": dur,

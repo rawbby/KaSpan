@@ -12,6 +12,7 @@
 #include <kaspan/memory/hash_map.hpp>
 #include <kaspan/scc/allgather_sub_graph.hpp>
 #include <kaspan/scc/cache_multi_pivot_search.hpp>
+#include <kaspan/scc/cache_multi_pivot_search_pull.hpp>
 #include <kaspan/scc/cache_pivot_search.hpp>
 #include <kaspan/scc/trim_1_local.hpp>
 
@@ -75,7 +76,7 @@ scc(
   auto has_changed    = make_bits_clean(graph.part.local_n());
   auto label_cache    = hash_map<vertex_t>{ graph.local_fw_m + graph.local_bw_m };
   for (;;) {
-    cache_rot_label_search(graph, front, label.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), on_decision, label_cache);
+    cache_rot_label_search_pull(graph, front, label.data(), active.data(), is_reached.data(), has_changed.data(), is_undecided.data(), on_decision, label_cache);
     global_decided = mpi_basic::allreduce_single(local_decided, mpi_basic::sum);
     if (global_decided >= graph.part.n()) break;
     label_cache.clear();
