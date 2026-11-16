@@ -56,9 +56,9 @@ def load_all_data(cwd):
                 bench, status = data(json.load(f))
                 if len(bench) == 0:
                     if status.get('error'):
-                        print(f"Skipping file with error {status.get('ec')}: {status.get('error').splitlines()[0]}")
+                        print(f"Skipping file {str(p.name)} with error {status.get('ec')}: {status.get('error').splitlines()[0]}")
                     else:
-                        print(f"Skipping file with error {status.get('ec')}")
+                        print(f"Skipping file {str(p.name)} with error {status.get('ec')}")
                     continue
 
                 duration = globals().get(f"get_{app}_duration")(bench, np_val)
